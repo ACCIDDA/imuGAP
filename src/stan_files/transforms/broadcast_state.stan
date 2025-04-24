@@ -1,0 +1,1 @@
+    rep_matrix(mu, cnty_end_index[i] - cnty_start_index[i] + 1)

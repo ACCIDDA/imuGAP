@@ -1,21 +1,18 @@
 
-#include data_def.stan
+#include /data/definition.stan
 
 parameters { // all of these are on the logit scale
-  row_vector[n_yr] mu; // time-varying state-level intercept
-  vector[n_cnty] mu_c; // county-level intercepts
-  vector[n_school] mu_s; // school-level intercepts
+  #include /parameters/standard.stan
+  #include /parameters/county_intercept_static.stan
+  #include /parameters/school_intercept_static.stan
+
   matrix[n_school, n_yr] s_dev; // school-level deviates
-  real compliance; // odds of compliance with second dose after receiving first dose
-  real<lower=0> sd_school;
-  real<lower=0> sd_cnty;
-  real<lower=0> sd_state;
   real<lower=0> sd_dev;
 }
 
 transformed parameters {
-  matrix[n_school, n_yr] lambda; // school-level coverage
-  matrix[n_cnty, n_yr] lambda_c; // county-level coverage
+  // lambda[schools, years], lambda_c[counties, years]
+  #include /tranforms/lambda.stan
   
   // school-level coverage (logit scale)
   for(i in 1:n_cnty){
@@ -25,16 +22,16 @@ transformed parameters {
     }
     
     lambda[(cnty_start_index[i]):(cnty_end_index[i]),] = 
-      rep_matrix(mu, cnty_end_index[i] - cnty_start_index[i] + 1) + 
+      #include /tranforms/broadcast_state.stan
+      + 
       rep_matrix(mu_c[i], cnty_end_index[i] - cnty_start_index[i] + 1, n_yr)  +
-      rep_matrix(mu_s[(cnty_start_index[i]):(cnty_end_index[i])], n_yr) +
+      #include /tranforms/broadcast_school.stan
+      +
       dev_temp;
   }
   
-  // county-level coverage (logit scale)
-  for(i in 1:n_cnty){
-    lambda_c[i,] = diagonal((lambda[(cnty_start_index[i]):(cnty_end_index[i]),]')*sch_wts[(cnty_start_index[i]):(cnty_end_index[i])])';
-  }
+  // lambda_c[index,year]: county-level coverage (logit scale)
+  #include /tranforms/county_coverage.stan
   
 }
 

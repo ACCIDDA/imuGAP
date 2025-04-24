@@ -1,0 +1,1 @@
+    rep_matrix(mu_s[(cnty_start_index[i]):(cnty_end_index[i])], n_yr)
