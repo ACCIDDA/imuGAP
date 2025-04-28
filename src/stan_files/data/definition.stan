@@ -22,5 +22,14 @@ data {
   // state-level observations
   int y_state[n_state_obs, 2]; // state-level coverage observations num up to date (col 1) and total enrollment (col 2)
   matrix[n_state_obs, n_yr] y_state_grades; // weights for grade cohorts corresponding to state-level observations
+
   int y_state_pop[n_state_obs]; // 19-35 mos (1), kindergarten entry (2), and 13-15 yos (3)
+}
+
+transformed data {
+  vector[n_state_obs] y_state_grade_row_sums;
+  for (i in 1:n_state_obs) {
+    y_state_grade_rowsum[i] = sum(y_state_grades[i,])
+  }
+
 }
