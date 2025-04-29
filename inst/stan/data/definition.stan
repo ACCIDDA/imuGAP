@@ -29,7 +29,10 @@ data {
 transformed data {
   vector[n_state_obs] y_state_grade_row_sums;
   for (i in 1:n_state_obs) {
-    y_state_grade_rowsum[i] = sum(y_state_grades[i,])
+    y_state_grade_row_sums[i] = sum(y_state_grades[i,]);
   }
-
+  int school_rep_size[n_cnty];
+  for (i in 1:n_cnty) {
+    school_rep_size[i] = cnty_end_index[i] - cnty_start_index[i] + 1;
+  }
 }

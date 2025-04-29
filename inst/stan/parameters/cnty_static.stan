@@ -1,0 +1,2 @@
+  vector[n_cnty] mu_c; // county-level intercepts
+  
