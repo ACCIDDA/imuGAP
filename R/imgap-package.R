@@ -1,10 +1,10 @@
-#' The 'gdmimes' package.
+#' The 'imgap' package.
 #'
 #' @description A DESCRIPTION OF THE PACKAGE
 #'
-#' @name gdmimes-package
-#' @aliases gdmimes
-#' @useDynLib gdmimes, .registration = TRUE
+#' @name imgap-package
+#' @aliases imgap
+#' @useDynLib imgap, .registration = TRUE
 #' @import methods
 #' @import Rcpp
 #' @importFrom rstan sampling
