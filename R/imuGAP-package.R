@@ -1,10 +1,10 @@
-#' The 'imgap' package.
+#' The 'imuGAP' package.
 #'
-#' @description A DESCRIPTION OF THE PACKAGE
+#' @description A package for estimating measles vaccine coverage
 #'
-#' @name imgap-package
-#' @aliases imgap
-#' @useDynLib imgap, .registration = TRUE
+#' @name imuGAP-package
+#' @aliases imuGAP
+#' @useDynLib imuGAP, .registration = TRUE
 #' @import methods
 #' @import Rcpp
 #' @importFrom rstan sampling

@@ -1,6 +1,6 @@
 
-imgap_options <- function(
-  total_years = 30, county_demography, state_demography 
+imuGAP_options <- function(
+  total_years = 30, county_demography, state_demography
 ) {
 
 }
@@ -9,20 +9,20 @@ stan_options <- function(...) {
 
 }
 
-#' @title Immunity: Geographic & Age-based Projection, `imgap`
+#' @title Immunity: Geographic & Age-based Projection, `imuGAP`
 #'
 #' @description This function estimates current coverage, by age and location.
 #'
-#' @param x a 
+#' @param x a
 #' @param y Numeric vector of output values.
 #' @param ... Arguments passed to `rstan::sampling` (e.g. iter, chains).
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #'
 #' @export
-#' 
+#'
 #' @examples
-#' 
-imgap <- function(
+#'
+imuGAP <- function(
   x, y,
   state_model = c("ar", "noisy"),
   cnty_model = c("ar", "noisy", "static"),
