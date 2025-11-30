@@ -1,2 +1,0 @@
-  vector[n_school] mu_s; // school-level intercepts
-  

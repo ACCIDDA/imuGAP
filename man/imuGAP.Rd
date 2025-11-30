@@ -5,21 +5,46 @@
 \title{Immunity: Geographic & Age-based Projection, \code{imuGAP}}
 \usage{
 imuGAP(
-  x,
-  y,
-  state_model = c("ar", "noisy"),
-  cnty_model = c("ar", "noisy", "static"),
-  schl_model = c("ar", "noisy", "static"),
-  imgap_options = imgap_options(),
-  stan_options = stan_options()
+  observations,
+  obs_populations,
+  locations,
+  dose_schedule,
+  imugap_opts = list(),
+  stan_opts = list()
 )
 }
 \arguments{
-\item{x}{a}
+\item{observations}{a \code{data.frame}, the observed data, with at least two columns:
+\itemize{
+\item a column named "positive", or the first column; a non-negative integer, the observed number of vaccinated individuals
+\item a column named "sample_n", or the second column: a positive integer, the number of individuals sampled
+\item if there exists a column "id", it must be unique, and will be used as the primary key for the observation data;
+otherwise, a unique id will be created based on the row number
+}}
 
-\item{y}{Numeric vector of output values.}
+\item{obs_populations}{a \code{data.frame} providing the meta-data about the observations. Briefly, it should capture for each observation
+the relevant location(s), cohort(s), age(s), dose, and relative contribution of that population to the observation. Each
+row in \code{obs} should have one or more corresponding rows in \code{wts}. The \code{wts} data.frame should have at least the following columns:
+\itemize{
+\item a column named "obs_id", with a value in the "id" column in \code{obs}
+\item "location", a positive integer, distinguishing locations.
+\item "cohort", a positive integer, distinguishing cohorts
+\item "age", a positive integer, distinguishing when this observation applies for this location/cohort
+\item "dose", a positive integer, which dose this observation applies to
+\item "weight", a positive numeric value, representing the relative contribution of that population to the observation
+}}
 
-\item{...}{Arguments passed to \code{rstan::sampling} (e.g. iter, chains).}
+\item{locations}{the location hierarchy, a \code{data.frame} with two columns:
+\itemize{
+\item "id", a positive integer, the location id
+\item "parent_id", a positive integer or \code{NA}, the parent location id; the root location should have \code{NA} as its parent_id
+}}
+
+\item{dose_schedule}{a numeric vector of length 2, the ages at which dose 1 and dose 2 are scheduled}
+
+\item{imugap_opts}{options for the \code{imuGAP} model}
+
+\item{stan_opts}{passed to \code{rstan::sampling} (e.g. iter, chains).}
 }
 \value{
 An object of class \code{stanfit} returned by \code{rstan::sampling}

@@ -12,6 +12,6 @@ A package for estimating measles vaccine coverage
 Stan Development Team (NA). RStan: the R interface to Stan. R package version NA. https://mc-stan.org
 }
 \author{
-\strong{Maintainer}: Carl A. B. Pearson \email{carl.ab.pearson@gmail.com} (\href{https://orcid.org/0000-0003-0701-7860}{ORCID})
+\strong{Maintainer}: Carl Pearson \email{carl.ab.pearson@gmail.com} (\href{https://orcid.org/0000-0003-0701-7860}{ORCID})
 
 }
