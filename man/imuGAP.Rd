@@ -9,8 +9,8 @@ imuGAP(
   obs_populations,
   locations,
   dose_schedule,
-  imugap_opts = list(),
-  stan_opts = list()
+  imugap_opts = imugap_options(),
+  stan_opts = stan_options()
 )
 }
 \arguments{

@@ -11,6 +11,13 @@ A package for estimating measles vaccine coverage
 \references{
 Stan Development Team (NA). RStan: the R interface to Stan. R package version NA. https://mc-stan.org
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://accidda.github.io/imuGAP/}
+}
+
+}
 \author{
 \strong{Maintainer}: Carl Pearson \email{carl.ab.pearson@gmail.com} (\href{https://orcid.org/0000-0003-0701-7860}{ORCID})
 
