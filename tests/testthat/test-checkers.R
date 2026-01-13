@@ -101,38 +101,3 @@ test_that("checked_set_equivalence works", {
     "'ref_dt'.*'d'"
   )
 })
-
-# test_that("checked_dt_able works", {
-#   dt <- data.frame(a = 1:3, b = 4:6)
-
-#   expect_silent(checked_dt_able(dt))
-#   expect_s3_class(dt, "data.table")
-
-#   list_dt <- list(a = 1:3, b = 4:6)
-#   expect_silent(checked_dt_able(list_dt))
-#   expect_s3_class(list_dt, "data.table")
-
-# })
-
-# test_that("check_obs works for obvious case", {
-#   dt <- data.table(
-#     obs_id = 1:3,
-#     location = 1:3,
-#     cohort = 1:3,
-#     age = rep(10, 3),
-#     dose = rep(1, 3),
-#     weight = rep(1.0, 3)
-#   )
-
-#   expect_silent(
-#     res <- check_obs_population(
-#       dt,
-#       max_obs_id = 3,
-#       max_location = 3,
-#       max_cohort = 3,
-#       max_age = 30
-#     )
-#   )
-
-#   expect_equal(res, dt)
-# })

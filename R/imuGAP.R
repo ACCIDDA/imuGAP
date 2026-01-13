@@ -145,8 +145,9 @@ check_locations <- function(location_map) {
 #'  if the column requirements are not satisfied.
 #' 
 #' @export
+#' @importFrom data.table as.data.table setkey
 check_observations <- function(observations) {
-  checked_dt_able(observations)
+  observations <- as.data.table(observations)
   checked_cols(observations, c("positive", "sample_n"))
   checked_nonneg_integer(observations, "positive")
   checked_positive_integer(observations, "sample_n")
@@ -270,8 +271,8 @@ check_obs_population <- function(
 imuGAP <- function(
   observations, obs_populations,
   locations, dose_schedule,
-  imugap_opts = list(),
-  stan_opts = list()
+  imugap_opts = imugap_options(),
+  stan_opts = stan_options()
 ) {
 
   # check location argument

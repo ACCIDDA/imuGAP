@@ -58,16 +58,9 @@ checked_set_equivalence <- function(dt, x, tarset) {
 }
 
 #' @importFrom data.table setDT
+#' @importFrom data.table as.data.table
 checked_dt_able <- function(dt, copy = FALSE) {
-  return(tryCatch(
-    if (copy) as.data.table(dt)[] else setDT(dt)[],
-    error = function(e) {
-      stop(
-        "'", deparse(substitute(dt)), "' must be valid argument to `data.table::setDT`\n",
-        "\tclass(", deparse(substitute(dt)), ") = ", paste(class(dt), collapse = "/")
-      )
-    }
-  ))
+  return(if (copy) as.data.table(dt) else setDT(dt))
 }
 
 checked_cols <- function(dt, cols) {
