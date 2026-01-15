@@ -325,7 +325,7 @@ imuGAP <- function(
     df = imugap_opts$df, intercept = TRUE
   )
 
-  doses <- matrix(0, ncol  = length(dose_schedule), nrow = max(wts$age))
+  doses <- matrix(0, ncol = length(dose_schedule), nrow = max(wts$age))
   for (i in seq_along(dose_schedule)) {
     doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
   }

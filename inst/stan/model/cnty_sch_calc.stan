@@ -13,7 +13,7 @@
     inv_logit(logit_phi_st),
     to_vector(inv_logit(
       rep_matrix(logit_phi_st, n_cnty) + // apply state terms for every cohort across counties => n_cohort x 1 => n_cohort x n_cnty
-      rep_matrix(off_cnty, n_cohort) // apply base school terms across every cohort => 1 x n_cnty => n_cohort x n_cnty
+      rep_matrix(off_cnty, n_cohort) // apply base county terms across every cohort => 1 x n_cnty => n_cohort x n_cnty
     ))),
     to_vector(inv_logit(
       rep_matrix(logit_phi_st, n_sch) + // apply state terms for every cohort across schools => n_cohort x 1 => n_cohort x n_sch

@@ -31,7 +31,7 @@ static constexpr std::array<const char*, 169> locations_array__ =
   {" (found before start of program)",
   " (in 'impute_school_coverage_process_v5', line 172, column 2 to column 23)",
   " (in 'impute_school_coverage_process_v5', line 178, column 2 to column 27)",
-  " (in 'impute_school_coverage_process_v5', line 179, column 2 to column 49)",
+  " (in 'impute_school_coverage_process_v5', line 179, column 2 to column 53)",
   " (in 'impute_school_coverage_process_v5', line 181, column 2 to column 26)",
   " (in 'impute_school_coverage_process_v5', line 182, column 2 to column 50)",
   " (in 'impute_school_coverage_process_v5', line 186, column 2 to column 29)",
@@ -110,7 +110,7 @@ static constexpr std::array<const char*, 169> locations_array__ =
   " (in 'impute_school_coverage_process_v5', line 162, column 32 to line 167, column 3)",
   " (in 'impute_school_coverage_process_v5', line 162, column 2 to line 167, column 3)",
   " (in 'impute_school_coverage_process_v5', line 172, column 9 to column 13)",
-  " (in 'impute_school_coverage_process_v5', line 179, column 32 to column 38)",
+  " (in 'impute_school_coverage_process_v5', line 179, column 36 to column 42)",
   " (in 'impute_school_coverage_process_v5', line 182, column 35 to column 40)",
   " (in 'impute_school_coverage_process_v5', line 186, column 9 to column 16)",
   " (in 'impute_school_coverage_process_v5', line 195, column 7 to column 15)",
@@ -1157,11 +1157,11 @@ public:
       current_statement__ = 2;
       sigma_cnty = in__.template read_constrain_lb<local_scalar_t__,
                      jacobian__>(0, lp__);
-      Eigen::Matrix<local_scalar_t__,-1,1> off_cnty =
-        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_cnty, DUMMY_VAR__);
+      Eigen::Matrix<local_scalar_t__,1,-1> off_cnty =
+        Eigen::Matrix<local_scalar_t__,1,-1>::Constant(n_cnty, DUMMY_VAR__);
       current_statement__ = 3;
       off_cnty = in__.template read_constrain_offset_multiplier<
-                   Eigen::Matrix<local_scalar_t__,-1,1>, jacobian__>(0,
+                   Eigen::Matrix<local_scalar_t__,1,-1>, jacobian__>(0,
                    sigma_cnty, lp__, n_cnty);
       local_scalar_t__ sigma_sch = DUMMY_VAR__;
       current_statement__ = 4;
@@ -1343,12 +1343,12 @@ public:
       current_statement__ = 2;
       sigma_cnty = in__.template read_constrain_lb<local_scalar_t__,
                      jacobian__>(0, lp__);
-      Eigen::Matrix<double,-1,1> off_cnty =
-        Eigen::Matrix<double,-1,1>::Constant(n_cnty,
+      Eigen::Matrix<double,1,-1> off_cnty =
+        Eigen::Matrix<double,1,-1>::Constant(n_cnty,
           std::numeric_limits<double>::quiet_NaN());
       current_statement__ = 3;
       off_cnty = in__.template read_constrain_offset_multiplier<
-                   Eigen::Matrix<local_scalar_t__,-1,1>, jacobian__>(0,
+                   Eigen::Matrix<local_scalar_t__,1,-1>, jacobian__>(0,
                    sigma_cnty, lp__, n_cnty);
       double sigma_sch = std::numeric_limits<double>::quiet_NaN();
       current_statement__ = 4;
@@ -1576,11 +1576,11 @@ public:
       current_statement__ = 2;
       sigma_cnty = in__.read<local_scalar_t__>();
       out__.write_free_lb(0, sigma_cnty);
-      Eigen::Matrix<local_scalar_t__,-1,1> off_cnty =
-        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_cnty, DUMMY_VAR__);
+      Eigen::Matrix<local_scalar_t__,1,-1> off_cnty =
+        Eigen::Matrix<local_scalar_t__,1,-1>::Constant(n_cnty, DUMMY_VAR__);
       current_statement__ = 3;
       stan::model::assign(off_cnty,
-        in__.read<Eigen::Matrix<local_scalar_t__,-1,1>>(n_cnty),
+        in__.read<Eigen::Matrix<local_scalar_t__,1,-1>>(n_cnty),
         "assigning variable off_cnty");
       out__.write_free_offset_multiplier(0, sigma_cnty, off_cnty);
       local_scalar_t__ sigma_sch = DUMMY_VAR__;
@@ -1658,8 +1658,8 @@ public:
       current_statement__ = 2;
       sigma_cnty = context__.vals_r("sigma_cnty")[(1 - 1)];
       out__.write_free_lb(0, sigma_cnty);
-      Eigen::Matrix<local_scalar_t__,-1,1> off_cnty =
-        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_cnty, DUMMY_VAR__);
+      Eigen::Matrix<local_scalar_t__,1,-1> off_cnty =
+        Eigen::Matrix<local_scalar_t__,1,-1>::Constant(n_cnty, DUMMY_VAR__);
       {
         std::vector<local_scalar_t__> off_cnty_flat__;
         current_statement__ = 3;
