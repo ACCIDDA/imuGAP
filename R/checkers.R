@@ -14,7 +14,9 @@ checked_as_integer <- function(dt, x, na_allowed = FALSE) {
     }
   }
   if (!na_allowed && dt[, any(is.na(get(x)))]) {
-    stopper(deparse(substitute(dt)), x, "'%s' column '%s' cannot have NA values")
+    stopper(
+      deparse(substitute(dt)), x, "'%s' column '%s' cannot have NA values"
+    )
   }
   return(dt[])
 }
@@ -48,10 +50,22 @@ checked_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE) {
 checked_set_equivalence <- function(dt, x, tarset) {
   tarset <- unique(tarset)
   setlen <- length(tarset)
-  if (length(intersect(tarset, dt[, get(x)])) != setlen) {
+  if (length(union(tarset, dt[, get(x)])) != setlen) {
     stopper(
       deparse(substitute(dt)), x,
       "'%s' column '%s' must contain all values in set"
+    )
+  }
+  return(dt[])
+}
+
+checked_subset <- function(dt, x, tarset) {
+  checkset <- unique(dt[, get(x)])
+  if (!all(checkset %in% tarset)) {
+    stopper(
+      deparse(substitute(dt)), x,
+      "'%s' column '%s' must be contained in parent set: missing %s",
+      toString(setdiff(checkset, tarset))
     )
   }
   return(dt[])
@@ -67,7 +81,8 @@ checked_cols <- function(dt, cols) {
   missing_cols <- setdiff(cols, names(dt))
   if (length(missing_cols) > 0) {
     stop(
-      "'", deparse(substitute(dt)), "' is missing the following required column(s): ", toString(missing_cols)
+      "'", deparse(substitute(dt)),
+      "' is missing the following required column(s): ", toString(missing_cols)
     )
   }
   return(dt[])

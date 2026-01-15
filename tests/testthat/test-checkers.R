@@ -20,7 +20,9 @@ test_that("checked_as_integer works", {
     "'ref_dt'.*'c'"
   )
 
-  somefun <- function(DT, col) eval(substitute(checked_as_integer(DT, col)))
+  somefun <- function(some_dt, col) {
+    eval(substitute(checked_as_integer(some_dt, col)))
+  }
 
   expect_silent(somefun(ref_dt, "a"))
   expect_silent(somefun(ref_dt, "b"))
@@ -47,9 +49,9 @@ test_that("checked_positive_integer works", {
     "'ref_dt'.*'b'"
   )
 
-  somefun <- function(DT, col) eval(
-    substitute(checked_positive_integer(DT, col))
-  )
+  somefun <- function(some_dt, col) {
+    eval(substitute(checked_positive_integer(some_dt, col)))
+  }
 
   expect_silent(somefun(ref_dt, "a"))
 
@@ -73,9 +75,9 @@ test_that("checked_maxed_pos_integer works", {
 
   expect_silent(checked_maxed_pos_integer(ref_dt, "b"))
 
-  somefun <- function(DT, col, max) eval(
-    substitute(checked_maxed_pos_integer(DT, col, max))
-  )
+  somefun <- function(some_dt, col, max) {
+    eval(substitute(checked_maxed_pos_integer(some_dt, col, max)))
+  }
 
   expect_silent(somefun(ref_dt, "a", 5))
   expect_silent(somefun(ref_dt, "a"))

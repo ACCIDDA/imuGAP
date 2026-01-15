@@ -25,7 +25,7 @@ check_obs_population(
 \itemize{
 \item obs_id, the observation id the row concerns
 \item dose, which dose the row concerns
-\item loc_id, the location the row concerns
+\item location, the location the row concerns
 \item cohort, the cohort at that location the row concerns
 \item age, the age of that cohort the row concerns
 \item weight, the relative contribution of this row to an observation

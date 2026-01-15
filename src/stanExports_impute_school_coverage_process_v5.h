@@ -64,31 +64,31 @@ static constexpr std::array<const char*, 169> locations_array__ =
   " (in 'impute_school_coverage_process_v5', line 104, column 2 to column 20)",
   " (in 'impute_school_coverage_process_v5', line 105, column 2 to column 24)",
   " (in 'impute_school_coverage_process_v5', line 106, column 2 to column 21)",
-  " (in 'impute_school_coverage_process_v5', line 109, column 2 to column 23)",
-  " (in 'impute_school_coverage_process_v5', line 110, column 27 to column 31)",
-  " (in 'impute_school_coverage_process_v5', line 110, column 33 to column 40)",
-  " (in 'impute_school_coverage_process_v5', line 110, column 2 to column 53)",
-  " (in 'impute_school_coverage_process_v5', line 114, column 2 to column 21)",
-  " (in 'impute_school_coverage_process_v5', line 115, column 21 to column 26)",
-  " (in 'impute_school_coverage_process_v5', line 115, column 2 to column 28)",
-  " (in 'impute_school_coverage_process_v5', line 116, column 21 to column 26)",
-  " (in 'impute_school_coverage_process_v5', line 116, column 2 to column 28)",
-  " (in 'impute_school_coverage_process_v5', line 120, column 2 to column 29)",
-  " (in 'impute_school_coverage_process_v5', line 121, column 8 to column 13)",
-  " (in 'impute_school_coverage_process_v5', line 121, column 2 to column 67)",
-  " (in 'impute_school_coverage_process_v5', line 123, column 44 to column 53)",
-  " (in 'impute_school_coverage_process_v5', line 123, column 2 to column 55)",
-  " (in 'impute_school_coverage_process_v5', line 124, column 45 to column 54)",
-  " (in 'impute_school_coverage_process_v5', line 124, column 2 to column 56)",
-  " (in 'impute_school_coverage_process_v5', line 125, column 44 to column 53)",
-  " (in 'impute_school_coverage_process_v5', line 125, column 2 to column 55)",
-  " (in 'impute_school_coverage_process_v5', line 126, column 42 to column 51)",
-  " (in 'impute_school_coverage_process_v5', line 126, column 2 to column 53)",
-  " (in 'impute_school_coverage_process_v5', line 128, column 26 to column 35)",
-  " (in 'impute_school_coverage_process_v5', line 128, column 2 to column 45)",
-  " (in 'impute_school_coverage_process_v5', line 131, column 2 to column 13)",
-  " (in 'impute_school_coverage_process_v5', line 132, column 8 to column 14)",
-  " (in 'impute_school_coverage_process_v5', line 132, column 2 to column 54)",
+  " (in 'impute_school_coverage_process_v5', line 109, column 2 to column 22)",
+  " (in 'impute_school_coverage_process_v5', line 110, column 8 to column 14)",
+  " (in 'impute_school_coverage_process_v5', line 110, column 2 to column 54)",
+  " (in 'impute_school_coverage_process_v5', line 113, column 2 to column 23)",
+  " (in 'impute_school_coverage_process_v5', line 114, column 27 to column 31)",
+  " (in 'impute_school_coverage_process_v5', line 114, column 33 to column 40)",
+  " (in 'impute_school_coverage_process_v5', line 114, column 2 to column 53)",
+  " (in 'impute_school_coverage_process_v5', line 118, column 2 to column 21)",
+  " (in 'impute_school_coverage_process_v5', line 119, column 21 to column 26)",
+  " (in 'impute_school_coverage_process_v5', line 119, column 2 to column 28)",
+  " (in 'impute_school_coverage_process_v5', line 120, column 21 to column 26)",
+  " (in 'impute_school_coverage_process_v5', line 120, column 2 to column 28)",
+  " (in 'impute_school_coverage_process_v5', line 124, column 2 to column 29)",
+  " (in 'impute_school_coverage_process_v5', line 125, column 8 to column 13)",
+  " (in 'impute_school_coverage_process_v5', line 125, column 2 to column 67)",
+  " (in 'impute_school_coverage_process_v5', line 127, column 55 to column 64)",
+  " (in 'impute_school_coverage_process_v5', line 127, column 2 to column 66)",
+  " (in 'impute_school_coverage_process_v5', line 128, column 45 to column 54)",
+  " (in 'impute_school_coverage_process_v5', line 128, column 2 to column 56)",
+  " (in 'impute_school_coverage_process_v5', line 129, column 44 to column 53)",
+  " (in 'impute_school_coverage_process_v5', line 129, column 2 to column 55)",
+  " (in 'impute_school_coverage_process_v5', line 130, column 42 to column 51)",
+  " (in 'impute_school_coverage_process_v5', line 130, column 2 to column 53)",
+  " (in 'impute_school_coverage_process_v5', line 132, column 26 to column 35)",
+  " (in 'impute_school_coverage_process_v5', line 132, column 2 to column 45)",
   " (in 'impute_school_coverage_process_v5', line 135, column 2 to column 37)",
   " (in 'impute_school_coverage_process_v5', line 140, column 2 to column 11)",
   " (in 'impute_school_coverage_process_v5', line 141, column 9 to column 17)",
@@ -660,6 +660,8 @@ private:
   int n_yr;
   int n_cohort;
   int n_sch;
+  int n_cnty;
+  std::vector<int> cnty_bounds;
   int n_doses;
   Eigen::Matrix<double,-1,-1> dose_sched_data__;
   int n_obs;
@@ -672,8 +674,6 @@ private:
   std::vector<int> weights_life_year;
   std::vector<int> weights_dose;
   Eigen::Matrix<double,-1,1> weights_data__;
-  int n_cnty;
-  std::vector<int> cnty_bounds;
   int predict_mode;
   int k_bs;
   Eigen::Matrix<double,-1,-1> bs_data__;
@@ -737,19 +737,41 @@ public:
       current_statement__ = 35;
       stan::math::check_greater_or_equal(function__, "n_sch", n_sch, 1);
       current_statement__ = 36;
+      context__.validate_dims("data initialization", "n_cnty", "int",
+        std::vector<size_t>{});
+      n_cnty = std::numeric_limits<int>::min();
+      current_statement__ = 36;
+      n_cnty = context__.vals_i("n_cnty")[(1 - 1)];
+      current_statement__ = 36;
+      stan::math::check_greater_or_equal(function__, "n_cnty", n_cnty, 1);
+      current_statement__ = 37;
+      stan::math::validate_non_negative_index("cnty_bounds", "n_cnty", n_cnty);
+      current_statement__ = 38;
+      context__.validate_dims("data initialization", "cnty_bounds", "int",
+        std::vector<size_t>{static_cast<size_t>(n_cnty)});
+      cnty_bounds = std::vector<int>(n_cnty, std::numeric_limits<int>::min());
+      current_statement__ = 38;
+      cnty_bounds = context__.vals_i("cnty_bounds");
+      current_statement__ = 38;
+      stan::math::check_greater_or_equal(function__, "cnty_bounds",
+        cnty_bounds, 1);
+      current_statement__ = 38;
+      stan::math::check_less_or_equal(function__, "cnty_bounds", cnty_bounds,
+        n_sch);
+      current_statement__ = 39;
       context__.validate_dims("data initialization", "n_doses", "int",
         std::vector<size_t>{});
       n_doses = std::numeric_limits<int>::min();
-      current_statement__ = 36;
+      current_statement__ = 39;
       n_doses = context__.vals_i("n_doses")[(1 - 1)];
-      current_statement__ = 36;
+      current_statement__ = 39;
       stan::math::check_greater_or_equal(function__, "n_doses", n_doses, 1);
-      current_statement__ = 37;
+      current_statement__ = 40;
       stan::math::validate_non_negative_index("dose_sched", "n_yr", n_yr);
-      current_statement__ = 38;
+      current_statement__ = 41;
       stan::math::validate_non_negative_index("dose_sched", "n_doses",
         n_doses);
-      current_statement__ = 39;
+      current_statement__ = 42;
       context__.validate_dims("data initialization", "dose_sched", "double",
         std::vector<size_t>{static_cast<size_t>(n_yr),
           static_cast<size_t>(n_doses)});
@@ -761,149 +783,149 @@ public:
         n_yr, n_doses);
       {
         std::vector<local_scalar_t__> dose_sched_flat__;
-        current_statement__ = 39;
+        current_statement__ = 42;
         dose_sched_flat__ = context__.vals_r("dose_sched");
-        current_statement__ = 39;
+        current_statement__ = 42;
         pos__ = 1;
-        current_statement__ = 39;
+        current_statement__ = 42;
         for (int sym1__ = 1; sym1__ <= n_doses; ++sym1__) {
-          current_statement__ = 39;
+          current_statement__ = 42;
           for (int sym2__ = 1; sym2__ <= n_yr; ++sym2__) {
-            current_statement__ = 39;
+            current_statement__ = 42;
             stan::model::assign(dose_sched, dose_sched_flat__[(pos__ - 1)],
               "assigning variable dose_sched",
               stan::model::index_uni(sym2__), stan::model::index_uni(sym1__));
-            current_statement__ = 39;
+            current_statement__ = 42;
             pos__ = (pos__ + 1);
           }
         }
       }
-      current_statement__ = 39;
+      current_statement__ = 42;
       stan::math::check_greater_or_equal(function__, "dose_sched",
         dose_sched, 0);
-      current_statement__ = 39;
+      current_statement__ = 42;
       stan::math::check_less_or_equal(function__, "dose_sched", dose_sched, 1);
-      current_statement__ = 40;
+      current_statement__ = 43;
       context__.validate_dims("data initialization", "n_obs", "int",
         std::vector<size_t>{});
       n_obs = std::numeric_limits<int>::min();
-      current_statement__ = 40;
+      current_statement__ = 43;
       n_obs = context__.vals_i("n_obs")[(1 - 1)];
-      current_statement__ = 40;
+      current_statement__ = 43;
       stan::math::check_greater_or_equal(function__, "n_obs", n_obs, 1);
-      current_statement__ = 41;
+      current_statement__ = 44;
       stan::math::validate_non_negative_index("y_obs", "n_obs", n_obs);
-      current_statement__ = 42;
+      current_statement__ = 45;
       context__.validate_dims("data initialization", "y_obs", "int",
         std::vector<size_t>{static_cast<size_t>(n_obs)});
       y_obs = std::vector<int>(n_obs, std::numeric_limits<int>::min());
-      current_statement__ = 42;
+      current_statement__ = 45;
       y_obs = context__.vals_i("y_obs");
-      current_statement__ = 42;
+      current_statement__ = 45;
       stan::math::check_greater_or_equal(function__, "y_obs", y_obs, 0);
-      current_statement__ = 43;
+      current_statement__ = 46;
       stan::math::validate_non_negative_index("y_smp", "n_obs", n_obs);
-      current_statement__ = 44;
+      current_statement__ = 47;
       context__.validate_dims("data initialization", "y_smp", "int",
         std::vector<size_t>{static_cast<size_t>(n_obs)});
       y_smp = std::vector<int>(n_obs, std::numeric_limits<int>::min());
-      current_statement__ = 44;
+      current_statement__ = 47;
       y_smp = context__.vals_i("y_smp");
-      current_statement__ = 44;
+      current_statement__ = 47;
       stan::math::check_greater_or_equal(function__, "y_smp", y_smp, 0);
-      current_statement__ = 45;
+      current_statement__ = 48;
       context__.validate_dims("data initialization", "n_weights", "int",
         std::vector<size_t>{});
       n_weights = std::numeric_limits<int>::min();
-      current_statement__ = 45;
+      current_statement__ = 48;
       n_weights = context__.vals_i("n_weights")[(1 - 1)];
-      current_statement__ = 45;
+      current_statement__ = 48;
       stan::math::check_greater_or_equal(function__, "n_weights", n_weights,
         n_obs);
-      current_statement__ = 46;
+      current_statement__ = 49;
       stan::math::validate_non_negative_index("obs_to_weights_bounds",
         "n_obs", n_obs);
-      current_statement__ = 47;
+      current_statement__ = 50;
       context__.validate_dims("data initialization", "obs_to_weights_bounds",
         "int", std::vector<size_t>{static_cast<size_t>(n_obs)});
       obs_to_weights_bounds = std::vector<int>(n_obs,
                                 std::numeric_limits<int>::min());
-      current_statement__ = 47;
+      current_statement__ = 50;
       obs_to_weights_bounds = context__.vals_i("obs_to_weights_bounds");
-      current_statement__ = 47;
+      current_statement__ = 50;
       stan::math::check_greater_or_equal(function__, "obs_to_weights_bounds",
         obs_to_weights_bounds, 1);
-      current_statement__ = 47;
+      current_statement__ = 50;
       stan::math::check_less_or_equal(function__, "obs_to_weights_bounds",
         obs_to_weights_bounds, n_weights);
-      current_statement__ = 48;
+      current_statement__ = 51;
       stan::math::validate_non_negative_index("weights_school", "n_weights",
         n_weights);
-      current_statement__ = 49;
+      current_statement__ = 52;
       context__.validate_dims("data initialization", "weights_school", "int",
         std::vector<size_t>{static_cast<size_t>(n_weights)});
       weights_school = std::vector<int>(n_weights,
                          std::numeric_limits<int>::min());
-      current_statement__ = 49;
+      current_statement__ = 52;
       weights_school = context__.vals_i("weights_school");
-      current_statement__ = 49;
+      current_statement__ = 52;
       stan::math::check_greater_or_equal(function__, "weights_school",
         weights_school, 1);
-      current_statement__ = 49;
+      current_statement__ = 52;
       stan::math::check_less_or_equal(function__, "weights_school",
-        weights_school, (n_sch + 1));
-      current_statement__ = 50;
+        weights_school, ((n_sch + n_cnty) + 1));
+      current_statement__ = 53;
       stan::math::validate_non_negative_index("weights_cohort", "n_weights",
         n_weights);
-      current_statement__ = 51;
+      current_statement__ = 54;
       context__.validate_dims("data initialization", "weights_cohort", "int",
         std::vector<size_t>{static_cast<size_t>(n_weights)});
       weights_cohort = std::vector<int>(n_weights,
                          std::numeric_limits<int>::min());
-      current_statement__ = 51;
+      current_statement__ = 54;
       weights_cohort = context__.vals_i("weights_cohort");
-      current_statement__ = 51;
+      current_statement__ = 54;
       stan::math::check_greater_or_equal(function__, "weights_cohort",
         weights_cohort, 1);
-      current_statement__ = 51;
+      current_statement__ = 54;
       stan::math::check_less_or_equal(function__, "weights_cohort",
         weights_cohort, n_cohort);
-      current_statement__ = 52;
+      current_statement__ = 55;
       stan::math::validate_non_negative_index("weights_life_year",
         "n_weights", n_weights);
-      current_statement__ = 53;
+      current_statement__ = 56;
       context__.validate_dims("data initialization", "weights_life_year",
         "int", std::vector<size_t>{static_cast<size_t>(n_weights)});
       weights_life_year = std::vector<int>(n_weights,
                             std::numeric_limits<int>::min());
-      current_statement__ = 53;
+      current_statement__ = 56;
       weights_life_year = context__.vals_i("weights_life_year");
-      current_statement__ = 53;
+      current_statement__ = 56;
       stan::math::check_greater_or_equal(function__, "weights_life_year",
         weights_life_year, 1);
-      current_statement__ = 53;
+      current_statement__ = 56;
       stan::math::check_less_or_equal(function__, "weights_life_year",
         weights_life_year, n_yr);
-      current_statement__ = 54;
+      current_statement__ = 57;
       stan::math::validate_non_negative_index("weights_dose", "n_weights",
         n_weights);
-      current_statement__ = 55;
+      current_statement__ = 58;
       context__.validate_dims("data initialization", "weights_dose", "int",
         std::vector<size_t>{static_cast<size_t>(n_weights)});
       weights_dose = std::vector<int>(n_weights,
                        std::numeric_limits<int>::min());
-      current_statement__ = 55;
+      current_statement__ = 58;
       weights_dose = context__.vals_i("weights_dose");
-      current_statement__ = 55;
+      current_statement__ = 58;
       stan::math::check_greater_or_equal(function__, "weights_dose",
         weights_dose, 1);
-      current_statement__ = 55;
+      current_statement__ = 58;
       stan::math::check_less_or_equal(function__, "weights_dose",
         weights_dose, n_doses);
-      current_statement__ = 56;
+      current_statement__ = 59;
       stan::math::validate_non_negative_index("weights", "n_weights",
         n_weights);
-      current_statement__ = 57;
+      current_statement__ = 60;
       context__.validate_dims("data initialization", "weights", "double",
         std::vector<size_t>{static_cast<size_t>(n_weights)});
       weights_data__ = Eigen::Matrix<double,-1,1>::Constant(n_weights,
@@ -913,43 +935,23 @@ public:
         n_weights);
       {
         std::vector<local_scalar_t__> weights_flat__;
-        current_statement__ = 57;
+        current_statement__ = 60;
         weights_flat__ = context__.vals_r("weights");
-        current_statement__ = 57;
+        current_statement__ = 60;
         pos__ = 1;
-        current_statement__ = 57;
+        current_statement__ = 60;
         for (int sym1__ = 1; sym1__ <= n_weights; ++sym1__) {
-          current_statement__ = 57;
+          current_statement__ = 60;
           stan::model::assign(weights, weights_flat__[(pos__ - 1)],
             "assigning variable weights", stan::model::index_uni(sym1__));
-          current_statement__ = 57;
+          current_statement__ = 60;
           pos__ = (pos__ + 1);
         }
       }
-      current_statement__ = 57;
+      current_statement__ = 60;
       stan::math::check_greater_or_equal(function__, "weights", weights, 0);
-      current_statement__ = 57;
+      current_statement__ = 60;
       stan::math::check_less_or_equal(function__, "weights", weights, 1);
-      current_statement__ = 58;
-      context__.validate_dims("data initialization", "n_cnty", "int",
-        std::vector<size_t>{});
-      n_cnty = std::numeric_limits<int>::min();
-      current_statement__ = 58;
-      n_cnty = context__.vals_i("n_cnty")[(1 - 1)];
-      current_statement__ = 59;
-      stan::math::validate_non_negative_index("cnty_bounds", "n_cnty", n_cnty);
-      current_statement__ = 60;
-      context__.validate_dims("data initialization", "cnty_bounds", "int",
-        std::vector<size_t>{static_cast<size_t>(n_cnty)});
-      cnty_bounds = std::vector<int>(n_cnty, std::numeric_limits<int>::min());
-      current_statement__ = 60;
-      cnty_bounds = context__.vals_i("cnty_bounds");
-      current_statement__ = 60;
-      stan::math::check_greater_or_equal(function__, "cnty_bounds",
-        cnty_bounds, 1);
-      current_statement__ = 60;
-      stan::math::check_less_or_equal(function__, "cnty_bounds", cnty_bounds,
-        n_sch);
       current_statement__ = 61;
       context__.validate_dims("data initialization", "predict_mode", "int",
         std::vector<size_t>{});

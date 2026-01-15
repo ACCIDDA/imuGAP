@@ -68,10 +68,10 @@ check_obs_population <- function(
 }
 
 #' @title Check location data
-#' 
+#'
 #' @param locations a `data.frame`, with integer columns `id` and `parent_id`.
 #' See Details for restrictions.
-#' 
+#'
 #' @details
 #' [imuGAP()] works on a hierarchical model of locations, so needs to be
 #' told what that structure is. This method checks that the location structure
@@ -133,17 +133,17 @@ check_locations <- function(location_map) {
 }
 
 #' @title Check observations objects
-#' 
+#'
 #' @param observations a `data.frame` with:
 #'  - nonnegative integer `positive` column
 #'  - positive integer `sample_n` column, which must be greater than or equal
 #'    to the `positive` column
 #'  - optionally, an `id` column, 1:size(observations)
-#' 
+#'
 #' @return the observation object, possibly changed in place to cast columns
 #'  to integers and add the `id` column if not original present. Will error
 #'  if the column requirements are not satisfied.
-#' 
+#'
 #' @export
 #' @importFrom data.table as.data.table setkey
 check_observations <- function(observations) {
@@ -170,7 +170,7 @@ check_observations <- function(observations) {
 #' @param obs_population a data.frame, the the observation weighting object, with columns
 #'  - obs_id, the observation id the row concerns
 #'  - dose, which dose the row concerns
-#'  - loc_id, the location the row concerns
+#'  - location, the location the row concerns
 #'  - cohort, the cohort at that location the row concerns
 #'  - age, the age of that cohort the row concerns
 #'  - weight, the relative contribution of this row to an observation
@@ -190,7 +190,7 @@ check_obs_population <- function(
 
   # using internal methods, check that obs_population has the correct structure
   checked_dt_able(obs_population)
-  checked_cols(obs_population, c("obs_id", "loc_id", "cohort", "age", "dose", "weight"))
+  checked_cols(obs_population, c("obs_id", "location", "cohort", "age", "dose", "weight"))
 
   checked_set_equivalence(
     obs_population, "dose", c(1L, 2L)
@@ -204,13 +204,13 @@ check_obs_population <- function(
 
   # check that obs_population loc_ids are all within locations ids; assumes locations
   # has already passed check_locations
-  checked_set_equivalence(
-    obs_population, "loc_id", locations$id
+  checked_subset(
+    obs_population, "location", unique(c(locations$id, locations$parent_id))
   )
 
   # check cohort and age if max values provided
-  checked_maxed_pos_integer(obs_population, cohort, max_cohort)
-  checked_maxed_pos_integer(obs_population, age, max_age)
+  checked_maxed_pos_integer(obs_population, "cohort", max_cohort)
+  checked_maxed_pos_integer(obs_population, "age", max_age)
 
   # check that weight is a positive numeric
   if (obs_population[, any(!is.numeric(weight) | weight <= 0)]) {
@@ -218,7 +218,7 @@ check_obs_population <- function(
   }
 
   # check that weights sum to 1 by obs_id
-  wt_check <- obs_population[, .(err = abs(sum(weight) - 1.0) >= 1e-10), by = obs_id]
+  wt_check <- obs_population[, .(err = abs(sum(weight) - 1.0) >= 1e-8), by = obs_id]
   if (any(wt_check$err)) {
     stop("obs_population$weight must sum to 1 by obs_id")
   }
@@ -240,6 +240,38 @@ check_obs_population <- function(
 # move dose schedule to first-class argument
 
 # if predict == TRUE, then need to provide max life year to predict out to
+
+#' @title Options for stan sampler
+#'
+#' @description
+#' This function encapsulates option passing to the stan sampler.
+#'
+#' @inheritDotParams rstan::sampling
+#' @inheritParams rstan::sampling
+#'
+#' @return a list of arguments matching [rstan::sampling()] inputs
+#' @export
+stan_options <- function(
+  object = stanmodels$impute_school_coverage_process_v5,
+  ...
+) {
+  res <- list(...)
+  res$object <- object
+  return(res)
+}
+
+#' @title Options for imuGAP model
+#'
+#' @description
+#' This function encapsulates option passing for imuGAP settings
+#'
+#' @param df degrees of freedom to use in bspline
+#'
+#' @return a list of imuGAP model options
+#'
+imugap_options <- function(df = 5L) {
+  return(as.list(environment()))
+}
 
 #' @title Immunity: Geographic & Age-based Projection, `imuGAP`
 #'
@@ -289,16 +321,21 @@ imuGAP <- function(
   )
 
   bsp <- splines::bs(
-    seq_len(wts[, length(unique(cohort))]),
-    df = imugap_opts$df, intercept = T
+    seq_len(wts[, diff(range(cohort)) + 1L]),
+    df = imugap_opts$df, intercept = TRUE
   )
 
+  doses <- matrix(0, ncol  = length(dose_schedule), nrow = max(wts$age))
+  for (i in seq_along(dose_schedule)) {
+    doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
+  }
+ 
   # prepare dat_stan
   dat_stan <- list(
     n_yr = max(wts$age),
     n_cohort = max(wts$cohort),
     n_sch = n_schl,
-    n_doses = 2,
+    n_doses = length(dose_schedule),
     dose_sched = doses,
     k_bs = ncol(bsp),
     bs = bsp,
@@ -307,18 +344,17 @@ imuGAP <- function(
     y_smp = obs$sample_n,
     n_weights = nrow(wts),
     obs_to_weights_bounds = unique(wts$range_start),
-    weights_school = wts$loc_id,
+    weights_school = wts$location,
     weights_cohort = wts$cohort,
     weights_life_year = wts$age,
     weights_dose = wts$dose,
     weights = wts$weight,
     n_cnty = n_cnty,
-    cnty_bounds = loc_info[layer == 3, unique(layer_bound)]
+    cnty_bounds = loc_info[layer == 3, unique(layer_bound)],
+    predict_mode = 0
   )
 
-  stan_opts <- list()
   stan_opts$data <- dat_stan
-  stan_opts$object <- stanmodels$impute_school_coverage_process_v5
   out <- do.call(rstan::sampling, stan_opts)
   return(out)
 }
