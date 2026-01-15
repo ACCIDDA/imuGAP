@@ -37,30 +37,30 @@ static constexpr std::array<const char*, 169> locations_array__ =
   " (in 'impute_school_coverage_process_v5', line 186, column 2 to column 29)",
   " (in 'impute_school_coverage_process_v5', line 195, column 0 to column 43)",
   " (in 'impute_school_coverage_process_v5', line 201, column 2 to column 36)",
-  " (in 'impute_school_coverage_process_v5', line 210, column 2 to line 216, column 4)",
-  " (in 'impute_school_coverage_process_v5', line 219, column 2 to column 129)",
-  " (in 'impute_school_coverage_process_v5', line 223, column 2 to column 116)",
-  " (in 'impute_school_coverage_process_v5', line 226, column 2 to column 39)",
-  " (in 'impute_school_coverage_process_v5', line 262, column 0 to column 131)",
-  " (in 'impute_school_coverage_process_v5', line 266, column 0 to column 118)",
-  " (in 'impute_school_coverage_process_v5', line 269, column 0 to column 37)",
+  " (in 'impute_school_coverage_process_v5', line 210, column 2 to line 220, column 4)",
+  " (in 'impute_school_coverage_process_v5', line 223, column 2 to column 129)",
+  " (in 'impute_school_coverage_process_v5', line 227, column 2 to column 116)",
+  " (in 'impute_school_coverage_process_v5', line 230, column 2 to column 39)",
+  " (in 'impute_school_coverage_process_v5', line 266, column 0 to column 131)",
+  " (in 'impute_school_coverage_process_v5', line 270, column 0 to column 118)",
+  " (in 'impute_school_coverage_process_v5', line 273, column 0 to column 37)",
   " (in 'impute_school_coverage_process_v5', line 204, column 4 to column 54)",
   " (in 'impute_school_coverage_process_v5', line 203, column 22 to line 205, column 3)",
   " (in 'impute_school_coverage_process_v5', line 203, column 2 to line 205, column 3)",
-  " (in 'impute_school_coverage_process_v5', line 232, column 4 to column 68)",
-  " (in 'impute_school_coverage_process_v5', line 231, column 25 to line 233, column 3)",
-  " (in 'impute_school_coverage_process_v5', line 231, column 2 to line 233, column 3)",
-  " (in 'impute_school_coverage_process_v5', line 275, column 2 to column 66)",
-  " (in 'impute_school_coverage_process_v5', line 274, column 23 to line 276, column 1)",
-  " (in 'impute_school_coverage_process_v5', line 274, column 0 to line 276, column 1)",
-  " (in 'impute_school_coverage_process_v5', line 240, column 4 to column 28)",
-  " (in 'impute_school_coverage_process_v5', line 246, column 4 to column 30)",
-  " (in 'impute_school_coverage_process_v5', line 247, column 4 to column 37)",
-  " (in 'impute_school_coverage_process_v5', line 249, column 4 to column 29)",
-  " (in 'impute_school_coverage_process_v5', line 250, column 4 to column 35)",
-  " (in 'impute_school_coverage_process_v5', line 256, column 4 to column 35)",
-  " (in 'impute_school_coverage_process_v5', line 236, column 21 to line 257, column 3)",
-  " (in 'impute_school_coverage_process_v5', line 236, column 2 to line 257, column 3)",
+  " (in 'impute_school_coverage_process_v5', line 236, column 4 to column 68)",
+  " (in 'impute_school_coverage_process_v5', line 235, column 25 to line 237, column 3)",
+  " (in 'impute_school_coverage_process_v5', line 235, column 2 to line 237, column 3)",
+  " (in 'impute_school_coverage_process_v5', line 279, column 2 to column 66)",
+  " (in 'impute_school_coverage_process_v5', line 278, column 23 to line 280, column 1)",
+  " (in 'impute_school_coverage_process_v5', line 278, column 0 to line 280, column 1)",
+  " (in 'impute_school_coverage_process_v5', line 244, column 4 to column 28)",
+  " (in 'impute_school_coverage_process_v5', line 250, column 4 to column 30)",
+  " (in 'impute_school_coverage_process_v5', line 251, column 4 to column 37)",
+  " (in 'impute_school_coverage_process_v5', line 253, column 4 to column 29)",
+  " (in 'impute_school_coverage_process_v5', line 254, column 4 to column 35)",
+  " (in 'impute_school_coverage_process_v5', line 260, column 4 to column 35)",
+  " (in 'impute_school_coverage_process_v5', line 240, column 21 to line 261, column 3)",
+  " (in 'impute_school_coverage_process_v5', line 240, column 2 to line 261, column 3)",
   " (in 'impute_school_coverage_process_v5', line 104, column 2 to column 20)",
   " (in 'impute_school_coverage_process_v5', line 105, column 2 to column 24)",
   " (in 'impute_school_coverage_process_v5', line 106, column 2 to column 21)",
@@ -115,13 +115,13 @@ static constexpr std::array<const char*, 169> locations_array__ =
   " (in 'impute_school_coverage_process_v5', line 186, column 9 to column 16)",
   " (in 'impute_school_coverage_process_v5', line 195, column 7 to column 15)",
   " (in 'impute_school_coverage_process_v5', line 201, column 13 to column 18)",
-  " (in 'impute_school_coverage_process_v5', line 210, column 27 to column 49)",
-  " (in 'impute_school_coverage_process_v5', line 219, column 27 to column 41)",
-  " (in 'impute_school_coverage_process_v5', line 223, column 26 to column 35)",
-  " (in 'impute_school_coverage_process_v5', line 226, column 26 to column 31)",
-  " (in 'impute_school_coverage_process_v5', line 262, column 25 to column 39)",
-  " (in 'impute_school_coverage_process_v5', line 266, column 24 to column 33)",
-  " (in 'impute_school_coverage_process_v5', line 269, column 24 to column 29)",
+  " (in 'impute_school_coverage_process_v5', line 210, column 27 to column 57)",
+  " (in 'impute_school_coverage_process_v5', line 223, column 27 to column 41)",
+  " (in 'impute_school_coverage_process_v5', line 227, column 26 to column 35)",
+  " (in 'impute_school_coverage_process_v5', line 230, column 26 to column 31)",
+  " (in 'impute_school_coverage_process_v5', line 266, column 25 to column 39)",
+  " (in 'impute_school_coverage_process_v5', line 270, column 24 to column 33)",
+  " (in 'impute_school_coverage_process_v5', line 273, column 24 to column 29)",
   " (in 'impute_school_coverage_process_v5', line 7, column 4 to column 35)",
   " (in 'impute_school_coverage_process_v5', line 9, column 8 to column 92)",
   " (in 'impute_school_coverage_process_v5', line 8, column 34 to line 10, column 5)",
@@ -1088,10 +1088,10 @@ public:
       current_statement__ = 87;
       phi_1dim__ = std::numeric_limits<int>::min();
       current_statement__ = 87;
-      phi_1dim__ = ((n_sch + 1) * n_cohort);
+      phi_1dim__ = (((1 + n_cnty) + n_sch) * n_cohort);
       current_statement__ = 87;
       stan::math::validate_non_negative_index("phi",
-        "(n_sch + 1) * n_cohort", phi_1dim__);
+        "(1 + n_cnty + n_sch) * n_cohort", phi_1dim__);
       current_statement__ = 88;
       unrolled_dose_probs_1dim__ = std::numeric_limits<int>::min();
       current_statement__ = 88;
@@ -1213,11 +1213,16 @@ public:
       current_statement__ = 9;
       stan::model::assign(phi,
         stan::math::append_row(
+          stan::math::append_row(stan::math::inv_logit(logit_phi_st),
+            stan::math::to_vector(
+              stan::math::inv_logit(
+                stan::math::add(stan::math::rep_matrix(logit_phi_st, n_cnty),
+                  stan::math::rep_matrix(off_cnty, n_cohort))))),
           stan::math::to_vector(
             stan::math::inv_logit(
               stan::math::add(stan::math::rep_matrix(logit_phi_st, n_sch),
-                stan::math::rep_matrix(shift, n_cohort)))),
-          stan::math::inv_logit(logit_phi_st)), "assigning variable phi");
+                stan::math::rep_matrix(shift, n_cohort))))),
+        "assigning variable phi");
       Eigen::Matrix<local_scalar_t__,-1,1> unrolled_dose_probs =
         Eigen::Matrix<local_scalar_t__,-1,1>::Constant(unrolled_dose_probs_1dim__,
           DUMMY_VAR__);
@@ -1419,11 +1424,16 @@ public:
       current_statement__ = 9;
       stan::model::assign(phi,
         stan::math::append_row(
+          stan::math::append_row(stan::math::inv_logit(logit_phi_st),
+            stan::math::to_vector(
+              stan::math::inv_logit(
+                stan::math::add(stan::math::rep_matrix(logit_phi_st, n_cnty),
+                  stan::math::rep_matrix(off_cnty, n_cohort))))),
           stan::math::to_vector(
             stan::math::inv_logit(
               stan::math::add(stan::math::rep_matrix(logit_phi_st, n_sch),
-                stan::math::rep_matrix(shift, n_cohort)))),
-          stan::math::inv_logit(logit_phi_st)), "assigning variable phi");
+                stan::math::rep_matrix(shift, n_cohort))))),
+        "assigning variable phi");
       current_statement__ = 10;
       stan::model::assign(unrolled_dose_probs,
         unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p,
