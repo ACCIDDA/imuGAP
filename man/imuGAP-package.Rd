@@ -22,4 +22,9 @@ Useful links:
 \author{
 \strong{Maintainer}: Carl Pearson \email{carl.ab.pearson@gmail.com} (\href{https://orcid.org/0000-0003-0701-7860}{ORCID})
 
+Authors:
+\itemize{
+  \item Claire Perrin Smith (\href{https://orcid.org/0000-0003-1069-9460}{ORCID})
+}
+
 }

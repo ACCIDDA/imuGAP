@@ -2,8 +2,10 @@ Package: imuGAP
 Title: Estimate Measles Vaccine Coverage
 Version: 0.0.0.9000
 Authors@R: 
-    person("Carl", "Pearson", email = "carl.ab.pearson@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0003-0701-7860"))
+    c(person("Carl", "Pearson", email = "carl.ab.pearson@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-0701-7860")),
+      person("Claire Perrin", "Smith", role = "aut",
+           comment = c(ORCID = "0000-0003-1069-9460")))
 Description: What the package does (one paragraph).
 License: MIT + file LICENSE
 Encoding: UTF-8

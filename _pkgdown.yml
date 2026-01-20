@@ -1,4 +1,5 @@
 url: https://accidda.github.io/imuGAP/
 template:
+  light-switch: true
   bootstrap: 5
 

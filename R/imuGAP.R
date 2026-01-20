@@ -223,6 +223,8 @@ check_obs_population <- function(
     stop("obs_population$weight must sum to 1 by obs_id")
   }
 
+  setkey(obs_population, obs_id, location, cohort)
+
   obs_population[, range_start := seq_len(.N)]
   obs_population[, range_start := min(range_start), by = obs_id]
 
@@ -331,7 +333,7 @@ imuGAP <- function(
   }
  
   # prepare dat_stan
-  dat_stan <- list(
+  stan_opts$data <- list(
     n_yr = max(wts$age),
     n_cohort = max(wts$cohort),
     n_sch = n_schl,
@@ -354,7 +356,18 @@ imuGAP <- function(
     predict_mode = 0
   )
 
-  stan_opts$data <- dat_stan
-  out <- do.call(rstan::sampling, stan_opts)
-  return(out)
+  return(do.call(rstan::sampling, stan_opts))
+}
+
+#' @title Custom imuGAP fit extraction
+#' 
+#' @description
+#' Thin wrapper around `rstan::extract` to extract typical imuGAP parameters.
+#' @param fit a `stanfit` object returned by `imuGAP()`
+#' @param pars character vector; parameters to extract.
+#' 
+#' @return a list, as returned by `rstan::extract()`
+#' 
+extract_imugap <- function(fit, pars = c("logit_phi_state"), ...) {
+  return(rstan::extract(fit, pars = pars, ...))
 }

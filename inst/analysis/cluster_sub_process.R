@@ -77,9 +77,32 @@ observations <- rbind(
 
 dose_schedule <- c(1, 4)
 
-res_stan <- imuGAP(observations, obs_population, locations, dose_schedule)
+res_stan <- imuGAP(
+  observations, obs_population, locations, dose_schedule,
+  stan_opts = stan_options(iter = 100, chains = 2)
+)
 
 # Stanify it
 
 saveRDS(res_stan, tarfile)
 saveRDS(rstan::extract(res_stan), gsub("(\\.[^\\.]+)$", "_extract\\1", tarfile))
+
+library(ggplot2)
+
+state_saturation <- (1 - plogis(rstan::extract(res_stan, pars = "logit_phi_st")$logit_phi_st)) |> as.data.table()
+state_series <- state_saturation[, iteration := seq_len(.N)] |> melt.data.table(id.vars = "iteration", variable.name = "cohort")
+state_series[, cohort := as.integer(gsub("V", "", cohort))]
+
+d1_dt <- obs_population[location == 1 & dose == 1][observations, on = .(obs_id == id), nomatch = 0]
+d2_dt <- obs_population[location == 1 & dose == 2][observations, on = .(obs_id == id), nomatch = 0]
+
+ggplot(state_series, aes(x = cohort, y = value)) +
+  geom_line(aes(group = iteration), alpha = 0.01) +
+  geom_point(aes(y = positive/sample_n, shape = "d1"), data = d1_dt) +
+  geom_point(aes(y = positive/sample_n, shape = "d2"), data = d2_dt) +
+  stat_summary(fun = median, geom = "line", color = "red", size = 1.2) +
+  labs(
+    x = "Cohort",
+    y = "State-level saturation"
+  ) +
+  theme_minimal()
