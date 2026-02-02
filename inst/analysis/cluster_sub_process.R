@@ -2,7 +2,7 @@ library(data.table)
 library(imuGAP)
 
 .args <- if (interactive()) {
-  .refpath <- file.path("~", "workspaces", "nc_measles")
+  .refpath <- file.path("..", "nc_measles")
   c(
     # inputs from data preparation
     file.path(.refpath, "output", "NC",
@@ -79,7 +79,7 @@ dose_schedule <- c(1, 4)
 
 res_stan <- imuGAP(
   observations, obs_population, locations, dose_schedule,
-  stan_opts = stan_options(iter = 100, chains = 2)
+  stan_opts = stan_options(iter = 1000, chains = 4, cores = 4)
 )
 
 # Stanify it
@@ -106,3 +106,6 @@ ggplot(state_series, aes(x = cohort, y = value)) +
     y = "State-level saturation"
   ) +
   theme_minimal()
+
+
+
