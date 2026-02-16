@@ -1,4 +1,3 @@
-
 library(data.table)
 
 test_that("checked_as_integer works", {
@@ -30,7 +29,6 @@ test_that("checked_as_integer works", {
     somefun(ref_dt, "c"),
     "'ref_dt'.*'c'"
   )
-
 })
 
 test_that("checked_positive_integer works", {
@@ -54,7 +52,6 @@ test_that("checked_positive_integer works", {
   }
 
   expect_silent(somefun(ref_dt, "a"))
-
 })
 
 test_that("checked_maxed_pos_integer works", {
@@ -81,7 +78,6 @@ test_that("checked_maxed_pos_integer works", {
 
   expect_silent(somefun(ref_dt, "a", 5))
   expect_silent(somefun(ref_dt, "a"))
-
 })
 
 test_that("checked_set_equivalence works", {

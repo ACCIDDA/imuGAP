@@ -9,7 +9,8 @@ Authors@R:
 Description: What the package does (one paragraph).
 License: MIT + file LICENSE
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
+Roxygen: list(markdown = TRUE, roclets = c("collate", "namespace", "rd",
+    "roxyglobals::global_roclet"))
 RoxygenNote: 7.3.3
 Biarch: true
 Depends: 
@@ -31,9 +32,14 @@ SystemRequirements: GNU make
 Suggests: 
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    roxygen2,
+    roxyglobals,
+    lintr
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: https://accidda.github.io/imuGAP/, https://github.com/ACCIDDA/imuGAP
 BugReports: https://github.com/ACCIDDA/imuGAP/issues
 LazyData: true
+Config/roxyglobals/filename: globals.R
+Config/roxyglobals/unique: FALSE
