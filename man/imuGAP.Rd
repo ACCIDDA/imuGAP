@@ -14,12 +14,12 @@ imuGAP(
 )
 }
 \arguments{
-\item{observations}{a \code{data.frame}, the observed data, with at least two columns:
+\item{observations}{a \verb{[data.frame()]}, the observed data, with at least two columns:
 \itemize{
-\item a column named "positive", or the first column; a non-negative integer, the observed number of vaccinated individuals
-\item a column named "sample_n", or the second column: a positive integer, the number of individuals sampled
-\item if there exists a column "id", it must be unique, and will be used as the primary key for the observation data;
-otherwise, a unique id will be created based on the row number
+\item an "id" column; any type, as long as unique
+\item a "positive" column; non-negative integers, the observed number of vaccinated individuals
+\item a "sample_n" column; positive integers, the number of individuals sampled
+\item optionally, a "censored" column; numeric, NA (uncensored) or 1 (right-censored);
 }}
 
 \item{obs_populations}{a \code{data.frame} providing the meta-data about the observations. Briefly, it should capture for each observation
