@@ -1,4 +1,3 @@
-
 stopper <- function(dt, x, fmt, ...) {
   msg <- sprintf(fmt, dt, x, ...)
   stop(msg, call. = FALSE)
@@ -15,7 +14,9 @@ checked_as_integer <- function(dt, x, na_allowed = FALSE) {
   }
   if (!na_allowed && dt[, any(is.na(get(x)))]) {
     stopper(
-      deparse(substitute(dt)), x, "'%s' column '%s' cannot have NA values"
+      deparse(substitute(dt)),
+      x,
+      "'%s' column '%s' cannot have NA values"
     )
   }
   return(dt[])
@@ -40,7 +41,10 @@ checked_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE) {
   if (!missing(max)) {
     if (dt[, any(get(x) > max)]) {
       stopper(
-        deparse(substitute(dt)), x, "'%s' column '%s' must all be <= %i", max
+        deparse(substitute(dt)),
+        x,
+        "'%s' column '%s' must all be <= %i",
+        max
       )
     }
   }
@@ -52,7 +56,8 @@ checked_set_equivalence <- function(dt, x, tarset) {
   setlen <- length(tarset)
   if (length(union(tarset, dt[, get(x)])) != setlen) {
     stopper(
-      deparse(substitute(dt)), x,
+      deparse(substitute(dt)),
+      x,
       "'%s' column '%s' must contain all values in set"
     )
   }
@@ -63,7 +68,8 @@ checked_subset <- function(dt, x, tarset) {
   checkset <- unique(dt[, get(x)])
   if (!all(checkset %in% tarset)) {
     stopper(
-      deparse(substitute(dt)), x,
+      deparse(substitute(dt)),
+      x,
       "'%s' column '%s' must be contained in parent set: missing %s",
       toString(setdiff(checkset, tarset))
     )
@@ -81,8 +87,10 @@ checked_cols <- function(dt, cols) {
   missing_cols <- setdiff(cols, names(dt))
   if (length(missing_cols) > 0) {
     stop(
-      "'", deparse(substitute(dt)),
-      "' is missing the following required column(s): ", toString(missing_cols)
+      "'",
+      deparse(substitute(dt)),
+      "' is missing the following required column(s): ",
+      toString(missing_cols)
     )
   }
   return(dt[])

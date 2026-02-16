@@ -1,157 +1,127 @@
-
-#' @title Validate `obs_population` object for `imuGAP`
+#' @title Canonicalize Location Data
 #'
-#' @inheritParams data.table::setDT
-#' @param max_obs_id optional positive integer, the maximum valid observation id
-#' @param max_location optional positive integer, the maximum valid location id
-#' @param max_cohort optional positive integer, the maximum valid cohort id
-#' @param max_age optional positive integer, the maximum valid age
-#' @param subset logical; if `FALSE` (default), observations must be complete.
-#' If `TRUE`, `max_obs_id` must be provided.
+#' @param locations a `[data.frame()]`, with columns `id` and `parent_id`, of
+#'   the same type. See Details for restrictions.
 #'
-#' @details
+#' @details The `[imuGAP()]` sampler works on a hierarchical model of locations,
+#'   and must be provided that structure. This method checks location structure
+#'   validity, and returns a canonical version including the layer membership.
 #'
-#' A valid `obs_population` object must:
-#'  - be convertible to a `data.table` via [data.table::setDT()]
-#'  - contain the columns "obs_id", "location", "cohort", "age", "dose", and
-#'  "weight"
-#'  - obs_id, integers >= 1; if `max_obs_id` is provided, <= `max_obs_id`;
-#'    if `subset` is `FALSE`, all integers 1:`max_obs_id` must be present
-#'  - location must be a positive integer less than or equal to `max_location`.
-#'  however, not all locations need to be represented in `wts`
-#'  - cohort must be a positive integer
-#'  - age must be a positive integer
-#'  - dose must be 1 or 2
-#'  - weight must be a positive numeric value; weights must sum to 1 by obs_id
+#'   A valid structure has:
+#'  - a unique root,
+#'  - no cycles, and
+#'  - no duplicate `id`s
 #'
-#' @importFrom data.table setDT
+#'   Users may explicitly identify the root `id` by providing a row with
+#'   `parent_id` equal to `NA`. Otherwise, any `parent_id` that does not appear
+#'   in `id` is treated as the root.
 #'
-#' @return if `x` is valid, returns the canonical `obs_population` object
+#'   If the input is valid, this method will create the canonicalized version.
+#'   In that version, all ids run from 1:N, where N is the number of distinct
+#'   ids. That order is determined by layer order, then position of parent
+#'   within its layer, then "natural" order (i.e., whatever base R [sort()]
+#'   yields).
 #'
-#' @section Errors:
-#' If `x` is not valid, raises an error describing the issue.
-#'
+#' @return a `data.table`, with:
+#'  - "id", "parent_id" columns as originally supplied, possibly reordered
+#'  - "c_id", "cp_id" columns, canonicalized id/parent_id columns,
+#'    representing the order that will be used in the sampler
+#'  - "layer" column, an integer from 1 (root), 2 (root children),
+#'    3 (grandchildren), etc
+#' @importFrom data.table as.data.table setkey data.table
 #' @export
-check_obs_population <- function(
-  x,
-  max_obs_id, max_location, max_cohort, max_age,
-  subset = !missing(max_obs_id)
-) {
+canonicalize_locations <- function(locations) {
+  locations <- as.data.table(locations)
 
-  # structural checks
+  # Check that locations has required structure
+  checked_cols(locations, c("id", "parent_id"))
 
-  # correct class
-  checked_dt_able(x)
-  checked_cols(x, c("obs_id", "location", "cohort", "age", "dose", "weight"))
-  checked_maxed_pos_integer(x, obs_id, max_obs_id)
-  # also need to check that all obs_id 1:max_obs_id are all present
-
-  checked_maxed_pos_integer(x, location, max_location)
-  checked_maxed_pos_integer(x, cohort, max_cohort)
-  checked_maxed_pos_integer(x, age, max_age)
-
-  if (!all(x$dose %in% 1:2)) {
-    stop("'wts$dose' must be 1 or 2")
+  # Find candidate unique root
+  potential_root <- locations[is.na(parent_id), id] |> unique()
+  if (!length(potential_root)) {
+    # if no explicit root, find implicit root
+    potential_root <- setdiff(locations$parent_id, locations$id) |> unique()
   }
 
-  if (any(!is.numeric(x$weight), any(x$weight <= 0))) {
-    stop("'wts$weight' must be a positive numeric")
-  }
-
-  tol <- 1e-10
-
-  if (x[, .(err = abs(sum(weight) - 1.0) >= tol), by = obs_id][, any(err)]) {
-    stop("'wts$weight' must sum to 1 by 'obs_id'")
-  }
-
-  return(x)
-}
-
-#' @title Check location data
-#'
-#' @param locations a `data.frame`, with integer columns `id` and `parent_id`.
-#' See Details for restrictions.
-#'
-#' @details
-#' [imuGAP()] works on a hierarchical model of locations, so needs to be
-#' told what that structure is. This method checks that the location structure
-#' is valid, and returns a canonical version including the layer size.
-#'
-#' `id` may not have an duplicates. If there is a row with `id == 1`, it must
-#' have `parent_id == NA`. `max(id)` must equal the number of rows, give or
-#' take the presence of the root `id == 1` - put another way, `id` must be
-#' `seq_len(dim(locations)[1])` (again, give or take 1 for the root node).
-#' After ordering, `id` and `parent_id` must be `all(diff(id) == 1)` and
-#' `all(diff(parent_id) %in% c(0, 1))`.
-#'
-#' Intended future capability: be able to extract a location structure that
-#' satisfies the requirements. In particular:
-#'  - allow a root other than 1; would be defined by a `parent_id` == `NA`
-#'  - accept arbitrary column types for `id`, including a non-covering set of
-#'  integers, and `parent_id`; the return object will include an appropriate
-#'  remapping to be applied to weighting data
-#'  - accept arbitrary layer depths
-#'
-#' @return a `data.table`, with the canonical location structure, and a
-#' `layer` column
-#' @importFrom data.table setkey data.table
-#' @export
-check_locations <- function(location_map) {
-  # locations should be a data.frame of `id`, `parent_id`
-
-  rev_dt <- checked_dt_able(
-    eval(substitute(location_map)), TRUE
-  )[, .(id, parent_id)]
-  checked_cols(rev_dt, c("id", "parent_id"))
-
-  if (rev_dt[is.na(parent_id), .N > 1]) stop("multiple parent_id == NA")
-  setkey(rev_dt, id, parent_id)
-  if (rev_dt[1, !(id %in% c(1, 2))]) stop("starts with id other than 1 or 2")
-
-  if (rev_dt[!is.na(parent_id), any(id <= parent_id)]) stop("id <= parent_id")
-  if (rev_dt[, any(diff(id) != 1)]) stop("missing or extra id")
-  if (rev_dt[!is.na(parent_id), !all(diff(parent_id) %in% c(0, 1))]) stop("missing or extra id")
-  if (rev_dt[!is.na(parent_id)][1, parent_id != 1]) stop("must start w/ parent_id == 1")
-
-  if (!rev_dt[is.na(parent_id), .N]) {
-    rev_dt <- rbind(
-      data.table(id = 1, parent_id = NA_integer_, layer = 1L, layer_bound = 1L),
-      rev_dt, fill = TRUE
+  # Error if not exactly one root
+  if (length(potential_root) != 1L) {
+    stop(
+      "locations must have exactly one root, but found ",
+      length(potential_root),
+      if (length(potential_root) > 0) paste0(": ", toString(potential_root))
     )
   }
 
-  onlayer <- 1L
-  while(rev_dt[, any(is.na(layer))]) {
-    parents <- rev_dt[layer == onlayer, id]
-    onlayer <- onlayer + 1L
-    rev_dt[parent_id %in% parents, layer := onlayer]
-    rev_dt[layer == onlayer, layer_bound := seq_len(.N)]
-    rev_dt[, layer_bound := min(layer_bound), by = parent_id]
+  # if root is implicit, add it to the data
+  if (!locations[id == potential_root, .N]) {
+    locations <- rbind(
+      data.table(id = potential_root),
+      locations,
+      fill = TRUE
+    )
   }
 
-  return(rev_dt[])
+
+  # recursively assign layer membership, starting with root
+  locations$layer <- NA_integer_
+  locations[is.na(parent_id), layer := 1L]
+
+
+  # Check for no cycles and no duplicate ids
+  checked_no_cycles(locations)
+  checked_no_duplicates(locations, "id")
+
+  # Initialize layer membership
+  locations[, layer := NA_integer_]
+  locations[is.na(parent_id), layer := 1L]
+
+  # Assign layers iteratively
+  current_layer <- 1L
+  while (locations[, any(is.na(layer))]) {
+    parents <- locations[layer == current_layer, id]
+    current_layer <- current_layer + 1L
+    locations[parent_id %in% parents, layer := current_layer]
+  }
+
+  return(locations[])
 }
 
 #' @title Check observations objects
+#' @param observations a `[data.frame()]`, the observed data, with at least two columns:
+#'   - an "id" column; any type, as long as unique
+#'   - a "positive" column; non-negative integers, the observed number of vaccinated individuals
+#'   - a "sample_n" column; positive integers, the number of individuals sampled
+#'   - optionally, a "censored" column; numeric, NA (uncensored) or 1 (right-censored);
 #'
-#' @param observations a `data.frame` with:
-#'  - nonnegative integer `positive` column
-#'  - positive integer `sample_n` column, which must be greater than or equal
-#'    to the `positive` column
-#'  - optionally, an `id` column, 1:size(observations)
-#'
-#' @return the observation object, possibly changed in place to cast columns
-#'  to integers and add the `id` column if not original present. Will error
-#'  if the column requirements are not satisfied.
+#' @return a canonical observation object, a `[data.table()]` with:
+#'  - an `obs_id` column, an integer sequence from 1; the order observations will be passed to estimation
+#'  - the "id" column, possibly reordered
+#'  - "positive" and "sample_n" columns, possibly reordered
+#'  - a "censored" column; all NA, if not present in original `observations` argument
 #'
 #' @export
 #' @importFrom data.table as.data.table setkey
-check_observations <- function(observations) {
+canonicalize_observations <- function(observations) {
   observations <- as.data.table(observations)
+
+  # check scientific data validity
   checked_cols(observations, c("positive", "sample_n"))
   checked_nonneg_integer(observations, "positive")
   checked_positive_integer(observations, "sample_n")
-  if (observations[, any(positive > sample_n)]) stop("positive must be <= sample_n")
+
+  if (observations[, any(positive > sample_n)]) {
+    stop("positive must be <= sample_n")
+  }
+
+  if ("censored" %in% names(observations)) {
+    checked_positive_integer(observations, "id")
+    setkey(observations, id)
+    if (!all(seq_len(observations[, .N]) == observations$id)) {
+      stop("if id provided, must be unique 1:.N")
+    }
+  } else {
+    observations[, id := seq_len(.N)]
+  }
 
   if ("id" %in% names(observations)) {
     checked_positive_integer(observations, "id")
@@ -162,6 +132,7 @@ check_observations <- function(observations) {
   } else {
     observations[, id := seq_len(.N)]
   }
+
   return(observations[])
 }
 
@@ -176,36 +147,44 @@ check_observations <- function(observations) {
 #'  - weight, the relative contribution of this row to an observation
 #' Note that multiple rows may concern the same observation, meaning that the populations
 #' from different cohorts, locations, and ages may be pooled in an observation
-#' @inheritParams check_observations
-#' @inheritParams check_locations
+#' @inheritParams canonicalize_observations
+#' @inheritParams canonicalize_locations
 #' @param max_cohort if present, what is the maximum cohort that should be present?
 #' @param max_age if present, what is the maximum age that should be present?
-check_obs_population <- function(
+canonicalize_populations <- function(
   obs_population,
   observations,
   locations,
   max_cohort,
   max_age
 ) {
-
   # using internal methods, check that obs_population has the correct structure
   checked_dt_able(obs_population)
-  checked_cols(obs_population, c("obs_id", "location", "cohort", "age", "dose", "weight"))
+  checked_cols(
+    obs_population,
+    c("obs_id", "location", "cohort", "age", "dose", "weight")
+  )
 
   checked_set_equivalence(
-    obs_population, "dose", c(1L, 2L)
+    obs_population,
+    "dose",
+    c(1L, 2L)
   )
 
   # check that obs_population obs_ids all match observation ids; assumes observations
-  # has already passed check_observations
+  # has already passed canonicalize_observations
   checked_set_equivalence(
-    obs_population, "obs_id", observations$id
+    obs_population,
+    "obs_id",
+    observations$id
   )
 
   # check that obs_population loc_ids are all within locations ids; assumes locations
-  # has already passed check_locations
+  # has already passed canonicalize_locations
   checked_subset(
-    obs_population, "location", unique(c(locations$id, locations$parent_id))
+    obs_population,
+    "location",
+    unique(c(locations$id, locations$parent_id))
   )
 
   # check cohort and age if max values provided
@@ -218,7 +197,10 @@ check_obs_population <- function(
   }
 
   # check that weights sum to 1 by obs_id
-  wt_check <- obs_population[, .(err = abs(sum(weight) - 1.0) >= 1e-8), by = obs_id]
+  wt_check <- obs_population[,
+    .(err = abs(sum(weight) - 1.0) >= 1e-8),
+    by = obs_id
+  ]
   if (any(wt_check$err)) {
     stop("obs_population$weight must sum to 1 by obs_id")
   }
@@ -229,7 +211,6 @@ check_obs_population <- function(
   obs_population[, range_start := min(range_start), by = obs_id]
 
   return(obs_population[])
-
 }
 
 
@@ -279,11 +260,7 @@ imugap_options <- function(df = 5L) {
 #'
 #' @description This function estimates current coverage, by age and location.
 #'
-#' @param observations a `data.frame`, the observed data, with at least two columns:
-#'   - a column named "positive", or the first column; a non-negative integer, the observed number of vaccinated individuals
-#'   - a column named "sample_n", or the second column: a positive integer, the number of individuals sampled
-#'   - if there exists a column "id", it must be unique, and will be used as the primary key for the observation data;
-#'     otherwise, a unique id will be created based on the row number
+#' @inheritParams canonicalize_observations
 #' @param obs_populations a `data.frame` providing the meta-data about the observations. Briefly, it should capture for each observation
 #' the relevant location(s), cohort(s), age(s), dose, and relative contribution of that population to the observation. Each
 #' row in `obs` should have one or more corresponding rows in `wts`. The `wts` data.frame should have at least the following columns:
@@ -303,35 +280,39 @@ imugap_options <- function(df = 5L) {
 #'
 #' @export
 imuGAP <- function(
-  observations, obs_populations,
-  locations, dose_schedule,
+  observations,
+  obs_populations,
+  locations,
+  dose_schedule,
   imugap_opts = imugap_options(),
   stan_opts = stan_options()
 ) {
-
   # check location argument
-  loc_info <- check_locations(locations)
+  loc_info <- canonicalize_locations(locations)
   n_cnty <- loc_info[layer == 2, .N]
   n_schl <- loc_info[layer == 3, .N]
 
   # check observations argument
-  obs <- check_observations(observations)[, .(id, positive, sample_n)]
+  obs <- canonicalize_observations(observations)[, .(id, positive, sample_n)]
 
   # check obs_populations - confirm wts locations
-  wts <- check_obs_population(
-    obs_populations, obs, loc_info
+  wts <- canonicalize_populations(
+    obs_populations,
+    obs,
+    loc_info
   )
 
   bsp <- splines::bs(
     seq_len(wts[, diff(range(cohort)) + 1L]),
-    df = imugap_opts$df, intercept = TRUE
+    df = imugap_opts$df,
+    intercept = TRUE
   )
 
   doses <- matrix(0, ncol = length(dose_schedule), nrow = max(wts$age))
   for (i in seq_along(dose_schedule)) {
     doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
   }
- 
+
   # prepare dat_stan
   stan_opts$data <- list(
     n_yr = max(wts$age),
@@ -360,14 +341,14 @@ imuGAP <- function(
 }
 
 #' @title Custom imuGAP fit extraction
-#' 
+#'
 #' @description
 #' Thin wrapper around `rstan::extract` to extract typical imuGAP parameters.
 #' @param fit a `stanfit` object returned by `imuGAP()`
 #' @param pars character vector; parameters to extract.
-#' 
+#'
 #' @return a list, as returned by `rstan::extract()`
-#' 
+#'
 extract_imugap <- function(fit, pars = c("logit_phi_state"), ...) {
   return(rstan::extract(fit, pars = pars, ...))
 }

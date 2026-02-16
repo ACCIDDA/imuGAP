@@ -6,3 +6,7 @@
 ^pkgdown$
 ^\.github$
 ^\.lintr$
+^air\.toml$
+^justfile$
+^[.]?air[.]toml$
+^\.vscode$
