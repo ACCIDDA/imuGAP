@@ -22,7 +22,6 @@ transformed data {
    // #include transformed_data/fixed_logit_phi.stan
    #include transformed_data/epsilon.stan
    #include transformed_data/cnty_schl.stan
-   #include transformed_data/censoring.stan
 }
 
 parameters {
@@ -58,10 +57,10 @@ model {
 
     #include model/bspline.stan
     // #include model/constant_phi.stan
-    #include model/static_lambda.stan
+    // #include model/static_lambda.stan
     #include model/cnty_sch.stan
     // #include model/cnty_sch_linear.stan
-
+    
     #include model/censored.stan
 
   }

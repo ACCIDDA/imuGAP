@@ -96,8 +96,6 @@ observations <- rbind(
 dose_schedule <- c(1, 4)
 
 res_stan <- imuGAP(
-  observations, obs_population, locations, dose_schedule,
-  stan_opts = stan_options(iter = 1000, chains = 4, cores = 4)
   observations,
   obs_population,
   locations,
