@@ -83,7 +83,7 @@ checked_dt_able <- function(dt, copy = FALSE) {
   return(if (copy) as.data.table(dt) else setDT(dt))
 }
 
-checked_cols <- function(dt, cols) {
+checked_cols <- function(dt, cols, warn_extra = FALSE) {
   missing_cols <- setdiff(cols, names(dt))
   if (length(missing_cols) > 0) {
     stop(
@@ -92,6 +92,17 @@ checked_cols <- function(dt, cols) {
       "' is missing the following required column(s): ",
       toString(missing_cols)
     )
+  }
+  if (warn_extra) {
+    extra_cols <- setdiff(names(dt), cols)
+    if (length(extra_cols) > 0) {
+      warning(
+        "'",
+        deparse(substitute(dt)),
+        "' has the following extra columns: ",
+        toString(extra_cols)
+      )
+    }
   }
   return(dt[])
 }

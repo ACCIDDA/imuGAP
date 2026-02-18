@@ -45,7 +45,7 @@
   }
 
   vector rowsum(matrix obj) {
-    int nrows = cols(obj);
+    int nrows = rows(obj);
     vector[nrows] res;
     for (i in 1:nrows) {
         res[i] = sum(obj[i, ]);
