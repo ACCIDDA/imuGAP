@@ -2,28 +2,33 @@
 % Please edit documentation in R/imuGAP.R
 \name{canonicalize_observations}
 \alias{canonicalize_observations}
-\title{Check observations objects}
+\title{Canonicalize Observation Data}
 \usage{
 canonicalize_observations(observations)
 }
 \arguments{
-\item{observations}{a \verb{[data.frame()]}, the observed data, with at least two columns:
+\item{observations}{a \verb{[data.frame()]}, the observed data, with at least
+three columns:
 \itemize{
-\item an "id" column; any type, as long as unique
-\item a "positive" column; non-negative integers, the observed number of vaccinated individuals
+\item an "id" column; any type, as long as unique, non-NA
+\item a "positive" column; non-negative integers, the observed number of
+vaccinated individuals
 \item a "sample_n" column; positive integers, the number of individuals sampled
-\item optionally, a "censored" column; numeric, NA (uncensored) or 1 (right-censored);
+\item optionally, a "censored" column; numeric, NA (uncensored) or 1
+(right-censored);
 }}
 }
 \value{
 a canonical observation object, a \verb{[data.table()]} with:
 \itemize{
-\item an \code{obs_id} column, an integer sequence from 1; the order observations will be passed to estimation
-\item the "id" column, possibly reordered
+\item an "obs_id" column, an integer sequence from 1; the order observations
+will be passed to estimation
+\item the original "id" column, possibly reordered
 \item "positive" and "sample_n" columns, possibly reordered
-\item a "censored" column; all NA, if not present in original \code{observations} argument
+\item a "censored" column; all NA, if not present in original \code{observations}
+argument
 }
 }
 \description{
-Check observations objects
+Canonicalize Observation Data
 }

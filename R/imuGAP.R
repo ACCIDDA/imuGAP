@@ -1,3 +1,7 @@
+check_processed <- function(dt) {
+
+}
+
 #' @title Canonicalize Location Data
 #'
 #' @param locations a `[data.frame()]`, with columns `id` and `parent_id`, of
@@ -28,13 +32,21 @@
 #'    representing the order that will be used in the sampler
 #'  - "layer" column, an integer from 1 (root), 2 (root children),
 #'    3 (grandchildren), etc
-#' @importFrom data.table as.data.table setkey data.table
+#' @importFrom data.table as.data.table setkey data.table setattr
 #' @export
+#' @global .
+#' @autoglobal
 canonicalize_locations <- function(locations) {
+
+  # if already canonical, return
+  if (attr(locations, "imuGAP-canonical", exact = TRUE) == "locations") {
+    return(locations[])
+  }
+
   locations <- as.data.table(locations)
 
   # Check that locations has required structure
-  checked_cols(locations, c("id", "parent_id"))
+  checked_cols(locations, c("id", "parent_id"), warn_extra = TRUE)
 
   # Find candidate unique root
   potential_root <- locations[is.na(parent_id), id] |> unique()
@@ -48,7 +60,18 @@ canonicalize_locations <- function(locations) {
     stop(
       "locations must have exactly one root, but found ",
       length(potential_root),
-      if (length(potential_root) > 0) paste0(": ", toString(potential_root))
+      if (length(potential_root) > 0) paste0(
+        ": ", toString(potential_root, width = 80)
+      )
+    )
+  }
+
+  # check for duplicate ids
+  if (length(dupes <- locations[, which(duplicated(id))])) {
+    stop(
+      "locations$id must be unique; found ",
+      length(dupes), " duplicates: ",
+      toString(dupes, width = 80)
     )
   }
 
@@ -61,77 +84,126 @@ canonicalize_locations <- function(locations) {
     )
   }
 
-
   # recursively assign layer membership, starting with root
+  on_layer <- 1L
   locations$layer <- NA_integer_
-  locations[is.na(parent_id), layer := 1L]
+  locations[is.na(parent_id), layer := on_layer]
+  layer_members <- locations[layer == on_layer, id]
 
-
-  # Check for no cycles and no duplicate ids
-  checked_no_cycles(locations)
-  checked_no_duplicates(locations, "id")
-
-  # Initialize layer membership
-  locations[, layer := NA_integer_]
-  locations[is.na(parent_id), layer := 1L]
-
-  # Assign layers iteratively
-  current_layer <- 1L
   while (locations[, any(is.na(layer))]) {
-    parents <- locations[layer == current_layer, id]
-    current_layer <- current_layer + 1L
-    locations[parent_id %in% parents, layer := current_layer]
+    on_layer <- on_layer + 1L
+    locations[parent_id %in% layer_members, layer := on_layer]
+    layer_members <- locations[layer == on_layer, id]
+    # check for cycles - if we have not assigned any new layer members,
+    # but still have unassigned locations, then we have a cycle
+    if (length(layer_members) == 0L && locations[, any(is.na(layer))]) {
+      stop(
+        "locations may not contain cycles; found ",
+        locations[is.na(layer), .N],
+        " ids in cycle(s). Offending locations: ",
+        toString(locations[is.na(layer), id], width = 80)
+      )
+    }
   }
+
+  # canonicalize ids, by layer, then parent position, then natural order
+
+  setkey(locations, layer, parent_id, id)
+  locations[, c_id := seq_len(.N)]
+  locations[
+    locations[, .(parent_id = id, cp_id = c_id)],
+    on = .(parent_id),
+    cp_id := cp_id
+  ]
+
+  setattr(locations, "imuGAP-canonical", "locations")
 
   return(locations[])
 }
 
-#' @title Check observations objects
-#' @param observations a `[data.frame()]`, the observed data, with at least two columns:
-#'   - an "id" column; any type, as long as unique
-#'   - a "positive" column; non-negative integers, the observed number of vaccinated individuals
+#' @title Canonicalize Observation Data
+#'
+#' @param observations a `[data.frame()]`, the observed data, with at least
+#'   three columns:
+#'   - an "id" column; any type, as long as unique, non-NA
+#'   - a "positive" column; non-negative integers, the observed number of
+#'     vaccinated individuals
 #'   - a "sample_n" column; positive integers, the number of individuals sampled
-#'   - optionally, a "censored" column; numeric, NA (uncensored) or 1 (right-censored);
+#'   - optionally, a "censored" column; numeric, NA (uncensored) or 1
+#'     (right-censored);
 #'
 #' @return a canonical observation object, a `[data.table()]` with:
-#'  - an `obs_id` column, an integer sequence from 1; the order observations will be passed to estimation
-#'  - the "id" column, possibly reordered
+#'  - an "obs_id" column, an integer sequence from 1; the order observations
+#'    will be passed to estimation
+#'  - the original "id" column, possibly reordered
 #'  - "positive" and "sample_n" columns, possibly reordered
-#'  - a "censored" column; all NA, if not present in original `observations` argument
+#'  - a "censored" column; all NA, if not present in original `observations`
+#'    argument
 #'
 #' @export
 #' @importFrom data.table as.data.table setkey
+#' @autoglobal
 canonicalize_observations <- function(observations) {
+
+  # if already canonical, return
+  if (attr(observations, "imuGAP-canonical", exact = TRUE) == "observations") {
+    return(observations[])
+  }
+
   observations <- as.data.table(observations)
+  checked_cols(observations, c("id", "positive", "sample_n"))
+
+  # check id column validity
+  if (observations[, any(is.na(id))]) {
+    stop(
+      "id column may not contain NA; found ",
+      observations[is.na(id), .N],
+      " NA values at rows: ",
+      toString(observations[, which(is.na(id))]), width = 80)
+  }
+
+  if (length(dupes <- observations[, which(duplicated(id))])) {
+    stop(
+      "observations$id must be unique; found ",
+      length(dupes), " duplicates: ",
+      toString(dupes, width = 80)
+    )
+  }
 
   # check scientific data validity
-  checked_cols(observations, c("positive", "sample_n"))
   checked_nonneg_integer(observations, "positive")
   checked_positive_integer(observations, "sample_n")
 
   if (observations[, any(positive > sample_n)]) {
-    stop("positive must be <= sample_n")
+    stop(
+      "positive must be <= sample_n; found ",
+      observations[positive > sample_n, .N],
+      " invalid observations with offending ids: ",
+      toString(observations[positive > sample_n, id], width = 80)
+    )
   }
+
 
   if ("censored" %in% names(observations)) {
-    checked_positive_integer(observations, "id")
-    setkey(observations, id)
-    if (!all(seq_len(observations[, .N]) == observations$id)) {
-      stop("if id provided, must be unique 1:.N")
+    # confirmed censored is numeric, and only contains NA or 1
+    if (!is.numeric(observations$censored)) {
+      stop("if provided, 'censored' column must be numeric")
+    }
+    if (observations[, any(!is.na(censored) & censored != 1)]) {
+      stop(
+        "if provided, 'censored' column must be NA (uncensored)",
+        " or 1 (right-censored)"
+      )
     }
   } else {
-    observations[, id := seq_len(.N)]
+    observations[, censored := NA_real_]
   }
 
-  if ("id" %in% names(observations)) {
-    checked_positive_integer(observations, "id")
-    setkey(observations, id)
-    if (!all(seq_len(observations[, .N]) == observations$id)) {
-      stop("if id provided, must be unique 1:.N")
-    }
-  } else {
-    observations[, id := seq_len(.N)]
-  }
+  # canonicalize ids: order by censoring
+  setkey(observations, censored, id)
+  observations[, obs_id := seq_len(.N)]
+
+  setattr(observations, "imuGAP-canonical", "observations")
 
   return(observations[])
 }

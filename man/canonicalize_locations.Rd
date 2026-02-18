@@ -4,42 +4,44 @@
 \alias{canonicalize_locations}
 \title{Canonicalize Location Data}
 \usage{
-canonicalize_locations(location_map)
+canonicalize_locations(locations)
 }
 \arguments{
-\item{locations}{a \code{data.frame}, with columns \code{id} and \code{parent_id}, with the same type.
-See Details for restrictions.}
+\item{locations}{a \verb{[data.frame()]}, with columns \code{id} and \code{parent_id}, of
+the same type. See Details for restrictions.}
 }
 \value{
 a \code{data.table}, with:
 \itemize{
-\item "id", "parent_id" columns as originally, possibly reordered
-\item "c_id", "cp_id" columns, canonicalized id columns, representing the order
-that will be used in the sampler
-\item "layer" column, an integer from 1 (root), 2 (root children), 3 (grandchildren), etc
+\item "id", "parent_id" columns as originally supplied, possibly reordered
+\item "c_id", "cp_id" columns, canonicalized id/parent_id columns,
+representing the order that will be used in the sampler
+\item "layer" column, an integer from 1 (root), 2 (root children),
+3 (grandchildren), etc
 }
 }
 \description{
 Canonicalize Location Data
 }
 \details{
-The \verb{[imuGAP()]} sampler works on a hierarchical model of locations, and
-must be told what that structure is. This method checks that the location structure
-is valid, and returns a canonical version including the layer size.
+The \verb{[imuGAP()]} sampler works on a hierarchical model of locations,
+and must be provided that structure. This method checks location structure
+validity, and returns a canonical version including the layer membership.
 
-A valid location structure has:
+A valid structure has:
 \itemize{
 \item a unique root,
 \item no cycles, and
 \item no duplicate \code{id}s
 }
 
-If any \code{parent_id} entry is \code{NA}, then the associated \code{id} is treated as
-the root. Otherwise, any \code{parent_id} that does not appear in \code{id} is treated
-as the root.
+Users may explicitly identify the root \code{id} by providing a row with
+\code{parent_id} equal to \code{NA}. Otherwise, any \code{parent_id} that does not appear
+in \code{id} is treated as the root.
 
-If the inputs are valid, this method will create the canonicalized version.
-In that version, all ids run from 1:N, where N is the number of distinct ids.
-That order is determined by layer order, then position of parent within its layer,
-then "natural" order (i.e., whatever base R \code{\link[=sort]{sort()}} yields).
+If the input is valid, this method will create the canonicalized version.
+In that version, all ids run from 1:N, where N is the number of distinct
+ids. That order is determined by layer order, then position of parent
+within its layer, then "natural" order (i.e., whatever base R \code{\link[=sort]{sort()}}
+yields).
 }
