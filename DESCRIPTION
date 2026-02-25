@@ -34,4 +34,5 @@ Suggests:
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
-URL: https://accidda.github.io/imuGAP/
+URL: https://accidda.github.io/imuGAP/, https://github.com/ACCIDDA/imuGAP
+BugReports: https://github.com/ACCIDDA/imuGAP/issues
