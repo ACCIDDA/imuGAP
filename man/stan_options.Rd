@@ -2,9 +2,9 @@
 % Please edit documentation in R/imuGAP.R
 \name{stan_options}
 \alias{stan_options}
-\title{Options for stan sampler}
+\title{Stan Sampler Options}
 \usage{
-stan_options(object = stanmodels$impute_school_coverage_process_v5, ...)
+stan_options(object = stanmodels$impute_school_coverage_process_v6, ...)
 }
 \arguments{
 \item{object}{An object of class \code{\linkS4class{stanmodel}}.}

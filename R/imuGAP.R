@@ -1,5 +1,14 @@
-check_processed <- function(dt) {
+#' @importFrom data.table setattr
+#' @keywords internal
+mark_canonical <- function(x, target_class) {
+  setattr(x, "imuGAP-canonical", target_class)
+  return(x[])
+}
 
+#' @keywords internal
+is_canonical <- function(dt, target_class) {
+  canonical <- attr(dt, "imuGAP-canonical", exact = TRUE)
+  return(!is.null(canonical) && (canonical == target_class))
 }
 
 #' @title Canonicalize Location Data
@@ -32,16 +41,15 @@ check_processed <- function(dt) {
 #'    representing the order that will be used in the sampler
 #'  - "layer" column, an integer from 1 (root), 2 (root children),
 #'    3 (grandchildren), etc
+#'
 #' @importFrom data.table as.data.table setkey data.table setattr
-#' @export
 #' @global .
 #' @autoglobal
+#' @export
 canonicalize_locations <- function(locations) {
 
   # if already canonical, return
-  if (attr(locations, "imuGAP-canonical", exact = TRUE) == "locations") {
-    return(locations[])
-  }
+  if (is_canonical(locations, "locations")) return(locations[])
 
   locations <- as.data.table(locations)
 
@@ -116,9 +124,7 @@ canonicalize_locations <- function(locations) {
     cp_id := cp_id
   ]
 
-  setattr(locations, "imuGAP-canonical", "locations")
-
-  return(locations[])
+  return(mark_canonical(locations, "locations"))
 }
 
 #' @title Canonicalize Observation Data
@@ -146,7 +152,7 @@ canonicalize_locations <- function(locations) {
 canonicalize_observations <- function(observations) {
 
   # if already canonical, return
-  if (attr(observations, "imuGAP-canonical", exact = TRUE) == "observations") {
+  if (is_canonical(observations, "observations")) {
     return(observations[])
   }
 
@@ -203,100 +209,90 @@ canonicalize_observations <- function(observations) {
   setkey(observations, censored, id)
   observations[, obs_id := seq_len(.N)]
 
-  setattr(observations, "imuGAP-canonical", "observations")
-
-  return(observations[])
+  return(mark_canonical(observations, "observations"))
 }
 
 #' @title Check observation meta data object
 #'
-#' @param obs_population a data.frame, the the observation weighting object, with columns
+#' @param populations a data.frame, the the observation weighting object, with
+#'   columns
 #'  - obs_id, the observation id the row concerns
 #'  - dose, which dose the row concerns
 #'  - location, the location the row concerns
 #'  - cohort, the cohort at that location the row concerns
 #'  - age, the age of that cohort the row concerns
 #'  - weight, the relative contribution of this row to an observation
-#' Note that multiple rows may concern the same observation, meaning that the populations
-#' from different cohorts, locations, and ages may be pooled in an observation
+#'   Note that multiple rows may concern the same observation, meaning that the
+#'   populations from different cohorts, locations, and ages may be pooled in an
+#'   observation
 #' @inheritParams canonicalize_observations
 #' @inheritParams canonicalize_locations
-#' @param max_cohort if present, what is the maximum cohort that should be present?
+#' @param max_cohort if present, what is the maximum cohort that should be
+#'   present?
 #' @param max_age if present, what is the maximum age that should be present?
+#' @export
 canonicalize_populations <- function(
-  obs_population,
+  populations,
   observations,
   locations,
   max_cohort,
   max_age
 ) {
-  # using internal methods, check that obs_population has the correct structure
-  checked_dt_able(obs_population)
+
+  if (is_canonical(populations, "populations")) {
+    return(populations[])
+  }
+
+  # using internal methods, check that populations has the correct structure
+  checked_dt_able(populations)
   checked_cols(
-    obs_population,
-    c("obs_id", "location", "cohort", "age", "dose", "weight")
+    populations, c("obs_id", "location", "cohort", "age", "dose", "weight")
   )
 
-  checked_set_equivalence(
-    obs_population,
-    "dose",
-    c(1L, 2L)
-  )
+  observations <- canonicalize_observations(observations)
+  locations <- canonicalize_locations(locations)
 
-  # check that obs_population obs_ids all match observation ids; assumes observations
-  # has already passed canonicalize_observations
-  checked_set_equivalence(
-    obs_population,
-    "obs_id",
-    observations$id
-  )
+  checked_subset(populations, "dose", c(1L, 2L))
 
-  # check that obs_population loc_ids are all within locations ids; assumes locations
-  # has already passed canonicalize_locations
-  checked_subset(
-    obs_population,
-    "location",
-    unique(c(locations$id, locations$parent_id))
-  )
+  # check that populations id correspond to all observation ids
+  checked_set_equivalence(populations, "obs_id", observations$id)
+
+  # check that populations locations are all *within* locations ids;
+  checked_subset(populations, "location", locations$id)
 
   # check cohort and age if max values provided
-  checked_maxed_pos_integer(obs_population, "cohort", max_cohort)
-  checked_maxed_pos_integer(obs_population, "age", max_age)
+  checked_maxed_pos_integer(populations, "cohort", max_cohort)
+  checked_maxed_pos_integer(populations, "age", max_age)
 
-  # check that weight is a positive numeric
-  if (obs_population[, any(!is.numeric(weight) | weight <= 0)]) {
-    stop("'obs_population$weight' must be a positive numeric")
+  # check that weight is a positive numeric; > 1 weights caught in next block
+  if (populations[, any(!is.numeric(weight) | weight <= 0)]) {
+    stop("'populations$weight' must be a positive numeric")
   }
 
   # check that weights sum to 1 by obs_id
-  wt_check <- obs_population[,
+  wt_check <- populations[,
     .(err = abs(sum(weight) - 1.0) >= 1e-8),
     by = obs_id
   ]
   if (any(wt_check$err)) {
-    stop("obs_population$weight must sum to 1 by obs_id")
+    stop("populations$weight must sum to 1 by obs_id")
   }
 
-  setkey(obs_population, obs_id, location, cohort)
+  # introduce canonical id
+  populations[observations, on = .(obs_id = id), obs_id := i.obs_id]
+  populations[locations, on = .(location = id), location := c_id]
 
-  obs_population[, range_start := seq_len(.N)]
-  obs_population[, range_start := min(range_start), by = obs_id]
+  setkey(populations, obs_id, c_id, cohort, age, dose)
 
-  return(obs_population[])
+  populations[, range_start := seq_len(.N)]
+  populations[, range_start := min(range_start), by = obs_id]
+
+  return(mark_canonical(populations, "populations"))
 }
-
-
-# Question: how do we want to handle filtering observations and/or obs_populations?
-# basically what do we want to do about the tradeoff on convenience vs safety?
-# option: provide a bool subset argument, which allows people to allow subset matching across obs and obs_pop
-
-# change the direction of location ordering - go from lowest to highest
-
-# move dose schedule to first-class argument
 
 # if predict == TRUE, then need to provide max life year to predict out to
 
-#' @title Options for stan sampler
+#' @title Stan Sampler Options
 #'
 #' @description
 #' This function encapsulates option passing to the stan sampler.
@@ -307,7 +303,7 @@ canonicalize_populations <- function(
 #' @return a list of arguments matching [rstan::sampling()] inputs
 #' @export
 stan_options <- function(
-  object = stanmodels$impute_school_coverage_process_v5,
+  object = stanmodels$impute_school_coverage_process_v6,
   ...
 ) {
   res <- list(...)
@@ -315,61 +311,68 @@ stan_options <- function(
   return(res)
 }
 
-#' @title Options for imuGAP model
+#' @title imuGAP Model Options
 #'
 #' @description
-#' This function encapsulates option passing for imuGAP settings
+#' This function encapsulates option passing for imuGAP settings.
 #'
 #' @param df degrees of freedom to use in bspline
+#' @param dose_schedule an integer vector, the ages at which dose(s) `n` are
+#'   scheduled, with vector indices and doses matching
 #'
 #' @return a list of imuGAP model options
-#'
-imugap_options <- function(df = 5L) {
+#' @export
+imugap_options <- function(
+  df = 5L, dose_schedule = c(1, 4)
+) {
   return(as.list(environment()))
 }
 
 #' @title Immunity: Geographic & Age-based Projection, `imuGAP`
 #'
-#' @description This function estimates current coverage, by age and location.
+#' @description
+#' This a sampler interface to convert user-friendly data into the necessary
+#' format to feed the immunity estimation model.
 #'
 #' @inheritParams canonicalize_observations
-#' @param obs_populations a `data.frame` providing the meta-data about the observations. Briefly, it should capture for each observation
-#' the relevant location(s), cohort(s), age(s), dose, and relative contribution of that population to the observation. Each
-#' row in `obs` should have one or more corresponding rows in `wts`. The `wts` data.frame should have at least the following columns:
-#'  - a column named "obs_id", with a value in the "id" column in `obs`
-#'  - "location", a positive integer, distinguishing locations.
-#'  - "cohort", a positive integer, distinguishing cohorts
-#'  - "age", a positive integer, distinguishing when this observation applies for this location/cohort
-#'  - "dose", a positive integer, which dose this observation applies to
-#'  - "weight", a positive numeric value, representing the relative contribution of that population to the observation
-#' @param locations the location hierarchy, a `data.frame` with two columns:
-#'   - "id", a positive integer, the location id
-#'   - "parent_id", a positive integer or `NA`, the parent location id; the root location should have `NA` as its parent_id
-#' @param dose_schedule a numeric vector of length 2, the ages at which dose 1 and dose 2 are scheduled
+#' @inheritParams canonicalize_populations
+#' @inheritParams canonicalize_locations
 #' @param imugap_opts options for the `imuGAP` model
-#' @param stan_opts passed to `rstan::sampling` (e.g. iter, chains).
+#' @param stan_opts passed to `rstan::sampling` (e.g. `iter`, `chains`).
+#'
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #'
+#' @autoglobal
 #' @export
 imuGAP <- function(
   observations,
-  obs_populations,
+  populations,
   locations,
-  dose_schedule,
   imugap_opts = imugap_options(),
   stan_opts = stan_options()
 ) {
+
   # check location argument
   loc_info <- canonicalize_locations(locations)
-  n_cnty <- loc_info[layer == 2, .N]
-  n_schl <- loc_info[layer == 3, .N]
+  layer_sizes <- loc_info[, .N, keyby = layer][, c(N)]
+  if (length(layer_sizes) != 3) {
+    stop(
+      "imuGAP currently only supports 3-layer models ",
+      "(e.g. single state => counties => schools); offered ",
+      length(layer_sizes),
+      " layers."
+    )
+  }
+
+  n_cnty <- layer_sizes[2]
+  n_schl <- layer_sizes[3]
 
   # check observations argument
-  obs <- canonicalize_observations(observations)[, .(id, positive, sample_n)]
+  obs <- canonicalize_observations(observations)
 
-  # check obs_populations - confirm wts locations
+  # check populations - confirm wts locations
   wts <- canonicalize_populations(
-    obs_populations,
+    populations,
     obs,
     loc_info
   )
@@ -384,6 +387,8 @@ imuGAP <- function(
   for (i in seq_along(dose_schedule)) {
     doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
   }
+
+# TODO deal with censoring
 
   # prepare dat_stan
   stan_opts$data <- list(
