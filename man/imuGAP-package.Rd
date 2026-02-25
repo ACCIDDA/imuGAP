@@ -16,6 +16,8 @@ R package version NA. https://mc-stan.org
 Useful links:
 \itemize{
   \item \url{https://accidda.github.io/imuGAP/}
+  \item \url{https://github.com/ACCIDDA/imuGAP}
+  \item Report bugs at \url{https://github.com/ACCIDDA/imuGAP/issues}
 }
 
 }
