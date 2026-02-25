@@ -5,7 +5,7 @@
 \title{Check observation meta data object}
 \usage{
 canonicalize_populations(
-  obs_population,
+  populations,
   observations,
   locations,
   max_cohort,
@@ -13,7 +13,7 @@ canonicalize_populations(
 )
 }
 \arguments{
-\item{obs_population}{a data.frame, the the observation weighting object, with columns
+\item{populations}{a data.frame, the the observation weighting object, with columns
 \itemize{
 \item obs_id, the observation id the row concerns
 \item dose, which dose the row concerns

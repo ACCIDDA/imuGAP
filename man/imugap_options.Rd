@@ -2,7 +2,7 @@
 % Please edit documentation in R/imuGAP.R
 \name{imugap_options}
 \alias{imugap_options}
-\title{Options for imuGAP model}
+\title{imuGAP Model Options}
 \usage{
 imugap_options(df = 5L)
 }
@@ -13,5 +13,5 @@ imugap_options(df = 5L)
 a list of imuGAP model options
 }
 \description{
-This function encapsulates option passing for imuGAP settings
+This function encapsulates option passing for imuGAP settings.
 }
