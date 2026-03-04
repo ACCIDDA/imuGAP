@@ -19,48 +19,78 @@ output_dir defaults to input_dir. Exit codes: 0=success, 1=validation, 2=model, 
 # --- Package guard -----------------------------------------------------------
 
 if (!requireNamespace("imuGAP", quietly = TRUE)) {
-  stop("Package 'imuGAP' required. Install with: devtools::install()")
+  stop("Package 'imuGAP' required. Install with: remotes::install_github(\"ACCIDDA/imuGAP\")")
 }
 
 # --- Helpers -----------------------------------------------------------------
 
+SUPPORTED_EXT <- c("csv", "rds")
+
+load_by_ext <- function(path) {
+  ext <- tolower(tools::file_ext(path))
+  switch(ext,
+    csv = read.csv(path, stringsAsFactors = FALSE),
+    rds = readRDS(path),
+    stop("Unsupported extension '.", ext, "' for: ", path, call. = FALSE)
+  )
+}
+
 find_input_file <- function(dir, name) {
-  csv_path <- file.path(dir, paste0(name, ".csv"))
-  rds_path <- file.path(dir, paste0(name, ".rds"))
-
-  if (file.exists(csv_path)) {
-    return(read.csv(csv_path, stringsAsFactors = FALSE))
+  for (ext in SUPPORTED_EXT) {
+    path <- file.path(dir, paste0(name, ".", ext))
+    if (file.exists(path)) return(load_by_ext(path))
   }
-  if (file.exists(rds_path)) {
-    return(readRDS(rds_path))
-  }
-
   stop("Expected '", name, ".csv' or '", name, ".rds' in ", dir, "/",
        call. = FALSE)
 }
 
+check_all_inputs <- function(dir) {
+  required <- c("observations", "obs_populations", "locations")
+  missing <- character(0)
+  for (name in required) {
+    found <- FALSE
+    for (ext in SUPPORTED_EXT) {
+      if (file.exists(file.path(dir, paste0(name, ".", ext)))) {
+        found <- TRUE
+        break
+      }
+    }
+    if (!found) missing <- c(missing, name)
+  }
+  if (length(missing) > 0) {
+    stop("Missing input files in ", dir, "/: ",
+         paste(missing, collapse = ", "),
+         " (expected .csv or .rds)", call. = FALSE)
+  }
+}
+
 # --- Main --------------------------------------------------------------------
 
-main <- function() {
-  args <- commandArgs(trailingOnly = TRUE)
+main <- function(args = commandArgs(trailingOnly = TRUE)) {
+  help_flag <- length(args) > 0 && args[1] %in% c("-h", "--help")
 
-  if (length(args) == 0 || (length(args) == 1 && args[1] == "-h")) {
+  if (length(args) == 0 || (help_flag && length(args) == 1)) {
     cat(USAGE)
     quit(save = "no")
   }
 
-  dry_run <- args[1] == "-h"
-  if (dry_run) {
+  if (help_flag) {
+    dry_run <- TRUE
     input_dir <- args[2]
   } else {
+    dry_run <- FALSE
     input_dir <- args[1]
     output_dir <- if (length(args) >= 2) args[2] else input_dir
   }
 
   if (!dir.exists(input_dir)) {
-    message("Error: Input directory not found: ", input_dir)
-    quit(status = 3, save = "no")  # I/O error
+    message("ERROR: Input directory not found: ", input_dir)
+    quit(status = 3, save = "no")
   }
+
+  # Check all files exist before loading any
+  tryCatch(check_all_inputs(input_dir),
+    error = function(e) { message("ERROR: ", e$message); quit(status = 3, save = "no") })
 
   # Load input files
   tryCatch({
@@ -70,9 +100,9 @@ main <- function() {
   }, error = function(e) { message("ERROR: ", e$message); quit(status = 3, save = "no") })
   message("[\u2713] Loading inputs...")
 
-  # Validate — assign to globalenv to work around eval(substitute()) NSE
-  # in check_locations/checked_dt_able, which walks parent frames to resolve
-  # symbols and can't find them across the imuGAP:: namespace boundary.
+  # Validate — assign to globalenv to work around NSE in checked_dt_able,
+  # which walks parent frames and can't resolve symbols across the imuGAP::
+  # namespace boundary. TODO: revisit after censoring branch merges.
   .locs <- locs_raw; .obs <- obs_raw; .opop <- obs_pop_raw
   on.exit({ rm(.locs, .obs, .opop, envir = globalenv()) }, add = TRUE)
   assign(".locs", .locs, envir = globalenv())
