@@ -5,12 +5,13 @@
 USAGE <- "imugap.R — Minimal CLI for imuGAP model fitting
 
 Usage: imugap <input_dir> [output_dir]
-       imugap -h <input_dir>          (validate only)
+       imugap -h <input_dir>          (validate only, no model fitting)
+       imugap -h | --help             (show this message)
 
 input_dir must contain:
   observations.csv (or .rds)      — columns: positive, sample_n
   obs_populations.csv (or .rds)   — columns: obs_id, location, cohort, age, dose, weight
-  locations.csv (or .rds)         — columns: id, parent_id
+  locations.csv (or .rds)         — columns: id, parent_id (hierarchical; see package docs)
 
 Output: fit.rds (raw stanfit object for post-processing).
 output_dir defaults to input_dir. Exit codes: 0=success, 1=validation, 2=model, 3=I/O.
@@ -26,15 +27,25 @@ if (!requireNamespace("imuGAP", quietly = TRUE)) {
 
 SUPPORTED_EXT <- c("csv", "rds")
 
+file_exists_any_ext <- function(dir, name) {
+  any(file.exists(file.path(dir, paste0(name, ".", SUPPORTED_EXT))))
+}
+
 load_by_ext <- function(path) {
   ext <- tolower(tools::file_ext(path))
-  switch(ext,
-    csv = read.csv(path, stringsAsFactors = FALSE),
-    rds = readRDS(path),
-    stop("Unsupported extension '.", ext, "' for: ", path, call. = FALSE)
+  tryCatch(
+    switch(ext,
+      csv = read.csv(path, stringsAsFactors = FALSE),
+      rds = readRDS(path),
+      stop("Unsupported extension '.", ext, "'", call. = FALSE)
+    ),
+    error = function(e) {
+      stop("Failed to read '", basename(path), "': ", e$message, call. = FALSE)
+    }
   )
 }
 
+# CSV takes precedence over RDS when both exist
 find_input_file <- function(dir, name) {
   for (ext in SUPPORTED_EXT) {
     path <- file.path(dir, paste0(name, ".", ext))
@@ -44,19 +55,10 @@ find_input_file <- function(dir, name) {
        call. = FALSE)
 }
 
+# Reports all missing files at once rather than failing on the first
 check_all_inputs <- function(dir) {
   required <- c("observations", "obs_populations", "locations")
-  missing <- character(0)
-  for (name in required) {
-    found <- FALSE
-    for (ext in SUPPORTED_EXT) {
-      if (file.exists(file.path(dir, paste0(name, ".", ext)))) {
-        found <- TRUE
-        break
-      }
-    }
-    if (!found) missing <- c(missing, name)
-  }
+  missing <- required[!vapply(required, function(n) file_exists_any_ext(dir, n), logical(1))]
   if (length(missing) > 0) {
     stop("Missing input files in ", dir, "/: ",
          paste(missing, collapse = ", "),
@@ -71,12 +73,13 @@ main <- function(args = commandArgs(trailingOnly = TRUE)) {
 
   if (length(args) == 0 || (help_flag && length(args) == 1)) {
     cat(USAGE)
-    quit(save = "no")
+    return(0)
   }
 
   if (help_flag) {
     dry_run <- TRUE
     input_dir <- args[2]
+    output_dir <- input_dir
   } else {
     dry_run <- FALSE
     input_dir <- args[1]
@@ -85,47 +88,74 @@ main <- function(args = commandArgs(trailingOnly = TRUE)) {
 
   if (!dir.exists(input_dir)) {
     message("ERROR: Input directory not found: ", input_dir)
-    quit(status = 3, save = "no")
+    return(3)
   }
 
-  # Check all files exist before loading any
-  tryCatch(check_all_inputs(input_dir),
-    error = function(e) { message("ERROR: ", e$message); quit(status = 3, save = "no") })
+  err <- tryCatch({ check_all_inputs(input_dir); NULL }, error = identity)
+  if (!is.null(err)) {
+    message("ERROR: ", err$message)
+    return(3)
+  }
 
-  # Load input files
-  tryCatch({
-    obs_raw     <- find_input_file(input_dir, "observations")
-    obs_pop_raw <- find_input_file(input_dir, "obs_populations")
-    locs_raw    <- find_input_file(input_dir, "locations")
-  }, error = function(e) { message("ERROR: ", e$message); quit(status = 3, save = "no") })
-  message("[\u2713] Loading inputs...")
+  message("[\u2192] Loading inputs...")
+  inputs <- tryCatch(
+    list(
+      obs     = find_input_file(input_dir, "observations"),
+      obs_pop = find_input_file(input_dir, "obs_populations"),
+      locs    = find_input_file(input_dir, "locations")
+    ),
+    error = identity
+  )
+  if (inherits(inputs, "error")) {
+    message("ERROR: ", inputs$message)
+    return(3)
+  }
+  message("[\u2713] Inputs loaded.")
 
-  # Validate — assign to globalenv to work around NSE in checked_dt_able,
-  # which walks parent frames and can't resolve symbols across the imuGAP::
-  # namespace boundary. TODO: revisit after censoring branch merges.
-  .locs <- locs_raw; .obs <- obs_raw; .opop <- obs_pop_raw
-  on.exit({ rm(.locs, .obs, .opop, envir = globalenv()) }, add = TRUE)
+  # Assign to globalenv to work around NSE in data.table::setDT and
+  # eval(substitute(...)) in check_locations, which walk parent frames and fail
+  # to resolve symbols across the imuGAP:: namespace boundary.
+  # TODO: remove globalenv hack once checker functions accept data directly
+  # without NSE frame-walking (see censoring branch).
+  .locs <- inputs$locs; .obs <- inputs$obs; .opop <- inputs$obs_pop
+  on.exit({
+    for (nm in c(".locs", ".obs", ".opop")) {
+      if (exists(nm, envir = globalenv(), inherits = FALSE))
+        rm(list = nm, envir = globalenv())
+    }
+  }, add = TRUE)
   assign(".locs", .locs, envir = globalenv())
   assign(".obs", .obs, envir = globalenv())
   assign(".opop", .opop, envir = globalenv())
 
+  message("[\u2192] Validating schema...")
   validated <- tryCatch({
     locs    <- imuGAP::check_locations(.locs)
     obs     <- imuGAP::check_observations(.obs)
     obs_pop <- imuGAP::check_obs_population(.opop, obs, locs)
     list(locs = locs, obs = obs, obs_pop = obs_pop)
-  }, error = function(e) { message("ERROR: ", e$message); quit(status = 1, save = "no") })
-  message("[\u2713] Validating schema...")
+  }, error = identity)
+  if (inherits(validated, "error")) {
+    message("ERROR: ", validated$message)
+    return(1)
+  }
+  message("[\u2713] Schema validated.")
 
   if (dry_run) {
-    message("Validation passed.")
-    quit(save = "no")
+    message("[\u2713] Validation passed.")
+    return(0)
   }
 
-  # Fit model
   dose_schedule <- c(1L, 4L)
   stan_opts <- imuGAP::stan_options(iter = 2000L, chains = 4L)
-  if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+
+  if (!dir.exists(output_dir)) {
+    ok <- dir.create(output_dir, recursive = TRUE)
+    if (!ok) {
+      message("ERROR: Could not create output directory: ", output_dir)
+      return(3)
+    }
+  }
 
   message("[\u2192] Launching imuGAP...")
   fit <- tryCatch(
@@ -135,18 +165,28 @@ main <- function(args = commandArgs(trailingOnly = TRUE)) {
       imugap_opts = imuGAP::imugap_options(df = 5L),
       stan_opts = stan_opts
     ),
-    error = function(e) { message("ERROR: ", e$message); quit(status = 2, save = "no") }
+    error = identity
   )
+  if (inherits(fit, "error")) {
+    message("ERROR: ", fit$message)
+    return(2)
+  }
   message("[\u2713] Model complete.")
 
-  # Save raw model output for downstream post-processing
   fit_path <- file.path(output_dir, "fit.rds")
-  saveRDS(fit, fit_path)
+  save_err <- tryCatch({ saveRDS(fit, fit_path); NULL }, error = identity)
+  if (!is.null(save_err)) {
+    message("ERROR: Failed to save output to ", fit_path, ": ", save_err$message)
+    return(3)
+  }
   message("[\u2713] Wrote ", fit_path)
 
-  invisible(NULL)
+  return(0)
 }
 
 # --- Entry guard -------------------------------------------------------------
 
-if (!interactive()) main()
+if (!interactive()) {
+  status <- main()
+  quit(status = status, save = "no")
+}
