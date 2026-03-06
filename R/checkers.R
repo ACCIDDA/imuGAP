@@ -49,8 +49,8 @@ checked_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE) {
 
 checked_set_equivalence <- function(dt, x, tarset) {
   tarset <- unique(tarset)
-  setlen <- length(tarset)
-  if (length(union(tarset, dt[, get(x)])) != setlen) {
+  colvals <- unique(dt[, get(x)])
+  if (!setequal(tarset, colvals)) {
     stopper(
       deparse(substitute(dt)), x,
       "'%s' column '%s' must contain all values in set"

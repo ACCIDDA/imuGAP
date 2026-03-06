@@ -45,4 +45,4 @@ jobs:
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
         with:
-          error-on: '"warning"'
+          error-on: '"error"'
