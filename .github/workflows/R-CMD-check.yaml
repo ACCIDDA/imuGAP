@@ -1,41 +1,48 @@
 name: R-CMD-check
 
-# Trigger the workflow on pushes and pull requests to the main branch
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, comp-523-s26]
   pull_request:
-    branches: [main, master]
+    branches: [main, master, comp-523-s26]
 
 jobs:
   R-CMD-check:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
 
-    # Set up standard environment variables for R package checking
+    runs-on: ${{ matrix.os }}
+
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
 
     steps:
-      # 1. Check out the repository code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Install R
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
 
-      # 3. Install the package's dependencies (looks at your DESCRIPTION file)
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
           needs: check
 
-      # 4. Run the standard R package check
+      - name: Cache Stan compilation objects
+        uses: actions/cache@v4
+        with:
+          path: src/
+          key: ${{ runner.os }}-stan-${{ hashFiles('inst/stan/**/*.stan', 'src/**/*.stan') }}
+          restore-keys: |
+            ${{ runner.os }}-stan-
+
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
         with:
-          error-on: '"error"' # Fails the pipeline only if there are hard errors
+          error-on: '"warning"'
