@@ -27,7 +27,8 @@
   expected <- system.file("scripts", "imugap.R", package = pkgname)
   if (!nzchar(expected)) return()
 
-  if (normalizePath(target, mustWork = FALSE) != normalizePath(expected, mustWork = FALSE)) {
+  resolved <- normalizePath(file.path(dirname(link), target), mustWork = FALSE)
+  if (resolved != normalizePath(expected, mustWork = FALSE)) {
     packageStartupMessage(
       "Note: 'imugap' on PATH points to a different install. ",
       "Run imuGAP::install_cli() to update."

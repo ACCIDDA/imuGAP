@@ -413,8 +413,6 @@ install_cli <- function(path = "~/.local/bin") {
   if (!ok) {
     stop("Failed to create symlink at ", link, call. = FALSE)
   }
-  Sys.chmod(link, mode = "755")
-
   message("Installed: ", link, " -> ", script)
   message("Ensure ", path, " is on your PATH.")
   return(invisible(TRUE))
