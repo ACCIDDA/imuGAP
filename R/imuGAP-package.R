@@ -29,3 +29,22 @@
 #' @importFrom data.table .EACHI
 ## usethis namespace: end
 NULL
+
+.onAttach <- function(libname, pkgname) {
+  link <- Sys.which("imugap")
+  if (!nzchar(link)) return()
+
+  target <- Sys.readlink(link)
+  if (!nzchar(target)) return()
+
+  expected <- system.file("scripts", "imugap.R", package = pkgname)
+  if (!nzchar(expected)) return()
+
+  resolved <- normalizePath(file.path(dirname(link), target), mustWork = FALSE)
+  if (resolved != normalizePath(expected, mustWork = FALSE)) {
+    packageStartupMessage(
+      "Note: 'imugap' on PATH points to a different install. ",
+      "Run imuGAP::install_cli() to update."
+    )
+  }
+}
