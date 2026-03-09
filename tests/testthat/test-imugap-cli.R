@@ -176,3 +176,34 @@ test_that("main returns 3 when input files are missing", {
   result <- suppressMessages(main(c(dir)))
   expect_equal(result, 3)
 })
+
+test_that("install_cli creates symlink to correct script", {
+  skip_on_os("windows")
+  dir <- tempfile("test_install_cli_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+  result <- imuGAP::install_cli(path = dir)
+  link <- file.path(dir, "imugap")
+  expect_true(result)
+  expect_true(file.exists(link))
+  target <- Sys.readlink(link)
+  expected <- system.file("scripts", "imugap.R", package = "imuGAP")
+  expect_equal(normalizePath(target), normalizePath(expected))
+})
+
+test_that("install_cli errors for non-existent directory", {
+  skip_on_os("windows")
+  expect_error(imuGAP::install_cli(path = "/nonexistent/path/xyz"), "does not exist")
+})
+
+test_that("install_cli replaces existing file at target", {
+  skip_on_os("windows")
+  dir <- tempfile("test_install_replace_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+  writeLines("old", file.path(dir, "imugap"))
+  imuGAP::install_cli(path = dir)
+  expect_true(nzchar(Sys.readlink(file.path(dir, "imugap"))))
+})
