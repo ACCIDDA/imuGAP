@@ -13,7 +13,7 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Biarch: true
 Depends: 
-    R (>= 3.4.0)
+    R (>= 3.5)
 Imports: 
     methods,
     Rcpp (>= 0.12.0),
@@ -36,3 +36,4 @@ VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: https://accidda.github.io/imuGAP/, https://github.com/ACCIDDA/imuGAP
 BugReports: https://github.com/ACCIDDA/imuGAP/issues
+LazyData: true
