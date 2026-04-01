@@ -118,6 +118,9 @@ check_locations <- function(location_map) {
       data.table(id = 1, parent_id = NA_integer_, layer = 1L, layer_bound = 1L),
       rev_dt, fill = TRUE
     )
+  } else {
+    rev_dt[, c("layer", "layer_bound") := NA_integer_]
+    rev_dt[is.na(parent_id), c("layer", "layer_bound") := 1L]
   }
 
   onlayer <- 1L

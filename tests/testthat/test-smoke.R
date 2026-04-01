@@ -1,10 +1,9 @@
 # Smoke tests using simulated test data from issue #14
 #
-# Data: school_observations.csv, state_observations.csv (Claire, issue #14)
-# Derived: locations.csv (state > county > school hierarchy from school data)
-#
-# NOTE: obs_populations.csv is not yet available. Once provided, add a full
-# pipeline test calling imuGAP() with minimal Stan iterations.
+# Data sources:
+#   - CSV fixtures: school_observations.csv, state_observations.csv (issue #14)
+#   - Package data: observations_sim, obs_populations_sim, locations_sim (.rda)
+#   - Derived: locations.csv (from school CSV hierarchy)
 
 # --- load package R sources (no Stan/Rcpp needed for validation) --------------
 
@@ -13,9 +12,19 @@ for (src in c("R/checkers.R", "R/imuGAP.R")) {
   source(file.path(pkg_root, src), local = TRUE)
 }
 
-# --- check_observations -------------------------------------------------------
+# --- helper: load .rda into local env ----------------------------------------
 
-test_that("school observations pass check_observations()", {
+load_rda <- function(name) {
+  path <- file.path(pkg_root, "data", paste0(name, ".rda"))
+  if (!file.exists(path)) return(NULL)
+  env <- new.env(parent = emptyenv())
+  load(path, envir = env)
+  env[[name]]
+}
+
+# --- CSV: check_observations --------------------------------------------------
+
+test_that("school observations CSV passes check_observations()", {
   path <- test_path("testdata", "school_observations.csv")
   skip_if_not(file.exists(path), "school_observations.csv not available")
 
@@ -30,7 +39,7 @@ test_that("school observations pass check_observations()", {
   expect_true(all(result$positive <= result$sample_n))
 })
 
-test_that("state observations pass check_observations()", {
+test_that("state observations CSV passes check_observations()", {
   path <- test_path("testdata", "state_observations.csv")
   skip_if_not(file.exists(path), "state_observations.csv not available")
 
@@ -45,14 +54,12 @@ test_that("state observations pass check_observations()", {
   expect_true(all(result$positive <= result$sample_n))
 })
 
-# --- check_locations ----------------------------------------------------------
+# --- CSV: check_locations -----------------------------------------------------
 
-test_that("derived locations pass check_locations()", {
+test_that("derived locations CSV passes check_locations()", {
   path <- test_path("testdata", "locations.csv")
   skip_if_not(file.exists(path), "locations.csv not available")
 
-  # globalenv assignment works around NSE frame-walking in check_locations()
-  # (same pattern as inst/scripts/imugap.R)
   locs <- read.csv(path)
   assign("locs", locs, envir = globalenv())
   on.exit(rm("locs", envir = globalenv()), add = TRUE)
@@ -67,7 +74,7 @@ test_that("derived locations pass check_locations()", {
   expect_equal(result[layer == 3, .N], 24L)
 })
 
-# --- cross-file consistency ---------------------------------------------------
+# --- CSV: cross-file consistency ----------------------------------------------
 
 test_that("school unit_ids align with location hierarchy", {
   school_path <- test_path("testdata", "school_observations.csv")
@@ -92,21 +99,75 @@ test_that("school unit_ids align with location hierarchy", {
   }
 })
 
-# --- full pipeline (blocked on obs_populations) -------------------------------
+# --- package data: full validation chain --------------------------------------
 
-test_that("full imuGAP() pipeline smoke test", {
-  skip("obs_populations.csv not yet available (issue #14)")
+test_that("observations_sim passes check_observations()", {
+  obs <- load_rda("observations_sim")
+  skip_if(is.null(obs), "observations_sim.rda not available")
 
-  obs <- read.csv(test_path("testdata", "school_observations.csv"))
   names(obs)[names(obs) == "y_obs"] <- "positive"
   names(obs)[names(obs) == "y_smp"] <- "sample_n"
 
-  locs <- read.csv(test_path("testdata", "locations.csv"))
-  opop <- read.csv(test_path("testdata", "obs_populations.csv"))
+  result <- check_observations(obs)
+  expect_s3_class(result, "data.table")
+  expect_equal(nrow(result), 698L)
+  expect_true(all(result$positive <= result$sample_n))
+})
+
+test_that("locations_sim passes check_locations()", {
+  locs <- load_rda("locations_sim")
+  skip_if(is.null(locs), "locations_sim.rda not available")
+
+  assign("locs", locs, envir = globalenv())
+  on.exit(rm("locs", envir = globalenv()), add = TRUE)
+
+  result <- check_locations(locs)
+  expect_s3_class(result, "data.table")
+  expect_equal(nrow(result), 28L)
+  expect_equal(max(result$layer), 3L)
+})
+
+test_that("obs_populations_sim passes check_obs_population()", {
+  obs_raw <- load_rda("observations_sim")
+  opop <- load_rda("obs_populations_sim")
+  locs_raw <- load_rda("locations_sim")
+  skip_if(
+    is.null(obs_raw) || is.null(opop) || is.null(locs_raw),
+    "package data not available"
+  )
+
+  names(obs_raw)[names(obs_raw) == "y_obs"] <- "positive"
+  names(obs_raw)[names(obs_raw) == "y_smp"] <- "sample_n"
+  obs <- check_observations(obs_raw)
+
+  assign("locs_raw", locs_raw, envir = globalenv())
+  on.exit(rm("locs_raw", envir = globalenv()), add = TRUE)
+  loc_info <- check_locations(locs_raw)
+
+  result <- check_obs_population(opop, obs, loc_info)
+  expect_s3_class(result, "data.table")
+  expect_equal(length(unique(result$obs_id)), nrow(obs))
+  expect_true(all(result$dose %in% 1:2))
+})
+
+# --- full pipeline (requires Stan) -------------------------------------------
+
+test_that("full imuGAP() pipeline smoke test", {
+  skip("requires Stan compilation — run manually with full package install")
+
+  obs_raw <- load_rda("observations_sim")
+  opop <- load_rda("obs_populations_sim")
+  locs_raw <- load_rda("locations_sim")
+
+  names(obs_raw)[names(obs_raw) == "y_obs"] <- "positive"
+  names(obs_raw)[names(obs_raw) == "y_smp"] <- "sample_n"
+
+  assign("locs_raw", locs_raw, envir = globalenv())
+  on.exit(rm("locs_raw", envir = globalenv()), add = TRUE)
 
   expect_no_error(
     imuGAP(
-      obs, opop, locs,
+      obs_raw, opop, locs_raw,
       dose_schedule = c(1L, 4L),
       stan_opts = stan_options(iter = 10, chains = 1)
     )
