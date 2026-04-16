@@ -4,10 +4,16 @@
 \alias{imugap_options}
 \title{imuGAP Model Options}
 \usage{
-imugap_options(df = 5L)
+imugap_options(df = 5L, dose_schedule = c(1, 4), object = c("default"))
 }
 \arguments{
 \item{df}{degrees of freedom to use in bspline}
+
+\item{dose_schedule}{an integer vector, the ages at which dose(s) \code{n} are
+scheduled, with vector indices and doses matching}
+
+\item{object}{which stan model object to use; currently only "default" is
+supported}
 }
 \value{
 a list of imuGAP model options

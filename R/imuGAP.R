@@ -134,10 +134,32 @@ canonicalize_locations <- function(locations) {
 #'   - an "id" column; any type, as long as unique, non-NA
 #'   - a "positive" column; non-negative integers, the observed number of
 #'     vaccinated individuals
-#'   - a "sample_n" column; positive integers, the number of individuals sampled
+#'   - a "sample_n" column; positive integers, the number of individuals
+#'     sampled, must be greater than or equal to "positive"
 #'   - optionally, a "censored" column; numeric, NA (uncensored) or 1
 #'     (right-censored);
 #'
+#' @details The observations object documents observations used to fit the
+#' model. Conceptually, each row represents an observation of vaccination status
+#' within a population. That population need not be uniform
+#' (see `[canonicalize_populations()]`) or concerning a single cohort or time:
+#' each observation should generally be the best available resolution data. That
+#' resolution can vary across rows. The `[imuGAP()]` sampler uses information
+#' about the resolutions to automatically figure out how to compare the latent
+#' process model to those different observations.
+#' 
+#' For the optional "censored" column: the model supports vaccination status
+#' indicators which are vaccine specific as well as those which represent an
+#' individual having all of a set of vaccines (including the target vaccine).
+#' The specific coverage for the target vaccine is right-censored in the latter
+#' case: the all-coverage is the minimum coverage for the target.
+#' 
+#' When at least some of the data are censored, you must supply the "censored"
+#' column to correctly estimate coverage. Mark any uncensored observations with
+#' NA, and any right-censored observations with 1. Note that "0" is *not* a
+#' valid value at this time; we are preserving that for potential future support
+#' of left-censoring.
+#' 
 #' @return a canonical observation object, a `[data.table()]` with:
 #'  - an "obs_id" column, an integer sequence from 1; the order observations
 #'    will be passed to estimation
@@ -205,7 +227,8 @@ canonicalize_observations <- function(observations) {
     observations[, censored := NA_real_]
   }
 
-  # canonicalize ids: order by censoring
+  # canonicalize ids: order by censoring, then id.
+  # this results in uncensored then censored observations.
   setkey(observations, censored, id)
   observations[, obs_id := seq_len(.N)]
 
@@ -214,14 +237,14 @@ canonicalize_observations <- function(observations) {
 
 #' @title Check observation meta data object
 #'
-#' @param populations a data.frame, the the observation weighting object, with
+#' @param populations a `[data.frame()]`, the the observation meta data, with
 #'   columns
-#'  - obs_id, the observation id the row concerns
-#'  - dose, which dose the row concerns
-#'  - location, the location the row concerns
-#'  - cohort, the cohort at that location the row concerns
-#'  - age, the age of that cohort the row concerns
-#'  - weight, the relative contribution of this row to an observation
+#'  - "obs_id", the observation id the row concerns
+#'  - "loc_id", the location id the row concerns
+#'  - "dose", which dose the row concerns
+#'  - "cohort", the cohort at that location the row concerns
+#'  - "age", the age of that cohort the row concerns
+#'  - "weight", the relative contribution of this row to an observation
 #'   Note that multiple rows may concern the same observation, meaning that the
 #'   populations from different cohorts, locations, and ages may be pooled in an
 #'   observation
@@ -230,13 +253,24 @@ canonicalize_observations <- function(observations) {
 #' @param max_cohort if present, what is the maximum cohort that should be
 #'   present?
 #' @param max_age if present, what is the maximum age that should be present?
+#'
+#' @details
+#' This method validates the meta-data associated with the observations, as well
+#' as converting that meta-data to use the canonical id format.
+#'
+#' @return a canonical populations object, mirroring the input "populations",
+#' with the following updates:
+#' - "obs_id", the observation id the row concerns, canonicalized to match
+#'   the canonical observation ids
+#' - "loc_id", the location id the row concerns, canonicalized to match
 #' @export
 canonicalize_populations <- function(
   populations,
   observations,
   locations,
   max_cohort,
-  max_age
+  max_age,
+  max_dose = 2L
 ) {
 
   if (is_canonical(populations, "populations")) {
@@ -246,7 +280,7 @@ canonicalize_populations <- function(
   # using internal methods, check that populations has the correct structure
   checked_dt_able(populations)
   checked_cols(
-    populations, c("obs_id", "location", "cohort", "age", "dose", "weight")
+    populations, c("obs_id", "loc_id", "cohort", "age", "dose", "weight")
   )
 
   observations <- canonicalize_observations(observations)
@@ -258,7 +292,7 @@ canonicalize_populations <- function(
   checked_set_equivalence(populations, "obs_id", observations$id)
 
   # check that populations locations are all *within* locations ids;
-  checked_subset(populations, "location", locations$id)
+  checked_subset(populations, "loc_id", locations$id)
 
   # check cohort and age if max values provided
   checked_maxed_pos_integer(populations, "cohort", max_cohort)
@@ -280,7 +314,7 @@ canonicalize_populations <- function(
 
   # introduce canonical id
   populations[observations, on = .(obs_id = id), obs_id := i.obs_id]
-  populations[locations, on = .(location = id), location := c_id]
+  populations[locations, on = .(loc_id = id), loc_id := c_id]
 
   setkey(populations, obs_id, c_id, cohort, age, dose)
 
@@ -295,19 +329,22 @@ canonicalize_populations <- function(
 #' @title Stan Sampler Options
 #'
 #' @description
-#' This function encapsulates option passing to the stan sampler.
+#' This function encapsulates option passing to the stan sampler, with the
+#' exception of the model object, which is passed in `imugap_options`.
 #'
 #' @inheritDotParams rstan::sampling
 #' @inheritParams rstan::sampling
 #'
 #' @return a list of arguments matching [rstan::sampling()] inputs
 #' @export
-stan_options <- function(
-  object = stanmodels$impute_school_coverage_process_v6,
-  ...
-) {
+stan_options <- function(...) {
   res <- list(...)
-  res$object <- object
+  if ("object" %in% names(res)) {
+    stop(
+      "Passing 'object' in stan_options is not allowed; ",
+      "The model object should be passed in `imugap_options` instead."
+    )
+  }
   return(res)
 }
 
@@ -319,12 +356,19 @@ stan_options <- function(
 #' @param df degrees of freedom to use in bspline
 #' @param dose_schedule an integer vector, the ages at which dose(s) `n` are
 #'   scheduled, with vector indices and doses matching
+#' @param object which stan model object to use; currently only "default" is
+#'   supported
 #'
 #' @return a list of imuGAP model options
 #' @export
 imugap_options <- function(
-  df = 5L, dose_schedule = c(1, 4)
+  df = 5L, dose_schedule = c(1, 4),
+  object = c("default")
 ) {
+  object <- switch(object,
+    "default" = stanmodels$impute_school_coverage_process_v6,
+    stop("Unknown model object: ", object)
+  )
   return(as.list(environment()))
 }
 
@@ -383,15 +427,16 @@ imuGAP <- function(
     intercept = TRUE
   )
 
+  dose_schedule <- imugap_opts$dose_schedule
+
   doses <- matrix(0, ncol = length(dose_schedule), nrow = max(wts$age))
   for (i in seq_along(dose_schedule)) {
     doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
   }
 
-# TODO deal with censoring
-
   # prepare dat_stan
   stan_opts$data <- list(
+    n_uncensored_obs = obs[is.na(censored), .N],
     n_yr = max(wts$age),
     n_cohort = max(wts$cohort),
     n_sch = n_schl,
@@ -413,6 +458,7 @@ imuGAP <- function(
     cnty_bounds = loc_info[layer == 3, unique(layer_bound)],
     predict_mode = 0
   )
+  stan_opts$object <- imugap_opts$object
 
   return(do.call(rstan::sampling, stan_opts))
 }

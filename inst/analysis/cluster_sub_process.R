@@ -1,3 +1,5 @@
+# TODO carl update to use new data structure
+
 library(data.table)
 library(imuGAP)
 

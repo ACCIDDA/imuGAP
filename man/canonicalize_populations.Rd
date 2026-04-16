@@ -9,20 +9,23 @@ canonicalize_populations(
   observations,
   locations,
   max_cohort,
-  max_age
+  max_age,
+  max_dose = 2L
 )
 }
 \arguments{
-\item{populations}{a data.frame, the the observation weighting object, with columns
+\item{populations}{a \verb{[data.frame()]}, the the observation meta data, with
+columns
 \itemize{
-\item obs_id, the observation id the row concerns
-\item dose, which dose the row concerns
-\item location, the location the row concerns
-\item cohort, the cohort at that location the row concerns
-\item age, the age of that cohort the row concerns
-\item weight, the relative contribution of this row to an observation
-Note that multiple rows may concern the same observation, meaning that the populations
-from different cohorts, locations, and ages may be pooled in an observation
+\item "obs_id", the observation id the row concerns
+\item "loc_id", the location id the row concerns
+\item "dose", which dose the row concerns
+\item "cohort", the cohort at that location the row concerns
+\item "age", the age of that cohort the row concerns
+\item "weight", the relative contribution of this row to an observation
+Note that multiple rows may concern the same observation, meaning that the
+populations from different cohorts, locations, and ages may be pooled in an
+observation
 }}
 
 \item{observations}{a \verb{[data.frame()]}, the observed data, with at least
@@ -31,7 +34,8 @@ three columns:
 \item an "id" column; any type, as long as unique, non-NA
 \item a "positive" column; non-negative integers, the observed number of
 vaccinated individuals
-\item a "sample_n" column; positive integers, the number of individuals sampled
+\item a "sample_n" column; positive integers, the number of individuals
+sampled, must be greater than or equal to "positive"
 \item optionally, a "censored" column; numeric, NA (uncensored) or 1
 (right-censored);
 }}
@@ -39,10 +43,24 @@ vaccinated individuals
 \item{locations}{a \verb{[data.frame()]}, with columns \code{id} and \code{parent_id}, of
 the same type. See Details for restrictions.}
 
-\item{max_cohort}{if present, what is the maximum cohort that should be present?}
+\item{max_cohort}{if present, what is the maximum cohort that should be
+present?}
 
 \item{max_age}{if present, what is the maximum age that should be present?}
 }
+\value{
+a canonical populations object, mirroring the input "populations",
+with the following updates:
+\itemize{
+\item "obs_id", the observation id the row concerns, canonicalized to match
+the canonical observation ids
+\item "loc_id", the location id the row concerns, canonicalized to match
+}
+}
 \description{
 Check observation meta data object
+}
+\details{
+This method validates the meta-data associated with the observations, as well
+as converting that meta-data to use the canonical id format.
 }

@@ -4,20 +4,19 @@
 \alias{stan_options}
 \title{Stan Sampler Options}
 \usage{
-stan_options(object = stanmodels$impute_school_coverage_process_v6, ...)
+stan_options(...)
 }
 \arguments{
-\item{object}{An object of class \code{\linkS4class{stanmodel}}.}
-
 \item{...}{
   Arguments passed on to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}}
   \describe{
-    \item{\code{}}{}
+    \item{\code{object}}{An object of class \code{\linkS4class{stanmodel}}.}
   }}
 }
 \value{
 a list of arguments matching \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} inputs
 }
 \description{
-This function encapsulates option passing to the stan sampler.
+This function encapsulates option passing to the stan sampler, with the
+exception of the model object, which is passed in \code{imugap_options}.
 }

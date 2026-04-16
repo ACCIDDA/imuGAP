@@ -13,7 +13,8 @@ three columns:
 \item an "id" column; any type, as long as unique, non-NA
 \item a "positive" column; non-negative integers, the observed number of
 vaccinated individuals
-\item a "sample_n" column; positive integers, the number of individuals sampled
+\item a "sample_n" column; positive integers, the number of individuals
+sampled, must be greater than or equal to "positive"
 \item optionally, a "censored" column; numeric, NA (uncensored) or 1
 (right-censored);
 }}
@@ -31,4 +32,26 @@ argument
 }
 \description{
 Canonicalize Observation Data
+}
+\details{
+The observations object documents observations used to fit the
+model. Conceptually, each row represents an observation of vaccination status
+within a population. That population need not be uniform
+(see \verb{[canonicalize_populations()]}) or concerning a single cohort or time:
+each observation should generally be the best available resolution data. That
+resolution can vary across rows. The \verb{[imuGAP()]} sampler uses information
+about the resolutions to automatically figure out how to compare the latent
+process model to those different observations.
+
+For the optional "censored" column: the model supports vaccination status
+indicators which are vaccine specific as well as those which represent an
+individual having all of a set of vaccines (including the target vaccine).
+The specific coverage for the target vaccine is right-censored in the latter
+case: the all-coverage is the minimum coverage for the target.
+
+When at least some of the data are censored, you must supply the "censored"
+column to correctly estimate coverage. Mark any uncensored observations with
+NA, and any right-censored observations with 1. Note that "0" is \emph{not} a
+valid value at this time; we are preserving that for potential future support
+of left-censoring.
 }

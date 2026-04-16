@@ -416,7 +416,7 @@ rowsum(const T0__& obj_arg__, std::ostream* pstream__) {
   try {
     int nrows = std::numeric_limits<int>::min();
     current_statement__ = 96;
-    nrows = stan::math::cols(obj);
+    nrows = stan::math::rows(obj);
     current_statement__ = 97;
     stan::math::validate_non_negative_index("res", "nrows", nrows);
     Eigen::Matrix<local_scalar_t__,-1,1> res =

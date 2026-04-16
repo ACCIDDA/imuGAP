@@ -61,7 +61,7 @@ test_that("yields data.table with ordered layer, parent_id, and id columns", {
     parent_id = c(NA, "a", "a", "c", "b")
   ))
 
-  expect_true(is.data.table(locs))
+  expect_true(data.table::is.data.table(locs))
   expect_equal(names(locs), c("id", "parent_id", "layer", "c_id", "cp_id"))
   expect_equal(locs$layer, c(1L, 2L, 2L, 3L, 3L))
   expect_equal(locs$id, c("a", "b", "c", "e", "d"))

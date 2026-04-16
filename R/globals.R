@@ -4,17 +4,18 @@ utils::globalVariables(c(
   ".", # <canonicalize_locations>
   "parent_id", # <canonicalize_locations>
   "id", # <canonicalize_locations>
-  ".N", # <canonicalize_locations>
-  ":=", # <canonicalize_locations>
   "layer", # <canonicalize_locations>
   "c_id", # <canonicalize_locations>
   "cp_id", # <canonicalize_locations>
   "id", # <canonicalize_observations>
-  ".N", # <canonicalize_observations>
   "positive", # <canonicalize_observations>
   "sample_n", # <canonicalize_observations>
   "censored", # <canonicalize_observations>
-  ":=", # <canonicalize_observations>
   "obs_id", # <canonicalize_observations>
+  "layer", # <imuGAP>
+  "N", # <imuGAP>
+  "cohort", # <imuGAP>
+  "censored", # <imuGAP>
+  "layer_bound", # <imuGAP>
   NULL
 ))

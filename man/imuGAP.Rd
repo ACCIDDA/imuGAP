@@ -8,7 +8,6 @@ imuGAP(
   observations,
   populations,
   locations,
-  dose_schedule,
   imugap_opts = imugap_options(),
   stan_opts = stan_options()
 )
@@ -20,27 +19,28 @@ three columns:
 \item an "id" column; any type, as long as unique, non-NA
 \item a "positive" column; non-negative integers, the observed number of
 vaccinated individuals
-\item a "sample_n" column; positive integers, the number of individuals sampled
+\item a "sample_n" column; positive integers, the number of individuals
+sampled, must be greater than or equal to "positive"
 \item optionally, a "censored" column; numeric, NA (uncensored) or 1
 (right-censored);
 }}
 
-\item{populations}{a data.frame, the the observation weighting object, with columns
+\item{populations}{a \verb{[data.frame()]}, the the observation meta data, with
+columns
 \itemize{
-\item obs_id, the observation id the row concerns
-\item dose, which dose the row concerns
-\item location, the location the row concerns
-\item cohort, the cohort at that location the row concerns
-\item age, the age of that cohort the row concerns
-\item weight, the relative contribution of this row to an observation
-Note that multiple rows may concern the same observation, meaning that the populations
-from different cohorts, locations, and ages may be pooled in an observation
+\item "obs_id", the observation id the row concerns
+\item "loc_id", the location id the row concerns
+\item "dose", which dose the row concerns
+\item "cohort", the cohort at that location the row concerns
+\item "age", the age of that cohort the row concerns
+\item "weight", the relative contribution of this row to an observation
+Note that multiple rows may concern the same observation, meaning that the
+populations from different cohorts, locations, and ages may be pooled in an
+observation
 }}
 
 \item{locations}{a \verb{[data.frame()]}, with columns \code{id} and \code{parent_id}, of
 the same type. See Details for restrictions.}
-
-\item{dose_schedule}{a numeric vector of length 2, the ages at which dose 1 and dose 2 are scheduled}
 
 \item{imugap_opts}{options for the \code{imuGAP} model}
 
