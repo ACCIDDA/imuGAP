@@ -124,6 +124,9 @@ canonicalize_locations <- function(locations) {
     cp_id := cp_id
   ]
 
+  locations[, layer_bound := seq_len(.N), by = layer]
+  locations[, layer_bound := min(layer_bound), by = cp_id]
+
   return(mark_canonical(locations, "locations"))
 }
 
@@ -147,21 +150,21 @@ canonicalize_locations <- function(locations) {
 #' resolution can vary across rows. The `[imuGAP()]` sampler uses information
 #' about the resolutions to automatically figure out how to compare the latent
 #' process model to those different observations.
-#' 
+#'
 #' For the optional "censored" column: the model supports vaccination status
 #' indicators which are vaccine specific as well as those which represent an
 #' individual having all of a set of vaccines (including the target vaccine).
 #' The specific coverage for the target vaccine is right-censored in the latter
 #' case: the all-coverage is the minimum coverage for the target.
-#' 
+#'
 #' When at least some of the data are censored, you must supply the "censored"
 #' column to correctly estimate coverage. Mark any uncensored observations with
 #' NA, and any right-censored observations with 1. Note that "0" is *not* a
 #' valid value at this time; we are preserving that for potential future support
 #' of left-censoring.
-#' 
+#'
 #' @return a canonical observation object, a `[data.table()]` with:
-#'  - an "obs_id" column, an integer sequence from 1; the order observations
+#'  - an "c_id" column, an integer sequence from 1; the order observations
 #'    will be passed to estimation
 #'  - the original "id" column, possibly reordered
 #'  - "positive" and "sample_n" columns, possibly reordered
@@ -230,7 +233,7 @@ canonicalize_observations <- function(observations) {
   # canonicalize ids: order by censoring, then id.
   # this results in uncensored then censored observations.
   setkey(observations, censored, id)
-  observations[, obs_id := seq_len(.N)]
+  observations[, c_id := seq_len(.N)]
 
   return(mark_canonical(observations, "observations"))
 }
@@ -260,9 +263,9 @@ canonicalize_observations <- function(observations) {
 #'
 #' @return a canonical populations object, mirroring the input "populations",
 #' with the following updates:
-#' - "obs_id", the observation id the row concerns, canonicalized to match
+#' - "obs_c_id", the observation id the row concerns, canonicalized to match
 #'   the canonical observation ids
-#' - "loc_id", the location id the row concerns, canonicalized to match
+#' - "loc_c_id", the location id the row concerns, canonicalized to match
 #' @export
 canonicalize_populations <- function(
   populations,
@@ -313,13 +316,13 @@ canonicalize_populations <- function(
   }
 
   # introduce canonical id
-  populations[observations, on = .(obs_id = id), obs_id := i.obs_id]
-  populations[locations, on = .(loc_id = id), loc_id := c_id]
+  populations[observations, on = .(obs_id = id), obs_c_id := c_id]
+  populations[locations, on = .(loc_id = id), loc_c_id := c_id]
 
-  setkey(populations, obs_id, c_id, cohort, age, dose)
+  setkey(populations, obs_c_id, loc_c_id, cohort, age, dose)
 
   populations[, range_start := seq_len(.N)]
-  populations[, range_start := min(range_start), by = obs_id]
+  populations[, range_start := min(range_start), by = obs_c_id]
 
   return(mark_canonical(populations, "populations"))
 }
@@ -449,7 +452,7 @@ imuGAP <- function(
     y_smp = obs$sample_n,
     n_weights = nrow(wts),
     obs_to_weights_bounds = unique(wts$range_start),
-    weights_school = wts$location,
+    weights_school = wts$loc_c_id,
     weights_cohort = wts$cohort,
     weights_life_year = wts$age,
     weights_dose = wts$dose,
