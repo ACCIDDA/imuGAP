@@ -6,49 +6,50 @@
 \usage{
 imuGAP(
   observations,
-  obs_populations,
+  populations,
   locations,
-  dose_schedule,
   imugap_opts = imugap_options(),
   stan_opts = stan_options()
 )
 }
 \arguments{
-\item{observations}{a \code{data.frame}, the observed data, with at least two columns:
+\item{observations}{a \verb{[data.frame()]}, the observed data, with at least
+three columns:
 \itemize{
-\item a column named "positive", or the first column; a non-negative integer, the observed number of vaccinated individuals
-\item a column named "sample_n", or the second column: a positive integer, the number of individuals sampled
-\item if there exists a column "id", it must be unique, and will be used as the primary key for the observation data;
-otherwise, a unique id will be created based on the row number
+\item an "id" column; any type, as long as unique, non-NA
+\item a "positive" column; non-negative integers, the observed number of
+vaccinated individuals
+\item a "sample_n" column; positive integers, the number of individuals
+sampled, must be greater than or equal to "positive"
+\item optionally, a "censored" column; numeric, NA (uncensored) or 1
+(right-censored);
 }}
 
-\item{obs_populations}{a \code{data.frame} providing the meta-data about the observations. Briefly, it should capture for each observation
-the relevant location(s), cohort(s), age(s), dose, and relative contribution of that population to the observation. Each
-row in \code{obs} should have one or more corresponding rows in \code{wts}. The \code{wts} data.frame should have at least the following columns:
+\item{populations}{a \verb{[data.frame()]}, the the observation meta data, with
+columns
 \itemize{
-\item a column named "obs_id", with a value in the "id" column in \code{obs}
-\item "location", a positive integer, distinguishing locations.
-\item "cohort", a positive integer, distinguishing cohorts
-\item "age", a positive integer, distinguishing when this observation applies for this location/cohort
-\item "dose", a positive integer, which dose this observation applies to
-\item "weight", a positive numeric value, representing the relative contribution of that population to the observation
+\item "obs_id", the observation id the row concerns
+\item "loc_id", the location id the row concerns
+\item "dose", which dose the row concerns
+\item "cohort", the cohort at that location the row concerns
+\item "age", the age of that cohort the row concerns
+\item "weight", the relative contribution of this row to an observation
+Note that multiple rows may concern the same observation, meaning that the
+populations from different cohorts, locations, and ages may be pooled in an
+observation
 }}
 
-\item{locations}{the location hierarchy, a \code{data.frame} with two columns:
-\itemize{
-\item "id", a positive integer, the location id
-\item "parent_id", a positive integer or \code{NA}, the parent location id; the root location should have \code{NA} as its parent_id
-}}
-
-\item{dose_schedule}{a numeric vector of length 2, the ages at which dose 1 and dose 2 are scheduled}
+\item{locations}{a \verb{[data.frame()]}, with columns \code{id} and \code{parent_id}, of
+the same type. See Details for restrictions.}
 
 \item{imugap_opts}{options for the \code{imuGAP} model}
 
-\item{stan_opts}{passed to \code{rstan::sampling} (e.g. iter, chains).}
+\item{stan_opts}{passed to \code{rstan::sampling} (e.g. \code{iter}, \code{chains}).}
 }
 \value{
 An object of class \code{stanfit} returned by \code{rstan::sampling}
 }
 \description{
-This function estimates current coverage, by age and location.
+This a sampler interface to convert user-friendly data into the necessary
+format to feed the immunity estimation model.
 }

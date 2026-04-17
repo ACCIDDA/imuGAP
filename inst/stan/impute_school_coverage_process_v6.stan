@@ -12,6 +12,7 @@ data {
 // #include data/shared_stateonly.stan
 #include data/shared.stan
 #include data/bspline.stan
+#include data/censoring.stan
 
 }
 
@@ -21,6 +22,7 @@ transformed data {
    // #include transformed_data/fixed_logit_phi.stan
    #include transformed_data/epsilon.stan
    #include transformed_data/cnty_schl.stan
+   #include transformed_data/censoring.stan
 }
 
 parameters {
@@ -38,11 +40,11 @@ parameters {
 transformed parameters {
   // state-level phi by year, constructed from beta spline
   // Construct state-level trend from basis functions
-  
+
   // yields logit_phi_st
   #include transformed_parameters/bspline.stan
   // #include transformed_parameters/constant_phi.stan
-  
+
   // #include transformed_parameters/cnty_sch_linear.stan
   #include transformed_parameters/cnty_sch.stan
   #include transformed_parameters/static_lambda.stan // yields unrolled dose cdf
@@ -56,18 +58,18 @@ model {
 
     #include model/bspline.stan
     // #include model/constant_phi.stan
-    // #include model/static_lambda.stan
+    #include model/static_lambda.stan
     #include model/cnty_sch.stan
     // #include model/cnty_sch_linear.stan
-    
-    #include model/shared.stan
+
+    #include model/censored.stan
 
   }
 
 }
 
-generated quantities{
-    #include generated_quantities/shared.stan 
+generated quantities {
+  #include generated_quantities/shared.stan
 }
 
 // This model represents vaccination as a discrete step, fixed hazard process

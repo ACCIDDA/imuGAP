@@ -1,4 +1,8 @@
 .Rproj.user
 *.Rproj
 inst/doc
-
+src/RcppExports*
+src/stanExports*
+src/*.dll
+.Rhistory
+.vscode/*

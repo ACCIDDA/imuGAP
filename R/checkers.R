@@ -1,4 +1,3 @@
-
 stopper <- function(dt, x, fmt, ...) {
   msg <- sprintf(fmt, dt, x, ...)
   stop(msg, call. = FALSE)
@@ -15,7 +14,9 @@ checked_as_integer <- function(dt, x, na_allowed = FALSE) {
   }
   if (!na_allowed && dt[, any(is.na(get(x)))]) {
     stopper(
-      deparse(substitute(dt)), x, "'%s' column '%s' cannot have NA values"
+      deparse(substitute(dt)),
+      x,
+      "'%s' column '%s' cannot have NA values"
     )
   }
   return(dt[])
@@ -40,7 +41,10 @@ checked_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE) {
   if (!missing(max)) {
     if (dt[, any(get(x) > max)]) {
       stopper(
-        deparse(substitute(dt)), x, "'%s' column '%s' must all be <= %i", max
+        deparse(substitute(dt)),
+        x,
+        "'%s' column '%s' must all be <= %i",
+        max
       )
     }
   }
@@ -50,10 +54,17 @@ checked_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE) {
 checked_set_equivalence <- function(dt, x, tarset) {
   tarset <- unique(tarset)
   setlen <- length(tarset)
-  if (length(union(tarset, dt[, get(x)])) != setlen) {
+  if (length(intersect(tarset, dt[, get(x)])) != setlen) {
     stopper(
-      deparse(substitute(dt)), x,
+      deparse(substitute(dt)),
+      x,
       "'%s' column '%s' must contain all values in set"
+    )
+  } else if (length(union(tarset, dt[, get(x)])) != setlen) {
+    stopper(
+      deparse(substitute(dt)),
+      x,
+      "'%s' column '%s' may not contain values outside of set"
     )
   }
   return(dt[])
@@ -63,7 +74,8 @@ checked_subset <- function(dt, x, tarset) {
   checkset <- unique(dt[, get(x)])
   if (!all(checkset %in% tarset)) {
     stopper(
-      deparse(substitute(dt)), x,
+      deparse(substitute(dt)),
+      x,
       "'%s' column '%s' must be contained in parent set: missing %s",
       toString(setdiff(checkset, tarset))
     )
@@ -77,13 +89,26 @@ checked_dt_able <- function(dt, copy = FALSE) {
   return(if (copy) as.data.table(dt) else setDT(dt))
 }
 
-checked_cols <- function(dt, cols) {
+checked_cols <- function(dt, cols, warn_extra = FALSE) {
   missing_cols <- setdiff(cols, names(dt))
   if (length(missing_cols) > 0) {
     stop(
-      "'", deparse(substitute(dt)),
-      "' is missing the following required column(s): ", toString(missing_cols)
+      "'",
+      deparse(substitute(dt)),
+      "' is missing the following required column(s): ",
+      toString(missing_cols)
     )
+  }
+  if (warn_extra) {
+    extra_cols <- setdiff(names(dt), cols)
+    if (length(extra_cols) > 0) {
+      warning(
+        "'",
+        deparse(substitute(dt)),
+        "' has the following extra columns: ",
+        toString(extra_cols)
+      )
+    }
   }
   return(dt[])
 }
