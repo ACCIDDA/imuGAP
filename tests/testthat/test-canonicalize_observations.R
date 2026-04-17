@@ -8,7 +8,7 @@ test_that("works for obvious case", {
 
   expect_silent(obs_res <- canonicalize_observations(obs))
   expect_s3_class(obs_res, "data.table")
-  expect_equal(obs_res$obs_id, 1:3)
+  expect_equal(obs_res$c_id, 1:3)
 
 })
 

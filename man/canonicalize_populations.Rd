@@ -52,9 +52,9 @@ present?}
 a canonical populations object, mirroring the input "populations",
 with the following updates:
 \itemize{
-\item "obs_id", the observation id the row concerns, canonicalized to match
+\item "obs_c_id", the observation id the row concerns, canonicalized to match
 the canonical observation ids
-\item "loc_id", the location id the row concerns, canonicalized to match
+\item "loc_c_id", the location id the row concerns, canonicalized to match
 }
 }
 \description{

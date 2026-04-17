@@ -22,7 +22,7 @@ sampled, must be greater than or equal to "positive"
 \value{
 a canonical observation object, a \verb{[data.table()]} with:
 \itemize{
-\item an "obs_id" column, an integer sequence from 1; the order observations
+\item an "c_id" column, an integer sequence from 1; the order observations
 will be passed to estimation
 \item the original "id" column, possibly reordered
 \item "positive" and "sample_n" columns, possibly reordered
