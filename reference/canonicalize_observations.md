@@ -5,7 +5,7 @@ Canonicalize Observation Data
 ## Usage
 
 ``` r
-canonicalize_observations(observations)
+canonicalize_observations(observations, drop_extra = TRUE)
 ```
 
 ## Arguments
@@ -24,6 +24,10 @@ canonicalize_observations(observations)
 
   - optionally, a `censored` column; numeric, NA (uncensored) or 1
     (right-censored); if not present, will be assumed NA
+
+- drop_extra:
+
+  a logical scalar; drop extraneous columns? (default: yes)
 
 ## Value
 

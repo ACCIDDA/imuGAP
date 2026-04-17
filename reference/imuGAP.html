@@ -79,10 +79,11 @@ columns</p><ul><li><p><code>obs_id</code>, any type; the observation the row con
 an observations data object)</p></li>
 <li><p>`loc_id“, any type; the location the row concerns (i.e. id shared with a
 locations data object)</p></li>
-<li><p><code>dose</code>, a non-zero, positive integer (1, 2, ...); which dose the row concerns</p></li>
-<li><p><code>cohort</code>, a positive integer; the cohort at that location the row concerns</p></li>
-<li><p><code>age</code>, a positive integer; the age of that cohort the row concerns</p></li>
-<li><p><code>weight</code>, a numeric, (0, 1); the relative contribution of this row to an observation
+<li><p><code>dose</code>, a non-zero, positive integer (1, 2, ...); what dose row concerns</p></li>
+<li><p><code>cohort</code>, a positive integer; the cohort at the location row concerns</p></li>
+<li><p><code>age</code>, a positive integer; the age of that cohort row concerns</p></li>
+<li><p><code>weight</code>, a numeric, (0, 1); the relative contribution of this row to an
+observation
 Note that multiple rows may concern the same observation, meaning that the
 populations from different cohorts, locations, and ages may be pooled in an
 observation</p></li>
@@ -90,8 +91,8 @@ observation</p></li>
 
 
 <dt id="arg-locations">locations<a class="anchor" aria-label="anchor" href="#arg-locations"></a></dt>
-<dd><p>a <code>[data.frame()]</code>, with columns <code>loc_id</code> and <code>parent_id</code>, of
-the same type. See Details for restrictions.</p></dd>
+<dd><p>a <code>[data.frame()]</code>, with columns <code>loc_id</code> and <code>parent_id</code>,
+of the same type. See Details for restrictions.</p></dd>
 
 
 <dt id="arg-imugap-opts">imugap_opts<a class="anchor" aria-label="anchor" href="#arg-imugap-opts"></a></dt>
