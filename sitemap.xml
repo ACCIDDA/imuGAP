@@ -6,9 +6,10 @@
 <url><loc>https://accidda.github.io/imuGAP/articles/index.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/authors.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/index.html</loc></url>
-<url><loc>https://accidda.github.io/imuGAP/reference/check_locations.html</loc></url>
-<url><loc>https://accidda.github.io/imuGAP/reference/check_obs_population.html</loc></url>
-<url><loc>https://accidda.github.io/imuGAP/reference/check_observations.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/canonicalize_locations.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/canonicalize_observations.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/canonicalize_populations.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/extract_imugap.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/imuGAP-package.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/imuGAP.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/imugap_options.html</loc></url>
