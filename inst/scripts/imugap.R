@@ -9,9 +9,9 @@ Usage: imugap <input_dir> [output_dir]
        imugap -h | --help             (show this message)
 
 input_dir must contain:
-  observations.csv (or .rds)      — columns: positive, sample_n
-  obs_populations.csv (or .rds)   — columns: obs_id, location, cohort, age, dose, weight
-  locations.csv (or .rds)         — columns: id, parent_id (hierarchical; see package docs)
+  observations.csv (or .rds)      — columns: obs_id, positive, sample_n
+  obs_populations.csv (or .rds)   — columns: obs_id, loc_id, cohort, age, dose, weight
+  locations.csv (or .rds)         — columns: loc_id, parent_id (hierarchical; see package docs)
 
 Output: fit.rds (raw stanfit object for post-processing).
 output_dir defaults to input_dir. Exit codes: 0=success, 1=validation, 2=model, 3=I/O.
@@ -112,31 +112,15 @@ main <- function(args = commandArgs(trailingOnly = TRUE)) {
   }
   message("[\u2713] Inputs loaded.")
 
-  # Assign to globalenv to work around NSE in data.table::setDT and
-  # eval(substitute(...)) in check_locations, which walk parent frames and fail
-  # to resolve symbols across the imuGAP:: namespace boundary.
-  # TODO: remove globalenv hack once checker functions accept data directly
-  # without NSE frame-walking (see censoring branch).
-  .locs <- inputs$locs; .obs <- inputs$obs; .opop <- inputs$obs_pop
-  on.exit({
-    for (nm in c(".locs", ".obs", ".opop")) {
-      if (exists(nm, envir = globalenv(), inherits = FALSE))
-        rm(list = nm, envir = globalenv())
-    }
-  }, add = TRUE)
-  assign(".locs", .locs, envir = globalenv())
-  assign(".obs", .obs, envir = globalenv())
-  assign(".opop", .opop, envir = globalenv())
-
   message("[\u2192] Validating schema...")
-  validated <- tryCatch({
-    locs    <- imuGAP::check_locations(.locs)
-    obs     <- imuGAP::check_observations(.obs)
-    obs_pop <- imuGAP::check_obs_population(.opop, obs, locs)
-    list(locs = locs, obs = obs, obs_pop = obs_pop)
+  canonical <- tryCatch({
+    locs <- imuGAP::canonicalize_locations(inputs$locs)
+    obs  <- imuGAP::canonicalize_observations(inputs$obs)
+    pops <- imuGAP::canonicalize_populations(inputs$obs_pop, obs, locs)
+    list(locs = locs, obs = obs, pops = pops)
   }, error = identity)
-  if (inherits(validated, "error")) {
-    message("ERROR: ", validated$message)
+  if (inherits(canonical, "error")) {
+    message("ERROR: ", canonical$message)
     return(1)
   }
   message("[\u2713] Schema validated.")
@@ -146,7 +130,6 @@ main <- function(args = commandArgs(trailingOnly = TRUE)) {
     return(0)
   }
 
-  dose_schedule <- c(1L, 4L)
   stan_opts <- imuGAP::stan_options(iter = 2000L, chains = 4L)
 
   if (!dir.exists(output_dir)) {
@@ -160,9 +143,9 @@ main <- function(args = commandArgs(trailingOnly = TRUE)) {
   message("[\u2192] Launching imuGAP...")
   fit <- tryCatch(
     imuGAP::imuGAP(
-      observations = validated$obs, obs_populations = validated$obs_pop,
-      locations = validated$locs, dose_schedule = dose_schedule,
-      imugap_opts = imuGAP::imugap_options(df = 5L),
+      observations = canonical$obs, populations = canonical$pops,
+      locations = canonical$locs,
+      imugap_opts = imuGAP::imugap_options(df = 5L, dose_schedule = c(1L, 4L)),
       stan_opts = stan_opts
     ),
     error = identity

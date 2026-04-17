@@ -1,8 +1,9 @@
 # Tests for inst/scripts/imugap.R
 #
-# NOTE: main() integration with imuGAP::check_* and imuGAP::imuGAP is not
-# tested here -- only argument parsing, I/O error paths, and helper functions.
-# Full integration testing requires a subprocess with real input data.
+# NOTE: main() integration with imuGAP::canonicalize_* and imuGAP::imuGAP is
+# not tested here -- only argument parsing, I/O error paths, and helper
+# functions. Full integration testing requires a subprocess with real input
+# data.
 
 # --- Source helpers and main() from the CLI script ---------------------------
 
