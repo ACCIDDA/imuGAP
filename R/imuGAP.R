@@ -13,7 +13,7 @@ is_canonical <- function(dt, target_class) {
 
 #' @title Canonicalize Location Data
 #'
-#' @param locations a `[data.frame()]`, with columns `id` and `parent_id`, of
+#' @param locations a `[data.frame()]`, with columns `loc_id` and `parent_id`, of
 #'   the same type. See Details for restrictions.
 #'
 #' @details The `[imuGAP()]` sampler works on a hierarchical model of locations,
@@ -23,11 +23,11 @@ is_canonical <- function(dt, target_class) {
 #'   A valid structure has:
 #'  - a unique root,
 #'  - no cycles, and
-#'  - no duplicate `id`s
+#'  - no duplicate `loc_id`s
 #'
-#'   Users may explicitly identify the root `id` by providing a row with
+#'   Users may explicitly identify the root `loc_id` by providing a row with
 #'   `parent_id` equal to `NA`. Otherwise, any `parent_id` that does not appear
-#'   in `id` is treated as the root.
+#'   in `loc_id` is treated as the root.
 #'
 #'   If the input is valid, this method will create the canonicalized version.
 #'   In that version, all ids run from 1:N, where N is the number of distinct
@@ -36,11 +36,13 @@ is_canonical <- function(dt, target_class) {
 #'   yields).
 #'
 #' @return a `data.table`, with:
-#'  - "id", "parent_id" columns as originally supplied, possibly reordered
-#'  - "c_id", "cp_id" columns, canonicalized id/parent_id columns,
+#'  - `loc_id`, `parent_id` columns as originally supplied, possibly reordered
+#'  - `loc_c_id`, `loc_cp_id` columns, canonicalized id/parent_id columns,
 #'    representing the order that will be used in the sampler
-#'  - "layer" column, an integer from 1 (root), 2 (root children),
-#'    3 (grandchildren), etc
+#'  - `layer` column, an integer from 1 (root), 2 (root children),
+#'    3 (grandchildren), &c
+#'  - `layer_bound` column, an integer starting from 1 by layer. This provides
+#'    index slice information used in the stan model.
 #'
 #' @importFrom data.table as.data.table setkey data.table setattr
 #' @global .
@@ -54,13 +56,22 @@ canonicalize_locations <- function(locations) {
   locations <- as.data.table(locations)
 
   # Check that locations has required structure
-  checked_cols(locations, c("id", "parent_id"), warn_extra = TRUE)
+  checked_cols(locations, c("loc_id", "parent_id"), warn_extra = TRUE)
+
+  # check for duplicate ids
+  if (length(dupes <- locations[, which(duplicated(loc_id))])) {
+    stop(
+      "locations$loc_id must be unique; found ",
+      length(dupes), " duplicates: ",
+      toString(dupes, width = 80)
+    )
+  }
 
   # Find candidate unique root
-  potential_root <- locations[is.na(parent_id), id] |> unique()
+  potential_root <- locations[is.na(parent_id), loc_id] |> unique()
   if (!length(potential_root)) {
     # if no explicit root, find implicit root
-    potential_root <- setdiff(locations$parent_id, locations$id) |> unique()
+    potential_root <- setdiff(locations$parent_id, locations$loc_id) |> unique()
   }
 
   # Error if not exactly one root
@@ -74,19 +85,10 @@ canonicalize_locations <- function(locations) {
     )
   }
 
-  # check for duplicate ids
-  if (length(dupes <- locations[, which(duplicated(id))])) {
-    stop(
-      "locations$id must be unique; found ",
-      length(dupes), " duplicates: ",
-      toString(dupes, width = 80)
-    )
-  }
-
   # if root is implicit, add it to the data
-  if (!locations[id == potential_root, .N]) {
+  if (!locations[loc_id == potential_root, .N]) {
     locations <- rbind(
-      data.table(id = potential_root),
+      data.table(loc_id = potential_root),
       locations,
       fill = TRUE
     )
@@ -96,12 +98,12 @@ canonicalize_locations <- function(locations) {
   on_layer <- 1L
   locations$layer <- NA_integer_
   locations[is.na(parent_id), layer := on_layer]
-  layer_members <- locations[layer == on_layer, id]
+  layer_members <- locations[layer == on_layer, loc_id]
 
   while (locations[, any(is.na(layer))]) {
     on_layer <- on_layer + 1L
     locations[parent_id %in% layer_members, layer := on_layer]
-    layer_members <- locations[layer == on_layer, id]
+    layer_members <- locations[layer == on_layer, loc_id]
     # check for cycles - if we have not assigned any new layer members,
     # but still have unassigned locations, then we have a cycle
     if (length(layer_members) == 0L && locations[, any(is.na(layer))]) {
@@ -109,23 +111,23 @@ canonicalize_locations <- function(locations) {
         "locations may not contain cycles; found ",
         locations[is.na(layer), .N],
         " ids in cycle(s). Offending locations: ",
-        toString(locations[is.na(layer), id], width = 80)
+        toString(locations[is.na(layer), loc_id], width = 80)
       )
     }
   }
 
   # canonicalize ids, by layer, then parent position, then natural order
 
-  setkey(locations, layer, parent_id, id)
-  locations[, c_id := seq_len(.N)]
+  setkey(locations, layer, parent_id, loc_id)
+  locations[, loc_c_id := seq_len(.N)]
   locations[
-    locations[, .(parent_id = id, cp_id = c_id)],
+    locations[, .(parent_id = loc_id, loc_cp_id = loc_c_id)],
     on = .(parent_id),
-    cp_id := cp_id
+    loc_cp_id := loc_cp_id
   ]
 
   locations[, layer_bound := seq_len(.N), by = layer]
-  locations[, layer_bound := min(layer_bound), by = cp_id]
+  locations[, layer_bound := min(layer_bound), by = loc_cp_id]
 
   return(mark_canonical(locations, "locations"))
 }
@@ -134,13 +136,13 @@ canonicalize_locations <- function(locations) {
 #'
 #' @param observations a `[data.frame()]`, the observed data, with at least
 #'   three columns:
-#'   - an "id" column; any type, as long as unique, non-NA
-#'   - a "positive" column; non-negative integers, the observed number of
+#'   - an `obs_id` column; any type, as long as unique, non-NA
+#'   - a `positive`` column; non-negative integers, the observed number of
 #'     vaccinated individuals
-#'   - a "sample_n" column; positive integers, the number of individuals
+#'   - a `sample_n` column; positive integers, the number of individuals
 #'     sampled, must be greater than or equal to "positive"
-#'   - optionally, a "censored" column; numeric, NA (uncensored) or 1
-#'     (right-censored);
+#'   - optionally, a `censored` column; numeric, NA (uncensored) or 1
+#'     (right-censored); if not present, will be assumed NA
 #'
 #' @details The observations object documents observations used to fit the
 #' model. Conceptually, each row represents an observation of vaccination status
@@ -151,23 +153,23 @@ canonicalize_locations <- function(locations) {
 #' about the resolutions to automatically figure out how to compare the latent
 #' process model to those different observations.
 #'
-#' For the optional "censored" column: the model supports vaccination status
+#' For the optional `censored` column: the model supports vaccination status
 #' indicators which are vaccine specific as well as those which represent an
 #' individual having all of a set of vaccines (including the target vaccine).
 #' The specific coverage for the target vaccine is right-censored in the latter
-#' case: the all-coverage is the minimum coverage for the target.
+#' case: full-set-coverage is the minimum coverage for the target.
 #'
-#' When at least some of the data are censored, you must supply the "censored"
+#' When at least some of the data are censored, you must supply the `censored`
 #' column to correctly estimate coverage. Mark any uncensored observations with
-#' NA, and any right-censored observations with 1. Note that "0" is *not* a
+#' NA, and any right-censored observations with $1$. Note that $0$ is *not* a
 #' valid value at this time; we are preserving that for potential future support
 #' of left-censoring.
 #'
 #' @return a canonical observation object, a `[data.table()]` with:
-#'  - an "c_id" column, an integer sequence from 1; the order observations
+#'  - an `obs_c_id` column, an integer sequence from 1; the order observations
 #'    will be passed to estimation
-#'  - the original "id" column, possibly reordered
-#'  - "positive" and "sample_n" columns, possibly reordered
+#'  - the original `obs_id` column, possibly reordered
+#'  - `positive` and `sample_n` columns, possibly reordered
 #'  - a "censored" column; all NA, if not present in original `observations`
 #'    argument
 #'
@@ -182,22 +184,22 @@ canonicalize_observations <- function(observations) {
   }
 
   observations <- as.data.table(observations)
-  checked_cols(observations, c("id", "positive", "sample_n"))
+  checked_cols(observations, c("obs_id", "positive", "sample_n"))
 
   # check id column validity
-  if (observations[, any(is.na(id))]) {
+  if (observations[, any(is.na(obs_id))]) {
     stop(
-      "id column may not contain NA; found ",
-      observations[is.na(id), .N],
+      "obs_id column may not contain NA; found ",
+      observations[is.na(obs_id), .N],
       " NA values at rows: ",
-      toString(observations[, which(is.na(id))]),
+      toString(observations[, which(is.na(obs_id))]),
       width = 80
     )
   }
 
-  if (length(dupes <- observations[, which(duplicated(id))])) {
+  if (length(dupes <- observations[, which(duplicated(obs_id))])) {
     stop(
-      "observations$id must be unique; found ",
+      "observations$obs_id must be unique; found ",
       length(dupes), " duplicates: ",
       toString(dupes, width = 80)
     )
@@ -212,7 +214,7 @@ canonicalize_observations <- function(observations) {
       "positive must be <= sample_n; found ",
       observations[positive > sample_n, .N],
       " invalid observations with offending ids: ",
-      toString(observations[positive > sample_n, id], width = 80)
+      toString(observations[positive > sample_n, obs_id], width = 80)
     )
   }
 
@@ -232,10 +234,10 @@ canonicalize_observations <- function(observations) {
     observations[, censored := NA_real_]
   }
 
-  # canonicalize ids: order by censoring, then id.
+  # canonicalize ids: order by censoring, then original obs_id.
   # this results in uncensored then censored observations.
-  setkey(observations, censored, id)
-  observations[, c_id := seq_len(.N)]
+  setkey(observations, censored, obs_id)
+  observations[, obs_c_id := seq_len(.N)]
 
   return(mark_canonical(observations, "observations"))
 }
@@ -244,12 +246,14 @@ canonicalize_observations <- function(observations) {
 #'
 #' @param populations a `[data.frame()]`, the the observation meta data, with
 #'   columns
-#'  - "obs_id", the observation id the row concerns
-#'  - "loc_id", the location id the row concerns
-#'  - "dose", which dose the row concerns
-#'  - "cohort", the cohort at that location the row concerns
-#'  - "age", the age of that cohort the row concerns
-#'  - "weight", the relative contribution of this row to an observation
+#'  - `obs_id`, any type; the observation the row concerns (i.e. id shared with
+#'    an observations data object)
+#'  - `loc_id``, any type; the location the row concerns (i.e. id shared with a
+#'    locations data object)
+#'  - `dose`, a non-zero, positive integer (1, 2, ...); which dose the row concerns
+#'  - `cohort`, a positive integer; the cohort at that location the row concerns
+#'  - `age`, a positive integer; the age of that cohort the row concerns
+#'  - `weight`, a numeric, (0, 1); the relative contribution of this row to an observation
 #'   Note that multiple rows may concern the same observation, meaning that the
 #'   populations from different cohorts, locations, and ages may be pooled in an
 #'   observation
@@ -261,13 +265,19 @@ canonicalize_observations <- function(observations) {
 #'
 #' @details
 #' This method validates the meta-data associated with the observations, as well
-#' as converting that meta-data to use the canonical id format.
+#' as converting that meta-data to use the canonical id formats.
 #'
-#' @return a canonical populations object, mirroring the input "populations",
+#' Regarding "cohorts" and "ages": these are counted from 1, by 1 "unit". You
+#' can imagine the units are whatever resolution is appropriate for your data:
+#' months, quarters, years, etc. As long as these are used consistently,
+#' estimation will work, and take on the unit meaning you used for input.
+#'
+#' @return a canonical populations object, mirroring the input `populations`,
 #' with the following updates:
-#' - "obs_c_id", the observation id the row concerns, canonicalized to match
+#' - `obs_c_id`, the observation id the row concerns, canonicalized to match
 #'   the canonical observation ids
-#' - "loc_c_id", the location id the row concerns, canonicalized to match
+#' - `loc_c_id`, the location id the row concerns, canonicalized to match
+#' - reordered to `obs_c_id` order
 #'
 #' @autoglobal
 #' @export
@@ -296,10 +306,10 @@ canonicalize_populations <- function(
   checked_subset(populations, "dose", c(1L, 2L))
 
   # check that populations id correspond to all observation ids
-  checked_set_equivalence(populations, "obs_id", observations$id)
+  checked_set_equivalence(populations, "obs_id", observations$obs_id)
 
   # check that populations locations are all *within* locations ids;
-  checked_subset(populations, "loc_id", locations$id)
+  checked_subset(populations, "loc_id", locations$loc_id)
 
   # check cohort and age if max values provided
   checked_maxed_pos_integer(populations, "cohort", max_cohort)
@@ -320,8 +330,8 @@ canonicalize_populations <- function(
   }
 
   # introduce canonical id
-  populations[observations, on = .(obs_id = id), obs_c_id := c_id]
-  populations[locations, on = .(loc_id = id), loc_c_id := c_id]
+  populations[observations, on = .(obs_id), obs_c_id := obs_c_id]
+  populations[locations, on = .(loc_id), loc_c_id := loc_c_id]
 
   setkey(populations, obs_c_id, loc_c_id, cohort, age, dose)
 

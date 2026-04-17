@@ -16,30 +16,32 @@ imuGAP(
 \item{observations}{a \verb{[data.frame()]}, the observed data, with at least
 three columns:
 \itemize{
-\item an "id" column; any type, as long as unique, non-NA
-\item a "positive" column; non-negative integers, the observed number of
+\item an \code{obs_id} column; any type, as long as unique, non-NA
+\item a `positive`` column; non-negative integers, the observed number of
 vaccinated individuals
-\item a "sample_n" column; positive integers, the number of individuals
+\item a \code{sample_n} column; positive integers, the number of individuals
 sampled, must be greater than or equal to "positive"
-\item optionally, a "censored" column; numeric, NA (uncensored) or 1
-(right-censored);
+\item optionally, a \code{censored} column; numeric, NA (uncensored) or 1
+(right-censored); if not present, will be assumed NA
 }}
 
 \item{populations}{a \verb{[data.frame()]}, the the observation meta data, with
 columns
 \itemize{
-\item "obs_id", the observation id the row concerns
-\item "loc_id", the location id the row concerns
-\item "dose", which dose the row concerns
-\item "cohort", the cohort at that location the row concerns
-\item "age", the age of that cohort the row concerns
-\item "weight", the relative contribution of this row to an observation
+\item \code{obs_id}, any type; the observation the row concerns (i.e. id shared with
+an observations data object)
+\item `loc_id``, any type; the location the row concerns (i.e. id shared with a
+locations data object)
+\item \code{dose}, a non-zero, positive integer (1, 2, ...); which dose the row concerns
+\item \code{cohort}, a positive integer; the cohort at that location the row concerns
+\item \code{age}, a positive integer; the age of that cohort the row concerns
+\item \code{weight}, a numeric, (0, 1); the relative contribution of this row to an observation
 Note that multiple rows may concern the same observation, meaning that the
 populations from different cohorts, locations, and ages may be pooled in an
 observation
 }}
 
-\item{locations}{a \verb{[data.frame()]}, with columns \code{id} and \code{parent_id}, of
+\item{locations}{a \verb{[data.frame()]}, with columns \code{loc_id} and \code{parent_id}, of
 the same type. See Details for restrictions.}
 
 \item{imugap_opts}{options for the \code{imuGAP} model}

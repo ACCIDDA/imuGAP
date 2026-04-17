@@ -10,22 +10,22 @@ canonicalize_observations(observations)
 \item{observations}{a \verb{[data.frame()]}, the observed data, with at least
 three columns:
 \itemize{
-\item an "id" column; any type, as long as unique, non-NA
-\item a "positive" column; non-negative integers, the observed number of
+\item an \code{obs_id} column; any type, as long as unique, non-NA
+\item a `positive`` column; non-negative integers, the observed number of
 vaccinated individuals
-\item a "sample_n" column; positive integers, the number of individuals
+\item a \code{sample_n} column; positive integers, the number of individuals
 sampled, must be greater than or equal to "positive"
-\item optionally, a "censored" column; numeric, NA (uncensored) or 1
-(right-censored);
+\item optionally, a \code{censored} column; numeric, NA (uncensored) or 1
+(right-censored); if not present, will be assumed NA
 }}
 }
 \value{
 a canonical observation object, a \verb{[data.table()]} with:
 \itemize{
-\item an "c_id" column, an integer sequence from 1; the order observations
+\item an \code{obs_c_id} column, an integer sequence from 1; the order observations
 will be passed to estimation
-\item the original "id" column, possibly reordered
-\item "positive" and "sample_n" columns, possibly reordered
+\item the original \code{obs_id} column, possibly reordered
+\item \code{positive} and \code{sample_n} columns, possibly reordered
 \item a "censored" column; all NA, if not present in original \code{observations}
 argument
 }
@@ -43,15 +43,15 @@ resolution can vary across rows. The \verb{[imuGAP()]} sampler uses information
 about the resolutions to automatically figure out how to compare the latent
 process model to those different observations.
 
-For the optional "censored" column: the model supports vaccination status
+For the optional \code{censored} column: the model supports vaccination status
 indicators which are vaccine specific as well as those which represent an
 individual having all of a set of vaccines (including the target vaccine).
 The specific coverage for the target vaccine is right-censored in the latter
-case: the all-coverage is the minimum coverage for the target.
+case: full-set-coverage is the minimum coverage for the target.
 
-When at least some of the data are censored, you must supply the "censored"
+When at least some of the data are censored, you must supply the \code{censored}
 column to correctly estimate coverage. Mark any uncensored observations with
-NA, and any right-censored observations with 1. Note that "0" is \emph{not} a
+NA, and any right-censored observations with $1$. Note that $0$ is \emph{not} a
 valid value at this time; we are preserving that for potential future support
 of left-censoring.
 }

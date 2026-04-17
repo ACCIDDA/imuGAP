@@ -7,17 +7,19 @@
 canonicalize_locations(locations)
 }
 \arguments{
-\item{locations}{a \verb{[data.frame()]}, with columns \code{id} and \code{parent_id}, of
+\item{locations}{a \verb{[data.frame()]}, with columns \code{loc_id} and \code{parent_id}, of
 the same type. See Details for restrictions.}
 }
 \value{
 a \code{data.table}, with:
 \itemize{
-\item "id", "parent_id" columns as originally supplied, possibly reordered
-\item "c_id", "cp_id" columns, canonicalized id/parent_id columns,
+\item \code{loc_id}, \code{parent_id} columns as originally supplied, possibly reordered
+\item \code{loc_c_id}, \code{loc_cp_id} columns, canonicalized id/parent_id columns,
 representing the order that will be used in the sampler
-\item "layer" column, an integer from 1 (root), 2 (root children),
-3 (grandchildren), etc
+\item \code{layer} column, an integer from 1 (root), 2 (root children),
+3 (grandchildren), &c
+\item \code{layer_bound} column, an integer starting from 1 by layer. This provides
+index slice information used in the stan model.
 }
 }
 \description{
@@ -32,12 +34,12 @@ A valid structure has:
 \itemize{
 \item a unique root,
 \item no cycles, and
-\item no duplicate \code{id}s
+\item no duplicate \code{loc_id}s
 }
 
-Users may explicitly identify the root \code{id} by providing a row with
+Users may explicitly identify the root \code{loc_id} by providing a row with
 \code{parent_id} equal to \code{NA}. Otherwise, any \code{parent_id} that does not appear
-in \code{id} is treated as the root.
+in \code{loc_id} is treated as the root.
 
 If the input is valid, this method will create the canonicalized version.
 In that version, all ids run from 1:N, where N is the number of distinct
