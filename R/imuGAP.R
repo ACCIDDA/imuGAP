@@ -190,7 +190,9 @@ canonicalize_observations <- function(observations) {
       "id column may not contain NA; found ",
       observations[is.na(id), .N],
       " NA values at rows: ",
-      toString(observations[, which(is.na(id))]), width = 80)
+      toString(observations[, which(is.na(id))]),
+      width = 80
+    )
   }
 
   if (length(dupes <- observations[, which(duplicated(id))])) {
@@ -266,6 +268,8 @@ canonicalize_observations <- function(observations) {
 #' - "obs_c_id", the observation id the row concerns, canonicalized to match
 #'   the canonical observation ids
 #' - "loc_c_id", the location id the row concerns, canonicalized to match
+#'
+#' @autoglobal
 #' @export
 canonicalize_populations <- function(
   populations,
@@ -391,7 +395,7 @@ imugap_options <- function(
 #'
 #' @autoglobal
 #' @export
-imuGAP <- function(
+imuGAP <- function( # nolint
   observations,
   populations,
   locations,

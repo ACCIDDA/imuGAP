@@ -13,6 +13,16 @@ utils::globalVariables(c(
   "sample_n", # <canonicalize_observations>
   "censored", # <canonicalize_observations>
   "c_id", # <canonicalize_observations>
+  "weight", # <canonicalize_populations>
+  "obs_id", # <canonicalize_populations>
+  "id", # <canonicalize_populations>
+  "obs_c_id", # <canonicalize_populations>
+  "c_id", # <canonicalize_populations>
+  "loc_c_id", # <canonicalize_populations>
+  "cohort", # <canonicalize_populations>
+  "age", # <canonicalize_populations>
+  "dose", # <canonicalize_populations>
+  "range_start", # <canonicalize_populations>
   "layer", # <imuGAP>
   "N", # <imuGAP>
   "cohort", # <imuGAP>

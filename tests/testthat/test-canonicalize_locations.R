@@ -64,7 +64,11 @@ test_that("yields data.table with ordered layer, parent_id, and id columns", {
   locs <- canonicalize_locations(ref)
 
   expect_true(data.table::is.data.table(locs))
-  expect_equal(names(locs), c(names(ref), "layer", "c_id", "cp_id", "layer_bound"))
+  expect_equal(
+    names(locs), c(
+      names(ref), "layer", "c_id", "cp_id", "layer_bound"
+    )
+  )
   expect_equal(locs$layer, c(1L, 2L, 2L, 3L, 3L))
   expect_equal(locs$id, c("a", "b", "c", "e", "d"))
   expect_equal(locs$c_id, sort(locs$c_id, na.last = FALSE))
