@@ -63,24 +63,26 @@ format to feed the immunity estimation model.</p>
 
 <dl><dt id="arg-observations">observations<a class="anchor" aria-label="anchor" href="#arg-observations"></a></dt>
 <dd><p>a <code>[data.frame()]</code>, the observed data, with at least
-three columns:</p><ul><li><p>an "id" column; any type, as long as unique, non-NA</p></li>
-<li><p>a "positive" column; non-negative integers, the observed number of
+three columns:</p><ul><li><p>an <code>obs_id</code> column; any type, as long as unique, non-NA</p></li>
+<li><p>a `positive“ column; non-negative integers, the observed number of
 vaccinated individuals</p></li>
-<li><p>a "sample_n" column; positive integers, the number of individuals
+<li><p>a <code>sample_n</code> column; positive integers, the number of individuals
 sampled, must be greater than or equal to "positive"</p></li>
-<li><p>optionally, a "censored" column; numeric, NA (uncensored) or 1
-(right-censored);</p></li>
+<li><p>optionally, a <code>censored</code> column; numeric, NA (uncensored) or 1
+(right-censored); if not present, will be assumed NA</p></li>
 </ul></dd>
 
 
 <dt id="arg-populations">populations<a class="anchor" aria-label="anchor" href="#arg-populations"></a></dt>
 <dd><p>a <code>[data.frame()]</code>, the the observation meta data, with
-columns</p><ul><li><p>"obs_id", the observation id the row concerns</p></li>
-<li><p>"loc_id", the location id the row concerns</p></li>
-<li><p>"dose", which dose the row concerns</p></li>
-<li><p>"cohort", the cohort at that location the row concerns</p></li>
-<li><p>"age", the age of that cohort the row concerns</p></li>
-<li><p>"weight", the relative contribution of this row to an observation
+columns</p><ul><li><p><code>obs_id</code>, any type; the observation the row concerns (i.e. id shared with
+an observations data object)</p></li>
+<li><p>`loc_id“, any type; the location the row concerns (i.e. id shared with a
+locations data object)</p></li>
+<li><p><code>dose</code>, a non-zero, positive integer (1, 2, ...); which dose the row concerns</p></li>
+<li><p><code>cohort</code>, a positive integer; the cohort at that location the row concerns</p></li>
+<li><p><code>age</code>, a positive integer; the age of that cohort the row concerns</p></li>
+<li><p><code>weight</code>, a numeric, (0, 1); the relative contribution of this row to an observation
 Note that multiple rows may concern the same observation, meaning that the
 populations from different cohorts, locations, and ages may be pooled in an
 observation</p></li>
@@ -88,7 +90,7 @@ observation</p></li>
 
 
 <dt id="arg-locations">locations<a class="anchor" aria-label="anchor" href="#arg-locations"></a></dt>
-<dd><p>a <code>[data.frame()]</code>, with columns <code>id</code> and <code>parent_id</code>, of
+<dd><p>a <code>[data.frame()]</code>, with columns <code>loc_id</code> and <code>parent_id</code>, of
 the same type. See Details for restrictions.</p></dd>
 
 

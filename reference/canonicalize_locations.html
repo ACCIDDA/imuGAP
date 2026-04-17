@@ -53,17 +53,19 @@
 
 
 <dl><dt id="arg-locations">locations<a class="anchor" aria-label="anchor" href="#arg-locations"></a></dt>
-<dd><p>a <code>[data.frame()]</code>, with columns <code>id</code> and <code>parent_id</code>, of
+<dd><p>a <code>[data.frame()]</code>, with columns <code>loc_id</code> and <code>parent_id</code>, of
 the same type. See Details for restrictions.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>a <code>data.table</code>, with:</p><ul><li><p>"id", "parent_id" columns as originally supplied, possibly reordered</p></li>
-<li><p>"c_id", "cp_id" columns, canonicalized id/parent_id columns,
+    <p>a <code>data.table</code>, with:</p><ul><li><p><code>loc_id</code>, <code>parent_id</code> columns as originally supplied, possibly reordered</p></li>
+<li><p><code>loc_c_id</code>, <code>loc_cp_id</code> columns, canonicalized id/parent_id columns,
 representing the order that will be used in the sampler</p></li>
-<li><p>"layer" column, an integer from 1 (root), 2 (root children),
-3 (grandchildren), etc</p></li>
+<li><p><code>layer</code> column, an integer from 1 (root), 2 (root children),
+3 (grandchildren), &amp;c</p></li>
+<li><p><code>layer_bound</code> column, an integer starting from 1 by layer. This provides
+index slice information used in the stan model.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -72,10 +74,10 @@ and must be provided that structure. This method checks location structure
 validity, and returns a canonical version including the layer membership.</p>
 <p>A valid structure has:</p><ul><li><p>a unique root,</p></li>
 <li><p>no cycles, and</p></li>
-<li><p>no duplicate <code>id</code>s</p></li>
-</ul><p>Users may explicitly identify the root <code>id</code> by providing a row with
+<li><p>no duplicate <code>loc_id</code>s</p></li>
+</ul><p>Users may explicitly identify the root <code>loc_id</code> by providing a row with
 <code>parent_id</code> equal to <code>NA</code>. Otherwise, any <code>parent_id</code> that does not appear
-in <code>id</code> is treated as the root.</p>
+in <code>loc_id</code> is treated as the root.</p>
 <p>If the input is valid, this method will create the canonicalized version.
 In that version, all ids run from 1:N, where N is the number of distinct
 ids. That order is determined by layer order, then position of parent

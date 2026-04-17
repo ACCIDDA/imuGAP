@@ -61,12 +61,14 @@
 
 <dl><dt id="arg-populations">populations<a class="anchor" aria-label="anchor" href="#arg-populations"></a></dt>
 <dd><p>a <code>[data.frame()]</code>, the the observation meta data, with
-columns</p><ul><li><p>"obs_id", the observation id the row concerns</p></li>
-<li><p>"loc_id", the location id the row concerns</p></li>
-<li><p>"dose", which dose the row concerns</p></li>
-<li><p>"cohort", the cohort at that location the row concerns</p></li>
-<li><p>"age", the age of that cohort the row concerns</p></li>
-<li><p>"weight", the relative contribution of this row to an observation
+columns</p><ul><li><p><code>obs_id</code>, any type; the observation the row concerns (i.e. id shared with
+an observations data object)</p></li>
+<li><p>`loc_id“, any type; the location the row concerns (i.e. id shared with a
+locations data object)</p></li>
+<li><p><code>dose</code>, a non-zero, positive integer (1, 2, ...); which dose the row concerns</p></li>
+<li><p><code>cohort</code>, a positive integer; the cohort at that location the row concerns</p></li>
+<li><p><code>age</code>, a positive integer; the age of that cohort the row concerns</p></li>
+<li><p><code>weight</code>, a numeric, (0, 1); the relative contribution of this row to an observation
 Note that multiple rows may concern the same observation, meaning that the
 populations from different cohorts, locations, and ages may be pooled in an
 observation</p></li>
@@ -75,18 +77,18 @@ observation</p></li>
 
 <dt id="arg-observations">observations<a class="anchor" aria-label="anchor" href="#arg-observations"></a></dt>
 <dd><p>a <code>[data.frame()]</code>, the observed data, with at least
-three columns:</p><ul><li><p>an "id" column; any type, as long as unique, non-NA</p></li>
-<li><p>a "positive" column; non-negative integers, the observed number of
+three columns:</p><ul><li><p>an <code>obs_id</code> column; any type, as long as unique, non-NA</p></li>
+<li><p>a `positive“ column; non-negative integers, the observed number of
 vaccinated individuals</p></li>
-<li><p>a "sample_n" column; positive integers, the number of individuals
+<li><p>a <code>sample_n</code> column; positive integers, the number of individuals
 sampled, must be greater than or equal to "positive"</p></li>
-<li><p>optionally, a "censored" column; numeric, NA (uncensored) or 1
-(right-censored);</p></li>
+<li><p>optionally, a <code>censored</code> column; numeric, NA (uncensored) or 1
+(right-censored); if not present, will be assumed NA</p></li>
 </ul></dd>
 
 
 <dt id="arg-locations">locations<a class="anchor" aria-label="anchor" href="#arg-locations"></a></dt>
-<dd><p>a <code>[data.frame()]</code>, with columns <code>id</code> and <code>parent_id</code>, of
+<dd><p>a <code>[data.frame()]</code>, with columns <code>loc_id</code> and <code>parent_id</code>, of
 the same type. See Details for restrictions.</p></dd>
 
 
@@ -101,15 +103,20 @@ present?</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>a canonical populations object, mirroring the input "populations",
-with the following updates:</p><ul><li><p>"obs_c_id", the observation id the row concerns, canonicalized to match
+    <p>a canonical populations object, mirroring the input <code>populations</code>,
+with the following updates:</p><ul><li><p><code>obs_c_id</code>, the observation id the row concerns, canonicalized to match
 the canonical observation ids</p></li>
-<li><p>"loc_c_id", the location id the row concerns, canonicalized to match</p></li>
+<li><p><code>loc_c_id</code>, the location id the row concerns, canonicalized to match</p></li>
+<li><p>reordered to <code>obs_c_id</code> order</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>This method validates the meta-data associated with the observations, as well
-as converting that meta-data to use the canonical id format.</p>
+as converting that meta-data to use the canonical id formats.</p>
+<p>Regarding "cohorts" and "ages": these are counted from 1, by 1 "unit". You
+can imagine the units are whatever resolution is appropriate for your data:
+months, quarters, years, etc. As long as these are used consistently,
+estimation will work, and take on the unit meaning you used for input.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

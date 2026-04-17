@@ -54,22 +54,22 @@
 
 <dl><dt id="arg-observations">observations<a class="anchor" aria-label="anchor" href="#arg-observations"></a></dt>
 <dd><p>a <code>[data.frame()]</code>, the observed data, with at least
-three columns:</p><ul><li><p>an "id" column; any type, as long as unique, non-NA</p></li>
-<li><p>a "positive" column; non-negative integers, the observed number of
+three columns:</p><ul><li><p>an <code>obs_id</code> column; any type, as long as unique, non-NA</p></li>
+<li><p>a `positive“ column; non-negative integers, the observed number of
 vaccinated individuals</p></li>
-<li><p>a "sample_n" column; positive integers, the number of individuals
+<li><p>a <code>sample_n</code> column; positive integers, the number of individuals
 sampled, must be greater than or equal to "positive"</p></li>
-<li><p>optionally, a "censored" column; numeric, NA (uncensored) or 1
-(right-censored);</p></li>
+<li><p>optionally, a <code>censored</code> column; numeric, NA (uncensored) or 1
+(right-censored); if not present, will be assumed NA</p></li>
 </ul></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>a canonical observation object, a <code>[data.table()]</code> with:</p><ul><li><p>an "c_id" column, an integer sequence from 1; the order observations
+    <p>a canonical observation object, a <code>[data.table()]</code> with:</p><ul><li><p>an <code>obs_c_id</code> column, an integer sequence from 1; the order observations
 will be passed to estimation</p></li>
-<li><p>the original "id" column, possibly reordered</p></li>
-<li><p>"positive" and "sample_n" columns, possibly reordered</p></li>
+<li><p>the original <code>obs_id</code> column, possibly reordered</p></li>
+<li><p><code>positive</code> and <code>sample_n</code> columns, possibly reordered</p></li>
 <li><p>a "censored" column; all NA, if not present in original <code>observations</code>
 argument</p></li>
 </ul></div>
@@ -83,14 +83,14 @@ each observation should generally be the best available resolution data. That
 resolution can vary across rows. The <code>[imuGAP()]</code> sampler uses information
 about the resolutions to automatically figure out how to compare the latent
 process model to those different observations.</p>
-<p>For the optional "censored" column: the model supports vaccination status
+<p>For the optional <code>censored</code> column: the model supports vaccination status
 indicators which are vaccine specific as well as those which represent an
 individual having all of a set of vaccines (including the target vaccine).
 The specific coverage for the target vaccine is right-censored in the latter
-case: the all-coverage is the minimum coverage for the target.</p>
-<p>When at least some of the data are censored, you must supply the "censored"
+case: full-set-coverage is the minimum coverage for the target.</p>
+<p>When at least some of the data are censored, you must supply the <code>censored</code>
 column to correctly estimate coverage. Mark any uncensored observations with
-NA, and any right-censored observations with 1. Note that "0" is <em>not</em> a
+NA, and any right-censored observations with $1$. Note that $0$ is <em>not</em> a
 valid value at this time; we are preserving that for potential future support
 of left-censoring.</p>
     </div>
