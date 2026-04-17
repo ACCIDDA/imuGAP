@@ -13,8 +13,8 @@ is_canonical <- function(dt, target_class) {
 
 #' @title Canonicalize Location Data
 #'
-#' @param locations a `[data.frame()]`, with columns `loc_id` and `parent_id`, of
-#'   the same type. See Details for restrictions.
+#' @param locations a `[data.frame()]`, with columns `loc_id` and `parent_id`,
+#'   of the same type. See Details for restrictions.
 #'
 #' @details The `[imuGAP()]` sampler works on a hierarchical model of locations,
 #'   and must be provided that structure. This method checks location structure
@@ -143,6 +143,7 @@ canonicalize_locations <- function(locations) {
 #'     sampled, must be greater than or equal to "positive"
 #'   - optionally, a `censored` column; numeric, NA (uncensored) or 1
 #'     (right-censored); if not present, will be assumed NA
+#' @param drop_extra a logical scalar; drop extraneous columns? (default: yes)
 #'
 #' @details The observations object documents observations used to fit the
 #' model. Conceptually, each row represents an observation of vaccination status
@@ -176,7 +177,7 @@ canonicalize_locations <- function(locations) {
 #' @export
 #' @importFrom data.table as.data.table setkey
 #' @autoglobal
-canonicalize_observations <- function(observations) {
+canonicalize_observations <- function(observations, drop_extra = TRUE) {
 
   # if already canonical, return
   if (is_canonical(observations, "observations")) {
@@ -239,6 +240,12 @@ canonicalize_observations <- function(observations) {
   setkey(observations, censored, obs_id)
   observations[, obs_c_id := seq_len(.N)]
 
+  if (drop_extra) {
+    observations <- observations[, .(
+      obs_c_id, positive, sample_n, censored, obs_id
+    )]
+  }
+
   return(mark_canonical(observations, "observations"))
 }
 
@@ -250,10 +257,11 @@ canonicalize_observations <- function(observations) {
 #'    an observations data object)
 #'  - `loc_id``, any type; the location the row concerns (i.e. id shared with a
 #'    locations data object)
-#'  - `dose`, a non-zero, positive integer (1, 2, ...); which dose the row concerns
-#'  - `cohort`, a positive integer; the cohort at that location the row concerns
-#'  - `age`, a positive integer; the age of that cohort the row concerns
-#'  - `weight`, a numeric, (0, 1); the relative contribution of this row to an observation
+#'  - `dose`, a non-zero, positive integer (1, 2, ...); what dose row concerns
+#'  - `cohort`, a positive integer; the cohort at the location row concerns
+#'  - `age`, a positive integer; the age of that cohort row concerns
+#'  - `weight`, a numeric, (0, 1); the relative contribution of this row to an
+#'    observation
 #'   Note that multiple rows may concern the same observation, meaning that the
 #'   populations from different cohorts, locations, and ages may be pooled in an
 #'   observation

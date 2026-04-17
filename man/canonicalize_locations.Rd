@@ -7,8 +7,8 @@
 canonicalize_locations(locations)
 }
 \arguments{
-\item{locations}{a \verb{[data.frame()]}, with columns \code{loc_id} and \code{parent_id}, of
-the same type. See Details for restrictions.}
+\item{locations}{a \verb{[data.frame()]}, with columns \code{loc_id} and \code{parent_id},
+of the same type. See Details for restrictions.}
 }
 \value{
 a \code{data.table}, with:

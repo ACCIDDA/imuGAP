@@ -32,17 +32,18 @@ columns
 an observations data object)
 \item `loc_id``, any type; the location the row concerns (i.e. id shared with a
 locations data object)
-\item \code{dose}, a non-zero, positive integer (1, 2, ...); which dose the row concerns
-\item \code{cohort}, a positive integer; the cohort at that location the row concerns
-\item \code{age}, a positive integer; the age of that cohort the row concerns
-\item \code{weight}, a numeric, (0, 1); the relative contribution of this row to an observation
+\item \code{dose}, a non-zero, positive integer (1, 2, ...); what dose row concerns
+\item \code{cohort}, a positive integer; the cohort at the location row concerns
+\item \code{age}, a positive integer; the age of that cohort row concerns
+\item \code{weight}, a numeric, (0, 1); the relative contribution of this row to an
+observation
 Note that multiple rows may concern the same observation, meaning that the
 populations from different cohorts, locations, and ages may be pooled in an
 observation
 }}
 
-\item{locations}{a \verb{[data.frame()]}, with columns \code{loc_id} and \code{parent_id}, of
-the same type. See Details for restrictions.}
+\item{locations}{a \verb{[data.frame()]}, with columns \code{loc_id} and \code{parent_id},
+of the same type. See Details for restrictions.}
 
 \item{imugap_opts}{options for the \code{imuGAP} model}
 

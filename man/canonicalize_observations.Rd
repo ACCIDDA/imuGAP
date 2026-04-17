@@ -4,7 +4,7 @@
 \alias{canonicalize_observations}
 \title{Canonicalize Observation Data}
 \usage{
-canonicalize_observations(observations)
+canonicalize_observations(observations, drop_extra = TRUE)
 }
 \arguments{
 \item{observations}{a \verb{[data.frame()]}, the observed data, with at least
@@ -18,6 +18,8 @@ sampled, must be greater than or equal to "positive"
 \item optionally, a \code{censored} column; numeric, NA (uncensored) or 1
 (right-censored); if not present, will be assumed NA
 }}
+
+\item{drop_extra}{a logical scalar; drop extraneous columns? (default: yes)}
 }
 \value{
 a canonical observation object, a \verb{[data.table()]} with:

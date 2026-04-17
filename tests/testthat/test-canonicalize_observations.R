@@ -12,6 +12,23 @@ test_that("works for obvious case", {
 
 })
 
+test_that("keeps or discards extra cols", {
+  # Test without id column
+  obs <- data.frame(
+    obs_id = c("a", "b", "c"),
+    positive = c(5, 10, 15),
+    sample_n = c(10, 20, 30),
+    extra = rep(TRUE, 3)
+  )
+
+  expect_silent(obs_res <- canonicalize_observations(obs))
+  expect_false("extra" %in% names(obs_res))
+
+  expect_silent(obs_res2 <- canonicalize_observations(obs, drop_extra = FALSE))
+  expect_true("extra" %in% names(obs_res2))
+
+})
+
 test_that("works with censoring", {
 
   obs <- data.frame(

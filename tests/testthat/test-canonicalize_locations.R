@@ -32,7 +32,9 @@ test_that("can enforce id and parent_id columns", {
 
 test_that("can enforce unique ids", {
   expect_error(
-    canonicalize_locations(data.frame(loc_id = c(1, 1, 2), parent_id = c(NA, 1, 1)))
+    canonicalize_locations(data.frame(
+      loc_id = c(1, 1, 2), parent_id = c(NA, 1, 1)
+    ))
   )
 })
 
@@ -49,7 +51,9 @@ test_that("can enforce unique root", {
 
 test_that("can enforce no cycles", {
   expect_error(
-    canonicalize_locations(data.frame(loc_id = 1:4, parent_id = c(NA, 1, 4, 3))),
+    canonicalize_locations(data.frame(
+      loc_id = 1:4, parent_id = c(NA, 1, 4, 3)
+    )),
     "cycle"
   )
 })
