@@ -25,5 +25,8 @@
 - [`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md)
   : imuGAP Model Options
 
+- [`install_cli()`](https://accidda.github.io/imuGAP/reference/install_cli.md)
+  : Install imuGAP CLI to PATH
+
 - [`stan_options()`](https://accidda.github.io/imuGAP/reference/stan_options.md)
   : Stan Sampler Options
