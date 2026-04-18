@@ -21,7 +21,7 @@ The model organizes places into a hierarchy, for example a state which contains 
 remotes::install_github("ACCIDDA/imuGAP")
 ```
 
-Requires R >= 3.4.0 and a C++ toolchain (for Stan model compilation).
+Requires R >= 4.1.0 and a C++ toolchain (for Stan model compilation).
 
 ## CLI Usage
 
@@ -32,6 +32,8 @@ imuGAP::install_cli()
 ```
 
 This creates a symlink at `~/.local/bin/imugap`. Make sure `~/.local/bin` is on your `PATH`.
+
+You only need to run `install_cli()` once after installing or updating the package; it refreshes the symlink so it points at the current install.
 
 ### Commands
 
@@ -54,9 +56,9 @@ imugap <input_dir> [output_dir]
 
 | File | Columns | Description |
 |------|---------|-------------|
-| `observations` | `positive`, `sample_n` | School-level vaccination counts. Optional `id` column (1:N). |
-| `obs_populations` | `obs_id`, `location`, `cohort`, `age`, `dose`, `weight` | Observation metadata. Weights must sum to 1 per `obs_id`. `dose` must include both 1 and 2. |
-| `locations` | `id`, `parent_id` | Location hierarchy (state > county > school). Root has `parent_id = NA`. |
+| `observations` | `obs_id`, `positive`, `sample_n` | School-level vaccination counts. |
+| `obs_populations` | `obs_id`, `loc_id`, `cohort`, `age`, `dose`, `weight` | Observation metadata. Weights must sum to 1 per `obs_id`. `dose` must include both 1 and 2. |
+| `locations` | `loc_id`, `parent_id` | Location hierarchy (state > county > school). Root has `parent_id = NA`. |
 
 ### Exit Codes
 

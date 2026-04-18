@@ -77,11 +77,9 @@ main <- function(args = commandArgs(trailingOnly = TRUE)) {
   }
 
   if (help_flag) {
-    dry_run <- TRUE
     input_dir <- args[2]
     output_dir <- input_dir
   } else {
-    dry_run <- FALSE
     input_dir <- args[1]
     output_dir <- if (length(args) >= 2) args[2] else input_dir
   }
@@ -125,7 +123,7 @@ main <- function(args = commandArgs(trailingOnly = TRUE)) {
   }
   message("[\u2713] Schema validated.")
 
-  if (dry_run) {
+  if (help_flag) {
     message("[\u2713] Validation passed.")
     return(0)
   }
