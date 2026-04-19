@@ -8,6 +8,14 @@
 - **Claire Perrin Smith**. Author.
   [](https://orcid.org/0000-0003-1069-9460)
 
+- **Kelly Zhen**. Contributor.
+
+- **Weston Voglesonger**. Contributor.
+
+- **Joshua Chen**. Contributor.
+
+- **Minjae Kung**. Contributor.
+
 ## Citation
 
 Source:
