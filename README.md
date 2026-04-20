@@ -57,7 +57,7 @@ imugap <input_dir> [output_dir]
 | File | Columns | Description |
 |------|---------|-------------|
 | `observations` | `obs_id`, `positive`, `sample_n` | School-level vaccination counts. |
-| `obs_populations` | `obs_id`, `loc_id`, `cohort`, `age`, `dose`, `weight` | Observation metadata. Weights must sum to 1 per `obs_id`. `dose` must include both 1 and 2. |
+| `populations` | `obs_id`, `loc_id`, `cohort`, `age`, `dose`, `weight` | Observation metadata. Weights must sum to 1 per `obs_id`. `dose` must include both 1 and 2. |
 | `locations` | `loc_id`, `parent_id` | Location hierarchy (state > county > school). Root has `parent_id = NA`. |
 
 ### Exit Codes
