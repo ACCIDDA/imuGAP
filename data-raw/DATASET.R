@@ -2,10 +2,8 @@
 ## Assumes imuGAP is in the same parent directory as nc_measles
 
 library(tidyverse)
-library(rstan)
 library(splines)
 library(data.table)
-library(loo)
 library(EnvStats)
 
 res_dt <- readRDS("../nc_measles/output/NC/cleaned_data.rds")
@@ -33,11 +31,8 @@ cov <- matrix(nrow = n_yr, ncol = 2)
 cov[1, ] <- 0
 
 for (i in 2:n_yr) {
-  increment <- c(
-    (1 - cov[i - 1, 1]) * (1 - exp(-lambda1 * doses[i, 1])),
-    ((cov[i, 1] - cov[i - 1, 2]) * (1 - exp(-lambda2 * doses[i, 2])))
-  )
-  cov[i, ] <-  cov[i - 1, ] + increment
+  cov[i,1] <- cov[i-1, 1] + (1-cov[i-1, 1])*(1-exp(-lambda1*doses[i,1]))
+  cov[i,2] <- cov[i-1, 2] + ((cov[i,1]-cov[i-1,2])*(1-exp(-lambda2*doses[i,2])))
 }
 
 # Pick 3 contiguous NC counties (Haywood, Jackson, Transylvania)
@@ -116,6 +111,14 @@ for (s in seq_len(sum(sch_per_cnty$n_sch))) {
 }
 kg_sim_full <- bind_rows(kg_sim_full)
 
+# Randomly select 10% of kindergarten observations to treat as censored
+cens <- sample(1:nrow(kg_sim_full),
+               round(nrow(kg_sim_full)*0.15),
+               replace = FALSE)
+
+kg_sim_full$censored <- NA
+kg_sim_full$censored[cens] <- 1
+
 # Simulate school vax view
 annual_tots <- kg_sim_full %>%
   group_by(year) %>%
@@ -132,7 +135,7 @@ sim_school <- data.frame(
   )
 )
 
-# Bind vax view simulation together
+  # Bind vax view simulation together
 vv_sim_full <- bind_rows(sim_child, sim_school, sim_teen)
 
 # Subset data (for now full data)
@@ -174,14 +177,16 @@ school_names <- c( # theme = native birds
   "Cormorant Elementary"
 )
 
-kg_sim$county <- county_names[kg_sim$enc_unit_id]
+kg_sim$county <- county_names[kg_sim$enc_unit_id - 1]
 kg_sim$school <- school_names[kg_sim$unit_id - 4]
 
 kg_sim <- kg_sim %>%
-  select(school, county, year, enc_unit_id, unit_id, y_obs, y_smp)
+  select(loc_id = school, parent_id = county, year, enc_unit_id,
+         unit_id, y_obs, y_smp, censored)
 
 vv_sim <- vv_sim %>%
-  select(vaxview_type = pop, year = Year, age = Age, y_obs = X, y_smp = N)
+  select(vaxview_type = pop, year = Year, age = Age, y_obs = X, y_smp = N) %>%
+  mutate(loc_id = "State")
 
 # Put years in calendar terms
 kg_sim$year <- kg_sim$year + 1995
@@ -230,23 +235,26 @@ observations_sim <- observations_sim %>%
          by_min = year - ly_max,
          cohort_min = by_min - min(by_min) +  1,
          cohort_max = by_max - min(by_min) +  1) %>%
-  dplyr::select(-by_min, -by_max)
+  dplyr::select(-by_min, -by_max) %>%
+  dplyr::rename(positive = "y_obs", sample_n = "y_smp")
 
-observations_sim$id <- seq_len(nrow(observations_sim))
+observations_sim$obs_id <- seq_len(nrow(observations_sim))
 
-# Create obs_populations
-obs_populations_sim <- data.frame(obs_id = numeric(),
-                                  location = numeric(),
-                                  cohort = numeric(),
-                                  age = numeric(),
-                                  dose = numeric(),
-                                  weight = numeric())
-for (i in seq_len(nrow(obs_sim))) {
-  obs_populations_sim <- bind_rows(
-    obs_populations_sim,
+observations_sim <- as.data.table(observations_sim)
+
+# Create populations
+populations_sim <- data.frame(obs_id = numeric(),
+                              loc_id = character(),
+                              cohort = numeric(),
+                              age = numeric(),
+                              dose = numeric(),
+                              weight = numeric())
+for (i in seq_len(nrow(observations_sim))) {
+  populations_sim <- bind_rows(
+    populations_sim,
     data.frame(
-      obs_id = observations_sim$id[i],
-      location = observations_sim$unit_id[i],
+      obs_id = observations_sim$obs_id[i],
+      loc_id = observations_sim$loc_id[i],
       # remember cohort and ly are inverse
       cohort = observations_sim$cohort_max[i]:observations_sim$cohort_min[i],
       age = observations_sim$ly_min[i]:observations_sim$ly_max[i],
@@ -256,13 +264,27 @@ for (i in seq_len(nrow(obs_sim))) {
   )
 }
 
+populations_sim <- as.data.table(populations_sim)
+
 # Create locations mapping
-locations_sim <- data.frame(id = 1:max(observations_sim$unit_id)) %>%
-  left_join(unique(
-    observations_sim %>% dplyr::select(id = unit_id, parent_id = enc_unit_id)
-  )) %>%
-  mutate(parent_id = ifelse(id %in% 2:4, 1, parent_id))
+locations_sim <- bind_rows(
+  # State
+  data.frame(loc_id = "State",
+             parent_id = NA),
+  # Counties
+  data.frame(loc_id = county_names,
+             parent_id = "State"),
+  #Schools
+  unique(
+    observations_sim %>%
+      filter(loc_id != "State") %>%
+      dplyr::select(loc_id,
+                    parent_id)
+  )
+)
+
+locations_sim <- as.data.table(locations_sim)
 
 usethis::use_data(observations_sim, overwrite = TRUE)
-usethis::use_data(obs_populations_sim, overwrite = TRUE)
+usethis::use_data(populations_sim, overwrite = TRUE)
 usethis::use_data(locations_sim, overwrite = TRUE)

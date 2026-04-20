@@ -12,7 +12,7 @@ tarfile <- tail(.args, 1)
 # load the example data from the package
 locs <- canonicalize_locations(locations_sim)
 obs <- canonicalize_observations(observations_sim)
-pop <- canonicalize_populations(obs_populations_sim, obs, locs)
+pop <- canonicalize_populations(populations_sim, obs, locs)
 
 res_stan <- imuGAP(
   obs, pop, locs,
@@ -34,12 +34,12 @@ state_series[, cohort := as.integer(gsub("V", "", cohort))]
 
 d1_dt <- pop[loc_c_id == 1 & dose == 1][
   obs,
-  on = .(obs_c_id == c_id),
+  on = .(obs_c_id),
   nomatch = 0
 ]
 d2_dt <- pop[loc_c_id == 1 & dose == 2][
   obs,
-  on = .(obs_c_id == c_id),
+  on = .(obs_c_id),
   nomatch = 0
 ]
 
