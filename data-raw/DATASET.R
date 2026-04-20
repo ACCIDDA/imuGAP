@@ -31,20 +31,22 @@ cov <- matrix(nrow = n_yr, ncol = 2)
 cov[1, ] <- 0
 
 for (i in 2:n_yr) {
-  cov[i,1] <- cov[i-1, 1] + (1-cov[i-1, 1])*(1-exp(-lambda1*doses[i,1]))
-  cov[i,2] <- cov[i-1, 2] + ((cov[i,1]-cov[i-1,2])*(1-exp(-lambda2*doses[i,2])))
+  cov[i, 1] <- cov[i - 1, 1] +
+    (1 - cov[i - 1, 1]) * (1 - exp(-lambda1 * doses[i, 1]))
+  cov[i, 2] <- cov[i - 1, 2] +
+    ((cov[i, 1] - cov[i - 1, 2]) * (1 - exp(-lambda2 * doses[i, 2])))
 }
 
 # Pick 3 contiguous NC counties (Haywood, Jackson, Transylvania)
 counties <- c(44, 50, 88)
 
-sch_per_cnty <- res_dt %>%
-  filter(enc_unit_id %in% counties) %>%
-  group_by(enc_unit_id) %>%
-  mutate(enc_unit_id = cur_group_id()) %>%
-  ungroup() %>%
-  filter(year == 2024) %>%
-  group_by(enc_unit_id) %>%
+sch_per_cnty <- res_dt |>
+  filter(enc_unit_id %in% counties) |>
+  group_by(enc_unit_id) |>
+  mutate(enc_unit_id = cur_group_id()) |>
+  ungroup() |>
+  filter(year == 2024) |>
+  group_by(enc_unit_id) |>
   summarize(n_sch = n())
 
 cnty_offset <- rnorm(nrow(sch_per_cnty), 0, sigma_cnty)
@@ -112,16 +114,16 @@ for (s in seq_len(sum(sch_per_cnty$n_sch))) {
 kg_sim_full <- bind_rows(kg_sim_full)
 
 # Randomly select 10% of kindergarten observations to treat as censored
-cens <- sample(1:nrow(kg_sim_full),
-               round(nrow(kg_sim_full)*0.15),
+cens <- sample(seq_len(nrow(kg_sim_full)),
+               round(nrow(kg_sim_full) * 0.15),
                replace = FALSE)
 
 kg_sim_full$censored <- NA
 kg_sim_full$censored[cens] <- 1
 
 # Simulate school vax view
-annual_tots <- kg_sim_full %>%
-  group_by(year) %>%
+annual_tots <- kg_sim_full |>
+  group_by(year) |>
   summarize(tot_enr = sum(y_smp),
             tot_vax = sum(y_obs))
 
@@ -135,7 +137,7 @@ sim_school <- data.frame(
   )
 )
 
-  # Bind vax view simulation together
+# Bind vax view simulation together
 vv_sim_full <- bind_rows(sim_child, sim_school, sim_teen)
 
 # Subset data (for now full data)
@@ -143,9 +145,9 @@ vv_sim <- vv_sim_full
 kg_sim <- kg_sim_full
 
 # Canonicalize IDs
-kg_sim <- kg_sim %>%
-  group_by(unit_id) %>%
-  mutate(unit_id = cur_group_id() + 4) %>%
+kg_sim <- kg_sim |>
+  group_by(unit_id) |>
+  mutate(unit_id = cur_group_id() + 4) |>
   ungroup()
 
 # Assign county and school names
@@ -180,12 +182,12 @@ school_names <- c( # theme = native birds
 kg_sim$county <- county_names[kg_sim$enc_unit_id - 1]
 kg_sim$school <- school_names[kg_sim$unit_id - 4]
 
-kg_sim <- kg_sim %>%
+kg_sim <- kg_sim |>
   select(loc_id = school, parent_id = county, year, enc_unit_id,
          unit_id, y_obs, y_smp, censored)
 
-vv_sim <- vv_sim %>%
-  select(vaxview_type = pop, year = Year, age = Age, y_obs = X, y_smp = N) %>%
+vv_sim <- vv_sim |>
+  select(vaxview_type = pop, year = Year, age = Age, y_obs = X, y_smp = N) |>
   mutate(loc_id = "State")
 
 # Put years in calendar terms
@@ -227,15 +229,15 @@ for (i in seq_len(nrow(vv_sim))) {
 }
 
 observations_sim <- bind_rows(kg_sim,
-                              vv_sim %>% mutate(unit_id = 1))
+                              vv_sim |> mutate(unit_id = 1))
 
 # Now get normalized cohorts
-observations_sim <- observations_sim %>%
+observations_sim <- observations_sim |>
   mutate(by_max = year - ly_min,
          by_min = year - ly_max,
          cohort_min = by_min - min(by_min) +  1,
-         cohort_max = by_max - min(by_min) +  1) %>%
-  dplyr::select(-by_min, -by_max) %>%
+         cohort_max = by_max - min(by_min) +  1) |>
+  dplyr::select(-by_min, -by_max) |>
   dplyr::rename(positive = "y_obs", sample_n = "y_smp")
 
 observations_sim$obs_id <- seq_len(nrow(observations_sim))
@@ -276,8 +278,8 @@ locations_sim <- bind_rows(
              parent_id = "State"),
   #Schools
   unique(
-    observations_sim %>%
-      filter(loc_id != "State") %>%
+    observations_sim |>
+      filter(loc_id != "State") |>
       dplyr::select(loc_id,
                     parent_id)
   )
