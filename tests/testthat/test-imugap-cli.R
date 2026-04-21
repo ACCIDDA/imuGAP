@@ -85,7 +85,7 @@ test_that("check_all_inputs reports all missing files at once", {
 
   expect_error(
     check_all_inputs(dir),
-    "observations.*obs_populations.*locations"
+    "observations.*populations.*locations"
   )
 })
 
@@ -98,7 +98,7 @@ test_that("check_all_inputs reports only the actually missing files", {
   err <- tryCatch(check_all_inputs(dir), error = identity)
   expect_true(inherits(err, "error"))
   expect_false(grepl("observations", err$message))
-  expect_true(grepl("obs_populations", err$message))
+  expect_true(grepl("populations", err$message))
   expect_true(grepl("locations", err$message))
 })
 
@@ -108,7 +108,7 @@ test_that("check_all_inputs passes when all files present", {
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
 
   write.csv(data.frame(a = 1), file.path(dir, "observations.csv"), row.names = FALSE)
-  write.csv(data.frame(a = 1), file.path(dir, "obs_populations.csv"), row.names = FALSE)
+  write.csv(data.frame(a = 1), file.path(dir, "populations.csv"), row.names = FALSE)
   write.csv(data.frame(a = 1), file.path(dir, "locations.csv"), row.names = FALSE)
   expect_no_error(check_all_inputs(dir))
 })

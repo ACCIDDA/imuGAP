@@ -10,7 +10,7 @@ Usage: imugap <input_dir> [output_dir]
 
 input_dir must contain:
   observations.csv (or .rds)      — columns: obs_id, positive, sample_n
-  obs_populations.csv (or .rds)   — columns: obs_id, loc_id, cohort, age, dose, weight
+  populations.csv (or .rds)       — columns: obs_id, loc_id, cohort, age, dose, weight
   locations.csv (or .rds)         — columns: loc_id, parent_id (hierarchical; see package docs)
 
 Output: fit.rds (raw stanfit object for post-processing).
@@ -57,7 +57,7 @@ find_input_file <- function(dir, name) {
 
 # Reports all missing files at once rather than failing on the first
 check_all_inputs <- function(dir) {
-  required <- c("observations", "obs_populations", "locations")
+  required <- c("observations", "populations", "locations")
   missing <- required[!vapply(required, function(n) file_exists_any_ext(dir, n), logical(1))]
   if (length(missing) > 0) {
     stop("Missing input files in ", dir, "/: ",
@@ -99,7 +99,7 @@ main <- function(args = commandArgs(trailingOnly = TRUE)) {
   inputs <- tryCatch(
     list(
       obs     = find_input_file(input_dir, "observations"),
-      obs_pop = find_input_file(input_dir, "obs_populations"),
+      pops    = find_input_file(input_dir, "populations"),
       locs    = find_input_file(input_dir, "locations")
     ),
     error = identity
@@ -114,7 +114,7 @@ main <- function(args = commandArgs(trailingOnly = TRUE)) {
   canonical <- tryCatch({
     locs <- imuGAP::canonicalize_locations(inputs$locs)
     obs  <- imuGAP::canonicalize_observations(inputs$obs)
-    pops <- imuGAP::canonicalize_populations(inputs$obs_pop, obs, locs)
+    pops <- imuGAP::canonicalize_populations(inputs$pops, obs, locs)
     list(locs = locs, obs = obs, pops = pops)
   }, error = identity)
   if (inherits(canonical, "error")) {
