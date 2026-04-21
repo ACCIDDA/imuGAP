@@ -114,12 +114,8 @@ for (s in seq_len(sum(sch_per_cnty$n_sch))) {
 kg_sim_full <- bind_rows(kg_sim_full)
 
 # Randomly select 15% of kindergarten observations to treat as censored
-cens <- sample(seq_len(nrow(kg_sim_full)),
-               round(nrow(kg_sim_full) * 0.15),
-               replace = FALSE)
-
-kg_sim_full$censored <- NA
-kg_sim_full$censored[cens] <- 1
+target_prob <- 0.15
+kg_sim_full$censored <- ifelse(runif(nrow(kg_sim_full)) > target_prob, NA, 1)
 
 # Simulate school vax view
 annual_tots <- kg_sim_full |>
@@ -242,7 +238,7 @@ observations_sim <- observations_sim |>
 
 observations_sim$obs_id <- seq_len(nrow(observations_sim))
 
-observations_sim <- as.data.table(observations_sim)
+observations_sim <- setDT(observations_sim)
 
 # Create populations
 populations_sim <- data.frame(obs_id = numeric(),
@@ -285,7 +281,7 @@ locations_sim <- bind_rows(
   )
 )
 
-locations_sim <- as.data.table(locations_sim)
+locations_sim <- setDT(locations_sim)
 
 usethis::use_data(observations_sim, overwrite = TRUE)
 usethis::use_data(populations_sim, overwrite = TRUE)
