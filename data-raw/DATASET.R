@@ -113,7 +113,7 @@ for (s in seq_len(sum(sch_per_cnty$n_sch))) {
 }
 kg_sim_full <- bind_rows(kg_sim_full)
 
-# Randomly select 10% of kindergarten observations to treat as censored
+# Randomly select 15% of kindergarten observations to treat as censored
 cens <- sample(seq_len(nrow(kg_sim_full)),
                round(nrow(kg_sim_full) * 0.15),
                replace = FALSE)
