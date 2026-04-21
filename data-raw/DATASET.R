@@ -266,7 +266,7 @@ for (i in seq_len(nrow(observations_sim))) {
   )
 }
 
-populations_sim <- as.data.table(populations_sim)
+setDT(populations_sim)
 
 # Create locations mapping
 locations_sim <- bind_rows(
