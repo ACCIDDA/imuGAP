@@ -21,3 +21,8 @@ a list of imuGAP model options
 \description{
 This function encapsulates option passing for imuGAP settings.
 }
+\examples{
+imugap_options() # defaults
+imugap_options(dose_schedule = c(1, 3)) # change dose schedule model
+
+}

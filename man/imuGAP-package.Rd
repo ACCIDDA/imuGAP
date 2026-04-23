@@ -29,4 +29,12 @@ Authors:
   \item Claire Perrin Smith (\href{https://orcid.org/0000-0003-1069-9460}{ORCID})
 }
 
+Other contributors:
+\itemize{
+  \item Kelly Zhen \email{zhen717605@gmail.com} [contributor]
+  \item Weston Voglesonger \email{westonvogle@gmail.com} [contributor]
+  \item Joshua Chen \email{joshuazchen1@gmail.com} [contributor]
+  \item Minjae Kung \email{minjaekung@gmail.com} [contributor]
+}
+
 }

@@ -20,3 +20,8 @@ a list of arguments matching \code{\link[rstan:stanmodel-method-sampling]{rstan:
 This function encapsulates option passing to the stan sampler, with the
 exception of the model object, which is passed in \code{imugap_options}.
 }
+\examples{
+stan_options() # defaults to no overrides
+stan_options(chains = 2, iter = 500) # setup for smaller run
+
+}
