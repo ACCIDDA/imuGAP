@@ -57,3 +57,9 @@ NA, and any right-censored observations with $1$. Note that $0$ is \emph{not} a
 valid value at this time; we are preserving that for potential future support
 of left-censoring.
 }
+\examples{
+data("observations_sim")
+observations_sim # raw data
+# canonical; n.b. drops columns and reorders to have uncensored first
+canonicalize_observations(observations_sim)
+}

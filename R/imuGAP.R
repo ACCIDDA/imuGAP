@@ -44,6 +44,15 @@ is_canonical <- function(dt, target_class) {
 #'  - `layer_bound` column, an integer starting from 1 by layer. This provides
 #'    index slice information used in the stan model.
 #'
+#' @examples
+#' data("locations_sim") # load example package data
+#' locations_sim         # unmodified data
+#' canonicalize_locations(locations_sim) # after canonicalizing
+#' # can also be provided in non-canonical order, and with an implicit root
+#' weird_locations <- subset(locations_sim, !is.na(parent_id))[
+#'   sample(nrow(locations_sim) - 1L)
+#' ]
+#' canonicalize_locations(weird_locations)
 #' @importFrom data.table as.data.table setkey data.table setattr
 #' @global .
 #' @autoglobal
@@ -117,7 +126,6 @@ canonicalize_locations <- function(locations) {
   }
 
   # canonicalize ids, by layer, then parent position, then natural order
-
   setkey(locations, layer, parent_id, loc_id)
   locations[, loc_c_id := seq_len(.N)]
   locations[
@@ -174,6 +182,11 @@ canonicalize_locations <- function(locations) {
 #'  - a "censored" column; all NA, if not present in original `observations`
 #'    argument
 #'
+#' @examples
+#' data("observations_sim")
+#' observations_sim # raw data
+#' # canonical; n.b. drops columns and reorders to have uncensored first
+#' canonicalize_observations(observations_sim)
 #' @export
 #' @importFrom data.table as.data.table setkey
 #' @autoglobal
@@ -234,7 +247,7 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
   } else {
     observations[, censored := NA_real_]
   }
-
+#
   # canonicalize ids: order by censoring, then original obs_id.
   # this results in uncensored then censored observations.
   setkey(observations, censored, obs_id)
@@ -270,6 +283,7 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
 #' @param max_cohort if present, what is the maximum cohort that should be
 #'   present?
 #' @param max_age if present, what is the maximum age that should be present?
+#' @param max_dose what is the maximum number of doses?
 #'
 #' @details
 #' This method validates the meta-data associated with the observations, as well
@@ -287,6 +301,11 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
 #' - `loc_c_id`, the location id the row concerns, canonicalized to match
 #' - reordered to `obs_c_id` order
 #'
+#' @examples
+#' data("populations_sim"); data("locations_sim"); data("observations_sim")
+#' populations_sim
+#' # note, this will work even other arguments not yet canonical
+#' canonicalize_populations(populations_sim, observations_sim, locations_sim)
 #' @autoglobal
 #' @export
 canonicalize_populations <- function(
@@ -355,10 +374,13 @@ canonicalize_populations <- function(
 #'
 #' @description
 #' This function encapsulates option passing to the stan sampler, with the
-#' exception of the model object, which is passed in `imugap_options`.
+#' exception of the model object, which is passed in `[imugap_options()]`.
 #'
 #' @inheritDotParams rstan::sampling
-#' @inheritParams rstan::sampling
+#'
+#' @examples
+#' stan_options() # defaults to no overrides
+#' stan_options(chains = 2, iter = 500) # setup for smaller run
 #'
 #' @return a list of arguments matching [rstan::sampling()] inputs
 #' @export
@@ -384,6 +406,10 @@ stan_options <- function(...) {
 #' @param object which stan model object to use; currently only "default" is
 #'   supported
 #'
+#' @examples
+#' imugap_options() # defaults
+#' imugap_options(dose_schedule = c(1, 3)) # change dose schedule model
+#'
 #' @return a list of imuGAP model options
 #' @export
 imugap_options <- function(
@@ -407,9 +433,19 @@ imugap_options <- function(
 #' @inheritParams canonicalize_populations
 #' @inheritParams canonicalize_locations
 #' @param imugap_opts options for the `imuGAP` model
-#' @param stan_opts passed to `rstan::sampling` (e.g. `iter`, `chains`).
+#' @param stan_opts passed to `[rstan::sampling()]` (e.g. `iter`, `chains`).
 #'
-#' @return An object of class `stanfit` returned by `rstan::sampling`
+#' @return An object of class `stanfit` returned by `[rstan::sampling()]`
+#'
+#' @examples
+#' \dontrun{
+#' data("locations_sim"); data("observations_sim"); data("populations_sim")
+#' st_opts <- stan_options(chains = 2, iter = 500)
+#' imuGAP(
+#'   observations_sim, populations_sim, locations_sim,
+#'   stan_opts = st_opts()
+#' )
+#' }
 #'
 #' @autoglobal
 #' @export
@@ -496,7 +532,7 @@ imuGAP <- function( # nolint
 #' @param pars character vector; parameters to extract.
 #'
 #' @return a list, as returned by `rstan::extract()`
-#'
+#' @export
 extract_imugap <- function(fit, pars = c("logit_phi_state"), ...) {
   return(rstan::extract(fit, pars = pars, ...))
 }

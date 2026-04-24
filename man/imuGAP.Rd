@@ -47,12 +47,23 @@ of the same type. See Details for restrictions.}
 
 \item{imugap_opts}{options for the \code{imuGAP} model}
 
-\item{stan_opts}{passed to \code{rstan::sampling} (e.g. \code{iter}, \code{chains}).}
+\item{stan_opts}{passed to \verb{[rstan::sampling()]} (e.g. \code{iter}, \code{chains}).}
 }
 \value{
-An object of class \code{stanfit} returned by \code{rstan::sampling}
+An object of class \code{stanfit} returned by \verb{[rstan::sampling()]}
 }
 \description{
 This a sampler interface to convert user-friendly data into the necessary
 format to feed the immunity estimation model.
+}
+\examples{
+\dontrun{
+data("locations_sim"); data("observations_sim"); data("populations_sim")
+st_opts <- stan_options(chains = 2, iter = 500)
+imuGAP(
+  observations_sim, populations_sim, locations_sim,
+  stan_opts = st_opts()
+)
+}
+
 }

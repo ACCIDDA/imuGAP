@@ -50,6 +50,8 @@ of the same type. See Details for restrictions.}
 present?}
 
 \item{max_age}{if present, what is the maximum age that should be present?}
+
+\item{max_dose}{what is the maximum number of doses?}
 }
 \value{
 a canonical populations object, mirroring the input \code{populations},
@@ -72,4 +74,10 @@ Regarding "cohorts" and "ages": these are counted from 1, by 1 "unit". You
 can imagine the units are whatever resolution is appropriate for your data:
 months, quarters, years, etc. As long as these are used consistently,
 estimation will work, and take on the unit meaning you used for input.
+}
+\examples{
+data("populations_sim"); data("locations_sim"); data("observations_sim")
+populations_sim
+# note, this will work even other arguments not yet canonical
+canonicalize_populations(populations_sim, observations_sim, locations_sim)
 }
