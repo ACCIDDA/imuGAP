@@ -18,7 +18,7 @@ a list of arguments matching \code{\link[rstan:stanmodel-method-sampling]{rstan:
 }
 \description{
 This function encapsulates option passing to the stan sampler, with the
-exception of the model object, which is passed in \code{imugap_options}.
+exception of the model object, which is passed in \verb{[imugap_options()]}.
 }
 \examples{
 stan_options() # defaults to no overrides

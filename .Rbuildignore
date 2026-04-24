@@ -10,3 +10,4 @@
 ^justfile$
 ^[.]?air[.]toml$
 ^\.vscode$
+^data-raw$

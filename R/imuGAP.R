@@ -374,10 +374,9 @@ canonicalize_populations <- function(
 #'
 #' @description
 #' This function encapsulates option passing to the stan sampler, with the
-#' exception of the model object, which is passed in `imugap_options`.
+#' exception of the model object, which is passed in `[imugap_options()]`.
 #'
 #' @inheritDotParams rstan::sampling
-#' @inheritParams rstan::sampling
 #'
 #' @examples
 #' stan_options() # defaults to no overrides
@@ -533,7 +532,7 @@ imuGAP <- function( # nolint
 #' @param pars character vector; parameters to extract.
 #'
 #' @return a list, as returned by `rstan::extract()`
-#'
+#' @export
 extract_imugap <- function(fit, pars = c("logit_phi_state"), ...) {
   return(rstan::extract(fit, pars = pars, ...))
 }
