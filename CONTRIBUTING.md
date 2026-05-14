@@ -13,18 +13,16 @@ language are not.
 
 ## Reporting Bugs
 
-Open an issue at <https://github.com/ACCIDDA/imuGAP/issues> and include:
-
-- A short, descriptive title.
-- Steps to reproduce the problem (a minimal reprex is ideal).
-- What you expected to happen vs. what actually happened.
-- Your R version (`sessionInfo()` output) and operating system.
+Use the [bug report template](https://github.com/ACCIDDA/imuGAP/issues/new?template=bug_report.yml)
+when opening a new issue. It asks for a description, a minimal reprex,
+your `sessionInfo()` output, and your operating system.
 
 ## Suggesting Features
 
-Feature requests are also welcome as issues. Please describe the use
-case and, if possible, how the feature fits into the existing model
-workflow (`imuGAP()` → Stan sampling → post-processing).
+Use the [feature request template](https://github.com/ACCIDDA/imuGAP/issues/new?template=feature_request.yml).
+Describe the use case and, if possible, how the feature fits into the
+existing model workflow (`imuGAP()` -> Stan sampling -> post-processing).
+You can also open a blank issue if neither template fits.
 
 ## Submitting Changes
 
@@ -73,7 +71,7 @@ Every pull request triggers two GitHub Actions workflows:
 
 | Workflow | What it does |
 |----------|-------------|
-| **R-CMD-check** | Runs `R CMD check` on Ubuntu and macOS. Stan models are compiled from source during the check; compilation artifacts are cached to speed up subsequent runs. |
+| **R-CMD-check** | Runs `R CMD check --as-cran` on Ubuntu, macOS, and Windows across R release, oldrel, and devel (9 jobs total). R-devel jobs are allowed to fail without blocking the PR. Stan compilation artifacts are cached per OS and R version. |
 | **pkgdown** | Builds the documentation site. On PRs this is a build-only check (no deployment); the site is deployed to GitHub Pages on pushes to `main`, published releases, and manual workflow dispatches. |
 
 Both workflows should pass before a PR is merged.
