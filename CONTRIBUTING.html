@@ -46,15 +46,11 @@
 </div>
 <div class="section level2">
 <h2 id="reporting-bugs">Reporting Bugs<a class="anchor" aria-label="anchor" href="#reporting-bugs"></a></h2>
-<p>Open an issue at <a href="https://github.com/ACCIDDA/imuGAP/issues" class="external-link uri">https://github.com/ACCIDDA/imuGAP/issues</a> and include:</p>
-<ul><li>A short, descriptive title.</li>
-<li>Steps to reproduce the problem (a minimal reprex is ideal).</li>
-<li>What you expected to happen vs. what actually happened.</li>
-<li>Your R version (<code><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo()</a></code> output) and operating system.</li>
-</ul></div>
+<p>Use the <a href="https://github.com/ACCIDDA/imuGAP/issues/new?template=bug_report.yml" class="external-link">bug report template</a> when opening a new issue. It asks for a description, a minimal reprex, your <code><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo()</a></code> output, and your operating system.</p>
+</div>
 <div class="section level2">
 <h2 id="suggesting-features">Suggesting Features<a class="anchor" aria-label="anchor" href="#suggesting-features"></a></h2>
-<p>Feature requests are also welcome as issues. Please describe the use case and, if possible, how the feature fits into the existing model workflow (<code>imuGAP()</code> → Stan sampling → post-processing).</p>
+<p>Use the <a href="https://github.com/ACCIDDA/imuGAP/issues/new?template=feature_request.yml" class="external-link">feature request template</a>. Describe the use case and, if possible, how the feature fits into the existing model workflow (<code>imuGAP()</code> -&gt; Stan sampling -&gt; post-processing). You can also open a blank issue if neither template fits.</p>
 </div>
 <div class="section level2">
 <h2 id="submitting-changes">Submitting Changes<a class="anchor" aria-label="anchor" href="#submitting-changes"></a></h2>
@@ -96,7 +92,7 @@
 <table class="table"><colgroup><col width="43%"><col width="56%"></colgroup><thead><tr><th>Workflow</th>
 <th>What it does</th>
 </tr></thead><tbody><tr><td><strong>R-CMD-check</strong></td>
-<td>Runs <code>R CMD check</code> on Ubuntu and macOS. Stan models are compiled from source during the check; compilation artifacts are cached to speed up subsequent runs.</td>
+<td>Runs <code>R CMD check --as-cran</code> on Ubuntu, macOS, and Windows across R release, oldrel, and devel (9 jobs total). R-devel jobs are allowed to fail without blocking the PR. Stan compilation artifacts are cached per OS and R version.</td>
 </tr><tr><td><strong>pkgdown</strong></td>
 <td>Builds the documentation site. On PRs this is a build-only check (no deployment); the site is deployed to GitHub Pages on pushes to <code>main</code>, published releases, and manual workflow dispatches.</td>
 </tr></tbody></table><p>Both workflows should pass before a PR is merged.</p>
