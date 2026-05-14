@@ -60,3 +60,15 @@ jobs:
         with:
           args: 'c("--no-manual", "--as-cran")'
           error-on: '"warning"'
+
+  check-result:
+    if: always()
+    needs: [R-CMD-check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all required checks passed
+        run: |
+          if [ "${{ needs.R-CMD-check.result }}" = "failure" ]; then
+            echo "One or more required checks failed"
+            exit 1
+          fi
