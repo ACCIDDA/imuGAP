@@ -10,6 +10,8 @@ extract_imugap(fit, pars = c("logit_phi_state"), ...)
 \item{fit}{a \code{stanfit} object returned by \code{imuGAP()}}
 
 \item{pars}{character vector; parameters to extract.}
+
+\item{...}{additional arguments passed to \code{\link[rstan:stanfit-method-extract]{rstan::extract()}}}
 }
 \value{
 a list, as returned by \code{rstan::extract()}

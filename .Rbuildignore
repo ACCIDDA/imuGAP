@@ -10,3 +10,5 @@
 ^justfile$
 ^[.]?air[.]toml$
 ^\.vscode$
+^CONTRIBUTING\.md$
+^data-raw$

@@ -50,6 +50,8 @@ of the same type. See Details for restrictions.}
 present?}
 
 \item{max_age}{if present, what is the maximum age that should be present?}
+
+\item{max_dose}{maximum dose number to allow (default: 2L)}
 }
 \value{
 a canonical populations object, mirroring the input \code{populations},

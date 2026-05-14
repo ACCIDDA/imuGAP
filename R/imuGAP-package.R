@@ -3,7 +3,6 @@
 #' @description A package for estimating measles vaccine coverage
 #'
 #' @name imuGAP-package
-#' @aliases imuGAP
 #' @useDynLib imuGAP, .registration = TRUE
 #' @import methods
 #' @import Rcpp

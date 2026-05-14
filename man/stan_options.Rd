@@ -10,7 +10,7 @@ stan_options(...)
 \item{...}{
   Arguments passed on to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling}}
   \describe{
-    \item{\code{object}}{An object of class \code{\linkS4class{stanmodel}}.}
+    \item{\code{}}{}
   }}
 }
 \value{
