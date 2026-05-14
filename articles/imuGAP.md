@@ -1,6 +1,7 @@
 # imuGAP: an Estimation Model for Measles Vaccination Coverage
 
 ``` r
+
 library(imuGAP)
 ```
 
@@ -12,20 +13,22 @@ Projection”, and as that name implies, the package provides a
 vaccination coverage by location and age cohort.
 
 The core model represents a target population as having a life-long
-propensity for vaccination; some proportion, $\phi$, of that population
-is unlikely to vaccinate and the complementary proportion, $1 - \phi$,
-is likely to vaccinate. That population then experiences a vaccination
-rate, $\lambda$, over the model time eras, according to the vaccination
-eligibility schedule, $\nu$. These core parameters can vary over time
-and location, in a user-specifiable way.
+propensity for vaccination; some proportion, $`\phi`$, of that
+population is unlikely to vaccinate and the complementary proportion,
+$`1 - \phi`$, is likely to vaccinate. That population then experiences a
+vaccination rate, $`\lambda`$, over the model time eras, according to
+the vaccination eligibility schedule, $`\nu`$. These core parameters can
+vary over time and location, in a user-specifiable way.
 
 Focusing just on the core model element, imagine a particular population
-location $i$ and cohort $a$ (where $a$ denotes the start of the time
-period when that group was born). If that cohort is now age $t$, and the
-vaccine schedule for the first dose is $\nu(t)$, the expected fraction
-of that group to have at least one dose is then:
+location $`i`$ and cohort $`a`$ (where $`a`$ denotes the start of the
+time period when that group was born). If that cohort is now age $`t`$,
+and the vaccine schedule for the first dose is $`\nu(t)`$, the expected
+fraction of that group to have at least one dose is then:
 
-$$P\left( \geq \text{1 dose} \right) = \left( 1 - \phi_{i,a} \right)\left( 1 - \exp\left\{ - \int_{a}^{t}\lambda_{i,a}(s)\nu(s)d\text{s} \right\} \right)$$
+``` math
+P(\ge\textrm{1 dose}) = \left(1 - \phi_{i, a}\right) \left(1 - \exp\left\{-\int_a^{t} \lambda_{i, a}(s)\nu(s) d\textrm{s}\right\}\right)
+```
 
 Which is to say, we are representing vaccination coverage via a survival
 model. Leaving aside the “unlikely” population

@@ -8,6 +8,7 @@ for the elements of the process.
 ## Quick Start
 
 ``` r
+
 remotes::install_github("ACCIDDA/imuGAP")
 ```
 
@@ -26,6 +27,7 @@ particular place combine the impact of all enclosing locations.
 ## Installation
 
 ``` r
+
 # Install from GitHub
 remotes::install_github("ACCIDDA/imuGAP")
 ```
@@ -37,6 +39,7 @@ Requires R \>= 4.1.0 and a C++ toolchain (for Stan model compilation).
 After installing the package, set up the command-line interface:
 
 ``` r
+
 imuGAP::install_cli()
 ```
 
@@ -68,11 +71,11 @@ imugap <input_dir> [output_dir]
 
 `input_dir` must contain three files (CSV or RDS):
 
-| File           | Columns                                               | Description                                                                                 |
-|----------------|-------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| `observations` | `obs_id`, `positive`, `sample_n`                      | School-level vaccination counts.                                                            |
-| `populations`  | `obs_id`, `loc_id`, `cohort`, `age`, `dose`, `weight` | Observation metadata. Weights must sum to 1 per `obs_id`. `dose` must include both 1 and 2. |
-| `locations`    | `loc_id`, `parent_id`                                 | Location hierarchy (state \> county \> school). Root has `parent_id = NA`.                  |
+| File | Columns | Description |
+|----|----|----|
+| `observations` | `obs_id`, `positive`, `sample_n` | School-level vaccination counts. |
+| `populations` | `obs_id`, `loc_id`, `cohort`, `age`, `dose`, `weight` | Observation metadata. Weights must sum to 1 per `obs_id`. `dose` must include both 1 and 2. |
+| `locations` | `loc_id`, `parent_id` | Location hierarchy (state \> county \> school). Root has `parent_id = NA`. |
 
 ### Exit Codes
 
