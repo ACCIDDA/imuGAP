@@ -1,4 +1,4 @@
-# imuGAP
+# imuGAP <img src="man/figures/logo.png" align="right" height="139" alt="imuGAP logo" />
 
 `{imuGAP}` provides a fitting and imputation / prediction tool for a particular process model of vaccination uptake. The tool provides flexible trends and relationships for the elements of the process.
 
