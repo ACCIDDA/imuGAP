@@ -79,3 +79,26 @@ test_that("yields data.table with ordered layer, parent_id, and id columns", {
   expect_equal(locs$loc_cp_id, sort(locs$loc_cp_id, na.last = FALSE))
 
 })
+
+test_that("infers implicit root when no row has parent_id == NA", {
+  # Root is implicit: parent_id "root" doesn't appear as a loc_id.
+  # The function should add a row for the implicit root.
+  ref <- data.frame(
+    loc_id = c("a", "b", "c"),
+    parent_id = c("root", "a", "a")
+  )
+  res <- canonicalize_locations(ref)
+  expect_true("root" %in% res$loc_id)
+  # The implicit root is at layer 1
+  expect_equal(res[res$loc_id == "root", "layer"][[1]], 1L)
+})
+
+test_that("canonical input short-circuits and returns unchanged", {
+  ref <- data.frame(
+    loc_id = c("a", "b", "c"),
+    parent_id = c(NA, "a", "a")
+  )
+  canon <- canonicalize_locations(ref)
+  again <- canonicalize_locations(canon)
+  expect_identical(canon, again)
+})

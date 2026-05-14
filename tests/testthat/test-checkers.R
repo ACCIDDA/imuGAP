@@ -99,3 +99,65 @@ test_that("checked_set_equivalence works", {
     "'ref_dt'.*'d'"
   )
 })
+
+test_that("checked_set_equivalence flags values outside the set", {
+  # Column 'c' contains all refset members AND extras (4) — triggers the
+  # "values outside of set" branch (i.e. union > setlen but intersect == setlen).
+  refset <- c(1L, 2L, 3L)
+  ref_dt <- data.table(
+    c = c(refset, 4L)
+  )
+  expect_error(
+    checked_set_equivalence(ref_dt, "c", refset),
+    "outside of set"
+  )
+})
+
+test_that("checked_as_integer errors on NA when na_allowed = FALSE", {
+  ref_dt <- data.table(a = c(1L, NA_integer_, 3L))
+  expect_error(
+    checked_as_integer(ref_dt, "a"),
+    "cannot have NA"
+  )
+})
+
+test_that("checked_as_integer allows NA when na_allowed = TRUE", {
+  ref_dt <- data.table(a = c(1L, NA_integer_, 3L))
+  expect_silent(checked_as_integer(ref_dt, "a", na_allowed = TRUE))
+})
+
+test_that("checked_subset accepts column whose values are all in tarset", {
+  ref_dt <- data.table(a = c(1L, 2L, 1L))
+  expect_silent(checked_subset(ref_dt, "a", c(1L, 2L, 3L)))
+})
+
+test_that("checked_subset errors when column has values outside tarset", {
+  ref_dt <- data.table(a = c(1L, 2L, 99L))
+  expect_error(
+    checked_subset(ref_dt, "a", c(1L, 2L, 3L)),
+    "parent set"
+  )
+})
+
+test_that("checked_subset error message names missing values", {
+  ref_dt <- data.table(a = c(1L, 7L, 8L))
+  expect_error(
+    checked_subset(ref_dt, "a", c(1L, 2L, 3L)),
+    "7"
+  )
+})
+
+test_that("checked_dt_able returns data.table via setDT when copy = FALSE", {
+  df <- data.frame(a = 1:3, b = 4:6)
+  res <- checked_dt_able(df, copy = FALSE)
+  expect_s3_class(res, "data.table")
+})
+
+test_that("checked_dt_able returns data.table via as.data.table when copy = TRUE", {
+  df <- data.frame(a = 1:3, b = 4:6)
+  res <- checked_dt_able(df, copy = TRUE)
+  expect_s3_class(res, "data.table")
+  # Should be a fresh copy, not modify df
+  expect_s3_class(df, "data.frame")
+  expect_false(data.table::is.data.table(df))
+})
