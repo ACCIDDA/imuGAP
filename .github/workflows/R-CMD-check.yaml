@@ -37,7 +37,11 @@ jobs:
 
       - name: Install macOS system dependencies
         if: runner.os == 'macOS'
-        run: brew install gettext
+        run: |
+          brew install gettext
+          GETTEXT_PREFIX="$(brew --prefix gettext)"
+          echo "CPPFLAGS=-I${GETTEXT_PREFIX}/include" >> "$GITHUB_ENV"
+          echo "LDFLAGS=-L${GETTEXT_PREFIX}/lib" >> "$GITHUB_ENV"
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
