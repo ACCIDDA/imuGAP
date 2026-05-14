@@ -7,8 +7,6 @@
 # does confirm the R -> Stan -> R round-trip is wired up correctly.
 
 test_that("imuGAP() runs end-to-end on bundled *_sim data", {
-  skip_on_cran()
-
   locs <- canonicalize_locations(locations_sim)
   obs <- canonicalize_observations(observations_sim)
   pop <- canonicalize_populations(populations_sim, obs, locs)
