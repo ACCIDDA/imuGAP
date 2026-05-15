@@ -25,3 +25,13 @@ Useful links:
 Authors:
 
 - Claire Perrin Smith ([ORCID](https://orcid.org/0000-0003-1069-9460))
+
+Other contributors:
+
+- Kelly Zhen <zhen717605@gmail.com> \[contributor\]
+
+- Weston Voglesonger <westonvogle@gmail.com> \[contributor\]
+
+- Joshua Chen <joshuazchen1@gmail.com> \[contributor\]
+
+- Minjae Kung <minjaekung@gmail.com> \[contributor\]

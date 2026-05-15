@@ -20,6 +20,11 @@ extract_imugap(fit, pars = c("logit_phi_state"), ...)
 
   character vector; parameters to extract.
 
+- ...:
+
+  additional arguments passed to
+  [`rstan::extract()`](https://mc-stan.org/rstan/reference/stanfit-method-extract.html)
+
 ## Value
 
 a list, as returned by

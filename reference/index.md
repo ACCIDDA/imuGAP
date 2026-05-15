@@ -28,5 +28,14 @@
 - [`install_cli()`](https://accidda.github.io/imuGAP/reference/install_cli.md)
   : Install imuGAP CLI to PATH
 
+- [`locations_sim`](https://accidda.github.io/imuGAP/reference/locations_sim.md)
+  : Example Location Data
+
+- [`observations_sim`](https://accidda.github.io/imuGAP/reference/observations_sim.md)
+  : Example Observation Data
+
+- [`populations_sim`](https://accidda.github.io/imuGAP/reference/populations_sim.md)
+  : Example Population Data
+
 - [`stan_options()`](https://accidda.github.io/imuGAP/reference/stan_options.md)
   : Stan Sampler Options

@@ -16,9 +16,7 @@ stan_options(...)
   Arguments passed on to
   [`rstan::sampling`](https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html)
 
-  `object`
-
-  :   An object of class `stanmodel`.
+  :   
 
 ## Value
 

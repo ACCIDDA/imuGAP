@@ -68,6 +68,10 @@ canonicalize_populations(
 
   if present, what is the maximum age that should be present?
 
+- max_dose:
+
+  maximum dose number to allow (default: 2L)
+
 ## Value
 
 a canonical populations object, mirroring the input `populations`, with
