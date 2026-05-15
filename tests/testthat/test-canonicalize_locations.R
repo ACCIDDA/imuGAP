@@ -81,11 +81,7 @@ test_that("yields data.table with ordered layer, parent_id, and id columns", {
 })
 
 test_that("infers implicit root when no row has parent_id == NA", {
-  ref <- data.frame(
-    loc_id = c("a", "b", "c"),
-    parent_id = c("root", "a", "a")
-  )
-  res <- canonicalize_locations(ref)
+  res <- canonicalize_locations(make_test_locs_implicit_root())
   root_rows <- res[res$layer == 1L, ]
   expect_equal(nrow(root_rows), 1L)
   expect_equal(root_rows$loc_id, "root")

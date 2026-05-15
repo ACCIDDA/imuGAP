@@ -31,7 +31,7 @@ test_that("canonicalize_populations assigns range_start by obs_c_id", {
   pops <- data.table::data.table(
     obs_id = c("o1", "o1", "o2", "o2"),
     loc_id = c("schl", "schl", "schl", "schl"),
-    cohort = c(1L, 1L, 1L, 1L),
+    cohort = c(1L, 1L, 2L, 2L),
     age = c(2L, 2L, 2L, 2L),
     dose = c(1L, 2L, 1L, 2L),
     weight = c(0.5, 0.5, 0.6, 0.4)
@@ -111,7 +111,7 @@ test_that("canonicalize_populations errors on cohort > max_cohort", {
 
 test_that("canonicalize_populations errors on age > max_age", {
   bad <- make_test_pops()
-  bad$age <- c(2L, 99L)
+  bad[2, "age"] <- 99L
   expect_error(
     canonicalize_populations(
       bad, make_test_obs(), make_test_locs(),

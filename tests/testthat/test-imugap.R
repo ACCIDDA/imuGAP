@@ -25,7 +25,7 @@ make_minimal_obs <- function() {
 }
 
 make_minimal_pops <- function() {
-  data.table::data.table(
+  data.frame(
     obs_id = c("o1", "o2"),
     loc_id = c("schlA", "schlB"),
     cohort = c(1L, 1L),
@@ -53,14 +53,8 @@ test_that("imuGAP errors when location hierarchy has more than 3 layers", {
     loc_id = c("state", "cnty", "schl", "subschl"),
     parent_id = c(NA, "state", "cnty", "schl")
   )
-  pops4 <- data.table::data.table(
-    obs_id = c("o1", "o2"),
-    loc_id = c("subschl", "subschl"),
-    cohort = c(1L, 1L),
-    age = c(5L, 5L),
-    dose = c(1L, 2L),
-    weight = c(1.0, 1.0)
-  )
+  pops4 <- make_minimal_pops()
+  pops4$loc_id <- c("subschl", "subschl")
   expect_error(
     imuGAP(
       observations = make_minimal_obs(),
@@ -87,14 +81,8 @@ test_that("imuGAP propagates validation errors from canonicalize_observations", 
 })
 
 test_that("imuGAP propagates validation errors from canonicalize_populations", {
-  bad_pops <- data.table::data.table(
-    obs_id = c("o1", "o2"),
-    loc_id = c("schlA", "schlB"),
-    cohort = c(1L, 1L),
-    age = c(5L, 5L),
-    dose = c(1L, 99L),  # invalid
-    weight = c(1.0, 1.0)
-  )
+  bad_pops <- make_minimal_pops()
+  bad_pops$dose <- c(1L, 99L)
   expect_error(
     imuGAP(
       observations = make_minimal_obs(),
