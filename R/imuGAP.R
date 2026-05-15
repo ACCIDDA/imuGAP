@@ -270,6 +270,7 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
 #' @param max_cohort if present, what is the maximum cohort that should be
 #'   present?
 #' @param max_age if present, what is the maximum age that should be present?
+#' @param max_dose maximum dose number to allow (default: 2L)
 #'
 #' @details
 #' This method validates the meta-data associated with the observations, as well
@@ -357,8 +358,7 @@ canonicalize_populations <- function(
 #' This function encapsulates option passing to the stan sampler, with the
 #' exception of the model object, which is passed in `imugap_options`.
 #'
-#' @inheritDotParams rstan::sampling
-#' @inheritParams rstan::sampling
+#' @inheritDotParams rstan::sampling -object
 #'
 #' @return a list of arguments matching [rstan::sampling()] inputs
 #' @export
@@ -494,6 +494,7 @@ imuGAP <- function( # nolint
 #' Thin wrapper around `rstan::extract` to extract typical imuGAP parameters.
 #' @param fit a `stanfit` object returned by `imuGAP()`
 #' @param pars character vector; parameters to extract.
+#' @param ... additional arguments passed to [rstan::extract()]
 #'
 #' @return a list, as returned by `rstan::extract()`
 #'
