@@ -56,3 +56,14 @@ An object of class \code{stanfit} returned by \code{rstan::sampling}
 This a sampler interface to convert user-friendly data into the necessary
 format to feed the immunity estimation model.
 }
+\examples{
+\dontrun{
+data("locations_sim"); data("observations_sim"); data("populations_sim")
+st_opts <- stan_options(chains = 2, iter = 500)
+imuGAP(
+  observations_sim, populations_sim, locations_sim,
+  stan_opts = st_opts
+)
+}
+
+}
