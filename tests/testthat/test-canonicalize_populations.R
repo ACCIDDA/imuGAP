@@ -1,48 +1,9 @@
-# Tests for canonicalize_populations()
-#
-# canonicalize_populations validates the (obs_id, loc_id, cohort, age, dose,
-# weight) mapping table that ties observations back to a (location, cohort,
-# age, dose) tuple. Tests cover the happy path, every validation branch, and
-# the canonical-passthrough.
 
-library(data.table)
 
-# --- helpers -----------------------------------------------------------------
-
-# Minimal valid trio for population tests. Two observations, three locations
-# (state -> county -> school), one cohort/age/dose row per observation so
-# weights sum to 1 trivially.
-make_locs <- function() {
-  data.frame(
-    loc_id = c("state", "cnty", "schl"),
-    parent_id = c(NA, "state", "cnty")
-  )
-}
-
-make_obs <- function() {
-  data.frame(
-    obs_id = c("o1", "o2"),
-    positive = c(5L, 10L),
-    sample_n = c(10L, 20L)
-  )
-}
-
-make_pops <- function() {
-  data.table::data.table(
-    obs_id = c("o1", "o2"),
-    loc_id = c("schl", "schl"),
-    cohort = c(1L, 1L),
-    age = c(2L, 2L),
-    dose = c(1L, 2L),
-    weight = c(1.0, 1.0)
-  )
-}
-
-# --- happy path --------------------------------------------------------------
 
 test_that("canonicalize_populations succeeds on valid input", {
   res <- canonicalize_populations(
-    make_pops(), make_obs(), make_locs(),
+    make_test_pops(), make_test_obs(), make_test_locs(),
     max_cohort = 5L, max_age = 10L
   )
   expect_s3_class(res, "data.table")
@@ -54,12 +15,12 @@ test_that("canonicalize_populations succeeds on valid input", {
 
 test_that("canonicalize_populations short-circuits on canonical input", {
   res1 <- canonicalize_populations(
-    make_pops(), make_obs(), make_locs(),
+    make_test_pops(), make_test_obs(), make_test_locs(),
     max_cohort = 5L, max_age = 10L
   )
   # second pass should pass through unchanged (no validation, no error)
   res2 <- canonicalize_populations(
-    res1, make_obs(), make_locs(),
+    res1, make_test_obs(), make_test_locs(),
     max_cohort = 5L, max_age = 10L
   )
   expect_identical(res1, res2)
@@ -76,7 +37,7 @@ test_that("canonicalize_populations assigns range_start by obs_c_id", {
     weight = c(0.5, 0.5, 0.6, 0.4)
   )
   res <- canonicalize_populations(
-    pops, make_obs(), make_locs(),
+    pops, make_test_obs(), make_test_locs(),
     max_cohort = 5L, max_age = 10L
   )
   expect_equal(nrow(res), 4L)
@@ -88,11 +49,11 @@ test_that("canonicalize_populations assigns range_start by obs_c_id", {
 # --- error paths -------------------------------------------------------------
 
 test_that("canonicalize_populations errors on missing required columns", {
-  bad <- make_pops()
+  bad <- make_test_pops()
   bad$weight <- NULL
   expect_error(
     canonicalize_populations(
-      bad, make_obs(), make_locs(),
+      bad, make_test_obs(), make_test_locs(),
       max_cohort = 5L, max_age = 10L
     ),
     "weight"
@@ -100,11 +61,11 @@ test_that("canonicalize_populations errors on missing required columns", {
 })
 
 test_that("canonicalize_populations errors on dose outside {1, 2}", {
-  bad <- make_pops()
+  bad <- make_test_pops()
   bad$dose <- c(1L, 3L)
   expect_error(
     canonicalize_populations(
-      bad, make_obs(), make_locs(),
+      bad, make_test_obs(), make_test_locs(),
       max_cohort = 5L, max_age = 10L
     ),
     "dose"
@@ -112,12 +73,12 @@ test_that("canonicalize_populations errors on dose outside {1, 2}", {
 })
 
 test_that("canonicalize_populations errors when obs_id does not cover all observations", {
-  bad <- make_pops()
+  bad <- make_test_pops()
   # Drop o2 so populations only covers o1
   bad <- bad[bad$obs_id != "o2", ]
   expect_error(
     canonicalize_populations(
-      bad, make_obs(), make_locs(),
+      bad, make_test_obs(), make_test_locs(),
       max_cohort = 5L, max_age = 10L
     ),
     "obs_id"
@@ -125,11 +86,11 @@ test_that("canonicalize_populations errors when obs_id does not cover all observ
 })
 
 test_that("canonicalize_populations errors on loc_id not in locations", {
-  bad <- make_pops()
+  bad <- make_test_pops()
   bad$loc_id <- c("schl", "nowhere")
   expect_error(
     canonicalize_populations(
-      bad, make_obs(), make_locs(),
+      bad, make_test_obs(), make_test_locs(),
       max_cohort = 5L, max_age = 10L
     ),
     "loc_id"
@@ -137,11 +98,11 @@ test_that("canonicalize_populations errors on loc_id not in locations", {
 })
 
 test_that("canonicalize_populations errors on cohort > max_cohort", {
-  bad <- make_pops()
+  bad <- make_test_pops()
   bad$cohort <- c(1L, 99L)
   expect_error(
     canonicalize_populations(
-      bad, make_obs(), make_locs(),
+      bad, make_test_obs(), make_test_locs(),
       max_cohort = 5L, max_age = 10L
     ),
     "cohort"
@@ -149,11 +110,11 @@ test_that("canonicalize_populations errors on cohort > max_cohort", {
 })
 
 test_that("canonicalize_populations errors on age > max_age", {
-  bad <- make_pops()
+  bad <- make_test_pops()
   bad$age <- c(2L, 99L)
   expect_error(
     canonicalize_populations(
-      bad, make_obs(), make_locs(),
+      bad, make_test_obs(), make_test_locs(),
       max_cohort = 5L, max_age = 10L
     ),
     "age"
@@ -161,20 +122,20 @@ test_that("canonicalize_populations errors on age > max_age", {
 })
 
 test_that("canonicalize_populations errors on non-positive weight", {
-  bad <- make_pops()
+  bad <- make_test_pops()
   bad$weight <- c(1.0, 0.0)
   expect_error(
     canonicalize_populations(
-      bad, make_obs(), make_locs(),
+      bad, make_test_obs(), make_test_locs(),
       max_cohort = 5L, max_age = 10L
     ),
     "weight"
   )
-  bad2 <- make_pops()
+  bad2 <- make_test_pops()
   bad2$weight <- c(1.0, -0.5)
   expect_error(
     canonicalize_populations(
-      bad2, make_obs(), make_locs(),
+      bad2, make_test_obs(), make_test_locs(),
       max_cohort = 5L, max_age = 10L
     ),
     "weight"
@@ -192,7 +153,7 @@ test_that("canonicalize_populations errors when weights do not sum to 1 by obs_i
   )
   expect_error(
     canonicalize_populations(
-      bad, make_obs(), make_locs(),
+      bad, make_test_obs(), make_test_locs(),
       max_cohort = 5L, max_age = 10L
     ),
     "sum to 1"

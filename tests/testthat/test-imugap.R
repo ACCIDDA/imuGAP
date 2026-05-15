@@ -1,11 +1,3 @@
-# Tests for imuGAP() error paths and data assembly.
-#
-# imuGAP() ultimately calls rstan::sampling(); the happy path (which actually
-# runs the sampler) is covered by the smoke test. Here we focus on:
-#   1. Validation errors raised before any Stan call.
-#   2. The data-assembly pipeline (b-spline, dose matrix, stan_opts$data) —
-#      exercised by mocking rstan::sampling via with_mocked_bindings.
-
 library(data.table)
 
 # --- helpers -----------------------------------------------------------------
@@ -157,35 +149,37 @@ test_that("imuGAP assembles stan_opts$data with all expected fields", {
 })
 
 test_that("imuGAP data assembly produces sane derived values", {
+  obs <- make_minimal_obs()
+  pops <- make_minimal_pops()
+  locs <- make_3layer_locs()
+  opts <- imugap_options()
   out <- with_captured_sampling(suppressWarnings(
-    imuGAP(
-      observations = make_minimal_obs(),
-      populations = make_minimal_pops(),
-      locations = make_3layer_locs()
-    )
+    imuGAP(observations = obs, populations = pops, locations = locs)
   ))
   d <- out$captured$data
-  expect_equal(d$n_obs, 2L)
-  expect_equal(d$n_uncensored_obs, 2L)  # no censored rows
-  expect_equal(d$n_doses, 2L)  # default dose_schedule c(1, 4)
+  expect_equal(d$n_obs, nrow(obs))
+  expect_equal(d$n_uncensored_obs, nrow(obs))
+  expect_equal(d$n_doses, length(opts$dose_schedule))
   expect_equal(d$predict_mode, 0)
-  expect_equal(d$n_cnty, 2L)  # 2 counties
-  expect_equal(d$n_sch, 2L)   # 2 schools
+  n_layers <- canonicalize_locations(locs)[, .N, by = layer]
+  expect_equal(d$n_cnty, n_layers[layer == 2, N])
+  expect_equal(d$n_sch, n_layers[layer == 3, N])
   expect_equal(nrow(d$dose_sched), d$n_yr)
   expect_equal(ncol(d$dose_sched), d$n_doses)
 })
 
 test_that("imuGAP forwards observation positive/sample_n into stan data", {
+  obs <- make_minimal_obs()
   out <- with_captured_sampling(suppressWarnings(
     imuGAP(
-      observations = make_minimal_obs(),
+      observations = obs,
       populations = make_minimal_pops(),
       locations = make_3layer_locs()
     )
   ))
   d <- out$captured$data
-  expect_setequal(d$y_obs, c(5L, 10L))
-  expect_setequal(d$y_smp, c(10L, 20L))
+  expect_setequal(d$y_obs, obs$positive)
+  expect_setequal(d$y_smp, obs$sample_n)
 })
 
 test_that("imuGAP forwards object from imugap_opts to rstan::sampling", {
