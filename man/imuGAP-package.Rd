@@ -3,6 +3,7 @@
 \docType{package}
 \name{imuGAP-package}
 \alias{imuGAP-package}
+\alias{imuGAP}
 \title{The 'imuGAP' package.}
 \description{
 A package for estimating measles vaccine coverage
