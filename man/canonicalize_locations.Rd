@@ -47,3 +47,13 @@ ids. That order is determined by layer order, then position of parent
 within its layer, then "natural" order (i.e., whatever base R \code{\link[=sort]{sort()}}
 yields).
 }
+\examples{
+data("locations_sim")
+locations_sim
+canonicalize_locations(locations_sim)
+# can also be provided in non-canonical order, and with an implicit root
+weird_locations <- subset(locations_sim, !is.na(parent_id))[
+  sample(nrow(locations_sim) - 1L)
+]
+canonicalize_locations(weird_locations)
+}

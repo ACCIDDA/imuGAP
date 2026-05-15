@@ -75,3 +75,8 @@ can imagine the units are whatever resolution is appropriate for your data:
 months, quarters, years, etc. As long as these are used consistently,
 estimation will work, and take on the unit meaning you used for input.
 }
+\examples{
+data("populations_sim"); data("locations_sim"); data("observations_sim")
+populations_sim
+canonicalize_populations(populations_sim, observations_sim, locations_sim)
+}
