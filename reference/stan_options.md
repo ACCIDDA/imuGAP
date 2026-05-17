@@ -23,3 +23,17 @@ stan_options(...)
 a list of arguments matching
 [`rstan::sampling()`](https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html)
 inputs
+
+## Examples
+
+``` r
+stan_options()
+#> list()
+stan_options(chains = 2, iter = 500)
+#> $chains
+#> [1] 2
+#> 
+#> $iter
+#> [1] 500
+#> 
+```

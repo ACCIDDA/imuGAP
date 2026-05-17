@@ -84,6 +84,116 @@ within its layer, then "natural" order (i.e., whatever base R <code><a href="htt
 yields).</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"locations_sim"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">locations_sim</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        loc_id parent_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        &lt;char&gt;    &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1:                     State      &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  2:                   Scruggs     State</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3:                    Simone     State</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  4:                    Watson     State</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  5:      Chickadee Elementary   Scruggs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  6:          Nuthatch Academy   Scruggs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  7:         Blue Heron School   Scruggs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  8:     Flycatcher Elementary   Scruggs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  9:  Bluebird Learning Center   Scruggs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10:           Catbird Academy   Scruggs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11:          Finch Elementary   Scruggs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12:            Sparrow School   Scruggs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13: Towhee Children's Academy   Scruggs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14:        Warbler Elementary   Scruggs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15:          Egret Elementary    Simone</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16:          Cardinal Academy    Simone</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17:            Bunting School    Simone</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18:           Tanager Academy    Simone</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19:      Oriole Youth Academy    Simone</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20:  Grosbeak Learning Center    Simone</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21:          Junco Elementary    Simone</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22:         Meadowlark School    Watson</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23:      Goldfinch Elementary    Watson</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24:       Mockingbird Academy    Watson</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25:   Kinglet Learning Center    Watson</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26:              Vireo School    Watson</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27:        Kingfisher Academy    Watson</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28:      Cormorant Elementary    Watson</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        loc_id parent_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        &lt;char&gt;    &lt;char&gt;</span>
+<span class="r-in"><span><span class="fu">canonicalize_locations</span><span class="op">(</span><span class="va">locations_sim</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;layer, parent_id, loc_id&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        loc_id parent_id layer loc_c_id loc_cp_id layer_bound</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        &lt;char&gt;    &lt;char&gt; &lt;int&gt;    &lt;int&gt;     &lt;int&gt;       &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1:                     State      &lt;NA&gt;     1        1        NA           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  2:                   Scruggs     State     2        2         1           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3:                    Simone     State     2        3         1           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  4:                    Watson     State     2        4         1           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  5:         Blue Heron School   Scruggs     3        5         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  6:  Bluebird Learning Center   Scruggs     3        6         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  7:           Catbird Academy   Scruggs     3        7         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  8:      Chickadee Elementary   Scruggs     3        8         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  9:          Finch Elementary   Scruggs     3        9         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10:     Flycatcher Elementary   Scruggs     3       10         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11:          Nuthatch Academy   Scruggs     3       11         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12:            Sparrow School   Scruggs     3       12         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13: Towhee Children's Academy   Scruggs     3       13         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14:        Warbler Elementary   Scruggs     3       14         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15:            Bunting School    Simone     3       15         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16:          Cardinal Academy    Simone     3       16         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17:          Egret Elementary    Simone     3       17         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18:  Grosbeak Learning Center    Simone     3       18         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19:          Junco Elementary    Simone     3       19         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20:      Oriole Youth Academy    Simone     3       20         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21:           Tanager Academy    Simone     3       21         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22:      Cormorant Elementary    Watson     3       22         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23:      Goldfinch Elementary    Watson     3       23         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24:        Kingfisher Academy    Watson     3       24         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25:   Kinglet Learning Center    Watson     3       25         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26:         Meadowlark School    Watson     3       26         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27:       Mockingbird Academy    Watson     3       27         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28:              Vireo School    Watson     3       28         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        loc_id parent_id layer loc_c_id loc_cp_id layer_bound</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        &lt;char&gt;    &lt;char&gt; &lt;int&gt;    &lt;int&gt;     &lt;int&gt;       &lt;int&gt;</span>
+<span class="r-in"><span><span class="co"># can also be provided in non-canonical order, and with an implicit root</span></span></span>
+<span class="r-in"><span><span class="va">weird_locations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">locations_sim</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">parent_id</span><span class="op">)</span><span class="op">)</span><span class="op">[</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">locations_sim</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="fu">canonicalize_locations</span><span class="op">(</span><span class="va">weird_locations</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;layer, parent_id, loc_id&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        loc_id parent_id layer loc_c_id loc_cp_id layer_bound</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        &lt;char&gt;    &lt;char&gt; &lt;int&gt;    &lt;int&gt;     &lt;int&gt;       &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1:                     State      &lt;NA&gt;     1        1        NA           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  2:                   Scruggs     State     2        2         1           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3:                    Simone     State     2        3         1           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  4:                    Watson     State     2        4         1           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  5:         Blue Heron School   Scruggs     3        5         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  6:  Bluebird Learning Center   Scruggs     3        6         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  7:           Catbird Academy   Scruggs     3        7         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  8:      Chickadee Elementary   Scruggs     3        8         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  9:          Finch Elementary   Scruggs     3        9         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10:     Flycatcher Elementary   Scruggs     3       10         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11:          Nuthatch Academy   Scruggs     3       11         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12:            Sparrow School   Scruggs     3       12         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13: Towhee Children's Academy   Scruggs     3       13         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14:        Warbler Elementary   Scruggs     3       14         2           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15:            Bunting School    Simone     3       15         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16:          Cardinal Academy    Simone     3       16         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17:          Egret Elementary    Simone     3       17         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18:  Grosbeak Learning Center    Simone     3       18         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19:          Junco Elementary    Simone     3       19         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20:      Oriole Youth Academy    Simone     3       20         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21:           Tanager Academy    Simone     3       21         3          11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22:      Cormorant Elementary    Watson     3       22         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23:      Goldfinch Elementary    Watson     3       23         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24:        Kingfisher Academy    Watson     3       24         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25:   Kinglet Learning Center    Watson     3       25         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26:         Meadowlark School    Watson     3       26         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27:       Mockingbird Academy    Watson     3       27         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28:              Vireo School    Watson     3       28         4          18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        loc_id parent_id layer loc_c_id loc_cp_id layer_bound</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                        &lt;char&gt;    &lt;char&gt; &lt;int&gt;    &lt;int&gt;     &lt;int&gt;       &lt;int&gt;</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

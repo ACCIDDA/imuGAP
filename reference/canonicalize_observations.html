@@ -98,6 +98,66 @@ valid value at this time; we are preserving that for potential future support
 of left-censoring.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"observations_sim"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">observations_sim</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    loc_id parent_id  year enc_unit_id unit_id positive sample_n</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    &lt;char&gt;    &lt;char&gt; &lt;num&gt;       &lt;num&gt;   &lt;num&gt;    &lt;num&gt;    &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1: Chickadee Elementary   Scruggs  2001           2       5       61       78</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2: Chickadee Elementary   Scruggs  2002           2       5       72       79</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3: Chickadee Elementary   Scruggs  2003           2       5       69       81</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4: Chickadee Elementary   Scruggs  2004           2       5       68       82</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5: Chickadee Elementary   Scruggs  2005           2       5       72       80</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                                           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 694:                State      &lt;NA&gt;  2021          NA       1      248      285</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 695:                State      &lt;NA&gt;  2022          NA       1      200      220</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 696:                State      &lt;NA&gt;  2023          NA       1      259      280</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 697:                State      &lt;NA&gt;  2024          NA       1      267      290</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 698:                State      &lt;NA&gt;  2025          NA       1      257      275</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      censored ly_min ly_max  dose weight vaxview_type    age cohort_min</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;num&gt;  &lt;num&gt;  &lt;num&gt; &lt;num&gt;  &lt;num&gt;       &lt;char&gt; &lt;char&gt;      &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1:       NA      5      5     2    1.0         &lt;NA&gt;   &lt;NA&gt;          4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2:       NA      5      5     2    1.0         &lt;NA&gt;   &lt;NA&gt;          5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3:       NA      5      5     2    1.0         &lt;NA&gt;   &lt;NA&gt;          6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4:       NA      5      5     2    1.0         &lt;NA&gt;   &lt;NA&gt;          7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5:       NA      5      5     2    1.0         &lt;NA&gt;   &lt;NA&gt;          8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 694:       NA     14     18     2    0.2         teen   &lt;NA&gt;         11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 695:       NA     14     18     2    0.2         teen   &lt;NA&gt;         12</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 696:       NA     14     18     2    0.2         teen   &lt;NA&gt;         13</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 697:       NA     14     18     2    0.2         teen   &lt;NA&gt;         14</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 698:       NA     14     18     2    0.2         teen   &lt;NA&gt;         15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cohort_max obs_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;num&gt;  &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1:          4      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2:          5      2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3:          6      3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4:          7      4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5:          8      5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ---                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 694:         15    694</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 695:         16    695</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 696:         17    696</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 697:         18    697</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 698:         19    698</span>
+<span class="r-in"><span><span class="fu">canonicalize_observations</span><span class="op">(</span><span class="va">observations_sim</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;censored, obs_id&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      obs_c_id positive sample_n censored obs_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;int&gt;    &lt;int&gt;    &lt;int&gt;    &lt;num&gt;  &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1:        1       61       78       NA      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2:        2       72       79       NA      2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3:        3       69       81       NA      3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4:        4       68       82       NA      4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5:        5       72       80       NA      5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 694:      694      245      277        1    562</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 695:      695       66       74        1    581</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 696:      696       71       76        1    582</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 697:      697       70       81        1    587</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 698:      698       76       81        1    592</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

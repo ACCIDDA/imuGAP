@@ -94,3 +94,51 @@ You can imagine the units are whatever resolution is appropriate for
 your data: months, quarters, years, etc. As long as these are used
 consistently, estimation will work, and take on the unit meaning you
 used for input.
+
+## Examples
+
+``` r
+data("populations_sim"); data("locations_sim"); data("observations_sim")
+populations_sim
+#>      obs_id               loc_id cohort   age  dose weight
+#>       <num>               <char>  <num> <num> <num>  <num>
+#>   1:      1 Chickadee Elementary      4     5     2    1.0
+#>   2:      2 Chickadee Elementary      5     5     2    1.0
+#>   3:      3 Chickadee Elementary      6     5     2    1.0
+#>   4:      4 Chickadee Elementary      7     5     2    1.0
+#>   5:      5 Chickadee Elementary      8     5     2    1.0
+#>  ---                                                      
+#> 746:    698                State     19    14     2    0.2
+#> 747:    698                State     18    15     2    0.2
+#> 748:    698                State     17    16     2    0.2
+#> 749:    698                State     16    17     2    0.2
+#> 750:    698                State     15    18     2    0.2
+canonicalize_populations(populations_sim, observations_sim, locations_sim)
+#> Key: <obs_c_id, loc_c_id, cohort, age, dose>
+#>      obs_id               loc_id cohort   age  dose weight obs_c_id loc_c_id
+#>       <num>               <char>  <int> <int> <num>  <num>    <int>    <int>
+#>   1:      1 Chickadee Elementary      4     5     2      1        1        8
+#>   2:      2 Chickadee Elementary      5     5     2      1        2        8
+#>   3:      3 Chickadee Elementary      6     5     2      1        3        8
+#>   4:      4 Chickadee Elementary      7     5     2      1        4        8
+#>   5:      5 Chickadee Elementary      8     5     2      1        5        8
+#>  ---                                                                        
+#> 746:    562   Kingfisher Academy     15     5     2      1      694       24
+#> 747:    581 Cormorant Elementary      9     5     2      1      695       22
+#> 748:    582 Cormorant Elementary     10     5     2      1      696       22
+#> 749:    587 Cormorant Elementary     15     5     2      1      697       22
+#> 750:    592 Cormorant Elementary     20     5     2      1      698       22
+#>      range_start
+#>            <int>
+#>   1:           1
+#>   2:           2
+#>   3:           3
+#>   4:           4
+#>   5:           5
+#>  ---            
+#> 746:         746
+#> 747:         747
+#> 748:         748
+#> 749:         749
+#> 750:         750
+```

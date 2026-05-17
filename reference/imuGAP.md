@@ -74,3 +74,16 @@ imuGAP(
 
 An object of class `stanfit` returned by
 [`rstan::sampling`](https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html)
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+data("locations_sim"); data("observations_sim"); data("populations_sim")
+st_opts <- stan_options(chains = 2, iter = 500)
+imuGAP(
+  observations_sim, populations_sim, locations_sim,
+  stan_opts = st_opts
+)
+} # }
+```

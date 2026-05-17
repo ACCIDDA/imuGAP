@@ -66,3 +66,64 @@ When at least some of the data are censored, you must supply the
 observations with NA, and any right-censored observations with \$1\$.
 Note that \$0\$ is *not* a valid value at this time; we are preserving
 that for potential future support of left-censoring.
+
+## Examples
+
+``` r
+data("observations_sim")
+observations_sim
+#>                    loc_id parent_id  year enc_unit_id unit_id positive sample_n
+#>                    <char>    <char> <num>       <num>   <num>    <num>    <num>
+#>   1: Chickadee Elementary   Scruggs  2001           2       5       61       78
+#>   2: Chickadee Elementary   Scruggs  2002           2       5       72       79
+#>   3: Chickadee Elementary   Scruggs  2003           2       5       69       81
+#>   4: Chickadee Elementary   Scruggs  2004           2       5       68       82
+#>   5: Chickadee Elementary   Scruggs  2005           2       5       72       80
+#>  ---                                                                           
+#> 694:                State      <NA>  2021          NA       1      248      285
+#> 695:                State      <NA>  2022          NA       1      200      220
+#> 696:                State      <NA>  2023          NA       1      259      280
+#> 697:                State      <NA>  2024          NA       1      267      290
+#> 698:                State      <NA>  2025          NA       1      257      275
+#>      censored ly_min ly_max  dose weight vaxview_type    age cohort_min
+#>         <num>  <num>  <num> <num>  <num>       <char> <char>      <num>
+#>   1:       NA      5      5     2    1.0         <NA>   <NA>          4
+#>   2:       NA      5      5     2    1.0         <NA>   <NA>          5
+#>   3:       NA      5      5     2    1.0         <NA>   <NA>          6
+#>   4:       NA      5      5     2    1.0         <NA>   <NA>          7
+#>   5:       NA      5      5     2    1.0         <NA>   <NA>          8
+#>  ---                                                                   
+#> 694:       NA     14     18     2    0.2         teen   <NA>         11
+#> 695:       NA     14     18     2    0.2         teen   <NA>         12
+#> 696:       NA     14     18     2    0.2         teen   <NA>         13
+#> 697:       NA     14     18     2    0.2         teen   <NA>         14
+#> 698:       NA     14     18     2    0.2         teen   <NA>         15
+#>      cohort_max obs_id
+#>           <num>  <int>
+#>   1:          4      1
+#>   2:          5      2
+#>   3:          6      3
+#>   4:          7      4
+#>   5:          8      5
+#>  ---                  
+#> 694:         15    694
+#> 695:         16    695
+#> 696:         17    696
+#> 697:         18    697
+#> 698:         19    698
+canonicalize_observations(observations_sim)
+#> Key: <censored, obs_id>
+#>      obs_c_id positive sample_n censored obs_id
+#>         <int>    <int>    <int>    <num>  <int>
+#>   1:        1       61       78       NA      1
+#>   2:        2       72       79       NA      2
+#>   3:        3       69       81       NA      3
+#>   4:        4       68       82       NA      4
+#>   5:        5       72       80       NA      5
+#>  ---                                           
+#> 694:      694      245      277        1    562
+#> 695:      695       66       74        1    581
+#> 696:      696       71       76        1    582
+#> 697:      697       70       81        1    587
+#> 698:      698       76       81        1    592
+```

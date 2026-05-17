@@ -123,6 +123,53 @@ months, quarters, years, etc. As long as these are used consistently,
 estimation will work, and take on the unit meaning you used for input.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"populations_sim"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"locations_sim"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"observations_sim"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">populations_sim</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      obs_id               loc_id cohort   age  dose weight</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;num&gt;               &lt;char&gt;  &lt;num&gt; &lt;num&gt; &lt;num&gt;  &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1:      1 Chickadee Elementary      4     5     2    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2:      2 Chickadee Elementary      5     5     2    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3:      3 Chickadee Elementary      6     5     2    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4:      4 Chickadee Elementary      7     5     2    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5:      5 Chickadee Elementary      8     5     2    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 746:    698                State     19    14     2    0.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 747:    698                State     18    15     2    0.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 748:    698                State     17    16     2    0.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 749:    698                State     16    17     2    0.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 750:    698                State     15    18     2    0.2</span>
+<span class="r-in"><span><span class="fu">canonicalize_populations</span><span class="op">(</span><span class="va">populations_sim</span>, <span class="va">observations_sim</span>, <span class="va">locations_sim</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;obs_c_id, loc_c_id, cohort, age, dose&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      obs_id               loc_id cohort   age  dose weight obs_c_id loc_c_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;num&gt;               &lt;char&gt;  &lt;int&gt; &lt;int&gt; &lt;num&gt;  &lt;num&gt;    &lt;int&gt;    &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1:      1 Chickadee Elementary      4     5     2      1        1        8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2:      2 Chickadee Elementary      5     5     2      1        2        8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3:      3 Chickadee Elementary      6     5     2      1        3        8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4:      4 Chickadee Elementary      7     5     2      1        4        8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5:      5 Chickadee Elementary      8     5     2      1        5        8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                                        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 746:    562   Kingfisher Academy     15     5     2      1      694       24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 747:    581 Cormorant Elementary      9     5     2      1      695       22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 748:    582 Cormorant Elementary     10     5     2      1      696       22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 749:    587 Cormorant Elementary     15     5     2      1      697       22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 750:    592 Cormorant Elementary     20     5     2      1      698       22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      range_start</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1:           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2:           2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3:           3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4:           4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5:           5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ---            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 746:         746</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 747:         747</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 748:         748</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 749:         749</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 750:         750</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
