@@ -15,7 +15,8 @@
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Estimate Measles Vaccine Coverage">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
+<meta property="og:title" content="Estimate Measles Vaccine Coverage">
 <meta name="description" content="What the package does (one paragraph).">
 <meta property="og:description" content="What the package does (one paragraph).">
 <meta property="og:image" content="https://accidda.github.io/imuGAP/logo.png">
@@ -68,114 +69,17 @@
 <p><a href="https://codecov.io/gh/ACCIDDA/imuGAP" class="external-link"><img src="https://codecov.io/gh/ACCIDDA/imuGAP/branch/main/graph/badge.svg" alt="codecov"></a></p>
 <p><a href="https://accidda.github.io/imuGAP/">imuGAP</a> provides a fitting and imputation / prediction tool for a particular process model of vaccination uptake. The tool provides flexible trends and relationships for the elements of the process.</p>
 <div class="section level2">
-<h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"ACCIDDA/imuGAP"</span><span class="op">)</span></span></code></pre></div>
+<p>Requires R &gt;= 4.1.0 and a C++ toolchain (for Stan model compilation).</p>
 </div>
 <div class="section level2">
 <h2 id="model">Model<a class="anchor" aria-label="anchor" href="#model"></a>
 </h2>
 <p>The <a href="https://accidda.github.io/imuGAP/">imuGAP</a> sampler fits two model effects: a lifetime tendency towards vaccination and a time varying force of vaccination. To fit those effects, the model evaluates observations which may combine many populations. The model distinguishes populations by place, birth timing, and age.</p>
 <p>The model organizes places into a hierarchy, for example a state which contains counties which in turn contain cities. The effects in a particular place combine the impact of all enclosing locations.</p>
-</div>
-<div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Install from GitHub</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"ACCIDDA/imuGAP"</span><span class="op">)</span></span></code></pre></div>
-<p>Requires R &gt;= 4.1.0 and a C++ toolchain (for Stan model compilation).</p>
-</div>
-<div class="section level2">
-<h2 id="cli-usage">CLI Usage<a class="anchor" aria-label="anchor" href="#cli-usage"></a>
-</h2>
-<p>After installing the package, set up the command-line interface:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">imuGAP</span><span class="fu">::</span><span class="fu">install_cli</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>This creates a symlink at <code>~/.local/bin/imugap</code>. Make sure <code>~/.local/bin</code> is on your <code>PATH</code>.</p>
-<p>You only need to run <code>install_cli()</code> once after installing or updating the package; it refreshes the symlink so it points at the current install.</p>
-<div class="section level3">
-<h3 id="commands">Commands<a class="anchor" aria-label="anchor" href="#commands"></a>
-</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Show help</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="ex">imugap</span> <span class="at">-h</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co"># Validate input data (dry run, no model fitting)</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="ex">imugap</span> <span class="at">-h</span> <span class="op">&lt;</span>input_dir<span class="op">&gt;</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co"># Run model fitting</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="ex">imugap</span> <span class="op">&lt;</span>input_dir<span class="op">&gt;</span> <span class="pp">[</span><span class="ss">output_dir</span><span class="pp">]</span></span></code></pre></div>
-<p><code>output_dir</code> defaults to <code>input_dir</code> if not specified. Output is a <code>fit.rds</code> file containing the raw <code>stanfit</code> object.</p>
-</div>
-<div class="section level3">
-<h3 id="input-files">Input Files<a class="anchor" aria-label="anchor" href="#input-files"></a>
-</h3>
-<p><code>input_dir</code> must contain three files (CSV or RDS):</p>
-<table class="table">
-<colgroup>
-<col width="21%">
-<col width="32%">
-<col width="46%">
-</colgroup>
-<thead><tr>
-<th>File</th>
-<th>Columns</th>
-<th>Description</th>
-</tr></thead>
-<tbody>
-<tr>
-<td><code>observations</code></td>
-<td>
-<code>obs_id</code>, <code>positive</code>, <code>sample_n</code>
-</td>
-<td>School-level vaccination counts.</td>
-</tr>
-<tr>
-<td><code>populations</code></td>
-<td>
-<code>obs_id</code>, <code>loc_id</code>, <code>cohort</code>, <code>age</code>, <code>dose</code>, <code>weight</code>
-</td>
-<td>Observation metadata. Weights must sum to 1 per <code>obs_id</code>. <code>dose</code> must include both 1 and 2.</td>
-</tr>
-<tr>
-<td><code>locations</code></td>
-<td>
-<code>loc_id</code>, <code>parent_id</code>
-</td>
-<td>Location hierarchy (state &gt; county &gt; school). Root has <code>parent_id = NA</code>.</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section level3">
-<h3 id="exit-codes">Exit Codes<a class="anchor" aria-label="anchor" href="#exit-codes"></a>
-</h3>
-<table class="table">
-<thead><tr>
-<th>Code</th>
-<th>Meaning</th>
-</tr></thead>
-<tbody>
-<tr>
-<td>0</td>
-<td>Success</td>
-</tr>
-<tr>
-<td>1</td>
-<td>Validation error</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Model error</td>
-</tr>
-<tr>
-<td>3</td>
-<td>I/O error</td>
-</tr>
-</tbody>
-</table>
-</div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -224,7 +128,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Carl Pearson, Claire Perrin Smith.</p>
+  <p>Developed by Carl Pearson, Claire Perrin Smith. <br><a href="https://accidda.org/" class="external-link accidda-footer-link" aria-label="Part of the ACCIDDA project"><img src="https://raw.githubusercontent.com/ACCIDDA/ACCIDDA-Images/refs/heads/main/accidda/accidda-logo-small.png" alt="ACCIDDA" class="accidda-footer-logo accidda-footer-logo-light" height="32"><img src="https://raw.githubusercontent.com/ACCIDDA/ACCIDDA-Images/refs/heads/main/accidda/accidda-white.png" alt="ACCIDDA" class="accidda-footer-logo accidda-footer-logo-dark" height="32"></a><span class="accidda-footer-text"> Part of the <a href="https://accidda.org/" class="external-link">ACCIDDA</a> project.</span></p>
 </div>
 
 <div class="pkgdown-footer-right">
