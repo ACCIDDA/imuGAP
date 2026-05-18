@@ -391,6 +391,27 @@ stan_options <- function(...) {
       "The model object should be passed in `imugap_options` instead."
     )
   }
+  int_args_in_sampling <- c("iter", "chains", "warmup", "cores")
+  for (arg in intersect(names(res), int_args_in_sampling)) {
+    if (length(res[[arg]]) != 1L) {
+      stop(
+        sprintf("'%s' must be a single positive integer", arg),
+        call. = FALSE
+      )
+    }
+    res[[arg]] <- check_positive_int(res[[arg]], arg)
+  }
+  if ("seed" %in% names(res)) {
+    val <- res[["seed"]]
+    if (length(val) != 1L) {
+      stop("'seed' must be a single value", call. = FALSE)
+    }
+    val <- suppressWarnings(as.integer(val))
+    if (is.na(val)) {
+      stop("'seed' must be coercible to an integer", call. = FALSE)
+    }
+    res[["seed"]] <- val
+  }
   return(res)
 }
 
@@ -415,6 +436,19 @@ imugap_options <- function(
   df = 5L, dose_schedule = c(1, 4),
   object = c("default")
 ) {
+  if (length(df) != 1L) {
+    stop("'df' must be a single positive integer", call. = FALSE)
+  }
+  df <- check_positive_int(df, "df")
+
+  dose_schedule <- check_positive_int(dose_schedule, "dose_schedule")
+  if (is.unsorted(dose_schedule, strictly = TRUE)) {
+    stop(
+      "'dose_schedule' must be an ascending vector of positive integers",
+      call. = FALSE
+    )
+  }
+
   object <- switch(object,
     "default" = stanmodels$impute_school_coverage_process_v6,
     stop("Unknown model object: ", object)
