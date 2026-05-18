@@ -12,7 +12,9 @@ test_that("imuGAP() runs end-to-end on bundled *_sim data", {
   pop <- canonicalize_populations(populations_sim, obs, locs)
 
   fit <- suppressWarnings(imuGAP(
-    obs, pop, locs,
+    obs,
+    pop,
+    locs,
     stan_opts = stan_options(
       iter = 100,
       chains = 1,

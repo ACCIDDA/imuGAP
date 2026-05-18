@@ -58,9 +58,10 @@ is_canonical <- function(dt, target_class) {
 #' @autoglobal
 #' @export
 canonicalize_locations <- function(locations) {
-
   # if already canonical, return
-  if (is_canonical(locations, "locations")) return(locations[])
+  if (is_canonical(locations, "locations")) {
+    return(locations[])
+  }
 
   locations <- as.data.table(locations)
 
@@ -71,7 +72,8 @@ canonicalize_locations <- function(locations) {
   if (length(dupes <- locations[, which(duplicated(loc_id))])) {
     stop(
       "locations$loc_id must be unique; found ",
-      length(dupes), " duplicates: ",
+      length(dupes),
+      " duplicates: ",
       toString(dupes, width = 80)
     )
   }
@@ -88,9 +90,12 @@ canonicalize_locations <- function(locations) {
     stop(
       "locations must have exactly one root, but found ",
       length(potential_root),
-      if (length(potential_root) > 0) paste0(
-        ": ", toString(potential_root, width = 80)
-      )
+      if (length(potential_root) > 0) {
+        paste0(
+          ": ",
+          toString(potential_root, width = 80)
+        )
+      }
     )
   }
 
@@ -191,7 +196,6 @@ canonicalize_locations <- function(locations) {
 #' @importFrom data.table as.data.table setkey
 #' @autoglobal
 canonicalize_observations <- function(observations, drop_extra = TRUE) {
-
   # if already canonical, return
   if (is_canonical(observations, "observations")) {
     return(observations[])
@@ -214,7 +218,8 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
   if (length(dupes <- observations[, which(duplicated(obs_id))])) {
     stop(
       "observations$obs_id must be unique; found ",
-      length(dupes), " duplicates: ",
+      length(dupes),
+      " duplicates: ",
       toString(dupes, width = 80)
     )
   }
@@ -231,7 +236,6 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
       toString(observations[positive > sample_n, obs_id], width = 80)
     )
   }
-
 
   if ("censored" %in% names(observations)) {
     # confirmed censored is numeric, and only contains NA or 1
@@ -255,7 +259,11 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
 
   if (drop_extra) {
     observations <- observations[, .(
-      obs_c_id, positive, sample_n, censored, obs_id
+      obs_c_id,
+      positive,
+      sample_n,
+      censored,
+      obs_id
     )]
   }
 
@@ -315,7 +323,6 @@ canonicalize_populations <- function(
   max_age,
   max_dose = 2L
 ) {
-
   if (is_canonical(populations, "populations")) {
     return(populations[])
   }
@@ -323,7 +330,8 @@ canonicalize_populations <- function(
   # using internal methods, check that populations has the correct structure
   checked_dt_able(populations)
   checked_cols(
-    populations, c("obs_id", "loc_id", "cohort", "age", "dose", "weight")
+    populations,
+    c("obs_id", "loc_id", "cohort", "age", "dose", "weight")
   )
 
   observations <- canonicalize_observations(observations)
@@ -433,7 +441,8 @@ stan_options <- function(...) {
 #' @return a list of imuGAP model options
 #' @export
 imugap_options <- function(
-  df = 5L, dose_schedule = c(1, 4),
+  df = 5L,
+  dose_schedule = c(1, 4),
   object = c("default")
 ) {
   if (length(df) != 1L) {
@@ -449,7 +458,8 @@ imugap_options <- function(
     )
   }
 
-  object <- switch(object,
+  object <- switch(
+    object,
     "default" = stanmodels$impute_school_coverage_process_v6,
     stop("Unknown model object: ", object)
   )
@@ -482,14 +492,13 @@ imugap_options <- function(
 #'
 #' @autoglobal
 #' @export
-imuGAP <- function( # nolint
+imuGAP <- function(
   observations,
   populations,
   locations,
   imugap_opts = imugap_options(),
   stan_opts = stan_options()
 ) {
-
   # check location argument
   loc_info <- canonicalize_locations(locations)
   layer_sizes <- loc_info[, .N, keyby = layer][, c(N)]

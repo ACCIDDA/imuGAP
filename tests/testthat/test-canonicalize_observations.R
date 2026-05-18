@@ -9,7 +9,6 @@ test_that("works for obvious case", {
   expect_silent(obs_res <- canonicalize_observations(obs))
   expect_s3_class(obs_res, "data.table")
   expect_equal(obs_res$obs_c_id, 1:3)
-
 })
 
 test_that("keeps or discards extra cols", {
@@ -26,11 +25,9 @@ test_that("keeps or discards extra cols", {
 
   expect_silent(obs_res2 <- canonicalize_observations(obs, drop_extra = FALSE))
   expect_true("extra" %in% names(obs_res2))
-
 })
 
 test_that("works with censoring", {
-
   obs <- data.frame(
     obs_id = c("a", "b", "c"),
     positive = c(5, 10, 15),
@@ -41,11 +38,9 @@ test_that("works with censoring", {
   expect_silent(obs_res <- canonicalize_observations(obs))
   expect_s3_class(obs_res, "data.table")
   expect_equal(obs_res$obs_id, c("a", "c", "b"))
-
 })
 
 test_that("can ensure scientific validity", {
-
   obs_negative_pos <- data.frame(
     obs_id = c("a", "b", "c"),
     positive = c(5, -10, 15),
@@ -69,7 +64,6 @@ test_that("can ensure scientific validity", {
   )
 
   expect_error(canonicalize_observations(obs_pos_samp_inconsistent), "sample_n")
-
 })
 
 test_that("errors when obs_id contains NA", {
@@ -105,7 +99,7 @@ test_that("errors when censored column contains values other than NA or 1", {
     obs_id = c("a", "b", "c"),
     positive = c(5, 10, 15),
     sample_n = c(10, 20, 30),
-    censored = c(NA, 0, 1)  # 0 is not allowed (reserved for left-censoring)
+    censored = c(NA, 0, 1) # 0 is not allowed (reserved for left-censoring)
   )
   expect_error(canonicalize_observations(obs), "censored")
 })

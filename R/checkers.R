@@ -90,8 +90,13 @@ checked_dt_able <- function(dt, copy = FALSE) {
 }
 
 check_positive_int <- function(val, name) {
-  if (!is.numeric(val) || length(val) < 1L || any(is.na(val)) ||
-        any(val < 1) || any(val != as.integer(val))) {
+  if (
+    !is.numeric(val) ||
+      length(val) < 1L ||
+      any(is.na(val)) ||
+      any(val < 1) ||
+      any(val != as.integer(val))
+  ) {
     stop(
       sprintf("'%s' must be (a vector of) positive integer(s)", name),
       call. = FALSE

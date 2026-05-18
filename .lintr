@@ -1,3 +1,11 @@
-linters: linters_with_defaults()
+linters: linters_with_defaults(
+    line_length_linter = line_length_linter(100L),
+    return_linter = NULL,
+    object_usage_linter = NULL,
+    object_name_linter = object_name_linter(
+      styles = c("snake_case", "symbols"),
+      regexes = "^imuGAP$"
+    )
+  )
 encoding: "UTF-8"
-exclusions: list("R/stanmodels.R", "inst/analysis")
+exclusions: list("R/stanmodels.R", "inst/analysis", "inst/scripts")

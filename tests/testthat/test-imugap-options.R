@@ -109,26 +109,32 @@ test_that("imugap_options rejects invalid df", {
 test_that("imugap_options rejects invalid dose_schedule", {
   valid_schedule <- c(1, 4)
   expect_error(
-    imugap_options(dose_schedule = -valid_schedule), "dose_schedule"
+    imugap_options(dose_schedule = -valid_schedule),
+    "dose_schedule"
   )
   expect_error(
-    imugap_options(dose_schedule = c(0, valid_schedule)), "dose_schedule"
+    imugap_options(dose_schedule = c(0, valid_schedule)),
+    "dose_schedule"
   )
   expect_error(
-    imugap_options(dose_schedule = c(valid_schedule, NA)), "dose_schedule"
+    imugap_options(dose_schedule = c(valid_schedule, NA)),
+    "dose_schedule"
   )
   expect_error(
-    imugap_options(dose_schedule = numeric(0)), "dose_schedule"
+    imugap_options(dose_schedule = numeric(0)),
+    "dose_schedule"
   )
   expect_error(
     imugap_options(dose_schedule = as.character(valid_schedule)),
     "dose_schedule"
   )
   expect_error(
-    imugap_options(dose_schedule = rev(valid_schedule)), "dose_schedule"
+    imugap_options(dose_schedule = rev(valid_schedule)),
+    "dose_schedule"
   )
   expect_error(
-    imugap_options(dose_schedule = c(1.5, 4)), "dose_schedule"
+    imugap_options(dose_schedule = c(1.5, 4)),
+    "dose_schedule"
   )
 })
 
