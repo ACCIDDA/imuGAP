@@ -89,6 +89,17 @@ checked_dt_able <- function(dt, copy = FALSE) {
   return(if (copy) as.data.table(dt) else setDT(dt))
 }
 
+check_positive_int <- function(val, name) {
+  if (!is.numeric(val) || length(val) < 1L || any(is.na(val)) ||
+        any(val < 1) || any(val != as.integer(val))) {
+    stop(
+      sprintf("'%s' must be (a vector of) positive integer(s)", name),
+      call. = FALSE
+    )
+  }
+  return(as.integer(val))
+}
+
 checked_cols <- function(dt, cols, warn_extra = FALSE) {
   missing_cols <- setdiff(cols, names(dt))
   if (length(missing_cols) > 0) {
