@@ -9,12 +9,12 @@ footer:
     right: built_with
   components:
     accidda: |
-      <br><a href="https://accidda.unc.edu/" class="accidda-footer-link"
+      <br><a href="https://accidda.org/" class="accidda-footer-link"
       aria-label="Part of the ACCIDDA project"><img
-      src="https://accidda.github.io/imuGAP/reference/figures/accidda-logo-light.png"
+      src="https://raw.githubusercontent.com/ACCIDDA/ACCIDDA-Images/refs/heads/main/accidda/accidda-logo-small.png"
       alt="ACCIDDA" class="accidda-footer-logo accidda-footer-logo-light"
       height="32"><img
-      src="https://accidda.github.io/imuGAP/reference/figures/accidda-logo-dark.png"
+      src="https://raw.githubusercontent.com/ACCIDDA/ACCIDDA-Images/refs/heads/main/accidda/accidda-white.png"
       alt="ACCIDDA" class="accidda-footer-logo accidda-footer-logo-dark"
       height="32"></a><span class="accidda-footer-text"> Part of the
-      <a href="https://accidda.unc.edu/">ACCIDDA</a> project.</span>
+      <a href="https://accidda.org/">ACCIDDA</a> project.</span>
