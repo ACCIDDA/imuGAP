@@ -4,12 +4,14 @@
 \alias{extract_imugap}
 \title{Custom imuGAP fit extraction}
 \usage{
-extract_imugap(fit, pars = c("logit_phi_state"), ...)
+extract_imugap(fit, pars = c("logit_phi_st"), ...)
 }
 \arguments{
 \item{fit}{a \code{stanfit} object returned by \code{imuGAP()}}
 
-\item{pars}{character vector; parameters to extract.}
+\item{pars}{character vector; parameters to extract. Defaults to
+\code{"logit_phi_st"}, the state-level logit-coverage parameter emitted by the
+bundled Stan model.}
 
 \item{...}{additional arguments passed to \code{\link[rstan:stanfit-method-extract]{rstan::extract()}}}
 }
@@ -18,4 +20,10 @@ a list, as returned by \code{rstan::extract()}
 }
 \description{
 Thin wrapper around \code{rstan::extract} to extract typical imuGAP parameters.
+}
+\examples{
+data("fit_sim")
+extract_imugap(fit_sim)
+extract_imugap(fit_sim, pars = "phi")
+
 }
