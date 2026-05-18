@@ -1,5 +1,7 @@
 # imuGAP
 
+[![codecov](https://codecov.io/gh/ACCIDDA/imuGAP/branch/main/graph/badge.svg)](https://codecov.io/gh/ACCIDDA/imuGAP)
+
 [imuGAP](https://accidda.github.io/imuGAP/) provides a fitting and
 imputation / prediction tool for a particular process model of
 vaccination uptake. The tool provides flexible trends and relationships
