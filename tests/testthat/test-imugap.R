@@ -127,11 +127,27 @@ test_that("imuGAP assembles stan_opts$data with all expected fields", {
   d <- out$captured$data
   expect_true(is.list(d))
   expected_fields <- c(
-    "n_uncensored_obs", "n_yr", "n_cohort", "n_sch", "n_doses",
-    "dose_sched", "k_bs", "bs", "n_obs", "y_obs", "y_smp",
-    "n_weights", "obs_to_weights_bounds", "weights_school",
-    "weights_cohort", "weights_life_year", "weights_dose",
-    "weights", "n_cnty", "cnty_bounds", "predict_mode"
+    "n_uncensored_obs",
+    "n_yr",
+    "n_cohort",
+    "n_sch",
+    "n_doses",
+    "dose_sched",
+    "k_bs",
+    "bs",
+    "n_obs",
+    "y_obs",
+    "y_smp",
+    "n_weights",
+    "obs_to_weights_bounds",
+    "weights_school",
+    "weights_cohort",
+    "weights_life_year",
+    "weights_dose",
+    "weights",
+    "n_cnty",
+    "cnty_bounds",
+    "predict_mode"
   )
   expect_true(all(expected_fields %in% names(d)))
 })
@@ -179,7 +195,10 @@ test_that("imuGAP forwards object from imugap_opts to rstan::sampling", {
     )
   ))
   expect_s4_class(out$captured$object, "stanmodel")
-  expect_equal(out$captured$object@model_name, "impute_school_coverage_process_v6")
+  expect_equal(
+    out$captured$object@model_name,
+    "impute_school_coverage_process_v6"
+  )
 })
 
 test_that("imuGAP forwards extra stan_opts (e.g. iter, chains)", {

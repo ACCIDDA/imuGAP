@@ -1,6 +1,4 @@
-
 test_that("can enforce id and parent_id columns", {
-
   # valid locations data should pass without error or warning
   expect_silent(
     canonicalize_locations(data.frame(loc_id = 1:3, parent_id = c(NA, 1, 1)))
@@ -8,7 +6,8 @@ test_that("can enforce id and parent_id columns", {
 
   expect_silent(
     canonicalize_locations(data.frame(
-      loc_id = c("a", "b", "c"), parent_id = c(NA, "a", "a")
+      loc_id = c("a", "b", "c"),
+      parent_id = c(NA, "a", "a")
     ))
   )
 
@@ -24,7 +23,9 @@ test_that("can enforce id and parent_id columns", {
 
   expect_warning(
     canonicalize_locations(data.frame(
-      loc_id = 1:3, parent_id = c(NA, 1, 1), extra_col = "x"
+      loc_id = 1:3,
+      parent_id = c(NA, 1, 1),
+      extra_col = "x"
     )),
     "extra_col"
   )
@@ -33,7 +34,8 @@ test_that("can enforce id and parent_id columns", {
 test_that("can enforce unique ids", {
   expect_error(
     canonicalize_locations(data.frame(
-      loc_id = c(1, 1, 2), parent_id = c(NA, 1, 1)
+      loc_id = c(1, 1, 2),
+      parent_id = c(NA, 1, 1)
     ))
   )
 })
@@ -52,14 +54,14 @@ test_that("can enforce unique root", {
 test_that("can enforce no cycles", {
   expect_error(
     canonicalize_locations(data.frame(
-      loc_id = 1:4, parent_id = c(NA, 1, 4, 3)
+      loc_id = 1:4,
+      parent_id = c(NA, 1, 4, 3)
     )),
     "cycle"
   )
 })
 
 test_that("yields data.table with ordered layer, parent_id, and id columns", {
-
   ref <- data.frame(
     loc_id = c("a", "b", "c", "d", "e"),
     parent_id = c(NA, "a", "a", "c", "b")
@@ -69,15 +71,19 @@ test_that("yields data.table with ordered layer, parent_id, and id columns", {
 
   expect_true(data.table::is.data.table(locs))
   expect_equal(
-    names(locs), c(
-      names(ref), "layer", "loc_c_id", "loc_cp_id", "layer_bound"
+    names(locs),
+    c(
+      names(ref),
+      "layer",
+      "loc_c_id",
+      "loc_cp_id",
+      "layer_bound"
     )
   )
   expect_equal(locs$layer, c(1L, 2L, 2L, 3L, 3L))
   expect_equal(locs$loc_id, c("a", "b", "c", "e", "d"))
   expect_equal(locs$loc_c_id, sort(locs$loc_c_id, na.last = FALSE))
   expect_equal(locs$loc_cp_id, sort(locs$loc_cp_id, na.last = FALSE))
-
 })
 
 test_that("infers implicit root when no row has parent_id == NA", {
