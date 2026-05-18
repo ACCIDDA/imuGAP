@@ -27,21 +27,16 @@ test_that("canonicalize_populations short-circuits on canonical input", {
 })
 
 test_that("canonicalize_populations assigns range_start by obs_c_id", {
-  # Two rows per obs so range_start should split into runs.
-  pops <- data.table::data.table(
-    obs_id = c("o1", "o1", "o2", "o2"),
-    loc_id = c("schl", "schl", "schl", "schl"),
-    cohort = c(1L, 1L, 2L, 2L),
-    age = c(2L, 2L, 2L, 2L),
-    dose = c(1L, 2L, 1L, 2L),
-    weight = c(0.5, 0.5, 0.6, 0.4)
+  base <- make_test_pops()
+  pops <- rbind(
+    transform(base, dose = 1L, weight = c(0.5, 0.6)),
+    transform(base, dose = 2L, weight = c(0.5, 0.4))
   )
   res <- canonicalize_populations(
     pops, make_test_obs(), make_test_locs(),
     max_cohort = 5L, max_age = 10L
   )
   expect_equal(nrow(res), 4L)
-  # range_start should be min seq within obs_c_id
   starts <- res[, .(start = unique(range_start)), by = obs_c_id]
   expect_equal(nrow(starts), 2L)
 })
@@ -143,13 +138,10 @@ test_that("canonicalize_populations errors on non-positive weight", {
 })
 
 test_that("canonicalize_populations errors when weights do not sum to 1 by obs_id", {
-  bad <- data.table::data.table(
-    obs_id = c("o1", "o1", "o2"),
-    loc_id = c("schl", "schl", "schl"),
-    cohort = c(1L, 1L, 1L),
-    age = c(2L, 2L, 2L),
-    dose = c(1L, 2L, 1L),
-    weight = c(0.3, 0.3, 1.0)  # o1 sums to 0.6, not 1.0
+  bad <- rbind(
+    make_test_pops(),
+    data.frame(obs_id = "o1", loc_id = "schl", cohort = 1L, age = 2L,
+               dose = 2L, weight = 0.3)
   )
   expect_error(
     canonicalize_populations(

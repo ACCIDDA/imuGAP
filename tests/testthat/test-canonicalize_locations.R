@@ -88,11 +88,7 @@ test_that("infers implicit root when no row has parent_id == NA", {
 })
 
 test_that("canonical input short-circuits and returns unchanged", {
-  ref <- data.frame(
-    loc_id = c("a", "b", "c"),
-    parent_id = c(NA, "a", "a")
-  )
-  canon <- canonicalize_locations(ref)
+  canon <- canonicalize_locations(make_test_locs())
   again <- canonicalize_locations(canon)
   expect_identical(canon, again)
 })
