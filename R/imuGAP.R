@@ -533,6 +533,7 @@ imuGAP <- function( # nolint
 #'
 #' @return a list, as returned by `rstan::extract()`
 #'
+#' @export
 extract_imugap <- function(fit, pars = c("logit_phi_state"), ...) {
   return(rstan::extract(fit, pars = pars, ...))
 }

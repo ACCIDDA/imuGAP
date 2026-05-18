@@ -71,3 +71,52 @@ test_that("can ensure scientific validity", {
   expect_error(canonicalize_observations(obs_pos_samp_inconsistent), "sample_n")
 
 })
+
+test_that("errors when obs_id contains NA", {
+  obs <- data.frame(
+    obs_id = c("a", NA, "c"),
+    positive = c(5, 10, 15),
+    sample_n = c(10, 20, 30)
+  )
+  expect_error(canonicalize_observations(obs), "obs_id.*NA")
+})
+
+test_that("errors when obs_id has duplicates", {
+  obs <- data.frame(
+    obs_id = c("a", "b", "a"),
+    positive = c(5, 10, 15),
+    sample_n = c(10, 20, 30)
+  )
+  expect_error(canonicalize_observations(obs), "unique")
+})
+
+test_that("errors when censored column is not numeric", {
+  obs <- data.frame(
+    obs_id = c("a", "b", "c"),
+    positive = c(5, 10, 15),
+    sample_n = c(10, 20, 30),
+    censored = c("no", "yes", "no")
+  )
+  expect_error(canonicalize_observations(obs), "censored.*numeric")
+})
+
+test_that("errors when censored column contains values other than NA or 1", {
+  obs <- data.frame(
+    obs_id = c("a", "b", "c"),
+    positive = c(5, 10, 15),
+    sample_n = c(10, 20, 30),
+    censored = c(NA, 0, 1)  # 0 is not allowed (reserved for left-censoring)
+  )
+  expect_error(canonicalize_observations(obs), "censored")
+})
+
+test_that("canonical input short-circuits and returns unchanged", {
+  obs <- data.frame(
+    obs_id = c("a", "b", "c"),
+    positive = c(5, 10, 15),
+    sample_n = c(10, 20, 30)
+  )
+  canon <- canonicalize_observations(obs)
+  again <- canonicalize_observations(canon)
+  expect_identical(canon, again)
+})

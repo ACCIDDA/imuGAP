@@ -3,6 +3,7 @@
 export(canonicalize_locations)
 export(canonicalize_observations)
 export(canonicalize_populations)
+export(extract_imugap)
 export(imuGAP)
 export(imugap_options)
 export(install_cli)

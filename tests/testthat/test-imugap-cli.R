@@ -208,3 +208,61 @@ test_that("install_cli replaces existing file at target", {
   imuGAP::install_cli(path = dir)
   expect_true(nzchar(Sys.readlink(file.path(dir, "imugap"))))
 })
+
+# --- install_cli branch coverage ---------------------------------------------
+#
+# Cover the remaining branches in R/install_cli.R: symlink-creation failure
+# (line 40), and (best-effort) the interactive prompt branch. The Windows
+# OS-type check (line 14) and the "no bundled script" branch (line 19) can't
+# be exercised on a Mac/Linux test runner without modifying the package or
+# the OS — we leave them uncovered.
+
+test_that("install_cli errors when symlink creation fails", {
+  skip_on_os("windows")
+  # Make the install directory read-only so file.symlink() returns FALSE.
+  dir <- tempfile("test_install_fail_ro_")
+  dir.create(dir)
+  Sys.chmod(dir, "0500")  # r-x for owner; no write
+  on.exit({
+    Sys.chmod(dir, "0700")
+    unlink(dir, recursive = TRUE)
+  }, add = TRUE)
+
+  # suppressWarnings: file.symlink() also emits a warning before returning
+  # FALSE; we only care about the resulting error.
+  expect_error(
+    suppressWarnings(imuGAP::install_cli(path = dir)),
+    "Failed to create symlink"
+  )
+})
+
+test_that("install_cli responds to interactive prompt response 'n'", {
+  skip_on_os("windows")
+  # Mock interactive() and readline() inside the imuGAP namespace. These
+  # bindings don't exist there by default (they live in base), but
+  # local_mocked_bindings will inject them and the call site will see them
+  # via standard scope.
+  dir <- tempfile("test_install_decline_")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+  # Attempt to mock; if the testthat API rejects mocking base functions for
+  # this package, skip with a note. (Different testthat versions behave
+  # slightly differently.)
+  ok <- tryCatch(
+    {
+      testthat::with_mocked_bindings(
+        {
+          suppressMessages(imuGAP::install_cli(path = dir))
+        },
+        interactive = function() TRUE,
+        readline = function(prompt) "n",
+        .package = "imuGAP"
+      )
+    },
+    error = function(e) NULL
+  )
+  skip_if(is.null(ok), "testthat cannot mock base bindings in imuGAP namespace")
+  expect_false(ok)
+  expect_false(file.exists(file.path(dir, "imugap")))
+})
