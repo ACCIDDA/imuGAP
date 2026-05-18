@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  test-coverage:
+  unit-tests:
     runs-on: ubuntu-latest
 
     env:
@@ -37,7 +37,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-rrelease-stan-
 
-      - name: Test coverage
+      - name: Run tests with coverage
         run: |
           cov <- covr::package_coverage(
             quiet = FALSE,
@@ -47,14 +47,11 @@ jobs:
           covr::to_cobertura(cov)
         shell: Rscript {0}
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
         with:
-          fail_ci_if_error: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }}
-          files: ./cobertura.xml
-          plugins: noop
-          disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage-data
+          path: cobertura.xml
 
       - name: Show testthat output
         if: always()
@@ -69,3 +66,25 @@ jobs:
         with:
           name: coverage-test-failures
           path: ${{ runner.temp }}/package
+
+  coverage:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          fail_ci_if_error: ${{ github.event_name != 'pull_request' || ! github.event.pull_request.head.repo.fork }}
+          files: ./cobertura.xml
+          plugins: noop
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
