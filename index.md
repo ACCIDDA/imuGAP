@@ -48,10 +48,9 @@ imuGAP::install_cli()
 This creates a symlink at `~/.local/bin/imugap`. Make sure
 `~/.local/bin` is on your `PATH`.
 
-You only need to run
-[`install_cli()`](https://accidda.github.io/imuGAP/reference/install_cli.md)
-once after installing or updating the package; it refreshes the symlink
-so it points at the current install.
+You only need to run `install_cli()` once after installing or updating
+the package; it refreshes the symlink so it points at the current
+install.
 
 ### Commands
 

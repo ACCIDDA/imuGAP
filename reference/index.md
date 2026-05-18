@@ -25,9 +25,6 @@
 - [`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md)
   : imuGAP Model Options
 
-- [`install_cli()`](https://accidda.github.io/imuGAP/reference/install_cli.md)
-  : Install imuGAP CLI to PATH
-
 - [`locations_sim`](https://accidda.github.io/imuGAP/reference/locations_sim.md)
   : Example Location Data
 
