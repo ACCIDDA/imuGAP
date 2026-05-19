@@ -1,4 +1,4 @@
-PKG := "SeverityEstimate"
+PKG := "imuGAP"
 VERSION := `Rscript -e "cat(read.dcf('DESCRIPTION')[,'Version'])"`
 TARBALL := PKG + "_" + VERSION + ".tar.gz"
 
@@ -70,11 +70,11 @@ renv-snapshot:
 	renv::update()
 	renv::snapshot()
 
-[doc('Install development version of SeverityEstimate')]
+[doc('Install development version of imuGAP')]
 install: renv-install
 	R CMD INSTALL .
 
-[doc('Remove development version of SeverityEstimate')]
+[doc('Remove development version of imuGAP')]
 remove:
 	R CMD REMOVE {{ PKG }}
 
