@@ -7,13 +7,13 @@
 extract_imugap(fit, pars = c("logit_phi_st"), ...)
 }
 \arguments{
-\item{fit}{a \code{stanfit} object returned by \code{imuGAP()}}
+\item{fit}{a \code{stanfit} object returned by \code{sampling()}}
 
 \item{pars}{character vector; parameters to extract. Defaults to
 \code{"logit_phi_st"}, the state-level logit-coverage parameter emitted by the
 bundled Stan model.}
 
-\item{...}{additional arguments passed to \code{\link[rstan:stanfit-method-extract]{rstan::extract()}}}
+\item{...}{additional arguments passed to \verb{[rstan::extract()]}.}
 }
 \value{
 a list, as returned by \code{rstan::extract()}

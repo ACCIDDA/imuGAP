@@ -37,9 +37,9 @@ make_minimal_pops <- function() {
 
 # --- error paths -------------------------------------------------------------
 
-test_that("imuGAP errors when location hierarchy has fewer than 3 layers", {
+test_that("sampling errors when location hierarchy has fewer than 3 layers", {
   expect_error(
-    imuGAP(
+    imuGAP::sampling(
       observations = make_minimal_obs(),
       populations = make_minimal_pops(),
       locations = make_2layer_locs()
@@ -48,7 +48,7 @@ test_that("imuGAP errors when location hierarchy has fewer than 3 layers", {
   )
 })
 
-test_that("imuGAP errors when location hierarchy has more than 3 layers", {
+test_that("sampling errors when location hierarchy has more than 3 layers", {
   locs4 <- data.frame(
     loc_id = c("state", "cnty", "schl", "subschl"),
     parent_id = c(NA, "state", "cnty", "schl")
@@ -56,7 +56,7 @@ test_that("imuGAP errors when location hierarchy has more than 3 layers", {
   pops4 <- make_minimal_pops()
   pops4$loc_id <- c("subschl", "subschl")
   expect_error(
-    imuGAP(
+    imuGAP::sampling(
       observations = make_minimal_obs(),
       populations = pops4,
       locations = locs4
@@ -65,13 +65,13 @@ test_that("imuGAP errors when location hierarchy has more than 3 layers", {
   )
 })
 
-test_that("imuGAP propagates validation errors from canonicalize_observations", {
+test_that("sampling propagates validation errors from canonicalize_observations", {
   bad_obs <- data.frame(
     obs_id = c("o1", "o2"),
     positive = c(5L, 10L)
   )
   expect_error(
-    imuGAP(
+    imuGAP::sampling(
       observations = bad_obs,
       populations = make_minimal_pops(),
       locations = make_3layer_locs()
@@ -80,11 +80,11 @@ test_that("imuGAP propagates validation errors from canonicalize_observations", 
   )
 })
 
-test_that("imuGAP propagates validation errors from canonicalize_populations", {
+test_that("sampling propagates validation errors from canonicalize_populations", {
   bad_pops <- make_minimal_pops()
   bad_pops$dose <- c(1L, 99L)
   expect_error(
-    imuGAP(
+    imuGAP::sampling(
       observations = make_minimal_obs(),
       populations = bad_pops,
       locations = make_3layer_locs()
@@ -95,7 +95,7 @@ test_that("imuGAP propagates validation errors from canonicalize_populations", {
 
 # --- data assembly path ------------------------------------------------------
 #
-# Mock rstan::sampling with with_mocked_bindings so imuGAP() runs the
+# Mock rstan::sampling with with_mocked_bindings so imuGAP::sampling() runs the
 # assembly pipeline but the mock captures stan_opts in lieu of sampling.
 
 with_captured_sampling <- function(code) {
@@ -115,9 +115,9 @@ with_captured_sampling <- function(code) {
   )
 }
 
-test_that("imuGAP assembles stan_opts$data with all expected fields", {
+test_that("sampling assembles stan_opts$data with all expected fields", {
   out <- with_captured_sampling(suppressWarnings(
-    imuGAP(
+    imuGAP::sampling(
       observations = make_minimal_obs(),
       populations = make_minimal_pops(),
       locations = make_3layer_locs()
@@ -152,13 +152,13 @@ test_that("imuGAP assembles stan_opts$data with all expected fields", {
   expect_true(all(expected_fields %in% names(d)))
 })
 
-test_that("imuGAP data assembly produces sane derived values", {
+test_that("sampling data assembly produces sane derived values", {
   obs <- make_minimal_obs()
   pops <- make_minimal_pops()
   locs <- make_3layer_locs()
   opts <- imugap_options()
   out <- with_captured_sampling(suppressWarnings(
-    imuGAP(observations = obs, populations = pops, locations = locs)
+    imuGAP::sampling(observations = obs, populations = pops, locations = locs)
   ))
   d <- out$captured$data
   expect_equal(d$n_obs, nrow(obs))
@@ -172,10 +172,10 @@ test_that("imuGAP data assembly produces sane derived values", {
   expect_equal(ncol(d$dose_sched), d$n_doses)
 })
 
-test_that("imuGAP forwards observation positive/sample_n into stan data", {
+test_that("sampling forwards observation positive/sample_n into stan data", {
   obs <- make_minimal_obs()
   out <- with_captured_sampling(suppressWarnings(
-    imuGAP(
+    imuGAP::sampling(
       observations = obs,
       populations = make_minimal_pops(),
       locations = make_3layer_locs()
@@ -186,9 +186,9 @@ test_that("imuGAP forwards observation positive/sample_n into stan data", {
   expect_setequal(d$y_smp, obs$sample_n)
 })
 
-test_that("imuGAP forwards object from imugap_opts to rstan::sampling", {
+test_that("sampling forwards object from imugap_opts to rstan::sampling", {
   out <- with_captured_sampling(suppressWarnings(
-    imuGAP(
+    imuGAP::sampling(
       observations = make_minimal_obs(),
       populations = make_minimal_pops(),
       locations = make_3layer_locs()
@@ -201,9 +201,9 @@ test_that("imuGAP forwards object from imugap_opts to rstan::sampling", {
   )
 })
 
-test_that("imuGAP forwards extra stan_opts (e.g. iter, chains)", {
+test_that("sampling forwards extra stan_opts (e.g. iter, chains)", {
   out <- with_captured_sampling(suppressWarnings(
-    imuGAP(
+    imuGAP::sampling(
       observations = make_minimal_obs(),
       populations = make_minimal_pops(),
       locations = make_3layer_locs(),

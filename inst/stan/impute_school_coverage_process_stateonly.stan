@@ -34,47 +34,38 @@ parameters {
 
 }
 
-transformed parameters {
-  // state-level phi by year, constructed from beta spline
-  // Construct state-level trend from basis functions
-  
-  // yields logit_phi_st
-  #include transformed_parameters/bspline.stan
-  // #include transformed_parameters/constant_phi.stan
-  
-  // #include model/stateonly_calc.stan // yields phi
-  // #include model/static_lambda_calc.stan // yields unrolled dose cdf
-  // #include model/p_obs_calc.stan // yields p_obs
-  
-  #include transformed_parameters/stateonly.stan // yields phi
-  #include transformed_parameters/static_lambda.stan // yields unrolled dose cdf
-  #include transformed_parameters/p_obs.stan // yields p_obs
-
-}
-
 model {
 
   if (!predict_mode) {
-
     #include model/bspline.stan
-    // #include model/constant_phi.stan
     #include model/static_lambda.stan
-  
-  // #include model/stateonly_calc.stan // yields phi
-  // #include model/static_lambda_calc.stan // yields unrolled dose cdf
-  // #include model/p_obs_calc.stan // yields p_obs
+
+    vector[n_cohort] logit_phi_st = bs * beta_bs;
+    vector[n_cohort] phi = inv_logit(logit_phi_st);
+    vector[n_doses * n_yr] unrolled_dose_probs = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);
+    vector[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
+    vector[n_obs] p_obs;
+    for (obs_i in 1:n_obs) {
+      p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
+    }
 
     #include model/shared.stan
-
   }
-
 }
 
-// generated quantities{
-//     #include model/stateonly_calc.stan // yields phi
-//     #include model/static_lambda_calc.stan // yields unrolled dose cdf
-//     #include model/p_obs_calc.stan // yields p_obs
-// }
+generated quantities {
+  vector[predict_mode ? n_obs : 0] p_obs;
+
+  if (predict_mode) {
+    vector[n_cohort] logit_phi_st = bs * beta_bs;
+    vector[n_cohort] phi = inv_logit(logit_phi_st);
+    vector[n_doses * n_yr] unrolled_dose_probs = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);
+    vector[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
+    for (obs_i in 1:n_obs) {
+      p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
+    }
+  }
+}
 
 // This model represents vaccination as a discrete step, fixed hazard process
 // therefore X(t) => X(t + deltaT) = X(t)*exp(-hazard*deltaT)

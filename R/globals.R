@@ -22,10 +22,10 @@ utils::globalVariables(c(
   "age", # <canonicalize_populations>
   "dose", # <canonicalize_populations>
   "range_start", # <canonicalize_populations>
-  "layer", # <imuGAP>
-  "N", # <imuGAP>
-  "cohort", # <imuGAP>
-  "censored", # <imuGAP>
-  "layer_bound", # <imuGAP>
+  "layer", # <sampling>
+  "N", # <sampling>
+  "cohort", # <sampling>
+  "censored", # <sampling>
+  "layer_bound", # <sampling>
   NULL
 ))

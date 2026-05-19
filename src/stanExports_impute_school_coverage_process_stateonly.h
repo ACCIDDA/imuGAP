@@ -27,143 +27,158 @@ namespace model_impute_school_coverage_process_stateonly_namespace {
 using stan::model::model_base_crtp;
 using namespace stan::math;
 stan::math::profile_map profiles__;
-static constexpr std::array<const char*, 136> locations_array__ =
+static constexpr std::array<const char*, 151> locations_array__ =
   {" (found before start of program)",
-  " (in 'string', line 161, column 2 to column 23)",
-  " (in 'string', line 168, column 2 to column 29)",
-  " (in 'string', line 177, column 0 to column 43)",
-  " (in 'string', line 189, column 2 to column 49)",
-  " (in 'string', line 192, column 2 to column 129)",
-  " (in 'string', line 196, column 2 to column 116)",
-  " (in 'string', line 199, column 2 to column 39)",
-  " (in 'string', line 205, column 4 to column 68)",
-  " (in 'string', line 204, column 25 to line 206, column 3)",
-  " (in 'string', line 204, column 2 to line 206, column 3)",
-  " (in 'string', line 213, column 4 to column 28)",
-  " (in 'string', line 219, column 4 to column 35)",
-  " (in 'string', line 227, column 4 to column 35)",
-  " (in 'string', line 209, column 21 to line 228, column 3)",
-  " (in 'string', line 209, column 2 to line 228, column 3)",
-  " (in 'string', line 103, column 2 to column 20)",
-  " (in 'string', line 104, column 2 to column 24)",
-  " (in 'string', line 107, column 2 to column 23)",
-  " (in 'string', line 108, column 27 to column 31)",
-  " (in 'string', line 108, column 33 to column 40)",
-  " (in 'string', line 108, column 2 to column 53)",
-  " (in 'string', line 112, column 2 to column 21)",
-  " (in 'string', line 113, column 21 to column 26)",
-  " (in 'string', line 113, column 2 to column 28)",
-  " (in 'string', line 114, column 21 to column 26)",
-  " (in 'string', line 114, column 2 to column 28)",
-  " (in 'string', line 118, column 2 to column 29)",
-  " (in 'string', line 119, column 8 to column 13)",
-  " (in 'string', line 119, column 2 to column 67)",
-  " (in 'string', line 121, column 45 to column 54)",
-  " (in 'string', line 121, column 2 to column 56)",
-  " (in 'string', line 122, column 44 to column 53)",
-  " (in 'string', line 122, column 2 to column 55)",
-  " (in 'string', line 123, column 42 to column 51)",
-  " (in 'string', line 123, column 2 to column 53)",
-  " (in 'string', line 125, column 26 to column 35)",
-  " (in 'string', line 125, column 2 to column 45)",
-  " (in 'string', line 128, column 2 to column 37)",
-  " (in 'string', line 134, column 2 to column 11)",
-  " (in 'string', line 135, column 9 to column 17)",
-  " (in 'string', line 135, column 19 to column 23)",
-  " (in 'string', line 135, column 2 to column 28)",
-  " (in 'string', line 140, column 11 to column 16)",
-  " (in 'string', line 140, column 2 to column 82)",
-  " (in 'string', line 142, column 26 to column 35)",
-  " (in 'string', line 142, column 2 to column 37)",
-  " (in 'string', line 143, column 26 to column 35)",
-  " (in 'string', line 143, column 2 to column 37)",
-  " (in 'string', line 148, column 4 to column 52)",
-  " (in 'string', line 150, column 4 to column 93)",
-  " (in 'string', line 146, column 32 to line 151, column 3)",
-  " (in 'string', line 146, column 2 to line 151, column 3)",
-  " (in 'string', line 156, column 0 to column 23)",
-  " (in 'string', line 161, column 9 to column 13)",
-  " (in 'string', line 168, column 9 to column 16)",
-  " (in 'string', line 177, column 7 to column 15)",
-  " (in 'string', line 189, column 9 to column 17)",
-  " (in 'string', line 192, column 27 to column 41)",
-  " (in 'string', line 196, column 26 to column 35)",
-  " (in 'string', line 199, column 26 to column 31)",
-  " (in 'string', line 7, column 4 to column 35)",
-  " (in 'string', line 9, column 8 to column 92)",
-  " (in 'string', line 8, column 34 to line 10, column 5)",
-  " (in 'string', line 8, column 4 to line 10, column 5)",
-  " (in 'string', line 11, column 10 to column 21)",
-  " (in 'string', line 11, column 4 to column 34)",
-  " (in 'string', line 13, column 8 to column 36)",
-  " (in 'string', line 12, column 35 to line 14, column 5)",
-  " (in 'string', line 12, column 4 to line 14, column 5)",
-  " (in 'string', line 15, column 4 to column 29)",
-  " (in 'string', line 16, column 4 to column 30)",
-  " (in 'string', line 6, column 59 to line 17, column 3)",
-  " (in 'string', line 21, column 4 to column 47)",
-  " (in 'string', line 22, column 11 to column 16)",
-  " (in 'string', line 22, column 18 to column 23)",
-  " (in 'string', line 22, column 4 to column 32)",
-  " (in 'string', line 24, column 8 to column 36)",
-  " (in 'string', line 23, column 23 to line 25, column 5)",
-  " (in 'string', line 23, column 4 to line 25, column 5)",
-  " (in 'string', line 26, column 4 to column 18)",
-  " (in 'string', line 20, column 59 to line 27, column 3)",
-  " (in 'string', line 31, column 4 to column 23)",
-  " (in 'string', line 32, column 4 to column 34)",
-  " (in 'string', line 30, column 26 to line 33, column 3)",
-  " (in 'string', line 36, column 4 to column 23)",
-  " (in 'string', line 37, column 4 to column 34)",
-  " (in 'string', line 35, column 34 to line 38, column 3)",
-  " (in 'string', line 41, column 4 to column 26)",
-  " (in 'string', line 42, column 15 to column 20)",
-  " (in 'string', line 42, column 4 to column 26)",
-  " (in 'string', line 44, column 8 to column 31)",
-  " (in 'string', line 43, column 23 to line 45, column 5)",
-  " (in 'string', line 43, column 4 to line 45, column 5)",
-  " (in 'string', line 46, column 4 to column 15)",
-  " (in 'string', line 40, column 32 to line 47, column 3)",
-  " (in 'string', line 50, column 4 to column 26)",
-  " (in 'string', line 51, column 11 to column 16)",
-  " (in 'string', line 51, column 4 to column 22)",
-  " (in 'string', line 53, column 8 to column 31)",
-  " (in 'string', line 52, column 23 to line 54, column 5)",
-  " (in 'string', line 52, column 4 to line 54, column 5)",
-  " (in 'string', line 55, column 4 to column 15)",
-  " (in 'string', line 49, column 28 to line 56, column 3)",
-  " (in 'string', line 62, column 9 to column 16)",
-  " (in 'string', line 62, column 2 to column 43)",
-  " (in 'string', line 65, column 9 to column 13)",
-  " (in 'string', line 65, column 15 to column 22)",
-  " (in 'string', line 65, column 2 to column 48)",
-  " (in 'string', line 66, column 9 to column 16)",
-  " (in 'string', line 66, column 2 to column 22)",
-  " (in 'string', line 69, column 4 to column 80)",
-  " (in 'string', line 70, column 4 to column 38)",
-  " (in 'string', line 71, column 4 to column 36)",
-  " (in 'string', line 72, column 4 to column 41)",
-  " (in 'string', line 73, column 4 to column 84)",
-  " (in 'string', line 68, column 26 to line 74, column 3)",
-  " (in 'string', line 68, column 2 to line 74, column 3)",
-  " (in 'string', line 76, column 9 to column 13)",
-  " (in 'string', line 76, column 15 to column 22)",
-  " (in 'string', line 76, column 2 to column 92)",
-  " (in 'string', line 77, column 2 to column 38)",
-  " (in 'string', line 78, column 2 to column 38)",
-  " (in 'string', line 81, column 4 to column 29)",
-  " (in 'string', line 84, column 43 to column 49)",
-  " (in 'string', line 84, column 6 to column 49)",
-  " (in 'string', line 85, column 6 to column 112)",
-  " (in 'string', line 83, column 23 to line 86, column 5)",
-  " (in 'string', line 83, column 4 to line 86, column 5)",
-  " (in 'string', line 87, column 4 to column 74)",
-  " (in 'string', line 80, column 26 to line 88, column 3)",
-  " (in 'string', line 80, column 2 to line 88, column 3)",
-  " (in 'string', line 91, column 9 to column 23)",
-  " (in 'string', line 91, column 2 to column 74)",
-  " (in 'string', line 92, column 2 to column 27)",
-  " (in 'string', line 59, column 98 to line 93, column 1)"};
+  " (in 'impute_school_coverage_process_stateonly', line 161, column 2 to column 23)",
+  " (in 'impute_school_coverage_process_stateonly', line 168, column 2 to column 29)",
+  " (in 'impute_school_coverage_process_stateonly', line 196, column 2 to column 41)",
+  " (in 'impute_school_coverage_process_stateonly', line 198, column 11 to column 19)",
+  " (in 'impute_school_coverage_process_stateonly', line 198, column 4 to column 49)",
+  " (in 'impute_school_coverage_process_stateonly', line 199, column 11 to column 19)",
+  " (in 'impute_school_coverage_process_stateonly', line 199, column 4 to column 51)",
+  " (in 'impute_school_coverage_process_stateonly', line 200, column 11 to column 25)",
+  " (in 'impute_school_coverage_process_stateonly', line 200, column 4 to column 113)",
+  " (in 'impute_school_coverage_process_stateonly', line 201, column 11 to column 20)",
+  " (in 'impute_school_coverage_process_stateonly', line 201, column 4 to column 101)",
+  " (in 'impute_school_coverage_process_stateonly', line 203, column 6 to column 70)",
+  " (in 'impute_school_coverage_process_stateonly', line 202, column 27 to line 204, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 202, column 4 to line 204, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 197, column 20 to line 205, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 197, column 2 to line 205, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 175, column 4 to column 28)",
+  " (in 'impute_school_coverage_process_stateonly', line 180, column 4 to column 35)",
+  " (in 'impute_school_coverage_process_stateonly', line 181, column 11 to column 19)",
+  " (in 'impute_school_coverage_process_stateonly', line 181, column 4 to column 49)",
+  " (in 'impute_school_coverage_process_stateonly', line 182, column 11 to column 19)",
+  " (in 'impute_school_coverage_process_stateonly', line 182, column 4 to column 51)",
+  " (in 'impute_school_coverage_process_stateonly', line 183, column 11 to column 25)",
+  " (in 'impute_school_coverage_process_stateonly', line 183, column 4 to column 113)",
+  " (in 'impute_school_coverage_process_stateonly', line 184, column 11 to column 20)",
+  " (in 'impute_school_coverage_process_stateonly', line 184, column 4 to column 101)",
+  " (in 'impute_school_coverage_process_stateonly', line 185, column 11 to column 16)",
+  " (in 'impute_school_coverage_process_stateonly', line 185, column 4 to column 24)",
+  " (in 'impute_school_coverage_process_stateonly', line 187, column 6 to column 70)",
+  " (in 'impute_school_coverage_process_stateonly', line 186, column 27 to line 188, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 186, column 4 to line 188, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 192, column 4 to column 35)",
+  " (in 'impute_school_coverage_process_stateonly', line 171, column 21 to line 193, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 171, column 2 to line 193, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 103, column 2 to column 20)",
+  " (in 'impute_school_coverage_process_stateonly', line 104, column 2 to column 24)",
+  " (in 'impute_school_coverage_process_stateonly', line 107, column 2 to column 23)",
+  " (in 'impute_school_coverage_process_stateonly', line 108, column 27 to column 31)",
+  " (in 'impute_school_coverage_process_stateonly', line 108, column 33 to column 40)",
+  " (in 'impute_school_coverage_process_stateonly', line 108, column 2 to column 53)",
+  " (in 'impute_school_coverage_process_stateonly', line 112, column 2 to column 21)",
+  " (in 'impute_school_coverage_process_stateonly', line 113, column 21 to column 26)",
+  " (in 'impute_school_coverage_process_stateonly', line 113, column 2 to column 28)",
+  " (in 'impute_school_coverage_process_stateonly', line 114, column 21 to column 26)",
+  " (in 'impute_school_coverage_process_stateonly', line 114, column 2 to column 28)",
+  " (in 'impute_school_coverage_process_stateonly', line 118, column 2 to column 29)",
+  " (in 'impute_school_coverage_process_stateonly', line 119, column 8 to column 13)",
+  " (in 'impute_school_coverage_process_stateonly', line 119, column 2 to column 67)",
+  " (in 'impute_school_coverage_process_stateonly', line 121, column 45 to column 54)",
+  " (in 'impute_school_coverage_process_stateonly', line 121, column 2 to column 56)",
+  " (in 'impute_school_coverage_process_stateonly', line 122, column 44 to column 53)",
+  " (in 'impute_school_coverage_process_stateonly', line 122, column 2 to column 55)",
+  " (in 'impute_school_coverage_process_stateonly', line 123, column 42 to column 51)",
+  " (in 'impute_school_coverage_process_stateonly', line 123, column 2 to column 53)",
+  " (in 'impute_school_coverage_process_stateonly', line 125, column 26 to column 35)",
+  " (in 'impute_school_coverage_process_stateonly', line 125, column 2 to column 45)",
+  " (in 'impute_school_coverage_process_stateonly', line 128, column 2 to column 37)",
+  " (in 'impute_school_coverage_process_stateonly', line 134, column 2 to column 11)",
+  " (in 'impute_school_coverage_process_stateonly', line 135, column 9 to column 17)",
+  " (in 'impute_school_coverage_process_stateonly', line 135, column 19 to column 23)",
+  " (in 'impute_school_coverage_process_stateonly', line 135, column 2 to column 28)",
+  " (in 'impute_school_coverage_process_stateonly', line 140, column 11 to column 16)",
+  " (in 'impute_school_coverage_process_stateonly', line 140, column 2 to column 82)",
+  " (in 'impute_school_coverage_process_stateonly', line 142, column 26 to column 35)",
+  " (in 'impute_school_coverage_process_stateonly', line 142, column 2 to column 37)",
+  " (in 'impute_school_coverage_process_stateonly', line 143, column 26 to column 35)",
+  " (in 'impute_school_coverage_process_stateonly', line 143, column 2 to column 37)",
+  " (in 'impute_school_coverage_process_stateonly', line 148, column 4 to column 52)",
+  " (in 'impute_school_coverage_process_stateonly', line 150, column 4 to column 93)",
+  " (in 'impute_school_coverage_process_stateonly', line 146, column 32 to line 151, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 146, column 2 to line 151, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 156, column 0 to column 23)",
+  " (in 'impute_school_coverage_process_stateonly', line 161, column 9 to column 13)",
+  " (in 'impute_school_coverage_process_stateonly', line 168, column 9 to column 16)",
+  " (in 'impute_school_coverage_process_stateonly', line 196, column 9 to column 33)",
+  " (in 'impute_school_coverage_process_stateonly', line 7, column 4 to column 35)",
+  " (in 'impute_school_coverage_process_stateonly', line 9, column 8 to column 92)",
+  " (in 'impute_school_coverage_process_stateonly', line 8, column 34 to line 10, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 8, column 4 to line 10, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 11, column 10 to column 21)",
+  " (in 'impute_school_coverage_process_stateonly', line 11, column 4 to column 34)",
+  " (in 'impute_school_coverage_process_stateonly', line 13, column 8 to column 36)",
+  " (in 'impute_school_coverage_process_stateonly', line 12, column 35 to line 14, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 12, column 4 to line 14, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 15, column 4 to column 29)",
+  " (in 'impute_school_coverage_process_stateonly', line 16, column 4 to column 30)",
+  " (in 'impute_school_coverage_process_stateonly', line 6, column 59 to line 17, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 21, column 4 to column 47)",
+  " (in 'impute_school_coverage_process_stateonly', line 22, column 11 to column 16)",
+  " (in 'impute_school_coverage_process_stateonly', line 22, column 18 to column 23)",
+  " (in 'impute_school_coverage_process_stateonly', line 22, column 4 to column 32)",
+  " (in 'impute_school_coverage_process_stateonly', line 24, column 8 to column 36)",
+  " (in 'impute_school_coverage_process_stateonly', line 23, column 23 to line 25, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 23, column 4 to line 25, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 26, column 4 to column 18)",
+  " (in 'impute_school_coverage_process_stateonly', line 20, column 59 to line 27, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 31, column 4 to column 23)",
+  " (in 'impute_school_coverage_process_stateonly', line 32, column 4 to column 34)",
+  " (in 'impute_school_coverage_process_stateonly', line 30, column 26 to line 33, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 36, column 4 to column 23)",
+  " (in 'impute_school_coverage_process_stateonly', line 37, column 4 to column 34)",
+  " (in 'impute_school_coverage_process_stateonly', line 35, column 34 to line 38, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 41, column 4 to column 26)",
+  " (in 'impute_school_coverage_process_stateonly', line 42, column 15 to column 20)",
+  " (in 'impute_school_coverage_process_stateonly', line 42, column 4 to column 26)",
+  " (in 'impute_school_coverage_process_stateonly', line 44, column 8 to column 31)",
+  " (in 'impute_school_coverage_process_stateonly', line 43, column 23 to line 45, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 43, column 4 to line 45, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 46, column 4 to column 15)",
+  " (in 'impute_school_coverage_process_stateonly', line 40, column 32 to line 47, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 50, column 4 to column 26)",
+  " (in 'impute_school_coverage_process_stateonly', line 51, column 11 to column 16)",
+  " (in 'impute_school_coverage_process_stateonly', line 51, column 4 to column 22)",
+  " (in 'impute_school_coverage_process_stateonly', line 53, column 8 to column 31)",
+  " (in 'impute_school_coverage_process_stateonly', line 52, column 23 to line 54, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 52, column 4 to line 54, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 55, column 4 to column 15)",
+  " (in 'impute_school_coverage_process_stateonly', line 49, column 28 to line 56, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 62, column 9 to column 16)",
+  " (in 'impute_school_coverage_process_stateonly', line 62, column 2 to column 43)",
+  " (in 'impute_school_coverage_process_stateonly', line 65, column 9 to column 13)",
+  " (in 'impute_school_coverage_process_stateonly', line 65, column 15 to column 22)",
+  " (in 'impute_school_coverage_process_stateonly', line 65, column 2 to column 48)",
+  " (in 'impute_school_coverage_process_stateonly', line 66, column 9 to column 16)",
+  " (in 'impute_school_coverage_process_stateonly', line 66, column 2 to column 22)",
+  " (in 'impute_school_coverage_process_stateonly', line 69, column 4 to column 80)",
+  " (in 'impute_school_coverage_process_stateonly', line 70, column 4 to column 38)",
+  " (in 'impute_school_coverage_process_stateonly', line 71, column 4 to column 36)",
+  " (in 'impute_school_coverage_process_stateonly', line 72, column 4 to column 41)",
+  " (in 'impute_school_coverage_process_stateonly', line 73, column 4 to column 84)",
+  " (in 'impute_school_coverage_process_stateonly', line 68, column 26 to line 74, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 68, column 2 to line 74, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 76, column 9 to column 13)",
+  " (in 'impute_school_coverage_process_stateonly', line 76, column 15 to column 22)",
+  " (in 'impute_school_coverage_process_stateonly', line 76, column 2 to column 92)",
+  " (in 'impute_school_coverage_process_stateonly', line 77, column 2 to column 38)",
+  " (in 'impute_school_coverage_process_stateonly', line 78, column 2 to column 38)",
+  " (in 'impute_school_coverage_process_stateonly', line 81, column 4 to column 29)",
+  " (in 'impute_school_coverage_process_stateonly', line 84, column 43 to column 49)",
+  " (in 'impute_school_coverage_process_stateonly', line 84, column 6 to column 49)",
+  " (in 'impute_school_coverage_process_stateonly', line 85, column 6 to column 112)",
+  " (in 'impute_school_coverage_process_stateonly', line 83, column 23 to line 86, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 83, column 4 to line 86, column 5)",
+  " (in 'impute_school_coverage_process_stateonly', line 87, column 4 to column 74)",
+  " (in 'impute_school_coverage_process_stateonly', line 80, column 26 to line 88, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 80, column 2 to line 88, column 3)",
+  " (in 'impute_school_coverage_process_stateonly', line 91, column 9 to column 23)",
+  " (in 'impute_school_coverage_process_stateonly', line 91, column 2 to column 74)",
+  " (in 'impute_school_coverage_process_stateonly', line 92, column 2 to column 27)",
+  " (in 'impute_school_coverage_process_stateonly', line 59, column 98 to line 93, column 1)"};
 std::vector<std::vector<int>>
 bounds_to_range(const std::vector<int>& lowers, const int& ub, std::ostream*
                 pstream__);
@@ -220,13 +235,13 @@ bounds_to_range(const std::vector<int>& lowers, const int& ub, std::ostream*
   (void) DUMMY_VAR__;
   try {
     int size_bounds = std::numeric_limits<int>::min();
-    current_statement__ = 61;
+    current_statement__ = 76;
     size_bounds = stan::math::size(lowers);
-    current_statement__ = 64;
+    current_statement__ = 79;
     if (stan::math::logical_gt(
           stan::model::rvalue(lowers, "lowers",
             stan::model::index_uni(size_bounds)), ub)) {
-      current_statement__ = 62;
+      current_statement__ = 77;
       if (pstream__) {
         stan::math::stan_print(pstream__, "Upper bound, ");
         stan::math::stan_print(pstream__, ub);
@@ -237,23 +252,23 @@ bounds_to_range(const std::vector<int>& lowers, const int& ub, std::ostream*
         *(pstream__) << std::endl;
       }
     }
-    current_statement__ = 65;
+    current_statement__ = 80;
     stan::math::validate_non_negative_index("uppers", "size_bounds",
       size_bounds);
     std::vector<int> uppers =
       std::vector<int>(size_bounds, std::numeric_limits<int>::min());
-    current_statement__ = 69;
+    current_statement__ = 84;
     for (int i = 1; i <= (size_bounds - 1); ++i) {
-      current_statement__ = 67;
+      current_statement__ = 82;
       stan::model::assign(uppers,
         (stan::model::rvalue(lowers, "lowers",
            stan::model::index_uni((i + 1))) - 1),
         "assigning variable uppers", stan::model::index_uni(i));
     }
-    current_statement__ = 70;
+    current_statement__ = 85;
     stan::model::assign(uppers, ub, "assigning variable uppers",
       stan::model::index_uni(size_bounds));
-    current_statement__ = 71;
+    current_statement__ = 86;
     return std::vector<std::vector<int>>{lowers, uppers};
   } catch (const std::exception& e) {
     stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -281,28 +296,28 @@ element_mult_expand(const T0__& colv_arg__, const T1__& rowv_arg__,
   (void) DUMMY_VAR__;
   try {
     int nrows = std::numeric_limits<int>::min();
-    current_statement__ = 73;
+    current_statement__ = 88;
     nrows = stan::math::size(colv);
     int ncols = std::numeric_limits<int>::min();
-    current_statement__ = 73;
+    current_statement__ = 88;
     ncols = stan::math::size(rowv);
-    current_statement__ = 74;
+    current_statement__ = 89;
     stan::math::validate_non_negative_index("result", "nrows", nrows);
-    current_statement__ = 75;
+    current_statement__ = 90;
     stan::math::validate_non_negative_index("result", "ncols", ncols);
     Eigen::Matrix<local_scalar_t__,-1,-1> result =
       Eigen::Matrix<local_scalar_t__,-1,-1>::Constant(nrows, ncols,
         DUMMY_VAR__);
-    current_statement__ = 79;
+    current_statement__ = 94;
     for (int i = 1; i <= nrows; ++i) {
-      current_statement__ = 77;
+      current_statement__ = 92;
       stan::model::assign(result,
         stan::math::multiply(rowv,
           stan::model::rvalue(colv, "colv", stan::model::index_uni(i))),
         "assigning variable result", stan::model::index_uni(i),
         stan::model::index_omni());
     }
-    current_statement__ = 80;
+    current_statement__ = 95;
     return result;
   } catch (const std::exception& e) {
     stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -324,9 +339,9 @@ diff(const T0__& obj_arg__, std::ostream* pstream__) {
   (void) DUMMY_VAR__;
   try {
     int sz = std::numeric_limits<int>::min();
-    current_statement__ = 82;
+    current_statement__ = 97;
     sz = stan::math::size(obj);
-    current_statement__ = 83;
+    current_statement__ = 98;
     return stan::math::subtract(
              stan::model::rvalue(obj, "obj", stan::model::index_min(2)),
              stan::model::rvalue(obj, "obj",
@@ -351,9 +366,9 @@ diff(const T0__& obj_arg__, std::ostream* pstream__) {
   (void) DUMMY_VAR__;
   try {
     int sz = std::numeric_limits<int>::min();
-    current_statement__ = 85;
+    current_statement__ = 100;
     sz = stan::math::size(obj);
-    current_statement__ = 86;
+    current_statement__ = 101;
     return stan::math::subtract(
              stan::model::rvalue(obj, "obj", stan::model::index_min(2)),
              stan::model::rvalue(obj, "obj",
@@ -378,22 +393,22 @@ colsum(const T0__& obj_arg__, std::ostream* pstream__) {
   (void) DUMMY_VAR__;
   try {
     int ncols = std::numeric_limits<int>::min();
-    current_statement__ = 88;
+    current_statement__ = 103;
     ncols = stan::math::cols(obj);
-    current_statement__ = 89;
+    current_statement__ = 104;
     stan::math::validate_non_negative_index("res", "ncols", ncols);
     Eigen::Matrix<local_scalar_t__,1,-1> res =
       Eigen::Matrix<local_scalar_t__,1,-1>::Constant(ncols, DUMMY_VAR__);
-    current_statement__ = 93;
+    current_statement__ = 108;
     for (int i = 1; i <= ncols; ++i) {
-      current_statement__ = 91;
+      current_statement__ = 106;
       stan::model::assign(res,
         stan::math::sum(
           stan::model::rvalue(obj, "obj", stan::model::index_omni(),
             stan::model::index_uni(i))), "assigning variable res",
         stan::model::index_uni(i));
     }
-    current_statement__ = 94;
+    current_statement__ = 109;
     return res;
   } catch (const std::exception& e) {
     stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -415,22 +430,22 @@ rowsum(const T0__& obj_arg__, std::ostream* pstream__) {
   (void) DUMMY_VAR__;
   try {
     int nrows = std::numeric_limits<int>::min();
-    current_statement__ = 96;
+    current_statement__ = 111;
     nrows = stan::math::rows(obj);
-    current_statement__ = 97;
+    current_statement__ = 112;
     stan::math::validate_non_negative_index("res", "nrows", nrows);
     Eigen::Matrix<local_scalar_t__,-1,1> res =
       Eigen::Matrix<local_scalar_t__,-1,1>::Constant(nrows, DUMMY_VAR__);
-    current_statement__ = 101;
+    current_statement__ = 116;
     for (int i = 1; i <= nrows; ++i) {
-      current_statement__ = 99;
+      current_statement__ = 114;
       stan::model::assign(res,
         stan::math::sum(
           stan::model::rvalue(obj, "obj", stan::model::index_uni(i),
             stan::model::index_omni())), "assigning variable res",
         stan::model::index_uni(i));
     }
-    current_statement__ = 102;
+    current_statement__ = 117;
     return res;
   } catch (const std::exception& e) {
     stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -459,41 +474,41 @@ unrolled_dose(const int& n_yr, const int& n_doses, const T2__&
   // suppress unused var warning
   (void) DUMMY_VAR__;
   try {
-    current_statement__ = 104;
+    current_statement__ = 119;
     stan::math::validate_non_negative_index("lambda", "n_doses", n_doses);
     Eigen::Matrix<local_scalar_t__,-1,1> lambda =
       Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_doses, DUMMY_VAR__);
-    current_statement__ = 105;
+    current_statement__ = 120;
     stan::model::assign(lambda, stan::math::exp(lambda_raw),
       "assigning variable lambda");
-    current_statement__ = 106;
+    current_statement__ = 121;
     stan::math::validate_non_negative_index("dXcdf", "n_yr", n_yr);
-    current_statement__ = 107;
+    current_statement__ = 122;
     stan::math::validate_non_negative_index("dXcdf", "n_doses", n_doses);
     Eigen::Matrix<local_scalar_t__,-1,-1> dXcdf =
       Eigen::Matrix<local_scalar_t__,-1,-1>::Constant(n_yr, n_doses,
         DUMMY_VAR__);
-    current_statement__ = 106;
+    current_statement__ = 121;
     stan::math::validate_non_negative_index("dXpdf", "n_yr", n_yr);
-    current_statement__ = 107;
+    current_statement__ = 122;
     stan::math::validate_non_negative_index("dXpdf", "n_doses", n_doses);
     Eigen::Matrix<local_scalar_t__,-1,-1> dXpdf =
       Eigen::Matrix<local_scalar_t__,-1,-1>::Constant(n_yr, n_doses,
         DUMMY_VAR__);
-    current_statement__ = 106;
+    current_statement__ = 121;
     stan::math::validate_non_negative_index("normdXpdf", "n_yr", n_yr);
-    current_statement__ = 107;
+    current_statement__ = 122;
     stan::math::validate_non_negative_index("normdXpdf", "n_doses", n_doses);
     Eigen::Matrix<local_scalar_t__,-1,-1> normdXpdf =
       Eigen::Matrix<local_scalar_t__,-1,-1>::Constant(n_yr, n_doses,
         DUMMY_VAR__);
-    current_statement__ = 109;
+    current_statement__ = 124;
     stan::math::validate_non_negative_index("rem", "n_doses", n_doses);
     Eigen::Matrix<local_scalar_t__,-1,1> rem =
       Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_doses, DUMMY_VAR__);
-    current_statement__ = 117;
+    current_statement__ = 132;
     for (int dose = 1; dose <= n_doses; ++dose) {
-      current_statement__ = 111;
+      current_statement__ = 126;
       stan::model::assign(dXcdf,
         stan::math::subtract(1,
           stan::math::exp(
@@ -506,24 +521,24 @@ unrolled_dose(const int& n_yr, const int& n_doses, const T2__&
                     stan::model::index_uni(dose))))))),
         "assigning variable dXcdf", stan::model::index_omni(),
         stan::model::index_uni(dose));
-      current_statement__ = 112;
+      current_statement__ = 127;
       stan::model::assign(rem, (1 -
         stan::model::rvalue(dXcdf, "dXcdf", stan::model::index_uni(n_yr),
           stan::model::index_uni(dose))), "assigning variable rem",
         stan::model::index_uni(dose));
-      current_statement__ = 113;
+      current_statement__ = 128;
       stan::model::assign(dXpdf,
         stan::model::rvalue(dXcdf, "dXcdf", stan::model::index_uni(1),
           stan::model::index_uni(dose)), "assigning variable dXpdf",
         stan::model::index_uni(1), stan::model::index_uni(dose));
-      current_statement__ = 114;
+      current_statement__ = 129;
       stan::model::assign(dXpdf,
         diff(
           stan::model::rvalue(dXcdf, "dXcdf", stan::model::index_omni(),
             stan::model::index_uni(dose)), pstream__),
         "assigning variable dXpdf", stan::model::index_min(2),
         stan::model::index_uni(dose));
-      current_statement__ = 115;
+      current_statement__ = 130;
       stan::model::assign(normdXpdf,
         stan::math::add(
           stan::math::reverse(
@@ -535,51 +550,51 @@ unrolled_dose(const int& n_yr, const int& n_doses, const T2__&
         "assigning variable normdXpdf", stan::model::index_omni(),
         stan::model::index_uni(dose));
     }
-    current_statement__ = 118;
+    current_statement__ = 133;
     stan::math::validate_non_negative_index("conditional_dXpdf", "n_yr", n_yr);
-    current_statement__ = 119;
+    current_statement__ = 134;
     stan::math::validate_non_negative_index("conditional_dXpdf", "n_doses",
       n_doses);
     Eigen::Matrix<local_scalar_t__,-1,-1> conditional_dXpdf =
       Eigen::Matrix<local_scalar_t__,-1,-1>::Constant(n_yr, n_doses,
         DUMMY_VAR__);
-    current_statement__ = 120;
+    current_statement__ = 135;
     stan::model::assign(conditional_dXpdf,
       stan::math::rep_matrix(0, n_yr, n_doses),
       "assigning variable conditional_dXpdf");
-    current_statement__ = 118;
+    current_statement__ = 133;
     stan::math::validate_non_negative_index("conditional_dXcdf", "n_yr", n_yr);
-    current_statement__ = 119;
+    current_statement__ = 134;
     stan::math::validate_non_negative_index("conditional_dXcdf", "n_doses",
       n_doses);
     Eigen::Matrix<local_scalar_t__,-1,-1> conditional_dXcdf =
       Eigen::Matrix<local_scalar_t__,-1,-1>::Constant(n_yr, n_doses,
         DUMMY_VAR__);
-    current_statement__ = 121;
+    current_statement__ = 136;
     stan::model::assign(conditional_dXpdf,
       stan::model::rvalue(dXpdf, "dXpdf", stan::model::index_omni(),
         stan::model::index_uni(1)), "assigning variable conditional_dXpdf",
       stan::model::index_omni(), stan::model::index_uni(1));
-    current_statement__ = 122;
+    current_statement__ = 137;
     stan::model::assign(conditional_dXcdf,
       stan::model::rvalue(dXcdf, "dXcdf", stan::model::index_omni(),
         stan::model::index_uni(1)), "assigning variable conditional_dXcdf",
       stan::model::index_omni(), stan::model::index_uni(1));
-    current_statement__ = 131;
+    current_statement__ = 146;
     for (int dose = 2; dose <= n_doses; ++dose) {
       int prev_dose = std::numeric_limits<int>::min();
-      current_statement__ = 123;
+      current_statement__ = 138;
       prev_dose = (dose - 1);
-      current_statement__ = 128;
+      current_statement__ = 143;
       for (int ly = 1; ly <= n_yr; ++ly) {
-        current_statement__ = 125;
+        current_statement__ = 140;
         if (stan::math::logical_lt(
               stan::model::rvalue(normdXpdf, "normdXpdf",
                 stan::model::index_uni(ly), stan::model::index_uni(dose)),
               epsilon_p)) {
           break;
         }
-        current_statement__ = 126;
+        current_statement__ = 141;
         stan::model::assign(conditional_dXpdf,
           stan::math::add(
             stan::model::deep_copy(
@@ -597,7 +612,7 @@ unrolled_dose(const int& n_yr, const int& n_doses, const T2__&
           "assigning variable conditional_dXpdf", stan::model::index_min(ly),
           stan::model::index_uni(dose));
       }
-      current_statement__ = 129;
+      current_statement__ = 144;
       stan::model::assign(conditional_dXcdf,
         stan::math::cumulative_sum(
           stan::model::rvalue(conditional_dXpdf, "conditional_dXpdf",
@@ -605,17 +620,17 @@ unrolled_dose(const int& n_yr, const int& n_doses, const T2__&
         "assigning variable conditional_dXcdf", stan::model::index_omni(),
         stan::model::index_uni(dose));
     }
-    current_statement__ = 132;
+    current_statement__ = 147;
     stan::math::validate_non_negative_index("unrolled_dose_cdf",
       "n_doses * n_yr", (n_doses * n_yr));
     Eigen::Matrix<local_scalar_t__,-1,1> unrolled_dose_cdf =
       Eigen::Matrix<local_scalar_t__,-1,1>::Constant((n_doses * n_yr),
         DUMMY_VAR__);
-    current_statement__ = 133;
+    current_statement__ = 148;
     stan::model::assign(unrolled_dose_cdf,
       stan::math::to_vector(conditional_dXcdf),
       "assigning variable unrolled_dose_cdf");
-    current_statement__ = 134;
+    current_statement__ = 149;
     return unrolled_dose_cdf;
   } catch (const std::exception& e) {
     stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -644,7 +659,7 @@ private:
   std::vector<int> phi_lookup;
   std::vector<int> cdf_lookup;
   double epsilon_p;
-  int unrolled_dose_probs_1dim__;
+  int p_obs_1dim__;
   Eigen::Map<Eigen::Matrix<double,-1,-1>> dose_sched{nullptr, 0, 0};
   Eigen::Map<Eigen::Matrix<double,-1,1>> weights{nullptr, 0};
   Eigen::Map<Eigen::Matrix<double,-1,-1>> bs{nullptr, 0, 0};
@@ -672,36 +687,36 @@ public:
     try {
       int pos__ = std::numeric_limits<int>::min();
       pos__ = 1;
-      current_statement__ = 16;
+      current_statement__ = 35;
       context__.validate_dims("data initialization", "n_yr", "int",
         std::vector<size_t>{});
       n_yr = std::numeric_limits<int>::min();
-      current_statement__ = 16;
+      current_statement__ = 35;
       n_yr = context__.vals_i("n_yr")[(1 - 1)];
-      current_statement__ = 16;
+      current_statement__ = 35;
       stan::math::check_greater_or_equal(function__, "n_yr", n_yr, 1);
-      current_statement__ = 17;
+      current_statement__ = 36;
       context__.validate_dims("data initialization", "n_cohort", "int",
         std::vector<size_t>{});
       n_cohort = std::numeric_limits<int>::min();
-      current_statement__ = 17;
+      current_statement__ = 36;
       n_cohort = context__.vals_i("n_cohort")[(1 - 1)];
-      current_statement__ = 17;
+      current_statement__ = 36;
       stan::math::check_greater_or_equal(function__, "n_cohort", n_cohort, 1);
-      current_statement__ = 18;
+      current_statement__ = 37;
       context__.validate_dims("data initialization", "n_doses", "int",
         std::vector<size_t>{});
       n_doses = std::numeric_limits<int>::min();
-      current_statement__ = 18;
+      current_statement__ = 37;
       n_doses = context__.vals_i("n_doses")[(1 - 1)];
-      current_statement__ = 18;
+      current_statement__ = 37;
       stan::math::check_greater_or_equal(function__, "n_doses", n_doses, 1);
-      current_statement__ = 19;
+      current_statement__ = 38;
       stan::math::validate_non_negative_index("dose_sched", "n_yr", n_yr);
-      current_statement__ = 20;
+      current_statement__ = 39;
       stan::math::validate_non_negative_index("dose_sched", "n_doses",
         n_doses);
-      current_statement__ = 21;
+      current_statement__ = 40;
       context__.validate_dims("data initialization", "dose_sched", "double",
         std::vector<size_t>{static_cast<size_t>(n_yr),
           static_cast<size_t>(n_doses)});
@@ -713,133 +728,133 @@ public:
         n_yr, n_doses);
       {
         std::vector<local_scalar_t__> dose_sched_flat__;
-        current_statement__ = 21;
+        current_statement__ = 40;
         dose_sched_flat__ = context__.vals_r("dose_sched");
-        current_statement__ = 21;
+        current_statement__ = 40;
         pos__ = 1;
-        current_statement__ = 21;
+        current_statement__ = 40;
         for (int sym1__ = 1; sym1__ <= n_doses; ++sym1__) {
-          current_statement__ = 21;
+          current_statement__ = 40;
           for (int sym2__ = 1; sym2__ <= n_yr; ++sym2__) {
-            current_statement__ = 21;
+            current_statement__ = 40;
             stan::model::assign(dose_sched, dose_sched_flat__[(pos__ - 1)],
               "assigning variable dose_sched",
               stan::model::index_uni(sym2__), stan::model::index_uni(sym1__));
-            current_statement__ = 21;
+            current_statement__ = 40;
             pos__ = (pos__ + 1);
           }
         }
       }
-      current_statement__ = 21;
+      current_statement__ = 40;
       stan::math::check_greater_or_equal(function__, "dose_sched",
         dose_sched, 0);
-      current_statement__ = 21;
+      current_statement__ = 40;
       stan::math::check_less_or_equal(function__, "dose_sched", dose_sched, 1);
-      current_statement__ = 22;
+      current_statement__ = 41;
       context__.validate_dims("data initialization", "n_obs", "int",
         std::vector<size_t>{});
       n_obs = std::numeric_limits<int>::min();
-      current_statement__ = 22;
+      current_statement__ = 41;
       n_obs = context__.vals_i("n_obs")[(1 - 1)];
-      current_statement__ = 22;
+      current_statement__ = 41;
       stan::math::check_greater_or_equal(function__, "n_obs", n_obs, 1);
-      current_statement__ = 23;
+      current_statement__ = 42;
       stan::math::validate_non_negative_index("y_obs", "n_obs", n_obs);
-      current_statement__ = 24;
+      current_statement__ = 43;
       context__.validate_dims("data initialization", "y_obs", "int",
         std::vector<size_t>{static_cast<size_t>(n_obs)});
       y_obs = std::vector<int>(n_obs, std::numeric_limits<int>::min());
-      current_statement__ = 24;
+      current_statement__ = 43;
       y_obs = context__.vals_i("y_obs");
-      current_statement__ = 24;
+      current_statement__ = 43;
       stan::math::check_greater_or_equal(function__, "y_obs", y_obs, 0);
-      current_statement__ = 25;
+      current_statement__ = 44;
       stan::math::validate_non_negative_index("y_smp", "n_obs", n_obs);
-      current_statement__ = 26;
+      current_statement__ = 45;
       context__.validate_dims("data initialization", "y_smp", "int",
         std::vector<size_t>{static_cast<size_t>(n_obs)});
       y_smp = std::vector<int>(n_obs, std::numeric_limits<int>::min());
-      current_statement__ = 26;
+      current_statement__ = 45;
       y_smp = context__.vals_i("y_smp");
-      current_statement__ = 26;
+      current_statement__ = 45;
       stan::math::check_greater_or_equal(function__, "y_smp", y_smp, 0);
-      current_statement__ = 27;
+      current_statement__ = 46;
       context__.validate_dims("data initialization", "n_weights", "int",
         std::vector<size_t>{});
       n_weights = std::numeric_limits<int>::min();
-      current_statement__ = 27;
+      current_statement__ = 46;
       n_weights = context__.vals_i("n_weights")[(1 - 1)];
-      current_statement__ = 27;
+      current_statement__ = 46;
       stan::math::check_greater_or_equal(function__, "n_weights", n_weights,
         n_obs);
-      current_statement__ = 28;
+      current_statement__ = 47;
       stan::math::validate_non_negative_index("obs_to_weights_bounds",
         "n_obs", n_obs);
-      current_statement__ = 29;
+      current_statement__ = 48;
       context__.validate_dims("data initialization", "obs_to_weights_bounds",
         "int", std::vector<size_t>{static_cast<size_t>(n_obs)});
       obs_to_weights_bounds = std::vector<int>(n_obs,
                                 std::numeric_limits<int>::min());
-      current_statement__ = 29;
+      current_statement__ = 48;
       obs_to_weights_bounds = context__.vals_i("obs_to_weights_bounds");
-      current_statement__ = 29;
+      current_statement__ = 48;
       stan::math::check_greater_or_equal(function__, "obs_to_weights_bounds",
         obs_to_weights_bounds, 1);
-      current_statement__ = 29;
+      current_statement__ = 48;
       stan::math::check_less_or_equal(function__, "obs_to_weights_bounds",
         obs_to_weights_bounds, n_weights);
-      current_statement__ = 30;
+      current_statement__ = 49;
       stan::math::validate_non_negative_index("weights_cohort", "n_weights",
         n_weights);
-      current_statement__ = 31;
+      current_statement__ = 50;
       context__.validate_dims("data initialization", "weights_cohort", "int",
         std::vector<size_t>{static_cast<size_t>(n_weights)});
       weights_cohort = std::vector<int>(n_weights,
                          std::numeric_limits<int>::min());
-      current_statement__ = 31;
+      current_statement__ = 50;
       weights_cohort = context__.vals_i("weights_cohort");
-      current_statement__ = 31;
+      current_statement__ = 50;
       stan::math::check_greater_or_equal(function__, "weights_cohort",
         weights_cohort, 1);
-      current_statement__ = 31;
+      current_statement__ = 50;
       stan::math::check_less_or_equal(function__, "weights_cohort",
         weights_cohort, n_cohort);
-      current_statement__ = 32;
+      current_statement__ = 51;
       stan::math::validate_non_negative_index("weights_life_year",
         "n_weights", n_weights);
-      current_statement__ = 33;
+      current_statement__ = 52;
       context__.validate_dims("data initialization", "weights_life_year",
         "int", std::vector<size_t>{static_cast<size_t>(n_weights)});
       weights_life_year = std::vector<int>(n_weights,
                             std::numeric_limits<int>::min());
-      current_statement__ = 33;
+      current_statement__ = 52;
       weights_life_year = context__.vals_i("weights_life_year");
-      current_statement__ = 33;
+      current_statement__ = 52;
       stan::math::check_greater_or_equal(function__, "weights_life_year",
         weights_life_year, 1);
-      current_statement__ = 33;
+      current_statement__ = 52;
       stan::math::check_less_or_equal(function__, "weights_life_year",
         weights_life_year, n_yr);
-      current_statement__ = 34;
+      current_statement__ = 53;
       stan::math::validate_non_negative_index("weights_dose", "n_weights",
         n_weights);
-      current_statement__ = 35;
+      current_statement__ = 54;
       context__.validate_dims("data initialization", "weights_dose", "int",
         std::vector<size_t>{static_cast<size_t>(n_weights)});
       weights_dose = std::vector<int>(n_weights,
                        std::numeric_limits<int>::min());
-      current_statement__ = 35;
+      current_statement__ = 54;
       weights_dose = context__.vals_i("weights_dose");
-      current_statement__ = 35;
+      current_statement__ = 54;
       stan::math::check_greater_or_equal(function__, "weights_dose",
         weights_dose, 1);
-      current_statement__ = 35;
+      current_statement__ = 54;
       stan::math::check_less_or_equal(function__, "weights_dose",
         weights_dose, n_doses);
-      current_statement__ = 36;
+      current_statement__ = 55;
       stan::math::validate_non_negative_index("weights", "n_weights",
         n_weights);
-      current_statement__ = 37;
+      current_statement__ = 56;
       context__.validate_dims("data initialization", "weights", "double",
         std::vector<size_t>{static_cast<size_t>(n_weights)});
       weights_data__ = Eigen::Matrix<double,-1,1>::Constant(n_weights,
@@ -849,46 +864,46 @@ public:
         n_weights);
       {
         std::vector<local_scalar_t__> weights_flat__;
-        current_statement__ = 37;
+        current_statement__ = 56;
         weights_flat__ = context__.vals_r("weights");
-        current_statement__ = 37;
+        current_statement__ = 56;
         pos__ = 1;
-        current_statement__ = 37;
+        current_statement__ = 56;
         for (int sym1__ = 1; sym1__ <= n_weights; ++sym1__) {
-          current_statement__ = 37;
+          current_statement__ = 56;
           stan::model::assign(weights, weights_flat__[(pos__ - 1)],
             "assigning variable weights", stan::model::index_uni(sym1__));
-          current_statement__ = 37;
+          current_statement__ = 56;
           pos__ = (pos__ + 1);
         }
       }
-      current_statement__ = 37;
+      current_statement__ = 56;
       stan::math::check_greater_or_equal(function__, "weights", weights, 0);
-      current_statement__ = 37;
+      current_statement__ = 56;
       stan::math::check_less_or_equal(function__, "weights", weights, 1);
-      current_statement__ = 38;
+      current_statement__ = 57;
       context__.validate_dims("data initialization", "predict_mode", "int",
         std::vector<size_t>{});
       predict_mode = std::numeric_limits<int>::min();
-      current_statement__ = 38;
+      current_statement__ = 57;
       predict_mode = context__.vals_i("predict_mode")[(1 - 1)];
-      current_statement__ = 38;
+      current_statement__ = 57;
       stan::math::check_greater_or_equal(function__, "predict_mode",
         predict_mode, 0);
-      current_statement__ = 38;
+      current_statement__ = 57;
       stan::math::check_less_or_equal(function__, "predict_mode",
         predict_mode, 1);
-      current_statement__ = 39;
+      current_statement__ = 58;
       context__.validate_dims("data initialization", "k_bs", "int",
         std::vector<size_t>{});
       k_bs = std::numeric_limits<int>::min();
-      current_statement__ = 39;
+      current_statement__ = 58;
       k_bs = context__.vals_i("k_bs")[(1 - 1)];
-      current_statement__ = 40;
+      current_statement__ = 59;
       stan::math::validate_non_negative_index("bs", "n_cohort", n_cohort);
-      current_statement__ = 41;
+      current_statement__ = 60;
       stan::math::validate_non_negative_index("bs", "k_bs", k_bs);
-      current_statement__ = 42;
+      current_statement__ = 61;
       context__.validate_dims("data initialization", "bs", "double",
         std::vector<size_t>{static_cast<size_t>(n_cohort),
           static_cast<size_t>(k_bs)});
@@ -898,52 +913,52 @@ public:
         n_cohort, k_bs);
       {
         std::vector<local_scalar_t__> bs_flat__;
-        current_statement__ = 42;
+        current_statement__ = 61;
         bs_flat__ = context__.vals_r("bs");
-        current_statement__ = 42;
+        current_statement__ = 61;
         pos__ = 1;
-        current_statement__ = 42;
+        current_statement__ = 61;
         for (int sym1__ = 1; sym1__ <= k_bs; ++sym1__) {
-          current_statement__ = 42;
+          current_statement__ = 61;
           for (int sym2__ = 1; sym2__ <= n_cohort; ++sym2__) {
-            current_statement__ = 42;
+            current_statement__ = 61;
             stan::model::assign(bs, bs_flat__[(pos__ - 1)],
               "assigning variable bs", stan::model::index_uni(sym2__),
               stan::model::index_uni(sym1__));
-            current_statement__ = 42;
+            current_statement__ = 61;
             pos__ = (pos__ + 1);
           }
         }
       }
-      current_statement__ = 43;
+      current_statement__ = 62;
       stan::math::validate_non_negative_index("obs_map", "n_obs", n_obs);
-      current_statement__ = 44;
+      current_statement__ = 63;
       obs_map = std::vector<std::vector<int>>(2,
                   std::vector<int>(n_obs, std::numeric_limits<int>::min()));
-      current_statement__ = 44;
+      current_statement__ = 63;
       stan::model::assign(obs_map,
         bounds_to_range(obs_to_weights_bounds, n_weights, pstream__),
         "assigning variable obs_map");
-      current_statement__ = 45;
+      current_statement__ = 64;
       stan::math::validate_non_negative_index("phi_lookup", "n_weights",
         n_weights);
-      current_statement__ = 46;
+      current_statement__ = 65;
       phi_lookup = std::vector<int>(n_weights,
                      std::numeric_limits<int>::min());
-      current_statement__ = 47;
+      current_statement__ = 66;
       stan::math::validate_non_negative_index("cdf_lookup", "n_weights",
         n_weights);
-      current_statement__ = 48;
+      current_statement__ = 67;
       cdf_lookup = std::vector<int>(n_weights,
                      std::numeric_limits<int>::min());
-      current_statement__ = 52;
+      current_statement__ = 71;
       for (int weight_i = 1; weight_i <= n_weights; ++weight_i) {
-        current_statement__ = 49;
+        current_statement__ = 68;
         stan::model::assign(phi_lookup,
           stan::model::rvalue(weights_cohort, "weights_cohort",
             stan::model::index_uni(weight_i)),
           "assigning variable phi_lookup", stan::model::index_uni(weight_i));
-        current_statement__ = 50;
+        current_statement__ = 69;
         stan::model::assign(cdf_lookup,
           (stan::model::rvalue(weights_life_year, "weights_life_year",
              stan::model::index_uni(weight_i)) +
@@ -951,38 +966,28 @@ public:
               stan::model::index_uni(weight_i)) - 1) * n_yr)),
           "assigning variable cdf_lookup", stan::model::index_uni(weight_i));
       }
-      current_statement__ = 53;
+      current_statement__ = 72;
       epsilon_p = std::numeric_limits<double>::quiet_NaN();
-      current_statement__ = 53;
+      current_statement__ = 72;
       epsilon_p = 1e-10;
-      current_statement__ = 46;
+      current_statement__ = 65;
       stan::math::check_greater_or_equal(function__, "phi_lookup",
         phi_lookup, 1);
-      current_statement__ = 48;
+      current_statement__ = 67;
       stan::math::check_greater_or_equal(function__, "cdf_lookup",
         cdf_lookup, 1);
-      current_statement__ = 54;
+      current_statement__ = 73;
       stan::math::validate_non_negative_index("beta_bs", "k_bs", k_bs);
-      current_statement__ = 55;
+      current_statement__ = 74;
       stan::math::validate_non_negative_index("lambda_raw", "n_doses",
         n_doses);
-      current_statement__ = 56;
-      stan::math::validate_non_negative_index("logit_phi_st", "n_cohort",
-        n_cohort);
-      current_statement__ = 57;
-      stan::math::validate_non_negative_index("phi", "n_cohort", n_cohort);
-      current_statement__ = 58;
-      unrolled_dose_probs_1dim__ = std::numeric_limits<int>::min();
-      current_statement__ = 58;
-      unrolled_dose_probs_1dim__ = (n_doses * n_yr);
-      current_statement__ = 58;
-      stan::math::validate_non_negative_index("unrolled_dose_probs",
-        "n_doses * n_yr", unrolled_dose_probs_1dim__);
-      current_statement__ = 59;
-      stan::math::validate_non_negative_index("weighted", "n_weights",
-        n_weights);
-      current_statement__ = 60;
-      stan::math::validate_non_negative_index("p_obs", "n_obs", n_obs);
+      current_statement__ = 75;
+      p_obs_1dim__ = std::numeric_limits<int>::min();
+      current_statement__ = 75;
+      p_obs_1dim__ = (predict_mode ? n_obs : 0);
+      current_statement__ = 75;
+      stan::math::validate_non_negative_index("p_obs",
+        "predict_mode ? n_obs : 0", p_obs_1dim__);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
     }
@@ -1025,74 +1030,79 @@ public:
       current_statement__ = 2;
       lambda_raw = in__.template read<
                      Eigen::Matrix<local_scalar_t__,-1,1>>(n_doses);
-      Eigen::Matrix<local_scalar_t__,-1,1> logit_phi_st =
-        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_cohort, DUMMY_VAR__);
-      current_statement__ = 3;
-      stan::model::assign(logit_phi_st, stan::math::multiply(bs, beta_bs),
-        "assigning variable logit_phi_st");
-      Eigen::Matrix<local_scalar_t__,-1,1> phi =
-        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_cohort, DUMMY_VAR__);
-      current_statement__ = 4;
-      stan::model::assign(phi, stan::math::inv_logit(logit_phi_st),
-        "assigning variable phi");
-      Eigen::Matrix<local_scalar_t__,-1,1> unrolled_dose_probs =
-        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(unrolled_dose_probs_1dim__,
-          DUMMY_VAR__);
-      current_statement__ = 5;
-      stan::model::assign(unrolled_dose_probs,
-        unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p,
-          pstream__), "assigning variable unrolled_dose_probs");
-      Eigen::Matrix<local_scalar_t__,-1,1> weighted =
-        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_weights,
-          DUMMY_VAR__);
-      current_statement__ = 6;
-      stan::model::assign(weighted,
-        stan::math::elt_multiply(
-          stan::math::elt_multiply(
-            stan::math::subtract(1,
-              stan::model::rvalue(phi, "phi",
-                stan::model::index_multi(phi_lookup))),
-            stan::model::rvalue(unrolled_dose_probs, "unrolled_dose_probs",
-              stan::model::index_multi(cdf_lookup))), weights),
-        "assigning variable weighted");
-      Eigen::Matrix<local_scalar_t__,-1,1> p_obs =
-        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_obs, DUMMY_VAR__);
-      current_statement__ = 10;
-      for (int obs_i = 1; obs_i <= n_obs; ++obs_i) {
-        current_statement__ = 8;
-        stan::model::assign(p_obs,
-          stan::math::sum(
-            stan::model::rvalue(weighted, "weighted",
-              stan::model::index_min_max(
-                stan::model::rvalue(obs_map, "obs_map",
-                  stan::model::index_uni(1), stan::model::index_uni(obs_i)),
-                stan::model::rvalue(obs_map, "obs_map",
-                  stan::model::index_uni(2), stan::model::index_uni(obs_i))))),
-          "assigning variable p_obs", stan::model::index_uni(obs_i));
-      }
-      current_statement__ = 5;
-      stan::math::check_greater_or_equal(function__, "unrolled_dose_probs",
-        unrolled_dose_probs, 0);
-      current_statement__ = 5;
-      stan::math::check_less_or_equal(function__, "unrolled_dose_probs",
-        unrolled_dose_probs, 1);
-      current_statement__ = 6;
-      stan::math::check_greater_or_equal(function__, "weighted", weighted, 0);
-      current_statement__ = 6;
-      stan::math::check_less_or_equal(function__, "weighted", weighted, 1);
-      current_statement__ = 7;
-      stan::math::check_greater_or_equal(function__, "p_obs", p_obs, 0);
-      current_statement__ = 7;
-      stan::math::check_less_or_equal(function__, "p_obs", p_obs, 1);
       {
-        current_statement__ = 15;
+        current_statement__ = 34;
         if (stan::math::logical_negation(predict_mode)) {
-          current_statement__ = 11;
+          current_statement__ = 17;
           lp_accum__.add(stan::math::normal_lpdf<propto__>(beta_bs, 0, 10));
-          current_statement__ = 12;
+          current_statement__ = 18;
           lp_accum__.add(stan::math::normal_lpdf<propto__>(lambda_raw,
                            stan::math::log(3), 1));
-          current_statement__ = 13;
+          current_statement__ = 19;
+          stan::math::validate_non_negative_index("logit_phi_st", "n_cohort",
+            n_cohort);
+          Eigen::Matrix<local_scalar_t__,-1,1> logit_phi_st =
+            Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_cohort,
+              DUMMY_VAR__);
+          current_statement__ = 20;
+          stan::model::assign(logit_phi_st,
+            stan::math::multiply(bs, beta_bs),
+            "assigning variable logit_phi_st");
+          current_statement__ = 21;
+          stan::math::validate_non_negative_index("phi", "n_cohort", n_cohort);
+          Eigen::Matrix<local_scalar_t__,-1,1> phi =
+            Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_cohort,
+              DUMMY_VAR__);
+          current_statement__ = 22;
+          stan::model::assign(phi, stan::math::inv_logit(logit_phi_st),
+            "assigning variable phi");
+          current_statement__ = 23;
+          stan::math::validate_non_negative_index("unrolled_dose_probs",
+            "n_doses * n_yr", (n_doses * n_yr));
+          Eigen::Matrix<local_scalar_t__,-1,1> unrolled_dose_probs =
+            Eigen::Matrix<local_scalar_t__,-1,1>::Constant((n_doses * n_yr),
+              DUMMY_VAR__);
+          current_statement__ = 24;
+          stan::model::assign(unrolled_dose_probs,
+            unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p,
+              pstream__), "assigning variable unrolled_dose_probs");
+          current_statement__ = 25;
+          stan::math::validate_non_negative_index("weighted", "n_weights",
+            n_weights);
+          Eigen::Matrix<local_scalar_t__,-1,1> weighted =
+            Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_weights,
+              DUMMY_VAR__);
+          current_statement__ = 26;
+          stan::model::assign(weighted,
+            stan::math::elt_multiply(
+              stan::math::elt_multiply(
+                stan::math::subtract(1,
+                  stan::model::rvalue(phi, "phi",
+                    stan::model::index_multi(phi_lookup))),
+                stan::model::rvalue(unrolled_dose_probs,
+                  "unrolled_dose_probs", stan::model::index_multi(cdf_lookup))),
+              weights), "assigning variable weighted");
+          current_statement__ = 27;
+          stan::math::validate_non_negative_index("p_obs", "n_obs", n_obs);
+          Eigen::Matrix<local_scalar_t__,-1,1> p_obs =
+            Eigen::Matrix<local_scalar_t__,-1,1>::Constant(n_obs,
+              DUMMY_VAR__);
+          current_statement__ = 31;
+          for (int obs_i = 1; obs_i <= n_obs; ++obs_i) {
+            current_statement__ = 29;
+            stan::model::assign(p_obs,
+              stan::math::sum(
+                stan::model::rvalue(weighted, "weighted",
+                  stan::model::index_min_max(
+                    stan::model::rvalue(obs_map, "obs_map",
+                      stan::model::index_uni(1),
+                      stan::model::index_uni(obs_i)),
+                    stan::model::rvalue(obs_map, "obs_map",
+                      stan::model::index_uni(2),
+                      stan::model::index_uni(obs_i))))),
+              "assigning variable p_obs", stan::model::index_uni(obs_i));
+          }
+          current_statement__ = 32;
           lp_accum__.add(stan::math::binomial_lpmf<propto__>(y_obs, y_smp,
                            p_obs));
         }
@@ -1146,21 +1156,6 @@ public:
       current_statement__ = 2;
       lambda_raw = in__.template read<
                      Eigen::Matrix<local_scalar_t__,-1,1>>(n_doses);
-      Eigen::Matrix<double,-1,1> logit_phi_st =
-        Eigen::Matrix<double,-1,1>::Constant(n_cohort,
-          std::numeric_limits<double>::quiet_NaN());
-      Eigen::Matrix<double,-1,1> phi =
-        Eigen::Matrix<double,-1,1>::Constant(n_cohort,
-          std::numeric_limits<double>::quiet_NaN());
-      Eigen::Matrix<double,-1,1> unrolled_dose_probs =
-        Eigen::Matrix<double,-1,1>::Constant(unrolled_dose_probs_1dim__,
-          std::numeric_limits<double>::quiet_NaN());
-      Eigen::Matrix<double,-1,1> weighted =
-        Eigen::Matrix<double,-1,1>::Constant(n_weights,
-          std::numeric_limits<double>::quiet_NaN());
-      Eigen::Matrix<double,-1,1> p_obs =
-        Eigen::Matrix<double,-1,1>::Constant(n_obs,
-          std::numeric_limits<double>::quiet_NaN());
       out__.write(beta_bs);
       out__.write(lambda_raw);
       if (stan::math::logical_negation(
@@ -1168,63 +1163,72 @@ public:
             stan::math::primitive_value(emit_generated_quantities__)))) {
         return ;
       }
-      current_statement__ = 3;
-      stan::model::assign(logit_phi_st, stan::math::multiply(bs, beta_bs),
-        "assigning variable logit_phi_st");
-      current_statement__ = 4;
-      stan::model::assign(phi, stan::math::inv_logit(logit_phi_st),
-        "assigning variable phi");
-      current_statement__ = 5;
-      stan::model::assign(unrolled_dose_probs,
-        unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p,
-          pstream__), "assigning variable unrolled_dose_probs");
-      current_statement__ = 6;
-      stan::model::assign(weighted,
-        stan::math::elt_multiply(
-          stan::math::elt_multiply(
-            stan::math::subtract(1,
-              stan::model::rvalue(phi, "phi",
-                stan::model::index_multi(phi_lookup))),
-            stan::model::rvalue(unrolled_dose_probs, "unrolled_dose_probs",
-              stan::model::index_multi(cdf_lookup))), weights),
-        "assigning variable weighted");
-      current_statement__ = 10;
-      for (int obs_i = 1; obs_i <= n_obs; ++obs_i) {
-        current_statement__ = 8;
-        stan::model::assign(p_obs,
-          stan::math::sum(
-            stan::model::rvalue(weighted, "weighted",
-              stan::model::index_min_max(
-                stan::model::rvalue(obs_map, "obs_map",
-                  stan::model::index_uni(1), stan::model::index_uni(obs_i)),
-                stan::model::rvalue(obs_map, "obs_map",
-                  stan::model::index_uni(2), stan::model::index_uni(obs_i))))),
-          "assigning variable p_obs", stan::model::index_uni(obs_i));
-      }
-      current_statement__ = 5;
-      stan::math::check_greater_or_equal(function__, "unrolled_dose_probs",
-        unrolled_dose_probs, 0);
-      current_statement__ = 5;
-      stan::math::check_less_or_equal(function__, "unrolled_dose_probs",
-        unrolled_dose_probs, 1);
-      current_statement__ = 6;
-      stan::math::check_greater_or_equal(function__, "weighted", weighted, 0);
-      current_statement__ = 6;
-      stan::math::check_less_or_equal(function__, "weighted", weighted, 1);
-      current_statement__ = 7;
-      stan::math::check_greater_or_equal(function__, "p_obs", p_obs, 0);
-      current_statement__ = 7;
-      stan::math::check_less_or_equal(function__, "p_obs", p_obs, 1);
-      if (emit_transformed_parameters__) {
-        out__.write(logit_phi_st);
-        out__.write(phi);
-        out__.write(unrolled_dose_probs);
-        out__.write(weighted);
-        out__.write(p_obs);
-      }
       if (stan::math::logical_negation(emit_generated_quantities__)) {
         return ;
       }
+      Eigen::Matrix<double,-1,1> p_obs =
+        Eigen::Matrix<double,-1,1>::Constant(p_obs_1dim__,
+          std::numeric_limits<double>::quiet_NaN());
+      current_statement__ = 16;
+      if (predict_mode) {
+        current_statement__ = 4;
+        stan::math::validate_non_negative_index("logit_phi_st", "n_cohort",
+          n_cohort);
+        Eigen::Matrix<double,-1,1> logit_phi_st =
+          Eigen::Matrix<double,-1,1>::Constant(n_cohort,
+            std::numeric_limits<double>::quiet_NaN());
+        current_statement__ = 5;
+        stan::model::assign(logit_phi_st, stan::math::multiply(bs, beta_bs),
+          "assigning variable logit_phi_st");
+        current_statement__ = 6;
+        stan::math::validate_non_negative_index("phi", "n_cohort", n_cohort);
+        Eigen::Matrix<double,-1,1> phi =
+          Eigen::Matrix<double,-1,1>::Constant(n_cohort,
+            std::numeric_limits<double>::quiet_NaN());
+        current_statement__ = 7;
+        stan::model::assign(phi, stan::math::inv_logit(logit_phi_st),
+          "assigning variable phi");
+        current_statement__ = 8;
+        stan::math::validate_non_negative_index("unrolled_dose_probs",
+          "n_doses * n_yr", (n_doses * n_yr));
+        Eigen::Matrix<double,-1,1> unrolled_dose_probs =
+          Eigen::Matrix<double,-1,1>::Constant((n_doses * n_yr),
+            std::numeric_limits<double>::quiet_NaN());
+        current_statement__ = 9;
+        stan::model::assign(unrolled_dose_probs,
+          unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p,
+            pstream__), "assigning variable unrolled_dose_probs");
+        current_statement__ = 10;
+        stan::math::validate_non_negative_index("weighted", "n_weights",
+          n_weights);
+        Eigen::Matrix<double,-1,1> weighted =
+          Eigen::Matrix<double,-1,1>::Constant(n_weights,
+            std::numeric_limits<double>::quiet_NaN());
+        current_statement__ = 11;
+        stan::model::assign(weighted,
+          stan::math::elt_multiply(
+            stan::math::elt_multiply(
+              stan::math::subtract(1,
+                stan::model::rvalue(phi, "phi",
+                  stan::model::index_multi(phi_lookup))),
+              stan::model::rvalue(unrolled_dose_probs, "unrolled_dose_probs",
+                stan::model::index_multi(cdf_lookup))), weights),
+          "assigning variable weighted");
+        current_statement__ = 14;
+        for (int obs_i = 1; obs_i <= n_obs; ++obs_i) {
+          current_statement__ = 12;
+          stan::model::assign(p_obs,
+            stan::math::sum(
+              stan::model::rvalue(weighted, "weighted",
+                stan::model::index_min_max(
+                  stan::model::rvalue(obs_map, "obs_map",
+                    stan::model::index_uni(1), stan::model::index_uni(obs_i)),
+                  stan::model::rvalue(obs_map, "obs_map",
+                    stan::model::index_uni(2), stan::model::index_uni(obs_i))))),
+            "assigning variable p_obs", stan::model::index_uni(obs_i));
+        }
+      }
+      out__.write(p_obs);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
     }
@@ -1327,14 +1331,12 @@ public:
                   emit_transformed_parameters__ = true, const bool
                   emit_generated_quantities__ = true) const {
     names__ = std::vector<std::string>{"beta_bs", "lambda_raw"};
-    if (emit_transformed_parameters__) {
-      std::vector<std::string>
-        temp{"logit_phi_st", "phi", "unrolled_dose_probs", "weighted",
-             "p_obs"};
+    if (emit_transformed_parameters__) {}
+    if (emit_generated_quantities__) {
+      std::vector<std::string> temp{"p_obs"};
       names__.reserve(names__.size() + temp.size());
       names__.insert(names__.end(), temp.begin(), temp.end());
     }
-    if (emit_generated_quantities__) {}
   }
   inline void
   get_dims(std::vector<std::vector<size_t>>& dimss__, const bool
@@ -1344,18 +1346,13 @@ public:
                                                                     size_t>(
                                                                     k_bs)},
                 std::vector<size_t>{static_cast<size_t>(n_doses)}};
-    if (emit_transformed_parameters__) {
+    if (emit_transformed_parameters__) {}
+    if (emit_generated_quantities__) {
       std::vector<std::vector<size_t>>
-        temp{std::vector<size_t>{static_cast<size_t>(n_cohort)},
-             std::vector<size_t>{static_cast<size_t>(n_cohort)},
-             std::vector<size_t>{static_cast<size_t>(
-                                   unrolled_dose_probs_1dim__)},
-             std::vector<size_t>{static_cast<size_t>(n_weights)},
-             std::vector<size_t>{static_cast<size_t>(n_obs)}};
+        temp{std::vector<size_t>{static_cast<size_t>(p_obs_1dim__)}};
       dimss__.reserve(dimss__.size() + temp.size());
       dimss__.insert(dimss__.end(), temp.begin(), temp.end());
     }
-    if (emit_generated_quantities__) {}
   }
   inline void
   constrained_param_names(std::vector<std::string>& param_names__, bool
@@ -1369,29 +1366,13 @@ public:
       param_names__.emplace_back(std::string() + "lambda_raw" + '.' +
         std::to_string(sym1__));
     }
-    if (emit_transformed_parameters__) {
-      for (int sym1__ = 1; sym1__ <= n_cohort; ++sym1__) {
-        param_names__.emplace_back(std::string() + "logit_phi_st" + '.' +
-          std::to_string(sym1__));
-      }
-      for (int sym1__ = 1; sym1__ <= n_cohort; ++sym1__) {
-        param_names__.emplace_back(std::string() + "phi" + '.' +
-          std::to_string(sym1__));
-      }
-      for (int sym1__ = 1; sym1__ <= unrolled_dose_probs_1dim__; ++sym1__) {
-        param_names__.emplace_back(std::string() + "unrolled_dose_probs" +
-          '.' + std::to_string(sym1__));
-      }
-      for (int sym1__ = 1; sym1__ <= n_weights; ++sym1__) {
-        param_names__.emplace_back(std::string() + "weighted" + '.' +
-          std::to_string(sym1__));
-      }
-      for (int sym1__ = 1; sym1__ <= n_obs; ++sym1__) {
+    if (emit_transformed_parameters__) {}
+    if (emit_generated_quantities__) {
+      for (int sym1__ = 1; sym1__ <= p_obs_1dim__; ++sym1__) {
         param_names__.emplace_back(std::string() + "p_obs" + '.' +
           std::to_string(sym1__));
       }
     }
-    if (emit_generated_quantities__) {}
   }
   inline void
   unconstrained_param_names(std::vector<std::string>& param_names__, bool
@@ -1405,35 +1386,19 @@ public:
       param_names__.emplace_back(std::string() + "lambda_raw" + '.' +
         std::to_string(sym1__));
     }
-    if (emit_transformed_parameters__) {
-      for (int sym1__ = 1; sym1__ <= n_cohort; ++sym1__) {
-        param_names__.emplace_back(std::string() + "logit_phi_st" + '.' +
-          std::to_string(sym1__));
-      }
-      for (int sym1__ = 1; sym1__ <= n_cohort; ++sym1__) {
-        param_names__.emplace_back(std::string() + "phi" + '.' +
-          std::to_string(sym1__));
-      }
-      for (int sym1__ = 1; sym1__ <= unrolled_dose_probs_1dim__; ++sym1__) {
-        param_names__.emplace_back(std::string() + "unrolled_dose_probs" +
-          '.' + std::to_string(sym1__));
-      }
-      for (int sym1__ = 1; sym1__ <= n_weights; ++sym1__) {
-        param_names__.emplace_back(std::string() + "weighted" + '.' +
-          std::to_string(sym1__));
-      }
-      for (int sym1__ = 1; sym1__ <= n_obs; ++sym1__) {
+    if (emit_transformed_parameters__) {}
+    if (emit_generated_quantities__) {
+      for (int sym1__ = 1; sym1__ <= p_obs_1dim__; ++sym1__) {
         param_names__.emplace_back(std::string() + "p_obs" + '.' +
           std::to_string(sym1__));
       }
     }
-    if (emit_generated_quantities__) {}
   }
   inline std::string get_constrained_sizedtypes() const {
-    return std::string("[{\"name\":\"beta_bs\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(k_bs) + "},\"block\":\"parameters\"},{\"name\":\"lambda_raw\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(n_doses) + "},\"block\":\"parameters\"},{\"name\":\"logit_phi_st\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(n_cohort) + "},\"block\":\"transformed_parameters\"},{\"name\":\"phi\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(n_cohort) + "},\"block\":\"transformed_parameters\"},{\"name\":\"unrolled_dose_probs\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(unrolled_dose_probs_1dim__) + "},\"block\":\"transformed_parameters\"},{\"name\":\"weighted\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(n_weights) + "},\"block\":\"transformed_parameters\"},{\"name\":\"p_obs\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(n_obs) + "},\"block\":\"transformed_parameters\"}]");
+    return std::string("[{\"name\":\"beta_bs\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(k_bs) + "},\"block\":\"parameters\"},{\"name\":\"lambda_raw\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(n_doses) + "},\"block\":\"parameters\"},{\"name\":\"p_obs\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(p_obs_1dim__) + "},\"block\":\"generated_quantities\"}]");
   }
   inline std::string get_unconstrained_sizedtypes() const {
-    return std::string("[{\"name\":\"beta_bs\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(k_bs) + "},\"block\":\"parameters\"},{\"name\":\"lambda_raw\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(n_doses) + "},\"block\":\"parameters\"},{\"name\":\"logit_phi_st\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(n_cohort) + "},\"block\":\"transformed_parameters\"},{\"name\":\"phi\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(n_cohort) + "},\"block\":\"transformed_parameters\"},{\"name\":\"unrolled_dose_probs\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(unrolled_dose_probs_1dim__) + "},\"block\":\"transformed_parameters\"},{\"name\":\"weighted\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(n_weights) + "},\"block\":\"transformed_parameters\"},{\"name\":\"p_obs\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(n_obs) + "},\"block\":\"transformed_parameters\"}]");
+    return std::string("[{\"name\":\"beta_bs\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(k_bs) + "},\"block\":\"parameters\"},{\"name\":\"lambda_raw\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(n_doses) + "},\"block\":\"parameters\"},{\"name\":\"p_obs\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(p_obs_1dim__) + "},\"block\":\"generated_quantities\"}]");
   }
   // Begin method overload boilerplate
   template <typename RNG> inline void
@@ -1443,10 +1408,9 @@ public:
               emit_generated_quantities = true, std::ostream*
               pstream = nullptr) const {
     const size_t num_params__ = (k_bs + n_doses);
-    const size_t num_transformed = emit_transformed_parameters *
-      (((((n_cohort + n_cohort) + unrolled_dose_probs_1dim__) + n_weights) +
-      n_obs));
-    const size_t num_gen_quantities = emit_generated_quantities * (0);
+    const size_t num_transformed = emit_transformed_parameters * (0);
+    const size_t num_gen_quantities = emit_generated_quantities *
+      (p_obs_1dim__);
     const size_t num_to_write = num_params__ + num_transformed +
       num_gen_quantities;
     std::vector<int> params_i;
@@ -1462,10 +1426,9 @@ public:
               emit_generated_quantities = true, std::ostream*
               pstream = nullptr) const {
     const size_t num_params__ = (k_bs + n_doses);
-    const size_t num_transformed = emit_transformed_parameters *
-      (((((n_cohort + n_cohort) + unrolled_dose_probs_1dim__) + n_weights) +
-      n_obs));
-    const size_t num_gen_quantities = emit_generated_quantities * (0);
+    const size_t num_transformed = emit_transformed_parameters * (0);
+    const size_t num_gen_quantities = emit_generated_quantities *
+      (p_obs_1dim__);
     const size_t num_to_write = num_params__ + num_transformed +
       num_gen_quantities;
     vars = std::vector<double>(num_to_write,
