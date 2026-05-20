@@ -23,9 +23,10 @@ test_that("imuGAP::sampling() runs end-to-end on bundled *_sim data", {
     )
   ))
 
-  expect_s4_class(fit, "stanfit")
+  expect_s3_class(fit, "imugap_fit")
+  expect_s4_class(fit$stanfit, "stanfit")
 
-  fit_pars <- fit@model_pars
+  fit_pars <- fit$stanfit@model_pars
   for (par in c("beta_bs", "lambda_raw")) {
     expect_true(par %in% fit_pars, info = paste("missing parameter:", par))
   }

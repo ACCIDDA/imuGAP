@@ -7,7 +7,7 @@
 extract_imugap(fit, pars = c("logit_phi_st"), ...)
 }
 \arguments{
-\item{fit}{a \code{stanfit} object returned by \code{sampling()}}
+\item{fit}{an \code{imugap_fit} object returned by \code{sampling()}}
 
 \item{pars}{character vector; parameters to extract. Defaults to
 \code{"logit_phi_st"}, the state-level logit-coverage parameter emitted by the

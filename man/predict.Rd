@@ -4,16 +4,12 @@
 \alias{predict}
 \title{Predict coverage probabilities}
 \usage{
-predict(fit, populations, locations, imugap_opts = imugap_options())
+predict(fit, populations)
 }
 \arguments{
-\item{fit}{a \code{stanfit} object returned by \code{sampling()}}
+\item{fit}{an \code{imugap_fit} object returned by \code{sampling()}}
 
 \item{populations}{a \verb{[data.frame()]} of target populations to predict for}
-
-\item{locations}{a \verb{[data.frame()]} of the geographic hierarchy}
-
-\item{imugap_opts}{options for the model, by default \code{imugap_options()}}
 }
 \value{
 A \code{data.table} with columns \code{sample_id}, \code{obs_id}, and \code{p_obs} containing
