@@ -17,20 +17,19 @@ test_that("sampling and predict work correctly with simulated data", {
     stan_opts = st_opts
   )
 
-  expect_s4_class(fit, "stanfit")
+  expect_s3_class(fit, "imugap_fit")
+  expect_s4_class(fit$stanfit, "stanfit")
 
   # Verify transformed parameters (like logit_phi_st) are NOT in the fit
   # Since they were removed, they should not be present in the fitted parameters.
-  fit_pars <- names(fit)
+  fit_pars <- names(fit$stanfit)
   expect_false("logit_phi_st" %in% fit_pars)
   expect_false("p_obs" %in% fit_pars)
 
   # Run prediction
   pred <- predict(
     fit = fit,
-    populations = populations_sim,
-    locations = locations_sim,
-    imugap_opts = imugap_opts
+    populations = populations_sim
   )
 
   expect_s3_class(pred, "data.table")
@@ -64,22 +63,28 @@ test_that("predict throws informative compatibility errors", {
   bad_locations <- canonicalize_locations(locations_sim)
   bad_locations <- bad_locations[layer < 3 | loc_c_id != max(loc_c_id)]
 
+  bad_fit_loc <- fit
+  bad_fit_loc$data$locations <- bad_locations
   expect_error(
-    predict(fit, populations_sim, bad_locations, imugap_opts),
+    predict(bad_fit_loc, populations_sim),
     "Number of schools in 'locations'.*does not match"
   )
 
   # Test dose schedule mismatch
   bad_imugap_opts <- imugap_options(df = 5, dose_schedule = c(1, 2, 4))
+  bad_fit_dose <- fit
+  bad_fit_dose$settings$imugap_opts <- bad_imugap_opts
   expect_error(
-    predict(fit, populations_sim, locations_sim, bad_imugap_opts),
+    predict(bad_fit_dose, populations_sim),
     "Dose schedule mismatch"
   )
 
   # Test B-spline specification mismatch
   bad_df_opts <- imugap_options(df = 6, dose_schedule = c(1, 4))
+  bad_fit_df <- fit
+  bad_fit_df$settings$imugap_opts <- bad_df_opts
   expect_error(
-    predict(fit, populations_sim, locations_sim, bad_df_opts),
+    predict(bad_fit_df, populations_sim),
     "B-spline degrees of freedom / specification mismatch"
   )
 })

@@ -122,7 +122,8 @@ test_that("sampling assembles stan_opts$data with all expected fields", {
       locations = make_3layer_locs()
     )
   ))
-  expect_s3_class(out$result, "stanfit_mock")
+  expect_s3_class(out$result, "imugap_fit")
+  expect_s3_class(out$result$stanfit, "stanfit_mock")
   d <- out$captured$data
   expect_true(is.list(d))
   expected_fields <- c(

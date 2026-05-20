@@ -105,7 +105,8 @@ imugap_options <- function(
 #' @param imugap_opts options for the `imuGAP` model
 #' @param stan_opts passed to `rstan::sampling` (e.g. `iter`, `chains`).
 #'
-#' @return An object of class `stanfit` returned by `rstan::sampling`
+#' @return An object of class `imugap_fit` wrapping the raw `stanfit` object
+#'   along with settings and dataset metadata.
 #'
 #' @examples
 #' \dontrun{
@@ -190,7 +191,24 @@ sampling <- function( # nolint
   )
   stan_opts$object <- imugap_opts$object
 
-  return(do.call(rstan::sampling, stan_opts))
+  raw_stanfit <- do.call(rstan::sampling, stan_opts)
+
+  structure(
+    list(
+      stanfit   = raw_stanfit,
+      settings  = list(
+        imugap_opts = imugap_opts,
+        stan_opts = stan_opts
+      ),
+      data      = list(
+        observations = obs,
+        populations = wts,
+        locations = loc_info
+      ),
+      algorithm = "MCMC"
+    ),
+    class = "imugap_fit"
+  )
 }
 
 #' @title Predict coverage probabilities
@@ -199,10 +217,8 @@ sampling <- function( # nolint
 #' Uses the output of \code{\link{sampling}} and a target \code{populations} grid to generate
 #' predicted coverage probabilities.
 #'
-#' @param fit a `stanfit` object returned by `sampling()`
+#' @param fit an `imugap_fit` object returned by `sampling()`
 #' @param populations a `[data.frame()]` of target populations to predict for
-#' @param locations a `[data.frame()]` of the geographic hierarchy
-#' @param imugap_opts options for the model, by default `imugap_options()`
 #'
 #' @return A `data.table` with columns `sample_id`, `obs_id`, and `p_obs` containing
 #'   the predicted coverage probabilities for each posterior draw and target observation.
@@ -212,21 +228,25 @@ sampling <- function( # nolint
 #' @importFrom rstan gqs extract
 predict <- function(
   fit,
-  populations,
-  locations,
-  imugap_opts = imugap_options()
+  populations
 ) {
-  dims <- fit@par_dims
+  if (!inherits(fit, "imugap_fit")) {
+    stop("fit must be an object of class 'imugap_fit'", call. = FALSE)
+  }
+
+  raw_fit <- fit$stanfit
+  imugap_opts <- fit$settings$imugap_opts
+  loc_info <- fit$data$locations
+
+  dims <- raw_fit@par_dims
   if (is.null(dims)) {
-    stop("Invalid 'fit' object. Ensure it is a valid stanfit object.", call. = FALSE)
+    stop("Invalid 'fit' object. Ensure it contains a valid stanfit object.", call. = FALSE)
   }
 
   if (!"beta_bs" %in% names(dims) || !"lambda_raw" %in% names(dims)) {
     stop("The 'fit' object does not appear to be an imuGAP model fit (missing 'beta_bs' or 'lambda_raw').", call. = FALSE)
   }
 
-  # check locations
-  loc_info <- canonicalize_locations(locations)
   layer_sizes <- loc_info[, .N, keyby = layer][, c(N)]
 
   # Check if model has counties and schools
@@ -374,7 +394,7 @@ predict <- function(
   }
 
   # Run gqs to generate predictions
-  gqs_res <- rstan::gqs(fit@stanmodel, data = dat_stan, draws = as.matrix(fit))
+  gqs_res <- rstan::gqs(raw_fit@stanmodel, data = dat_stan, draws = as.matrix(raw_fit))
 
   # Extract predictions
   p_obs_draws <- rstan::extract(gqs_res, pars = "p_obs")$p_obs
@@ -398,7 +418,7 @@ predict <- function(
 #'
 #' @description
 #' Thin wrapper around `rstan::extract` to extract typical imuGAP parameters.
-#' @param fit a `stanfit` object returned by `sampling()`
+#' @param fit an `imugap_fit` object returned by `sampling()`
 #' @param pars character vector; parameters to extract.
 #' @param ... additional arguments passed to `[rstan::extract()]`.
 #'
@@ -410,6 +430,9 @@ predict <- function(
 #' extract_imugap(fit_sim, pars = "phi")
 #'
 #' @export
-extract_imugap <- function(fit, pars = c("logit_phi_st"), ...) {
-  return(rstan::extract(fit, pars = pars, ...))
+extract_imugap <- function(fit, pars = c("logit_phi_state"), ...) {
+  if (!inherits(fit, "imugap_fit")) {
+    stop("fit must be an object of class 'imugap_fit'", call. = FALSE)
+  }
+  return(rstan::extract(fit$stanfit, pars = pars, ...))
 }

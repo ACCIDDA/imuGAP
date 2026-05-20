@@ -47,7 +47,8 @@ of the same type. See Details for restrictions.}
 \item{stan_opts}{passed to \code{rstan::sampling} (e.g. \code{iter}, \code{chains}).}
 }
 \value{
-An object of class \code{stanfit} returned by \code{rstan::sampling}
+An object of class \code{imugap_fit} wrapping the raw \code{stanfit} object
+along with settings and dataset metadata.
 }
 \description{
 This a sampler interface to convert user-friendly data into the necessary
