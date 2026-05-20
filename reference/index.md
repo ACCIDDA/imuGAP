@@ -14,6 +14,9 @@
 - [`extract_imugap()`](https://accidda.github.io/imuGAP/reference/extract_imugap.md)
   : Custom imuGAP fit extraction
 
+- [`fit_sim`](https://accidda.github.io/imuGAP/reference/fit_sim.md) :
+  Example Stan Fit
+
 - [`imuGAP-package`](https://accidda.github.io/imuGAP/reference/imuGAP-package.md)
   [`imuGAP`](https://accidda.github.io/imuGAP/reference/imuGAP-package.md)
   : The 'imuGAP' package.
