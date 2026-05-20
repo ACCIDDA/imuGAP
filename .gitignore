@@ -4,5 +4,8 @@ inst/doc
 src/RcppExports*
 src/stanExports*
 src/*.dll
+src/*.so
 .Rhistory
 .vscode/*
+*.gz
+imuGAP.Rcheck/*
