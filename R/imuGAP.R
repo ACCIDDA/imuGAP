@@ -571,12 +571,19 @@ imuGAP <- function(
 #' @description
 #' Thin wrapper around `rstan::extract` to extract typical imuGAP parameters.
 #' @param fit a `stanfit` object returned by `imuGAP()`
-#' @param pars character vector; parameters to extract.
+#' @param pars character vector; parameters to extract. Defaults to
+#'   `"logit_phi_st"`, the state-level logit-coverage parameter emitted by the
+#'   bundled Stan model.
 #' @param ... additional arguments passed to [rstan::extract()]
 #'
 #' @return a list, as returned by `rstan::extract()`
 #'
+#' @examples
+#' data("fit_sim")
+#' extract_imugap(fit_sim)
+#' extract_imugap(fit_sim, pars = "phi")
+#'
 #' @export
-extract_imugap <- function(fit, pars = c("logit_phi_state"), ...) {
+extract_imugap <- function(fit, pars = c("logit_phi_st"), ...) {
   return(rstan::extract(fit, pars = pars, ...))
 }
