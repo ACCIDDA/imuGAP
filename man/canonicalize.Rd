@@ -98,15 +98,62 @@ by the \verb{[sampling()]} sampler and the underlying Stan models.
 \details{
 The \code{imuGAP} hierarchical modeling framework requires data structures to adhere to
 specific relational and format constraints. The three canonicalize functions
-process and validate these inputs:
+process and validate these inputs as described below:
+
+\subsection{Locations (\code{canonicalize_locations})}{
+The \verb{[sampling()]} sampler works on a hierarchical model of locations,
+and must be provided that structure. This method checks location structure
+validity, and returns a canonical version including the layer membership.
+
+A valid structure has:
 \itemize{
-\item \code{canonicalize_locations()} validates the geographic hierarchy structure (checks for unique root, no cycles, no duplicates) and assigns layers.
-\item \code{canonicalize_observations()} validates observation counts (e.g. positive cases <= sample_n) and prepares censoring indicators.
-\item \code{canonicalize_populations()} validates cohort, age, dose, and weight metadata and maps them to canonical observation and location IDs.
+\item a unique root,
+\item no cycles, and
+\item no duplicate \code{loc_id}s
+}
+Users may explicitly identify the root \code{loc_id} by providing a row with
+\code{parent_id} equal to \code{NA}. Otherwise, any \code{parent_id} that does not appear
+in \code{loc_id} is treated as the root.
+
+If the input is valid, this method will create the canonicalized version.
+In that version, all ids run from 1:N, where N is the number of distinct
+ids. That order is determined by layer order, then position of parent
+within its layer, then "natural" order (i.e., whatever base R \code{sort()}
+yields).
 }
 
-Each function returns a \code{data.table} with canonicalized sequential IDs (such as
-\code{loc_c_id} or \code{obs_c_id}) matching the indexing expected by the sampler.
+\subsection{Observations (\code{canonicalize_observations})}{
+The observations object documents observations used to fit the
+model. Conceptually, each row represents an observation of vaccination status
+within a population. That population need not be uniform
+(see \code{\link{canonicalize_populations}}) or concerning a single cohort or time:
+each observation should generally be the best available resolution data. That
+resolution can vary across rows. The sampler uses information
+about the resolutions to automatically figure out how to compare the latent
+process model to those different observations.
+
+For the optional \code{censored} column: the model supports vaccination status
+indicators which are vaccine specific as well as those which represent an
+individual having all of a set of vaccines (including the target vaccine).
+The specific coverage for the target vaccine is right-censored in the latter
+case: full-set-coverage is the minimum coverage for the target.
+
+When at least some of the data are censored, you must supply the \code{censored}
+column to correctly estimate coverage. Mark any uncensored observations with
+\code{NA}, and any right-censored observations with \code{1}. Note that \code{0} is \emph{not} a
+valid value at this time; we are preserving that for potential future support
+of left-censoring.
+}
+
+\subsection{Populations (\code{canonicalize_populations})}{
+This method validates the meta-data associated with the observations, as well
+as converting that meta-data to use the canonical id formats.
+
+Regarding "cohorts" and "ages": these are counted from 1, by 1 "unit". You
+can imagine the units are whatever resolution is appropriate for your data:
+months, quarters, years, etc. As long as these are used consistently,
+estimation will work, and take on the unit meaning you used for input.
+}
 }
 \examples{
 # --- canonicalize_locations ---
