@@ -53,7 +53,8 @@ test_that("canonicalize_populations assigns range_start by obs_c_id", {
 # --- error paths -------------------------------------------------------------
 
 test_that("canonicalize_populations errors on missing required columns", {
-  bad <- make_test_pops()
+  # With duplicate obs_id, weight is required
+  bad <- rbind(make_test_pops(), make_test_pops()[1, ])
   bad$weight <- NULL
   expect_error(
     canonicalize_populations(
@@ -65,6 +66,21 @@ test_that("canonicalize_populations errors on missing required columns", {
     ),
     "weight"
   )
+})
+
+test_that("canonicalize_populations infers weight = 1.0 when missing and obs_ids are unique", {
+  pops <- make_test_pops()
+  pops$weight <- NULL
+  res <- canonicalize_populations(
+    pops,
+    make_test_obs(),
+    make_test_locs(),
+    max_cohort = 5L,
+    max_age = 10L
+  )
+  expect_s3_class(res, "data.table")
+  expect_true("weight" %in% names(res))
+  expect_true(all(res$weight == 1.0))
 })
 
 test_that("canonicalize_populations errors on dose outside {1, 2}", {

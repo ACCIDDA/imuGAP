@@ -329,6 +329,16 @@ canonicalize_populations <- function(
 
   # using internal methods, check that populations has the correct structure
   checked_dt_able(populations)
+
+  if (!"weight" %in% names(populations)) {
+    if (any(duplicated(populations$obs_id))) {
+      stop(
+        "'populations' is missing the following required column(s): weight"
+      )
+    }
+    populations[, weight := 1.0]
+  }
+
   checked_cols(
     populations,
     c("obs_id", "loc_id", "cohort", "age", "dose", "weight")
@@ -375,8 +385,6 @@ canonicalize_populations <- function(
   return(mark_canonical(populations, "populations"))
 }
 
-# if predict == TRUE, then need to provide max life year to predict out to
-
 #' @title Stan Sampler Options
 #'
 #' @description
@@ -397,6 +405,12 @@ stan_options <- function(...) {
     stop(
       "Passing 'object' in stan_options is not allowed; ",
       "The model object should be passed in `imugap_options` instead."
+    )
+  }
+  if ("data" %in% names(res)) {
+    stop(
+      "Passing 'data' in stan_options is not allowed; ",
+      "The `sampling` or `predict` functions construct the 'data' argument internally."
     )
   }
   int_args_in_sampling <- c("iter", "chains", "warmup", "cores")
