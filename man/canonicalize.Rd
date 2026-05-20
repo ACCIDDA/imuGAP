@@ -99,8 +99,8 @@ by the \verb{[sampling()]} sampler and the underlying Stan models.
 The \code{imuGAP} hierarchical modeling framework requires data structures to adhere to
 specific relational and format constraints. The three canonicalize functions
 process and validate these inputs as described below:
-
 \subsection{Locations (\code{canonicalize_locations})}{
+
 The \verb{[sampling()]} sampler works on a hierarchical model of locations,
 and must be provided that structure. This method checks location structure
 validity, and returns a canonical version including the layer membership.
@@ -111,6 +111,7 @@ A valid structure has:
 \item no cycles, and
 \item no duplicate \code{loc_id}s
 }
+
 Users may explicitly identify the root \code{loc_id} by providing a row with
 \code{parent_id} equal to \code{NA}. Otherwise, any \code{parent_id} that does not appear
 in \code{loc_id} is treated as the root.
@@ -123,10 +124,11 @@ yields).
 }
 
 \subsection{Observations (\code{canonicalize_observations})}{
+
 The observations object documents observations used to fit the
 model. Conceptually, each row represents an observation of vaccination status
 within a population. That population need not be uniform
-(see \code{\link{canonicalize_populations}}) or concerning a single cohort or time:
+(see \verb{[canonicalize_populations()]}) or concerning a single cohort or time:
 each observation should generally be the best available resolution data. That
 resolution can vary across rows. The sampler uses information
 about the resolutions to automatically figure out how to compare the latent
@@ -146,6 +148,7 @@ of left-censoring.
 }
 
 \subsection{Populations (\code{canonicalize_populations})}{
+
 This method validates the meta-data associated with the observations, as well
 as converting that meta-data to use the canonical id formats.
 
