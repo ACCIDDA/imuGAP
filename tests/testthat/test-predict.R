@@ -1,6 +1,3 @@
-library(testthat)
-library(data.table)
-library(imuGAP)
 
 test_that("sampling and predict work correctly with simulated data", {
   data("locations_sim", package = "imuGAP")
