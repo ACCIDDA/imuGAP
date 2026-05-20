@@ -330,6 +330,11 @@ canonicalize_populations <- function(
   # using internal methods, check that populations has the correct structure
   checked_dt_able(populations)
 
+  checked_cols(
+    populations,
+    c("obs_id", "loc_id", "cohort", "age", "dose")
+  )
+
   if (!"weight" %in% names(populations)) {
     if (any(duplicated(populations$obs_id))) {
       stop(
@@ -338,11 +343,6 @@ canonicalize_populations <- function(
     }
     populations[, weight := 1.0]
   }
-
-  checked_cols(
-    populations,
-    c("obs_id", "loc_id", "cohort", "age", "dose", "weight")
-  )
 
   observations <- canonicalize_observations(observations)
   locations <- canonicalize_locations(locations)
