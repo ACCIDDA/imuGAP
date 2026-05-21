@@ -136,7 +136,7 @@ canonicalize_locations <- function(locations) {
     return(locations[])
   }
 
-  locations <- as.data.table(locations)
+  locations <- data.table::copy(as.data.table(locations))
 
   # Check that locations has required structure
   checked_cols(locations, c("loc_id", "parent_id"), warn_extra = TRUE)
@@ -240,7 +240,7 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
     return(observations[])
   }
 
-  observations <- as.data.table(observations)
+  observations <- data.table::copy(as.data.table(observations))
   checked_cols(observations, c("obs_id", "positive", "sample_n"))
 
   # check id column validity
@@ -336,7 +336,7 @@ canonicalize_populations <- function(
   }
 
   # using internal methods, check that populations has the correct structure
-  checked_dt_able(populations)
+  populations <- data.table::copy(as.data.table(populations))
 
   checked_cols(
     populations,
