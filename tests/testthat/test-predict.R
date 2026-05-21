@@ -35,7 +35,7 @@ test_that("sampling and predict work correctly with simulated data", {
   expect_s3_class(pred, "data.table")
   expect_true(all(c("sample_id", "obs_id", "p_obs") %in% names(pred)))
 
-  n_draws <- 5 # iter(10) - warmup(5)
+  n_draws <- 5 # 10 iterations minus 5 warmup
   n_obs <- length(unique(populations_sim$obs_id))
   expect_equal(nrow(pred), n_draws * n_obs)
 

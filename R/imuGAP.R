@@ -247,7 +247,13 @@ predict.imugap_fit <- function(
   }
 
   if (!"beta_bs" %in% names(dims) || !"lambda_raw" %in% names(dims)) {
-    stop("The 'fit' object does not appear to be an imuGAP model fit (missing 'beta_bs' or 'lambda_raw').", call. = FALSE)
+    stop(
+      paste(
+        "The 'fit' object does not appear to be an imuGAP model fit",
+        "(missing 'beta_bs' or 'lambda_raw')."
+      ),
+      call. = FALSE
+    )
   }
 
   layer_sizes <- loc_info[, .N, keyby = layer][, c(N)]
@@ -260,7 +266,10 @@ predict.imugap_fit <- function(
     if (length(layer_sizes) != 3) {
       stop(
         sprintf(
-          "The fitted model has 3 layers (counties and schools), but the provided 'locations' has %d layers.",
+          paste(
+            "The fitted model has 3 layers (counties and schools),",
+            "but the provided 'locations' has %d layers."
+          ),
           length(layer_sizes)
         ),
         call. = FALSE
@@ -293,7 +302,10 @@ predict.imugap_fit <- function(
   } else {
     # Stateonly model
     if (length(layer_sizes) > 1) {
-      stop("The fitted model is a stateonly model, but the provided 'locations' has counties/schools.", call. = FALSE)
+      stop(
+        "The fitted model is a stateonly model, but the provided 'locations' has counties/schools.",
+        call. = FALSE
+      )
     }
     n_cnty <- 0L
     n_schl <- 0L
@@ -334,7 +346,10 @@ predict.imugap_fit <- function(
   if (ncol(bsp) != k_bs_fit) {
     stop(
       sprintf(
-        "B-spline degrees of freedom / specification mismatch: target populations cohort range implies %d spline bases, but the fitted model has %d. Check df in imugap_opts.",
+        paste(
+          "B-spline degrees of freedom / specification mismatch: target populations cohort range",
+          "implies %d spline bases, but the fitted model has %d. Check df in imugap_opts."
+        ),
         ncol(bsp), k_bs_fit
       ),
       call. = FALSE

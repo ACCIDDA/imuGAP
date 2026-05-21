@@ -1,7 +1,7 @@
 linters: linters_with_defaults(
     line_length_linter = line_length_linter(100L),
-    return_linter = NULL,
     object_usage_linter = NULL,
+    cyclocomp_linter = NULL,
     object_name_linter = object_name_linter(
       styles = c("snake_case", "symbols"),
       regexes = "^imuGAP$"
