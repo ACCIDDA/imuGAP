@@ -9,13 +9,13 @@ test_that("sampling and predict work correctly with simulated data", {
   st_opts <- stan_options(chains = 1, iter = 10, warmup = 5, refresh = 0)
   imugap_opts <- imugap_options(df = 5, dose_schedule = c(1, 4))
 
-  fit <- imuGAP::sampling(
+  fit <- suppressWarnings(imuGAP::sampling(
     observations = observations_sim,
     populations = populations_sim,
     locations = locations_sim,
     imugap_opts = imugap_opts,
     stan_opts = st_opts
-  )
+  ))
 
   expect_s3_class(fit, "imugap_fit")
   expect_s4_class(fit$stanfit, "stanfit")
@@ -51,13 +51,13 @@ test_that("predict throws informative compatibility errors", {
   st_opts <- stan_options(chains = 1, iter = 10, warmup = 5, refresh = 0)
   imugap_opts <- imugap_options(df = 5, dose_schedule = c(1, 4))
 
-  fit <- imuGAP::sampling(
+  fit <- suppressWarnings(imuGAP::sampling(
     observations = observations_sim,
     populations = populations_sim,
     locations = locations_sim,
     imugap_opts = imugap_opts,
     stan_opts = st_opts
-  )
+  ))
 
   # Test county mismatch: modify locations to remove one school mapping
   bad_locations <- canonicalize_locations(locations_sim)
