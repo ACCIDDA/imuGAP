@@ -221,7 +221,8 @@ canonicalize_locations <- function(locations) {
 }
 
 #' @rdname canonicalize
-#' @return `canonicalize_observations` returns a canonical observation object, a `[data.table()]` with:
+#' @return `canonicalize_observations` returns a canonical observation object,
+#'   a `[data.table()]` with:
 #'  - an `obs_c_id` column, an integer sequence from 1; the order observations
 #'    will be passed to estimation
 #'  - the original `obs_id` column, possibly reordered
@@ -312,7 +313,8 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
 }
 
 #' @rdname canonicalize
-#' @return `canonicalize_populations` returns a canonical populations object, mirroring the input `populations`,
+#' @return `canonicalize_populations` returns a canonical populations object,
+#'   mirroring the input `populations`,
 #' with the following updates:
 #' - `obs_c_id`, the observation id the row concerns, canonicalized to match
 #'   the canonical observation ids
