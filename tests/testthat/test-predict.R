@@ -28,8 +28,8 @@ test_that("sampling and predict work correctly with simulated data", {
 
   # Run prediction
   pred <- predict(
-    fit = fit,
-    populations = populations_sim
+    fit,
+    populations_sim
   )
 
   expect_s3_class(pred, "data.table")

@@ -217,8 +217,9 @@ sampling <- function( # nolint
 #' Uses the output of \code{\link{sampling}} and a target \code{populations} grid to generate
 #' predicted coverage probabilities.
 #'
-#' @param fit an `imugap_fit` object returned by `sampling()`
+#' @param object an `imugap_fit` object returned by `sampling()`
 #' @param populations a `[data.frame()]` of target populations to predict for
+#' @param ... additional arguments passed to other methods.
 #'
 #' @return A `data.table` with columns `sample_id`, `obs_id`, and `p_obs` containing
 #'   the predicted coverage probabilities for each posterior draw and target observation.
@@ -226,10 +227,12 @@ sampling <- function( # nolint
 #' @export
 #' @importFrom data.table as.data.table copy data.table
 #' @importFrom rstan gqs extract
-predict <- function(
-  fit,
-  populations
+predict.imugap_fit <- function(
+  object,
+  populations,
+  ...
 ) {
+  fit <- object
   if (!inherits(fit, "imugap_fit")) {
     stop("fit must be an object of class 'imugap_fit'", call. = FALSE)
   }
