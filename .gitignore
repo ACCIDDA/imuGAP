@@ -9,3 +9,4 @@ src/*.so
 .vscode/*
 *.gz
 imuGAP.Rcheck/*
+docs/
