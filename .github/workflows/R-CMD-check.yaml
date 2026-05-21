@@ -64,7 +64,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-r${{ matrix.config.r }}-stan-
 
+      # PKG_BUILD_EXTRA_FLAGS=false stops pkgbuild from injecting its
+      # debug flags (-g -O0) when pkgload::load_all() recompiles the
+      # package under roxygen2. -O0 inflates Stan template object files
+      # past the Windows COFF section limit even with -Wa,-mbig-obj.
+      # See pkgbuild docs: ?pkgbuild::compile_dll.
       - name: Generate documentation
+        env:
+          PKG_BUILD_EXTRA_FLAGS: "false"
         run: roxygen2::roxygenise()
         shell: Rscript {0}
 

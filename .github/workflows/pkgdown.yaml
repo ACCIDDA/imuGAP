@@ -45,7 +45,12 @@ jobs:
             ${{ runner.os }}-stan-pkgdown-
             ${{ runner.os }}-stan-
 
+      # PKG_BUILD_EXTRA_FLAGS=false stops pkgbuild from injecting its
+      # debug flags (-g -O0) when pkgload::load_all() recompiles the
+      # package under roxygen2. See R-CMD-check.yaml for full context.
       - name: Generate documentation
+        env:
+          PKG_BUILD_EXTRA_FLAGS: "false"
         run: roxygen2::roxygenise()
         shell: Rscript {0}
 
