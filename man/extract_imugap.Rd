@@ -4,7 +4,7 @@
 \alias{extract_imugap}
 \title{Custom imuGAP fit extraction}
 \usage{
-extract_imugap(fit, pars = c("logit_phi_state"), ...)
+extract_imugap(fit, pars = c("logit_phi_st"), ...)
 }
 \arguments{
 \item{fit}{an \code{imugap_fit} object returned by \code{sampling()}}

@@ -433,7 +433,7 @@ predict.imugap_fit <- function(
 #' extract_imugap(fit_sim, pars = "phi")
 #'
 #' @export
-extract_imugap <- function(fit, pars = c("logit_phi_state"), ...) {
+extract_imugap <- function(fit, pars = c("logit_phi_st"), ...) {
   if (!inherits(fit, "imugap_fit")) {
     stop("fit must be an object of class 'imugap_fit'", call. = FALSE)
   }
