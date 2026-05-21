@@ -91,7 +91,7 @@
 #'
 #' @name canonicalize
 #' @aliases canonicalize_locations canonicalize_observations canonicalize_populations
-#' @importFrom data.table as.data.table setkey data.table setattr
+#' @importFrom data.table setkey data.table setattr
 #' @global .
 #' @autoglobal
 NULL
@@ -129,6 +129,7 @@ is_canonical <- function(dt, target_class) {
 #'   sample(nrow(locations_sim) - 1L)
 #' ]
 #' canonicalize_locations(weird_locations)
+#' @autoglobal
 #' @export
 canonicalize_locations <- function(locations) {
   # if already canonical, return
@@ -136,7 +137,7 @@ canonicalize_locations <- function(locations) {
     return(locations[])
   }
 
-  locations <- data.table::copy(as.data.table(locations))
+  locations <- data.table::as.data.table(locations)
 
   # Check that locations has required structure
   checked_cols(locations, c("loc_id", "parent_id"), warn_extra = TRUE)
@@ -233,6 +234,7 @@ canonicalize_locations <- function(locations) {
 #' data("observations_sim")
 #' observations_sim
 #' canonicalize_observations(observations_sim)
+#' @autoglobal
 #' @export
 canonicalize_observations <- function(observations, drop_extra = TRUE) {
   # if already canonical, return
@@ -240,7 +242,7 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
     return(observations[])
   }
 
-  observations <- data.table::copy(as.data.table(observations))
+  observations <- data.table::as.data.table(observations)
   checked_cols(observations, c("obs_id", "positive", "sample_n"))
 
   # check id column validity
@@ -322,6 +324,7 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
 #' data("populations_sim"); data("locations_sim"); data("observations_sim")
 #' populations_sim
 #' canonicalize_populations(populations_sim, observations_sim, locations_sim)
+#' @autoglobal
 #' @export
 canonicalize_populations <- function(
   populations,
@@ -336,7 +339,7 @@ canonicalize_populations <- function(
   }
 
   # using internal methods, check that populations has the correct structure
-  populations <- data.table::copy(as.data.table(populations))
+  populations <- data.table::as.data.table(populations)
 
   checked_cols(
     populations,

@@ -4,12 +4,13 @@
 \alias{extract_imugap}
 \title{Custom imuGAP fit extraction}
 \usage{
-extract_imugap(fit, pars = c("logit_phi_st"), ...)
+extract_imugap(fit, pars = c("beta_bs"), ...)
 }
 \arguments{
 \item{fit}{an \code{imugap_fit} object returned by \code{sampling()}}
 
-\item{pars}{character vector; parameters to extract.}
+\item{pars}{character vector; parameters to extract. Defaults to
+\code{"beta_bs"}, the state-level B-spline parameter.}
 
 \item{...}{additional arguments passed to \verb{[rstan::extract()]}.}
 }
@@ -22,6 +23,6 @@ Thin wrapper around \code{rstan::extract} to extract typical imuGAP parameters.
 \examples{
 data("fit_sim")
 extract_imugap(fit_sim)
-extract_imugap(fit_sim, pars = "phi")
+extract_imugap(fit_sim, pars = "lambda_raw")
 
 }
