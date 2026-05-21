@@ -422,7 +422,8 @@ predict.imugap_fit <- function(
 #' @description
 #' Thin wrapper around `rstan::extract` to extract typical imuGAP parameters.
 #' @param fit an `imugap_fit` object returned by `sampling()`
-#' @param pars character vector; parameters to extract.
+#' @param pars character vector; parameters to extract. Defaults to
+#'   `"beta_bs"`, the state-level B-spline parameter.
 #' @param ... additional arguments passed to `[rstan::extract()]`.
 #'
 #' @return a list, as returned by `rstan::extract()`
@@ -430,10 +431,10 @@ predict.imugap_fit <- function(
 #' @examples
 #' data("fit_sim")
 #' extract_imugap(fit_sim)
-#' extract_imugap(fit_sim, pars = "phi")
+#' extract_imugap(fit_sim, pars = "lambda_raw")
 #'
 #' @export
-extract_imugap <- function(fit, pars = c("logit_phi_st"), ...) {
+extract_imugap <- function(fit, pars = c("beta_bs"), ...) {
   if (!inherits(fit, "imugap_fit")) {
     stop("fit must be an object of class 'imugap_fit'", call. = FALSE)
   }

@@ -19,7 +19,7 @@
 
 pkgload::load_all(quiet = TRUE)
 
-fit_sim <- suppressWarnings(imuGAP(
+fit_sim <- suppressWarnings(sampling(
   observations_sim,
   populations_sim,
   locations_sim,

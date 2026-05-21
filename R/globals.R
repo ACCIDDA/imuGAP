@@ -2,6 +2,26 @@
 
 utils::globalVariables(c(
   ".", # <canonicalize>
+  "loc_id", # <canonicalize_locations>
+  "parent_id", # <canonicalize_locations>
+  "layer", # <canonicalize_locations>
+  "loc_c_id", # <canonicalize_locations>
+  "loc_cp_id", # <canonicalize_locations>
+  "layer_bound", # <canonicalize_locations>
+  "obs_id", # <canonicalize_observations>
+  "positive", # <canonicalize_observations>
+  "sample_n", # <canonicalize_observations>
+  "censored", # <canonicalize_observations>
+  "obs_c_id", # <canonicalize_observations>
+  "weight", # <canonicalize_populations>
+  "obs_id", # <canonicalize_populations>
+  "obs_c_id", # <canonicalize_populations>
+  "loc_id", # <canonicalize_populations>
+  "loc_c_id", # <canonicalize_populations>
+  "cohort", # <canonicalize_populations>
+  "age", # <canonicalize_populations>
+  "dose", # <canonicalize_populations>
+  "range_start", # <canonicalize_populations>
   "layer", # <sampling>
   "N", # <sampling>
   "cohort", # <sampling>
