@@ -4,14 +4,12 @@
 \alias{extract_imugap}
 \title{Custom imuGAP fit extraction}
 \usage{
-extract_imugap(fit, pars = c("logit_phi_st"), ...)
+extract_imugap(fit, pars = c("logit_phi_state"), ...)
 }
 \arguments{
 \item{fit}{an \code{imugap_fit} object returned by \code{sampling()}}
 
-\item{pars}{character vector; parameters to extract. Defaults to
-\code{"logit_phi_st"}, the state-level logit-coverage parameter emitted by the
-bundled Stan model.}
+\item{pars}{character vector; parameters to extract.}
 
 \item{...}{additional arguments passed to \verb{[rstan::extract()]}.}
 }
