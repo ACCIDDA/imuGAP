@@ -225,7 +225,11 @@ internal_target_builder_df <- function(location) {
       }
     }
 
-    return(tmp[, .SD, .SDcols = c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")])
+    cols <- c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
+    if ("obs_id" %in% names(tmp)) {
+      cols <- c("obs_id", cols)
+    }
+    return(tmp[, .SD, .SDcols = cols])
 
 }
 
@@ -350,6 +354,9 @@ predict.imugap_fit <- function(
 
   raw_fit <- fit$stanfit
   target <- create_target(fit, target)
+  if (!"obs_id" %in% names(target)) {
+    target[, obs_id := obs_c_id]
+  }
 
   # Generate dummy observations
   obs <- canonicalize_observations(target[, .(obs_id = obs_c_id, positive = 0L, sample_n = 1L, censored = NA_real_)])
