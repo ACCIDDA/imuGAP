@@ -341,8 +341,7 @@ create_target <- function(
 #' @importFrom rstan gqs extract
 predict.imugap_fit <- function(
   object,
-  populations,
-  ...
+  target
 ) {
   fit <- object
   if (!inherits(fit, "imugap_fit")) {
@@ -350,13 +349,10 @@ predict.imugap_fit <- function(
   }
 
   raw_fit <- fit$stanfit
-  imugap_opts <- fit$settings$imugap_opts
-  loc_info <- fit$locations
-  ref_data <- fit$data
-  populations <- create_target(fit, populations)
+  target <- create_target(fit, target)
 
   # Generate dummy observations
-  obs <- canonicalize_observations(populations[, .(obs_id = obs_c_id, positive = 0L, sample_n = 1L, censored = NA_real_)])
+  obs <- canonicalize_observations(target[, .(obs_id = obs_c_id, positive = 0L, sample_n = 1L, censored = NA_real_)])
 
   # Update the data object for prediction mode
   dat_stan <- fit$data
@@ -364,34 +360,31 @@ predict.imugap_fit <- function(
   dat_stan$n_obs <- nrow(obs)
   dat_stan$y_obs <- obs$positive
   dat_stan$y_smp <- obs$sample_n
-  dat_stan$n_weights <- nrow(populations)
-  dat_stan$obs_to_weights_bounds <- seq_len(nrow(populations))
-  dat_stan$weights_school <- populations$loc_c_id
-  dat_stan$weights_cohort <- populations$cohort
-  dat_stan$weights_life_year <- populations$age
-  dat_stan$weights_dose <- populations$dose
-  dat_stan$weights <- populations$weight
+  dat_stan$n_weights <- nrow(target)
+  dat_stan$obs_to_weights_bounds <- seq_len(nrow(target))
+  dat_stan$weights_school <- target$loc_c_id
+  dat_stan$weights_cohort <- target$cohort
+  dat_stan$weights_life_year <- target$age
+  dat_stan$weights_dose <- target$dose
+  dat_stan$weights <- target$weight
   dat_stan$predict_mode <- 1
 
   # Run gqs to generate predictions
   gqs_res <- rstan::gqs(raw_fit@stanmodel, data = dat_stan, draws = as.matrix(raw_fit))
 
   # Extract predictions
-  p_obs_draws <- rstan::extract(gqs_res, pars = "p_obs")$p_obs
-  p_obs_draws <- as.matrix(p_obs_draws)
+  p_obs_draws <- rstan::extract(gqs_res, pars = "p_obs")$p_obs |> as.matrix()
 
-  # Match up with requested populations
-  unique_obs <- unique(populations[, .(obs_c_id, obs_id)], by = "obs_c_id")
   n_draws <- nrow(p_obs_draws)
   n_obs <- ncol(p_obs_draws)
 
   res_dt <- data.table::data.table(
     sample_id = rep(seq_len(n_draws), times = n_obs),
-    obs_id = rep(unique_obs$obs_id, each = n_draws),
+    obs_c_id = rep(target$obs_c_id, each = n_draws),
     p_obs = as.vector(p_obs_draws)
-  )
-
-  return(res_dt)
+  )[target, on = .(obs_c_id)]
+  res_dt$obs_c_id <- NULL
+  return(res_dt[])
 }
 
 #' @title Custom imuGAP fit extraction
