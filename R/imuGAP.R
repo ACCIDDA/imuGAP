@@ -17,7 +17,7 @@
 #' \dontrun{
 #' data("locations_sim"); data("observations_sim"); data("populations_sim")
 #' st_opts <- stan_options(chains = 2, iter = 500)
-#' imuGAP(
+#' sampling(
 #'   observations_sim, populations_sim, locations_sim,
 #'   stan_opts = st_opts
 #' )
