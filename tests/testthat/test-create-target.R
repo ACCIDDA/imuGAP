@@ -171,7 +171,7 @@ test_that("internal_target_builder_df validates custom obs_c_id and weight colum
   )
 })
 
-test_that("create_target correctly delegates to vector/df builders and processes location mappings", {
+test_that("create_target delegates to builders and processes location mappings", {
   fit <- make_mock_fit()
 
   # Test vector branch delegation
@@ -184,7 +184,10 @@ test_that("create_target correctly delegates to vector/df builders and processes
     mode = "error"
   )
   expect_s3_class(res_vec, "data.table")
-  expect_equal(names(res_vec), c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight", "loc_c_id"))
+  expect_equal(
+    names(res_vec),
+    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight", "loc_c_id")
+  )
   expect_equal(res_vec$loc_c_id, c(4, 5))
 
   # Test df branch delegation
@@ -196,7 +199,10 @@ test_that("create_target correctly delegates to vector/df builders and processes
   )
   res_df <- create_target(fit = fit, location = df_loc)
   expect_s3_class(res_df, "data.table")
-  expect_equal(names(res_df), c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight", "loc_c_id"))
+  expect_equal(
+    names(res_df),
+    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight", "loc_c_id")
+  )
   expect_equal(res_df$loc_c_id, c(4, 5))
 
   # Error when additional arguments are supplied for df

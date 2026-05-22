@@ -231,4 +231,3 @@ test_that("sampling returns a structured imugap_fit object", {
   expect_type(fit$settings, "list")
   expect_named(fit$settings, c("imugap_opts", "stan_opts"))
 })
-

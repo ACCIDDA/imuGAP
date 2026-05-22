@@ -114,6 +114,55 @@ sampling <- function( # nolint
 }
 
 #' @keywords internal
+gcd <- function(a, b) {
+  while (b != 0) {
+    temp <- b
+    b <- a %% b
+    a <- temp
+  }
+  return(a)
+}
+
+#' @keywords internal
+lcm <- function(a, b) {
+  return((a * b) / gcd(a, b))
+}
+
+#' @keywords internal
+compute_recycled_target_len <- function(lens) {
+  target_len <- lens[1]
+  for (len in lens[2:4]) {
+    target_len <- lcm(target_len, len)
+  }
+  return(target_len)
+}
+
+#' @keywords internal
+validate_vec_inputs <- function(location, age, cohort, dose) {
+  if (missing(age) || missing(cohort) || missing(dose)) {
+    stop("age, cohort, and dose must be supplied when location is a vector", call. = FALSE)
+  }
+
+  n_loc <- length(location)
+  n_age <- length(age)
+  n_coh <- length(cohort)
+  n_dos <- length(dose)
+
+  zero_lens <- c("location", "age", "cohort", "dose")[which(
+    c(n_loc, n_age, n_coh, n_dos) == 0L
+  )]
+
+  if (length(zero_lens) > 0) {
+    stop(
+      "No arguments may have length zero; the following do: ",
+      toString(zero_lens),
+      call. = FALSE
+    )
+  }
+  return(list(n_loc = n_loc, n_age = n_age, n_coh = n_coh, n_dos = n_dos))
+}
+
+#' @keywords internal
 internal_target_builder_vec <- function(
   location,
   age,
@@ -121,115 +170,85 @@ internal_target_builder_vec <- function(
   dose,
   mode
 ) {
-    if (missing(age) || missing(cohort) || missing(dose)) {
-      stop("age, cohort, and dose must be supplied when location is a vector", call. = FALSE)
-    }
+  lens <- validate_vec_inputs(location, age, cohort, dose)
+  n_loc <- lens$n_loc
+  n_age <- lens$n_age
+  n_coh <- lens$n_coh
+  n_dos <- lens$n_dos
 
-    n_loc <- length(location)
-    n_age <- length(age)
-    n_coh <- length(cohort)
-    n_dos <- length(dose)
-
-    zero_lens <- c("location", "age", "cohort", "dose")[which(
-      c(n_loc, n_age, n_coh, n_dos) == 0L
-    )]
-
-    if (length(zero_lens) > 0) {
+  if (mode == "error") {
+    if (n_loc != n_age || n_loc != n_coh || n_loc != n_dos) {
       stop(
-        "No arguments may have length zero; the following do: ",
-        toString(zero_lens),
+        "All arguments must have the same length in 'error' mode",
         call. = FALSE
       )
     }
+    target <- data.table::data.table(
+      loc_id = location,
+      age = age,
+      cohort = cohort,
+      dose = dose,
+      weight = 1.0
+    )
+  } else if (mode == "enumerate") {
+    target <- data.table::as.data.table(expand.grid(
+      loc_id = location,
+      age = age,
+      cohort = cohort,
+      dose = dose,
+      weight = 1.0,
+      stringsAsFactors = FALSE
+    ))
+  } else if (mode == "recycle") {
+    lens_vec <- c(n_loc, n_age, n_coh, n_dos)
+    target_len <- compute_recycled_target_len(lens_vec)
 
-    if (mode == "error") {
-      if (n_loc != n_age || n_loc != n_coh || n_loc != n_dos) {
-        stop(
-          "All arguments must have the same length in 'error' mode",
-          call. = FALSE
-        )
-      }
-      target <- data.table::data.table(
-        loc_id = location,
-        age = age,
-        cohort = cohort,
-        dose = dose,
-        weight = 1.0
-      )
-    } else if (mode == "enumerate") {
-      target <- data.table::as.data.table(expand.grid(
-        loc_id = location,
-        age = age,
-        cohort = cohort,
-        dose = dose,
-        weight = 1.0,
-        stringsAsFactors = FALSE
-      ))
-    } else if (mode == "recycle") {
-      gcd <- function(a, b) {
-        while (b != 0) {
-          temp <- b
-          b <- a %% b
-          a <- temp
-        }
-        return(a)
-      }
-      lcm <- function(a, b) {
-        return((a * b) / gcd(a, b))
-      }
-
-      lens <- c(n_loc, n_age, n_coh, n_dos)
-      target_len <- lens[1]
-      for (len in lens[2:4]) {
-        target_len <- lcm(target_len, len)
-      }
-
-      target <- data.table::data.table(
-        loc_id = rep_len(location, target_len),
-        age = rep_len(age, target_len),
-        cohort = rep_len(cohort, target_len),
-        dose = rep_len(dose, target_len),
-        weight = 1.0
-      )
-    }
-    target[, obs_c_id := seq_len(.N)]
-    data.table::setcolorder(target, c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight"))
-    return(target[])
+    target <- data.table::data.table(
+      loc_id = rep_len(location, target_len),
+      age = rep_len(age, target_len),
+      cohort = rep_len(cohort, target_len),
+      dose = rep_len(dose, target_len),
+      weight = 1.0
+    )
+  }
+  target[, obs_c_id := seq_len(.N)]
+  data.table::setcolorder(target, c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight"))
+  return(target[])
 }
 
 #' @keywords internal
 internal_target_builder_df <- function(location) {
 
-    tmp <- data.table::as.data.table(location)
-    checked_cols(tmp, c("loc_id", "age", "cohort", "dose"))
+  tmp <- data.table::as.data.table(location)
+  checked_cols(tmp, c("loc_id", "age", "cohort", "dose"))
 
-    if (!"obs_c_id" %in% names(tmp)) {
-      tmp[, obs_c_id := seq_len(.N)]
-    } else {
-      if (!all(tmp$obs_c_id == seq_len(nrow(tmp)))) {
-        stop("if supplied, obs_c_id must be 1:nrow(target)", call. = FALSE)
-      }
+  if (!"obs_c_id" %in% names(tmp)) {
+    tmp[, obs_c_id := seq_len(.N)]
+  } else {
+    if (!all(tmp$obs_c_id == seq_len(nrow(tmp)))) {
+      stop("if supplied, obs_c_id must be 1:nrow(target)", call. = FALSE)
     }
+  }
 
-    if ("obs_id" %in% names(tmp)) {
-      if (any(duplicated(tmp$obs_id))) {
-        stop("if supplied, obs_id must be unique", call. = FALSE)
-      }
+  if ("obs_id" %in% names(tmp)) {
+    if (any(duplicated(tmp$obs_id))) {
+      stop("if supplied, obs_id must be unique", call. = FALSE)
     }
+  }
 
-    if (!"weight" %in% names(tmp)) {
-      tmp[, weight := 1.0]
-    } else {
-      if (!all(tmp$weight == 1.0)) {
-        stop("if supplied, weight must be 1", call. = FALSE)
-      }
+  if (!"weight" %in% names(tmp)) {
+    tmp[, weight := 1.0]
+  } else {
+    if (!all(tmp$weight == 1.0)) {
+      stop("if supplied, weight must be 1", call. = FALSE)
     }
+  }
 
-    cols <- c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
-    if ("obs_id" %in% names(tmp)) {
-      cols <- c("obs_id", cols)
-    }
-    return(tmp[, .SD, .SDcols = cols])
+  cols <- c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
+  if ("obs_id" %in% names(tmp)) {
+    cols <- c("obs_id", cols)
+  }
+  return(tmp[, .SD, .SDcols = cols])
 
 }
 
@@ -243,19 +262,27 @@ internal_target_builder_df <- function(location) {
 #' @param fit an `imugap_fit` object returned by `[sampling()]`
 #' @param location either a vector of locations or a `data.frame`; if a vector of locations,
 #'   treated as the target locations; if a `data.frame`, then validated as the target object.
-#' @param age vector of ages for which to predict coverage, consistent with `[canonicalize_populations()]`
-#' @param cohort vector of cohorts for which to predict coverage, consistent with `[canonicalize_populations()]`
-#' @param dose vector of doses for which to predict coverage, consistent with `[canonicalize_observations()]`
+#' @param age vector of ages for which to predict coverage,
+#'   consistent with `[canonicalize_populations()]`
+#' @param cohort vector of cohorts for which to predict coverage,
+#'   consistent with `[canonicalize_populations()]`
+#' @param dose vector of doses for which to predict coverage,
+#'   consistent with `[canonicalize_observations()]`
 #'
 #' @details
-#' When locations is a `data.frame`, this function validates that object against the `fit` argument. Non-missing
-#' values for the other arguments are an error for that approach.
+#' When locations is a `data.frame`, this function validates that object
+#' against the `fit` argument. Non-missing values for the other arguments
+#' are an error for that approach.
 #'
-#' Otherwise, locations must correspond to a vector of location IDs and `age`, `cohort`, and `dose`
-#' must also be supplied. Depending on the `mode` argument, these arguments may have different lengths.
-#'   If `mode = "error"` (default), then all of these arguments must have the same length.
-#'   If `mode = "enumerate"`, then the resulting target will be all combinations of the arguments.
-#'   If `mode = "recycle"`, then the resulting target will recycle all the arguments out to the least-common-multiple length.  
+#' Otherwise, locations must correspond to a vector of location IDs and
+#' `age`, `cohort`, and `dose` must also be supplied. Depending on the
+#' `mode` argument, these arguments may have different lengths.
+#'   If `mode = "error"` (default), then all of these arguments must have
+#'   the same length.
+#'   If `mode = "enumerate"`, then the resulting target will be all
+#'   combinations of the arguments.
+#'   If `mode = "recycle"`, then the resulting target will recycle all the
+#'   arguments out to the least-common-multiple length.
 #'
 #' @return A `data.table` representing the canonicalized target population.
 #'
@@ -276,7 +303,10 @@ create_target <- function(
     internal_target_builder_vec(location, age, cohort, dose, mode)
   } else {
     if (!missing(age) || !missing(cohort) || !missing(dose)) {
-      stop("age, cohort, and dose must not be supplied when location is a data.frame", call. = FALSE)
+      stop(
+        "age, cohort, and dose must not be supplied when location is a data.frame",
+        call. = FALSE
+      )
     }
     internal_target_builder_df(location)
   }
@@ -295,7 +325,10 @@ create_target <- function(
   invalid_dose_rows <- target[, which(!between(dose, 1L, fit$data$n_doses))]
   if (length(invalid_dose_rows) > 0) {
     stop(
-      sprintf("dose values must be within 1 and fit$data$n_doses (%i). Invalid dose in rows: ", fit$data$n_doses),
+      sprintf(
+        "dose values must be within 1 and fit$data$n_doses (%i). Invalid dose in rows: ",
+        fit$data$n_doses
+      ),
       toString(invalid_dose_rows, width = 60),
       call. = FALSE
     )
@@ -305,7 +338,10 @@ create_target <- function(
   invalid_age_rows <- target[, which(!between(age, 1L, fit$data$n_yr))]
   if (length(invalid_age_rows) > 0) {
     stop(
-      sprintf("age values must be within 1 and fit$data$n_yr (%i). Invalid age in rows: ", fit$data$n_yr),
+      sprintf(
+        "age values must be within 1 and fit$data$n_yr (%i). Invalid age in rows: ",
+        fit$data$n_yr
+      ),
       toString(invalid_age_rows, width = 60),
       call. = FALSE
     )
@@ -315,7 +351,10 @@ create_target <- function(
   invalid_cohort_rows <- target[, which(!between(cohort, 1L, fit$data$n_cohort))]
   if (length(invalid_cohort_rows) > 0) {
     stop(
-      sprintf("cohort values must be within 1 and fit$data$n_cohort (%i). Invalid cohort in rows: ", fit$data$n_cohort),
+      sprintf(
+        "cohort values must be within 1 and fit$data$n_cohort (%i). Invalid cohort in rows: ",
+        fit$data$n_cohort
+      ),
       toString(invalid_cohort_rows, width = 60),
       call. = FALSE
     )
@@ -359,7 +398,11 @@ predict.imugap_fit <- function(
   }
 
   # Generate dummy observations
-  obs <- canonicalize_observations(target[, .(obs_id = obs_c_id, positive = 0L, sample_n = 1L, censored = NA_real_)])
+  obs <- canonicalize_observations(
+    target[, .(
+      obs_id = obs_c_id, positive = 0L, sample_n = 1L, censored = NA_real_
+    )]
+  )
 
   # Update the data object for prediction mode
   dat_stan <- fit$data
