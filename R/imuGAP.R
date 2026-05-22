@@ -131,7 +131,7 @@ lcm <- function(a, b) {
 #' @keywords internal
 compute_recycled_target_len <- function(lens) {
   target_len <- lens[1]
-  for (len in lens[2:4]) {
+  for (len in lens[-1L]) {
     target_len <- lcm(target_len, len)
   }
   return(target_len)
