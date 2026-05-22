@@ -214,3 +214,21 @@ test_that("sampling forwards extra stan_opts (e.g. iter, chains)", {
   expect_equal(out$captured$chains, 1)
   expect_equal(out$captured$refresh, 0)
 })
+
+test_that("sampling returns a structured imugap_fit object", {
+  out <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs()
+    )
+  ))
+  fit <- out$result
+  expect_s3_class(fit, "imugap_fit")
+  expect_named(fit, c("stanfit", "settings", "data", "locations", "algorithm"))
+  expect_equal(fit$algorithm, "MCMC")
+  expect_s3_class(fit$locations, "data.table")
+  expect_type(fit$settings, "list")
+  expect_named(fit$settings, c("imugap_opts", "stan_opts"))
+})
+

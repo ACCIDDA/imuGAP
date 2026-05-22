@@ -161,6 +161,14 @@ test_that("internal_target_builder_df validates custom obs_c_id and weight colum
     internal_target_builder_df(df_bad_wt),
     "if supplied, weight must be"
   )
+
+  # Invalid obs_id (duplicated)
+  df_bad_obs_id <- df_custom
+  df_bad_obs_id$obs_id <- c("o1", "o1")
+  expect_error(
+    internal_target_builder_df(df_bad_obs_id),
+    "if supplied, obs_id must be unique"
+  )
 })
 
 test_that("create_target correctly delegates to vector/df builders and processes location mappings", {
