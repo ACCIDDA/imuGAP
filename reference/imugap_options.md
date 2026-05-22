@@ -200,50 +200,10 @@ imugap_options()
 #>   // Vaccination uptake rate
 #>   vector[n_doses] lambda_raw;
 #> }
-#> transformed parameters {
-#>   // state-level phi by year, constructed from beta spline
-#>   // Construct state-level trend from basis functions
-#>   // yields logit_phi_st
-#> vector[n_cohort] logit_phi_st = bs*beta_bs;
-#>   // #include transformed_parameters/constant_phi.stan
-#>   // #include transformed_parameters/cnty_sch_linear.stan
-#>   row_vector[n_sch] shift = off_sch;
-#>   for (c in 1:n_cnty) {
-#>     shift[cnty_map[1,c]:cnty_map[2,c]] += off_cnty[c]; // add county offsets to relevant school offsets
-#>   }
-#> 
-#>   // school-level phi by year, converted to column major vector
-#>   // so it's school n, cohort 1 => n_cohort; school n+1, ...
-#>   // TODO double check mapping from matrix to vector
-#>   vector<lower=0, upper=1>[(1+ n_cnty + n_sch) * n_cohort] phi = append_row(append_row(
-#>     inv_logit(logit_phi_st),
-#>     to_vector(inv_logit(
-#>       rep_matrix(logit_phi_st, n_cnty) + // apply state terms for every cohort across counties => n_cohort x 1 => n_cohort x n_cnty
-#>       rep_matrix(off_cnty, n_cohort) // apply base school terms across every cohort => 1 x n_cnty => n_cohort x n_cnty
-#>     ))),
-#>     to_vector(inv_logit(
-#>       rep_matrix(logit_phi_st, n_sch) + // apply state terms for every cohort across schools => n_cohort x 1 => n_cohort x n_sch
-#>       rep_matrix(shift, n_cohort) // apply base school terms across every cohort => 1 x n_sch => n_cohort x n_sch
-#>     )) // n_cohort x n_sch => n_cohort * n_sch
-#>   );
-#>   vector<lower=0, upper=1>[n_doses * n_yr] unrolled_dose_probs = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);
-#>   // state-wide obs => school_id == n_sch + 1; TODO check vectorization flattening order
-#>   vector<lower=0,upper=1>[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
-#>   // convert conditional_dXcdf to p_obs, according to the observation weights
-#>   vector<lower=0,upper=1>[n_obs] p_obs;
-#>   // the observed probability of having previously gotten dose X is:
-#>   //  - the weighted combination of relevant cohorts X relevant life years X relevant schools
-#>   //  - a cohort X year X school probability is
-#>   //    conditional_dXcdf[dose, cohort_life_year] * (1 - phi[school, cohort])
-#>   for (obs_i in 1:n_obs) {
-#>     p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
-#>   }
-#> }
 #> model {
 #>   if (!predict_mode) {
 #>     // PRIORS - spline coefficients
 #>     beta_bs ~ normal(0, 10);
-#>     // #include model/constant_phi.stan
 #>     // PRIOR - lambda; relatively strong prior belief that ~95% coverage achieved in a year
 #>     // mean of 3 => 1 - exp(-3*1) == ~ 0.95
 #>     lambda_raw ~ normal(log(3), 1);
@@ -252,7 +212,26 @@ imugap_options()
 #>     off_cnty ~ normal(0, sigma_cnty);
 #>     sigma_sch ~ cauchy(0, 2);
 #>     off_sch ~ normal(0, sigma_sch);
-#>     // #include model/cnty_sch_linear.stan
+#>     vector[n_obs] p_obs;
+#> vector[n_cohort] logit_phi_st = bs * beta_bs;
+#> row_vector[n_sch] shift = off_sch;
+#> for (c in 1:n_cnty) {
+#>   shift[cnty_map[1,c]:cnty_map[2,c]] += off_cnty[c];
+#> }
+#> vector[(1+ n_cnty + n_sch) * n_cohort] phi = append_row(append_row(
+#>   inv_logit(logit_phi_st),
+#>   to_vector(inv_logit(
+#>     rep_matrix(logit_phi_st, n_cnty) + rep_matrix(off_cnty, n_cohort)
+#>   ))),
+#>   to_vector(inv_logit(
+#>     rep_matrix(logit_phi_st, n_sch) + rep_matrix(shift, n_cohort)
+#>   ))
+#> );
+#> vector[n_doses * n_yr] unrolled_dose_probs = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);
+#> vector[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
+#> for (obs_i in 1:n_obs) {
+#>   p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
+#> }
 #> if (n_uncensored_obs < n_obs) { # at least some censored observations
 #>     # p_s => 1 - p_s = p_f :: probability of at least this many successes =>
 #>     #                         probability of less than this many failures
@@ -266,18 +245,28 @@ imugap_options()
 #>   }
 #> }
 #> generated quantities {
-#> vector<lower=0, upper=1>[n_doses * n_yr] unrolled_dose_probs_gen = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);
-#> // state-wide obs => school_id == n_sch + 1; TODO check vectorization flattening order
-#> vector<lower=0,upper=1>[n_weights] weighted_gen = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
-#> // convert conditional_dXcdf to p_obs, according to the observation weights
-#> vector<lower=0,upper=1>[n_obs] p_gen;
-#> // the observed probability of having previously gotten dose X is:
-#> //  - the weighted combination of relevant cohorts X relevant life years X relevant schools
-#> //  - a cohort X year X school probability is
-#> //    conditional_dXcdf[dose, cohort_life_year] * (1 - phi[school, cohort])
-#> for (obs_i in 1:n_obs) {
-#>   p_gen[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
+#>   vector[predict_mode ? n_obs : 0] p_obs;
+#>   if (predict_mode) {
+#> vector[n_cohort] logit_phi_st = bs * beta_bs;
+#> row_vector[n_sch] shift = off_sch;
+#> for (c in 1:n_cnty) {
+#>   shift[cnty_map[1,c]:cnty_map[2,c]] += off_cnty[c];
 #> }
+#> vector[(1+ n_cnty + n_sch) * n_cohort] phi = append_row(append_row(
+#>   inv_logit(logit_phi_st),
+#>   to_vector(inv_logit(
+#>     rep_matrix(logit_phi_st, n_cnty) + rep_matrix(off_cnty, n_cohort)
+#>   ))),
+#>   to_vector(inv_logit(
+#>     rep_matrix(logit_phi_st, n_sch) + rep_matrix(shift, n_cohort)
+#>   ))
+#> );
+#> vector[n_doses * n_yr] unrolled_dose_probs = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);
+#> vector[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
+#> for (obs_i in 1:n_obs) {
+#>   p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
+#> }
+#>   }
 #> }
 #> // This model represents vaccination as a discrete step, fixed hazard process
 #> // therefore X(t) => X(t + deltaT) = X(t)*exp(-hazard*deltaT)
@@ -504,50 +493,10 @@ imugap_options(dose_schedule = c(1, 3))
 #>   // Vaccination uptake rate
 #>   vector[n_doses] lambda_raw;
 #> }
-#> transformed parameters {
-#>   // state-level phi by year, constructed from beta spline
-#>   // Construct state-level trend from basis functions
-#>   // yields logit_phi_st
-#> vector[n_cohort] logit_phi_st = bs*beta_bs;
-#>   // #include transformed_parameters/constant_phi.stan
-#>   // #include transformed_parameters/cnty_sch_linear.stan
-#>   row_vector[n_sch] shift = off_sch;
-#>   for (c in 1:n_cnty) {
-#>     shift[cnty_map[1,c]:cnty_map[2,c]] += off_cnty[c]; // add county offsets to relevant school offsets
-#>   }
-#> 
-#>   // school-level phi by year, converted to column major vector
-#>   // so it's school n, cohort 1 => n_cohort; school n+1, ...
-#>   // TODO double check mapping from matrix to vector
-#>   vector<lower=0, upper=1>[(1+ n_cnty + n_sch) * n_cohort] phi = append_row(append_row(
-#>     inv_logit(logit_phi_st),
-#>     to_vector(inv_logit(
-#>       rep_matrix(logit_phi_st, n_cnty) + // apply state terms for every cohort across counties => n_cohort x 1 => n_cohort x n_cnty
-#>       rep_matrix(off_cnty, n_cohort) // apply base school terms across every cohort => 1 x n_cnty => n_cohort x n_cnty
-#>     ))),
-#>     to_vector(inv_logit(
-#>       rep_matrix(logit_phi_st, n_sch) + // apply state terms for every cohort across schools => n_cohort x 1 => n_cohort x n_sch
-#>       rep_matrix(shift, n_cohort) // apply base school terms across every cohort => 1 x n_sch => n_cohort x n_sch
-#>     )) // n_cohort x n_sch => n_cohort * n_sch
-#>   );
-#>   vector<lower=0, upper=1>[n_doses * n_yr] unrolled_dose_probs = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);
-#>   // state-wide obs => school_id == n_sch + 1; TODO check vectorization flattening order
-#>   vector<lower=0,upper=1>[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
-#>   // convert conditional_dXcdf to p_obs, according to the observation weights
-#>   vector<lower=0,upper=1>[n_obs] p_obs;
-#>   // the observed probability of having previously gotten dose X is:
-#>   //  - the weighted combination of relevant cohorts X relevant life years X relevant schools
-#>   //  - a cohort X year X school probability is
-#>   //    conditional_dXcdf[dose, cohort_life_year] * (1 - phi[school, cohort])
-#>   for (obs_i in 1:n_obs) {
-#>     p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
-#>   }
-#> }
 #> model {
 #>   if (!predict_mode) {
 #>     // PRIORS - spline coefficients
 #>     beta_bs ~ normal(0, 10);
-#>     // #include model/constant_phi.stan
 #>     // PRIOR - lambda; relatively strong prior belief that ~95% coverage achieved in a year
 #>     // mean of 3 => 1 - exp(-3*1) == ~ 0.95
 #>     lambda_raw ~ normal(log(3), 1);
@@ -556,7 +505,26 @@ imugap_options(dose_schedule = c(1, 3))
 #>     off_cnty ~ normal(0, sigma_cnty);
 #>     sigma_sch ~ cauchy(0, 2);
 #>     off_sch ~ normal(0, sigma_sch);
-#>     // #include model/cnty_sch_linear.stan
+#>     vector[n_obs] p_obs;
+#> vector[n_cohort] logit_phi_st = bs * beta_bs;
+#> row_vector[n_sch] shift = off_sch;
+#> for (c in 1:n_cnty) {
+#>   shift[cnty_map[1,c]:cnty_map[2,c]] += off_cnty[c];
+#> }
+#> vector[(1+ n_cnty + n_sch) * n_cohort] phi = append_row(append_row(
+#>   inv_logit(logit_phi_st),
+#>   to_vector(inv_logit(
+#>     rep_matrix(logit_phi_st, n_cnty) + rep_matrix(off_cnty, n_cohort)
+#>   ))),
+#>   to_vector(inv_logit(
+#>     rep_matrix(logit_phi_st, n_sch) + rep_matrix(shift, n_cohort)
+#>   ))
+#> );
+#> vector[n_doses * n_yr] unrolled_dose_probs = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);
+#> vector[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
+#> for (obs_i in 1:n_obs) {
+#>   p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
+#> }
 #> if (n_uncensored_obs < n_obs) { # at least some censored observations
 #>     # p_s => 1 - p_s = p_f :: probability of at least this many successes =>
 #>     #                         probability of less than this many failures
@@ -570,18 +538,28 @@ imugap_options(dose_schedule = c(1, 3))
 #>   }
 #> }
 #> generated quantities {
-#> vector<lower=0, upper=1>[n_doses * n_yr] unrolled_dose_probs_gen = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);
-#> // state-wide obs => school_id == n_sch + 1; TODO check vectorization flattening order
-#> vector<lower=0,upper=1>[n_weights] weighted_gen = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
-#> // convert conditional_dXcdf to p_obs, according to the observation weights
-#> vector<lower=0,upper=1>[n_obs] p_gen;
-#> // the observed probability of having previously gotten dose X is:
-#> //  - the weighted combination of relevant cohorts X relevant life years X relevant schools
-#> //  - a cohort X year X school probability is
-#> //    conditional_dXcdf[dose, cohort_life_year] * (1 - phi[school, cohort])
-#> for (obs_i in 1:n_obs) {
-#>   p_gen[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
+#>   vector[predict_mode ? n_obs : 0] p_obs;
+#>   if (predict_mode) {
+#> vector[n_cohort] logit_phi_st = bs * beta_bs;
+#> row_vector[n_sch] shift = off_sch;
+#> for (c in 1:n_cnty) {
+#>   shift[cnty_map[1,c]:cnty_map[2,c]] += off_cnty[c];
 #> }
+#> vector[(1+ n_cnty + n_sch) * n_cohort] phi = append_row(append_row(
+#>   inv_logit(logit_phi_st),
+#>   to_vector(inv_logit(
+#>     rep_matrix(logit_phi_st, n_cnty) + rep_matrix(off_cnty, n_cohort)
+#>   ))),
+#>   to_vector(inv_logit(
+#>     rep_matrix(logit_phi_st, n_sch) + rep_matrix(shift, n_cohort)
+#>   ))
+#> );
+#> vector[n_doses * n_yr] unrolled_dose_probs = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);
+#> vector[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
+#> for (obs_i in 1:n_obs) {
+#>   p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
+#> }
+#>   }
 #> }
 #> // This model represents vaccination as a discrete step, fixed hazard process
 #> // therefore X(t) => X(t + deltaT) = X(t)*exp(-hazard*deltaT)

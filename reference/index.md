@@ -2,14 +2,10 @@
 
 ## All functions
 
-- [`canonicalize_locations()`](https://accidda.github.io/imuGAP/reference/canonicalize_locations.md)
-  : Canonicalize Location Data
-
-- [`canonicalize_observations()`](https://accidda.github.io/imuGAP/reference/canonicalize_observations.md)
-  : Canonicalize Observation Data
-
-- [`canonicalize_populations()`](https://accidda.github.io/imuGAP/reference/canonicalize_populations.md)
-  : Check observation meta data object
+- [`canonicalize_locations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md)
+  [`canonicalize_observations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md)
+  [`canonicalize_populations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md)
+  : Canonicalize imuGAP Data Objects
 
 - [`extract_imugap()`](https://accidda.github.io/imuGAP/reference/extract_imugap.md)
   : Custom imuGAP fit extraction
@@ -20,10 +16,6 @@
 - [`imuGAP-package`](https://accidda.github.io/imuGAP/reference/imuGAP-package.md)
   [`imuGAP`](https://accidda.github.io/imuGAP/reference/imuGAP-package.md)
   : The 'imuGAP' package.
-
-- [`imuGAP()`](https://accidda.github.io/imuGAP/reference/imuGAP.md) :
-
-  Immunity: Geographic & Age-based Projection, `imuGAP`
 
 - [`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md)
   : imuGAP Model Options
@@ -36,6 +28,14 @@
 
 - [`populations_sim`](https://accidda.github.io/imuGAP/reference/populations_sim.md)
   : Example Population Data
+
+- [`predict(`*`<imugap_fit>`*`)`](https://accidda.github.io/imuGAP/reference/predict.imugap_fit.md)
+  : Predict coverage probabilities
+
+- [`sampling()`](https://accidda.github.io/imuGAP/reference/sampling.md)
+  :
+
+  Immunity: Geographic & Age-based Projection, `imuGAP`
 
 - [`stan_options()`](https://accidda.github.io/imuGAP/reference/stan_options.md)
   : Stan Sampler Options

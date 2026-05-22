@@ -1,10 +1,11 @@
 # Example Stan Fit
 
-A reference `stanfit` object produced by running `imuGAP()` on the
-bundled `locations_sim`, `populations_sim`, and `observations_sim`
-datasets. Intended as a lightweight fixture for examples, tests, and
-downstream tooling that needs a real fit without paying the cost of
-recompiling or re-running the Stan model.
+A reference `stanfit` object produced by running
+[`imuGAP()`](https://accidda.github.io/imuGAP/reference/imuGAP-package.md)
+on the bundled `locations_sim`, `populations_sim`, and
+`observations_sim` datasets. Intended as a lightweight fixture for
+examples, tests, and downstream tooling that needs a real fit without
+paying the cost of recompiling or re-running the Stan model.
 
 ## Usage
 

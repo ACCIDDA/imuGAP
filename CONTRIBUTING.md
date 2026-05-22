@@ -24,9 +24,10 @@ and your operating system.
 Use the [feature request
 template](https://github.com/ACCIDDA/imuGAP/issues/new?template=feature_request.yml).
 Describe the use case and, if possible, how the feature fits into the
-existing model workflow (`imuGAP()` -\> Stan sampling -\>
-post-processing). You can also open a blank issue if neither template
-fits.
+existing model workflow
+([`imuGAP()`](https://accidda.github.io/imuGAP/reference/imuGAP-package.md)
+-\> Stan sampling -\> post-processing). You can also open a blank issue
+if neither template fits.
 
 ## Submitting Changes
 
