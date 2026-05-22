@@ -1,98 +1,3 @@
-#' @title Stan Sampler Options
-#'
-#' @description
-#' This function encapsulates option passing to the stan sampler, with the
-#' exception of the model object, which is passed in `imugap_options`.
-#'
-#' @inheritDotParams rstan::sampling -object
-#'
-#' @examples
-#' stan_options()
-#' stan_options(chains = 2, iter = 500)
-#'
-#' @return a list of arguments matching [rstan::sampling()] inputs
-#' @export
-stan_options <- function(...) {
-  res <- list(...)
-  if ("object" %in% names(res)) {
-    stop(
-      "Passing 'object' in stan_options is not allowed; ",
-      "The model object should be passed in `imugap_options` instead."
-    )
-  }
-  if ("data" %in% names(res)) {
-    stop(
-      "Passing 'data' in stan_options is not allowed; ",
-      "The `sampling` or `predict` functions construct the 'data' argument internally."
-    )
-  }
-  int_args_in_sampling <- c("iter", "chains", "warmup", "cores")
-  for (arg in intersect(names(res), int_args_in_sampling)) {
-    if (length(res[[arg]]) != 1L) {
-      stop(
-        sprintf("'%s' must be a single positive integer", arg),
-        call. = FALSE
-      )
-    }
-    res[[arg]] <- check_positive_int(res[[arg]], arg)
-  }
-  if ("seed" %in% names(res)) {
-    val <- res[["seed"]]
-    if (length(val) != 1L) {
-      stop("'seed' must be a single value", call. = FALSE)
-    }
-    val <- suppressWarnings(as.integer(val))
-    if (is.na(val)) {
-      stop("'seed' must be coercible to an integer", call. = FALSE)
-    }
-    res[["seed"]] <- val
-  }
-  return(res)
-}
-
-#' @title imuGAP Model Options
-#'
-#' @description
-#' This function encapsulates option passing for imuGAP settings.
-#'
-#' @param df degrees of freedom to use in bspline
-#' @param dose_schedule an integer vector, the ages at which dose(s) `n` are
-#'   scheduled, with vector indices and doses matching
-#' @param object which stan model object to use; currently only "default" is
-#'   supported
-#'
-#' @examples
-#' imugap_options()
-#' imugap_options(dose_schedule = c(1, 3))
-#'
-#' @return a list of imuGAP model options
-#' @export
-imugap_options <- function(
-  df = 5L,
-  dose_schedule = c(1, 4),
-  object = c("default")
-) {
-  if (length(df) != 1L) {
-    stop("'df' must be a single positive integer", call. = FALSE)
-  }
-  df <- check_positive_int(df, "df")
-
-  dose_schedule <- check_positive_int(dose_schedule, "dose_schedule")
-  if (is.unsorted(dose_schedule, strictly = TRUE)) {
-    stop(
-      "'dose_schedule' must be an ascending vector of positive integers",
-      call. = FALSE
-    )
-  }
-
-  object <- switch(
-    object,
-    "default" = stanmodels$impute_school_coverage_process_v6,
-    stop("Unknown model object: ", object)
-  )
-  return(as.list(environment()))
-}
-
 #' @title Immunity: Geographic & Age-based Projection, `imuGAP`
 #'
 #' @description
@@ -200,21 +105,228 @@ sampling <- function( # nolint
         imugap_opts = imugap_opts,
         stan_opts = stan_opts
       ),
-      data      = list(
-        observations = obs,
-        populations = wts,
-        locations = loc_info
-      ),
+      data      = stan_opts$data[setdiff(names(stan_opts$data), "object")],
+      locations = loc_info,
       algorithm = "MCMC"
     ),
     class = "imugap_fit"
   )
 }
 
+#' @keywords internal
+internal_target_builder_vec <- function(
+  location,
+  age,
+  cohort,
+  dose,
+  mode
+) {
+    if (missing(age) || missing(cohort) || missing(dose)) {
+      stop("age, cohort, and dose must be supplied when location is a vector", call. = FALSE)
+    }
+
+    n_loc <- length(location)
+    n_age <- length(age)
+    n_coh <- length(cohort)
+    n_dos <- length(dose)
+
+    zero_lens <- c("location", "age", "cohort", "dose")[which(
+      c(n_loc, n_age, n_coh, n_dos) == 0L
+    )]
+
+    if (length(zero_lens) > 0) {
+      stop(
+        "No arguments may have length zero; the following do: ",
+        toString(zero_lens),
+        call. = FALSE
+      )
+    }
+
+    if (mode == "error") {
+      if (n_loc != n_age || n_loc != n_coh || n_loc != n_dos) {
+        stop(
+          "All arguments must have the same length in 'error' mode",
+          call. = FALSE
+        )
+      }
+      target <- data.table::data.table(
+        loc_id = location,
+        age = age,
+        cohort = cohort,
+        dose = dose,
+        weight = 1.0
+      )
+    } else if (mode == "enumerate") {
+      target <- data.table::as.data.table(expand.grid(
+        loc_id = location,
+        age = age,
+        cohort = cohort,
+        dose = dose,
+        weight = 1.0,
+        stringsAsFactors = FALSE
+      ))
+    } else if (mode == "recycle") {
+      gcd <- function(a, b) {
+        while (b != 0) {
+          temp <- b
+          b <- a %% b
+          a <- temp
+        }
+        return(a)
+      }
+      lcm <- function(a, b) {
+        return((a * b) / gcd(a, b))
+      }
+
+      lens <- c(n_loc, n_age, n_coh, n_dos)
+      target_len <- lens[1]
+      for (len in lens[2:4]) {
+        target_len <- lcm(target_len, len)
+      }
+
+      target <- data.table::data.table(
+        loc_id = rep_len(location, target_len),
+        age = rep_len(age, target_len),
+        cohort = rep_len(cohort, target_len),
+        dose = rep_len(dose, target_len),
+        weight = 1.0
+      )
+    }
+    target[, obs_c_id := seq_len(.N)]
+    data.table::setcolorder(target, c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight"))
+    return(target[])
+}
+
+#' @keywords internal
+internal_target_builder_df <- function(location) {
+
+    tmp <- data.table::as.data.table(location)
+    checked_cols(tmp, c("loc_id", "age", "cohort", "dose"))
+
+    if (!"obs_c_id" %in% names(tmp)) {
+      tmp[, obs_c_id := seq_len(.N)]
+    } else {
+      if (!all(tmp$obs_c_id == seq_len(nrow(tmp)))) {
+        stop("if supplied, obs_c_id must be 1:nrow(target)", call. = FALSE)
+      }
+    }
+
+    if ("obs_id" %in% names(tmp)) {
+      if (any(duplicated(tmp$obs_id))) {
+        stop("if supplied, obs_id must be unique", call. = FALSE)
+      }
+    }
+
+    if (!"weight" %in% names(tmp)) {
+      tmp[, weight := 1.0]
+    } else {
+      if (!all(tmp$weight == 1.0)) {
+        stop("if supplied, weight must be 1", call. = FALSE)
+      }
+    }
+
+    return(tmp[, .SD, .SDcols = c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")])
+
+}
+
+
+#' @title Create target population for prediction
+#'
+#' @description
+#' Creates a target object appropriate for use with `[predict.imugap_fit()]`,
+#' which will be used with a specific `imugap_fit` object.
+#'
+#' @param fit an `imugap_fit` object returned by `[sampling()]`
+#' @param location either a vector of locations or a `data.frame`; if a vector of locations,
+#'   treated as the target locations; if a `data.frame`, then validated as the target object.
+#' @param age vector of ages for which to predict coverage, consistent with `[canonicalize_populations()]`
+#' @param cohort vector of cohorts for which to predict coverage, consistent with `[canonicalize_populations()]`
+#' @param dose vector of doses for which to predict coverage, consistent with `[canonicalize_observations()]`
+#'
+#' @details
+#' When locations is a `data.frame`, this function validates that object against the `fit` argument. Non-missing
+#' values for the other arguments are an error for that approach.
+#'
+#' Otherwise, locations must correspond to a vector of location IDs and `age`, `cohort`, and `dose`
+#' must also be supplied. Depending on the `mode` argument, these arguments may have different lengths.
+#'   If `mode = "error"` (default), then all of these arguments must have the same length.
+#'   If `mode = "enumerate"`, then the resulting target will be all combinations of the arguments.
+#'   If `mode = "recycle"`, then the resulting target will recycle all the arguments out to the least-common-multiple length.  
+#'
+#' @return A `data.table` representing the canonicalized target population.
+#'
+#' @importFrom data.table as.data.table copy data.table
+create_target <- function(
+  fit,
+  location,
+  age,
+  cohort,
+  dose,
+  mode = c("error", "enumerate", "recycle")
+) {
+
+  mode <- match.arg(mode)
+
+  # check if location is a data.frame or vector
+  target <- if (!is.data.frame(location)) {
+    internal_target_builder_vec(location, age, cohort, dose, mode)
+  } else {
+    if (!missing(age) || !missing(cohort) || !missing(dose)) {
+      stop("age, cohort, and dose must not be supplied when location is a data.frame", call. = FALSE)
+    }
+    internal_target_builder_df(location)
+  }
+
+  #  - check that all locations are within fit$locations
+  invalid_locs <- setdiff(target$loc_id, fit$locations$loc_id)
+  if (length(invalid_locs) > 0) {
+    stop(
+      "all locations must be within fit$locations. Invalid locations: ",
+      toString(invalid_locs, width = 60),
+      call. = FALSE
+    )
+  }
+
+  #  - check dose are within fit$data$n_doses
+  invalid_dose_rows <- target[, which(!between(dose, 1L, fit$data$n_doses))]
+  if (length(invalid_dose_rows) > 0) {
+    stop(
+      sprintf("dose values must be within 1 and fit$data$n_doses (%i). Invalid dose in rows: ", fit$data$n_doses),
+      toString(invalid_dose_rows, width = 60),
+      call. = FALSE
+    )
+  }
+
+  #  - check age is within fit$data$n_yr
+  invalid_age_rows <- target[, which(!between(age, 1L, fit$data$n_yr))]
+  if (length(invalid_age_rows) > 0) {
+    stop(
+      sprintf("age values must be within 1 and fit$data$n_yr (%i). Invalid age in rows: ", fit$data$n_yr),
+      toString(invalid_age_rows, width = 60),
+      call. = FALSE
+    )
+  }
+
+  #  - check cohort is within fit$data$n_cohort
+  invalid_cohort_rows <- target[, which(!between(cohort, 1L, fit$data$n_cohort))]
+  if (length(invalid_cohort_rows) > 0) {
+    stop(
+      sprintf("cohort values must be within 1 and fit$data$n_cohort (%i). Invalid cohort in rows: ", fit$data$n_cohort),
+      toString(invalid_cohort_rows, width = 60),
+      call. = FALSE
+    )
+  }
+
+  # use fit$locations to add corresponding loc_c_id to target
+  target[fit$locations, on = .(loc_id), loc_c_id := loc_c_id]
+
+  return(target[])
+}
+
 #' @title Predict coverage probabilities
 #'
 #' @description
-#' Uses the output of \code{\link{sampling}} and a target \code{populations} grid to generate
+#' Uses the output of `[sampling()]` and a target `populations` grid to generate
 #' predicted coverage probabilities.
 #'
 #' @param object an `imugap_fit` object returned by `sampling()`
@@ -239,177 +351,27 @@ predict.imugap_fit <- function(
 
   raw_fit <- fit$stanfit
   imugap_opts <- fit$settings$imugap_opts
-  loc_info <- fit$data$locations
-
-  dims <- raw_fit@par_dims
-  if (is.null(dims)) {
-    stop("Invalid 'fit' object. Ensure it contains a valid stanfit object.", call. = FALSE)
-  }
-
-  if (!"beta_bs" %in% names(dims) || !"lambda_raw" %in% names(dims)) {
-    stop(
-      paste(
-        "The 'fit' object does not appear to be an imuGAP model fit",
-        "(missing 'beta_bs' or 'lambda_raw')."
-      ),
-      call. = FALSE
-    )
-  }
-
-  layer_sizes <- loc_info[, .N, keyby = layer][, c(N)]
-
-  # Check if model has counties and schools
-  has_cnty <- "off_cnty" %in% names(dims)
-  has_sch <- "off_sch" %in% names(dims)
-
-  if (has_cnty) {
-    if (length(layer_sizes) != 3) {
-      stop(
-        sprintf(
-          paste(
-            "The fitted model has 3 layers (counties and schools),",
-            "but the provided 'locations' has %d layers."
-          ),
-          length(layer_sizes)
-        ),
-        call. = FALSE
-      )
-    }
-    n_cnty <- layer_sizes[2]
-    n_schl <- layer_sizes[3]
-
-    n_cnty_fit <- dims$off_cnty
-    n_sch_fit <- dims$off_sch
-
-    if (n_cnty != n_cnty_fit) {
-      stop(
-        sprintf(
-          "Number of counties in 'locations' (%d) does not match the fitted model (%d).",
-          n_cnty, n_cnty_fit
-        ),
-        call. = FALSE
-      )
-    }
-    if (n_schl != n_sch_fit) {
-      stop(
-        sprintf(
-          "Number of schools in 'locations' (%d) does not match the fitted model (%d).",
-          n_schl, n_sch_fit
-        ),
-        call. = FALSE
-      )
-    }
-  } else {
-    # Stateonly model
-    if (length(layer_sizes) > 1) {
-      stop(
-        "The fitted model is a stateonly model, but the provided 'locations' has counties/schools.",
-        call. = FALSE
-      )
-    }
-    n_cnty <- 0L
-    n_schl <- 0L
-  }
-
-  populations <- data.table::copy(data.table::as.data.table(populations))
-
-  # Ensure obs_id is present
-  if (!"obs_id" %in% names(populations)) {
-    populations[, obs_id := seq_len(.N)]
-  }
-  # Ensure weight is present
-  if (!"weight" %in% names(populations)) {
-    populations[, weight := 1.0]
-  }
+  loc_info <- fit$locations
+  ref_data <- fit$data
+  populations <- create_target(fit, populations)
 
   # Generate dummy observations
-  unique_obs_ids <- unique(populations$obs_id)
-  obs <- data.table::data.table(
-    obs_id = unique_obs_ids,
-    positive = rep(0L, length(unique_obs_ids)),
-    sample_n = rep(1L, length(unique_obs_ids)),
-    censored = rep(NA_real_, length(unique_obs_ids))
-  )
-  obs <- canonicalize_observations(obs)
+  obs <- canonicalize_observations(populations[, .(obs_id = obs_c_id, positive = 0L, sample_n = 1L, censored = NA_real_)])
 
-  # Determine max cohort and max age (n_yr) from populations
-  max_cohort <- max(populations$cohort)
-  max_age <- max(populations$age)
-
-  # Check B-spline compatibility
-  bsp <- splines::bs(
-    seq_len(max_cohort),
-    df = imugap_opts$df,
-    intercept = TRUE
-  )
-  k_bs_fit <- dims$beta_bs
-  if (ncol(bsp) != k_bs_fit) {
-    stop(
-      sprintf(
-        paste(
-          "B-spline degrees of freedom / specification mismatch: target populations cohort range",
-          "implies %d spline bases, but the fitted model has %d. Check df in imugap_opts."
-        ),
-        ncol(bsp), k_bs_fit
-      ),
-      call. = FALSE
-    )
-  }
-
-  # Check lambda size
-  dose_schedule <- imugap_opts$dose_schedule
-  n_doses_fit <- dims$lambda_raw
-  if (length(dose_schedule) != n_doses_fit) {
-    stop(
-      sprintf(
-        "Dose schedule mismatch: provided schedule has %d doses, but the fitted model has %d.",
-        length(dose_schedule), n_doses_fit
-      ),
-      call. = FALSE
-    )
-  }
-
-  wts <- canonicalize_populations(
-    populations,
-    obs,
-    loc_info,
-    max_cohort = max_cohort,
-    max_age = max_age,
-    max_dose = length(dose_schedule)
-  )
-
-  doses <- matrix(0, ncol = length(dose_schedule), nrow = max_age)
-  for (i in seq_along(dose_schedule)) {
-    doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
-  }
-
-  # prepare dat_stan for prediction mode
-  dat_stan <- list(
-    n_uncensored_obs = obs[is.na(censored), .N],
-    n_yr = max_age,
-    n_cohort = max_cohort,
-    n_sch = if (has_sch) n_schl else 0L,
-    n_doses = length(dose_schedule),
-    dose_sched = doses,
-    k_bs = ncol(bsp),
-    bs = bsp,
-    n_obs = nrow(obs),
-    y_obs = obs$positive,
-    y_smp = obs$sample_n,
-    n_weights = nrow(wts),
-    obs_to_weights_bounds = unique(wts$range_start),
-    weights_cohort = wts$cohort,
-    weights_life_year = wts$age,
-    weights_dose = wts$dose,
-    weights = wts$weight,
-    predict_mode = 1
-  )
-
-  if (has_cnty) {
-    dat_stan$n_cnty <- n_cnty
-    dat_stan$cnty_bounds <- loc_info[layer == 3, unique(layer_bound)]
-    dat_stan$weights_school <- wts$loc_c_id
-  }
+  # Update the data object for prediction mode
+  dat_stan <- fit$data
+  dat_stan$n_uncensored_obs <- obs[is.na(censored), .N]
+  dat_stan$n_obs <- nrow(obs)
+  dat_stan$y_obs <- obs$positive
+  dat_stan$y_smp <- obs$sample_n
+  dat_stan$n_weights <- nrow(populations)
+  dat_stan$obs_to_weights_bounds <- seq_len(nrow(populations))
+  dat_stan$weights_school <- populations$loc_c_id
+  dat_stan$weights_cohort <- populations$cohort
+  dat_stan$weights_life_year <- populations$age
+  dat_stan$weights_dose <- populations$dose
+  dat_stan$weights <- populations$weight
+  dat_stan$predict_mode <- 1
 
   # Run gqs to generate predictions
   gqs_res <- rstan::gqs(raw_fit@stanmodel, data = dat_stan, draws = as.matrix(raw_fit))
@@ -419,7 +381,7 @@ predict.imugap_fit <- function(
   p_obs_draws <- as.matrix(p_obs_draws)
 
   # Match up with requested populations
-  unique_obs <- unique(wts[, .(obs_c_id, obs_id)], by = "obs_c_id")
+  unique_obs <- unique(populations[, .(obs_c_id, obs_id)], by = "obs_c_id")
   n_draws <- nrow(p_obs_draws)
   n_obs <- ncol(p_obs_draws)
 
