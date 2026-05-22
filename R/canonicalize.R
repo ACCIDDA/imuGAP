@@ -360,7 +360,7 @@ canonicalize_populations <- function(
   observations <- canonicalize_observations(observations)
   locations <- canonicalize_locations(locations)
 
-  checked_subset(populations, "dose", c(1L, 2L))
+  checked_subset(populations, "dose", seq_len(max_dose))
 
   # check that populations id correspond to all observation ids
   checked_set_equivalence(populations, "obs_id", observations$obs_id)
