@@ -105,4 +105,3 @@ test_that("predict throws informative compatibility errors", {
     "cohort values must be within 1 and fit\\$data\\$n_cohort"
   )
 })
-
