@@ -13,7 +13,7 @@ make_mock_fit <- function() {
     )
   )
   class(fit) <- "imugap_fit"
-  return(fit)
+  fit
 }
 
 test_that("internal_target_builder_vec works with mode='error'", {
