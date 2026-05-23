@@ -21,7 +21,7 @@ checked_as_integer <- function(dt, x, na_allowed = FALSE) {
       "'%s' column '%s' cannot have NA values"
     )
   }
-  return(dt[])
+  dt[]
 }
 
 #' @keywords internal
@@ -29,7 +29,7 @@ checked_positive_integer <- function(dt, x, na_allowed = FALSE) {
   if (checked_as_integer(dt, x, na_allowed)[, any(get(x) < 1L)]) {
     stopper(deparse(substitute(dt)), x, "'%s' column '%s' must all be > 0")
   }
-  return(dt[])
+  dt[]
 }
 
 #' @keywords internal
@@ -37,7 +37,7 @@ checked_nonneg_integer <- function(dt, x, na_allowed = FALSE) {
   if (checked_as_integer(dt, x, na_allowed)[, any(get(x) < 0L)]) {
     stopper(deparse(substitute(dt)), x, "'%s' column '%s' must all be >= 0")
   }
-  return(dt[])
+  dt[]
 }
 
 #' @keywords internal
@@ -53,7 +53,7 @@ checked_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE) {
       )
     }
   }
-  return(dt[])
+  dt[]
 }
 
 #' @keywords internal
@@ -73,7 +73,7 @@ checked_set_equivalence <- function(dt, x, tarset) {
       "'%s' column '%s' may not contain values outside of set"
     )
   }
-  return(dt[])
+  dt[]
 }
 
 #' @keywords internal
@@ -87,14 +87,14 @@ checked_subset <- function(dt, x, tarset) {
       toString(setdiff(checkset, tarset))
     )
   }
-  return(dt[])
+  dt[]
 }
 
 #' @keywords internal
 #' @importFrom data.table setDT
 #' @importFrom data.table as.data.table
 checked_dt_able <- function(dt, copy = FALSE) {
-  return(if (copy) as.data.table(dt) else setDT(dt))
+  if (copy) as.data.table(dt) else setDT(dt)
 }
 
 #' @keywords internal
@@ -120,7 +120,7 @@ check_positive_int <- function(val, name) {
   if (any(val < 1L)) {
     stop(sprintf("'%s' must be positive", name), call. = FALSE)
   }
-  return(as.integer(val))
+  as.integer(val)
 }
 
 #' @keywords internal
@@ -145,5 +145,5 @@ checked_cols <- function(dt, cols, warn_extra = FALSE) {
       )
     }
   }
-  return(dt[])
+  dt[]
 }

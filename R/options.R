@@ -47,7 +47,7 @@ stan_options <- function(...) {
     }
     res[["seed"]] <- val
   }
-  return(res)
+  res
 }
 
 #' @title imuGAP Model Options
@@ -90,5 +90,5 @@ imugap_options <- function(
     "default" = stanmodels$impute_school_coverage_process_v6,
     stop("Unknown model object: ", object)
   )
-  return(as.list(environment()))
+  as.list(environment())
 }

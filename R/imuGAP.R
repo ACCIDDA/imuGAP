@@ -119,12 +119,12 @@ gcd <- function(a, b) {
     b <- a %% b
     a <- temp
   }
-  return(a)
+  a
 }
 
 #' @keywords internal
 lcm <- function(a, b) {
-  return((a * b) / gcd(a, b))
+  (a * b) / gcd(a, b)
 }
 
 #' @keywords internal
@@ -133,7 +133,7 @@ compute_recycled_target_len <- function(lens) {
   for (len in lens[-1L]) {
     target_len <- lcm(target_len, len)
   }
-  return(target_len)
+  target_len
 }
 
 #' @keywords internal
@@ -158,7 +158,7 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
       call. = FALSE
     )
   }
-  return(list(n_loc = n_loc, n_age = n_age, n_coh = n_coh, n_dos = n_dos))
+  c(n_loc = n_loc, n_age = n_age, n_coh = n_coh, n_dos = n_dos)
 }
 
 #' @keywords internal
@@ -170,13 +170,9 @@ internal_target_builder_vec <- function(
   mode
 ) {
   lens <- validate_vec_inputs(location, age, cohort, dose)
-  n_loc <- lens$n_loc
-  n_age <- lens$n_age
-  n_coh <- lens$n_coh
-  n_dos <- lens$n_dos
 
   if (mode == "error") {
-    if (n_loc != n_age || n_loc != n_coh || n_loc != n_dos) {
+    if (length(unique(lens)) > 1L) {
       stop(
         "All arguments must have the same length in 'error' mode",
         call. = FALSE
@@ -199,8 +195,7 @@ internal_target_builder_vec <- function(
       stringsAsFactors = FALSE
     ))
   } else if (mode == "recycle") {
-    lens_vec <- c(n_loc, n_age, n_coh, n_dos)
-    target_len <- compute_recycled_target_len(lens_vec)
+    target_len <- compute_recycled_target_len(lens)
 
     target <- data.table::data.table(
       loc_id = rep_len(location, target_len),
@@ -212,7 +207,7 @@ internal_target_builder_vec <- function(
   }
   target[, obs_c_id := seq_len(.N)]
   data.table::setcolorder(target, c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight"))
-  return(target[])
+  target[]
 }
 
 #' @keywords internal
@@ -230,7 +225,7 @@ internal_target_builder_df <- function(location) {
   }
 
   if ("obs_id" %in% names(tmp)) {
-    if (any(duplicated(tmp$obs_id)) | any(is.na(tmp$obs_id))) {
+    if (any(duplicated(tmp$obs_id)) || any(is.na(tmp$obs_id))) {
       stop("if supplied, obs_id must be unique and not NA", call. = FALSE)
     }
   }
@@ -247,7 +242,7 @@ internal_target_builder_df <- function(location) {
   if ("obs_id" %in% names(tmp)) {
     cols <- c(cols, "obs_id")
   }
-  return(tmp[, .SD, .SDcols = cols])
+  tmp[, .SD, .SDcols = cols]
 
 }
 
@@ -362,7 +357,7 @@ create_target <- function(
   # use fit$locations to add corresponding loc_c_id to target
   target[fit$locations, on = .(loc_id), loc_c_id := loc_c_id]
 
-  return(target[])
+  target[]
 }
 
 #' @title Predict coverage probabilities
@@ -433,7 +428,7 @@ predict.imugap_fit <- function(
     p_obs = as.vector(p_obs_draws)
   )[target, on = .(obs_c_id)]
   res_dt$obs_c_id <- NULL
-  return(res_dt[])
+  res_dt[]
 }
 
 #' @title Custom imuGAP fit extraction
@@ -457,5 +452,5 @@ extract_imugap <- function(fit, pars = c("beta_bs"), ...) {
   if (!inherits(fit, "imugap_fit")) {
     stop("fit must be an object of class 'imugap_fit'", call. = FALSE)
   }
-  return(rstan::extract(fit$stanfit, pars = pars, ...))
+  rstan::extract(fit$stanfit, pars = pars, ...)
 }

@@ -100,13 +100,13 @@ NULL
 #' @keywords internal
 mark_canonical <- function(x, target_class) {
   setattr(x, "imuGAP-canonical", target_class)
-  return(x[])
+  x[]
 }
 
 #' @keywords internal
 is_canonical <- function(dt, target_class) {
   canonical <- attr(dt, "imuGAP-canonical", exact = TRUE)
-  return(!is.null(canonical) && (canonical == target_class))
+  !is.null(canonical) && (canonical == target_class)
 }
 
 #' @rdname canonicalize
@@ -217,7 +217,7 @@ canonicalize_locations <- function(locations) {
   locations[, layer_bound := seq_len(.N), by = layer]
   locations[, layer_bound := min(layer_bound), by = loc_cp_id]
 
-  return(mark_canonical(locations, "locations"))
+  mark_canonical(locations, "locations")
 }
 
 #' @rdname canonicalize
@@ -309,7 +309,7 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
     )]
   }
 
-  return(mark_canonical(observations, "observations"))
+  mark_canonical(observations, "observations")
 }
 
 #' @rdname canonicalize
@@ -395,5 +395,5 @@ canonicalize_populations <- function(
   populations[, range_start := seq_len(.N)]
   populations[, range_start := min(range_start), by = obs_c_id]
 
-  return(mark_canonical(populations, "populations"))
+  mark_canonical(populations, "populations")
 }
