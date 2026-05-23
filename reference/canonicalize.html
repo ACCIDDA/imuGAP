@@ -125,13 +125,15 @@ representing the order that will be used in the sampler</p></li>
 3 (grandchildren), &amp;c</p></li>
 <li><p><code>layer_bound</code> column, an integer starting from 1 by layer. This provides
 index slice information used in the stan model.</p></li>
-</ul><p><code>canonicalize_observations</code> returns a canonical observation object, a <code>[data.table()]</code> with:</p><ul><li><p>an <code>obs_c_id</code> column, an integer sequence from 1; the order observations
+</ul><p><code>canonicalize_observations</code> returns a canonical observation object,
+a <code>[data.table()]</code> with:</p><ul><li><p>an <code>obs_c_id</code> column, an integer sequence from 1; the order observations
 will be passed to estimation</p></li>
 <li><p>the original <code>obs_id</code> column, possibly reordered</p></li>
 <li><p><code>positive</code> and <code>sample_n</code> columns, possibly reordered</p></li>
 <li><p>a "censored" column; all NA, if not present in original <code>observations</code>
 argument</p></li>
-</ul><p><code>canonicalize_populations</code> returns a canonical populations object, mirroring the input <code>populations</code>,
+</ul><p><code>canonicalize_populations</code> returns a canonical populations object,
+mirroring the input <code>populations</code>,
 with the following updates:</p><ul><li><p><code>obs_c_id</code>, the observation id the row concerns, canonicalized to match
 the canonical observation ids</p></li>
 <li><p><code>loc_c_id</code>, the location id the row concerns, canonicalized to match</p></li>

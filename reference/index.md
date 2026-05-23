@@ -7,6 +7,9 @@
   [`canonicalize_populations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md)
   : Canonicalize imuGAP Data Objects
 
+- [`create_target()`](https://accidda.github.io/imuGAP/reference/create_target.md)
+  : Create target population for prediction
+
 - [`extract_imugap()`](https://accidda.github.io/imuGAP/reference/extract_imugap.md)
   : Custom imuGAP fit extraction
 

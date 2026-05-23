@@ -24,6 +24,9 @@ Useful links:
 
 Authors:
 
+- Carl Pearson <carl.ab.pearson@gmail.com>
+  ([ORCID](https://orcid.org/0000-0003-0701-7860))
+
 - Claire Perrin Smith ([ORCID](https://orcid.org/0000-0003-1069-9460))
 
 Other contributors:

@@ -1,15 +1,13 @@
 # Predict coverage probabilities
 
-Uses the output of
-[`sampling`](https://accidda.github.io/imuGAP/reference/sampling.md) and
-a target `populations` grid to generate predicted coverage
-probabilities.
+Uses the output of `[sampling()]` and a target `populations` grid to
+generate predicted coverage probabilities.
 
 ## Usage
 
 ``` r
 # S3 method for class 'imugap_fit'
-predict(object, populations, ...)
+predict(object, target)
 ```
 
 ## Arguments
