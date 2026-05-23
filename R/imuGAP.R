@@ -245,7 +245,7 @@ internal_target_builder_df <- function(location) {
 
   cols <- c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
   if ("obs_id" %in% names(tmp)) {
-    cols <- c("obs_id", cols)
+    cols <- c(cols, "obs_id")
   }
   return(tmp[, .SD, .SDcols = cols])
 
