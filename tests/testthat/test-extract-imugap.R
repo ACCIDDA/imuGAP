@@ -15,8 +15,7 @@ test_that("extract_imugap extracts from a valid imugap_fit", {
         list(
           stanfit = raw_fit,
           settings = list(),
-          data = list(),
-          algorithm = "MCMC"
+          data = list()
         ),
         class = "imugap_fit"
       )
@@ -37,8 +36,7 @@ test_that("extract_imugap extracts from a valid imugap_fit", {
         list(
           stanfit = raw_fit,
           settings = list(),
-          data = list(),
-          algorithm = "MCMC"
+          data = list()
         ),
         class = "imugap_fit"
       )

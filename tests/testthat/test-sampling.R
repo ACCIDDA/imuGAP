@@ -225,8 +225,7 @@ test_that("sampling returns a structured imugap_fit object", {
   ))
   fit <- out$result
   expect_s3_class(fit, "imugap_fit")
-  expect_named(fit, c("stanfit", "settings", "data", "locations", "algorithm"))
-  expect_equal(fit$algorithm, "MCMC")
+  expect_named(fit, c("stanfit", "settings", "data", "locations"))
   expect_s3_class(fit$locations, "data.table")
   expect_type(fit$settings, "list")
   expect_named(fit$settings, c("imugap_opts", "stan_opts"))

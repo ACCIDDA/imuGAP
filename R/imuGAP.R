@@ -106,8 +106,7 @@ sampling <- function( # nolint
         stan_opts = stan_opts
       ),
       data      = stan_opts$data[setdiff(names(stan_opts$data), "object")],
-      locations = loc_info,
-      algorithm = "MCMC"
+      locations = loc_info
     ),
     class = "imugap_fit"
   )
@@ -270,11 +269,11 @@ internal_target_builder_df <- function(location) {
 #'   consistent with `[canonicalize_observations()]`
 #'
 #' @details
-#' When locations is a `data.frame`, this function validates that object
+#' When `location` is a `data.frame`, this function validates that object
 #' against the `fit` argument. Non-missing values for the other arguments
 #' are an error for that approach.
 #'
-#' Otherwise, locations must correspond to a vector of location IDs and
+#' Otherwise, `location` must correspond to a vector of location IDs and
 #' `age`, `cohort`, and `dose` must also be supplied. Depending on the
 #' `mode` argument, these arguments may have different lengths.
 #'   If `mode = "error"` (default), then all of these arguments must have
