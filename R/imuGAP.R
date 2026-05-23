@@ -230,8 +230,8 @@ internal_target_builder_df <- function(location) {
   }
 
   if ("obs_id" %in% names(tmp)) {
-    if (any(duplicated(tmp$obs_id))) {
-      stop("if supplied, obs_id must be unique", call. = FALSE)
+    if (any(duplicated(tmp$obs_id)) | any(is.na(tmp$obs_id))) {
+      stop("if supplied, obs_id must be unique and not NA", call. = FALSE)
     }
   }
 
