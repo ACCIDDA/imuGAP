@@ -13,3 +13,5 @@
 ^\.vscode$
 ^CONTRIBUTING\.md$
 ^data-raw$
+^cran-comments\.md$
+^CITATION\.cff$
