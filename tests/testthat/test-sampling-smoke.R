@@ -31,6 +31,9 @@ test_that("imuGAP::sampling() runs end-to-end on bundled *_sim data", {
     expect_true(par %in% fit_pars, info = paste("missing parameter:", par))
   }
   for (par in c("logit_phi_st", "phi")) {
-    expect_false(par %in% fit_pars, info = paste("parameter should be absent:", par))
+    expect_false(
+      par %in% fit_pars,
+      info = paste("parameter should be absent:", par)
+    )
   }
 })
