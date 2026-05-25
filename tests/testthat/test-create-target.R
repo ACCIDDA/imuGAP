@@ -1,4 +1,3 @@
-
 # Setup mock fit object for create_target validation
 make_mock_fit <- function() {
   fit <- list(
@@ -27,7 +26,10 @@ test_that("internal_target_builder_vec works with mode='error'", {
   )
 
   expect_s3_class(res, "data.table")
-  expect_equal(names(res), c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight"))
+  expect_equal(
+    names(res),
+    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
+  )
   expect_equal(res$obs_c_id, 1:2)
   expect_equal(res$loc_id, c("schlA", "schlB"))
   expect_equal(res$weight, c(1, 1))
@@ -121,7 +123,10 @@ test_that("internal_target_builder_df works and creates target successfully", {
   # Successful case
   res <- internal_target_builder_df(df_loc)
   expect_s3_class(res, "data.table")
-  expect_equal(names(res), c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight"))
+  expect_equal(
+    names(res),
+    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
+  )
   expect_equal(res$obs_c_id, 1:2)
   expect_equal(res$weight, c(1, 1))
 
@@ -259,6 +264,80 @@ test_that("create_target performs correct bounds checking against fit object", {
       age = 1L,
       cohort = 11L,
       dose = 1L
+    ),
+    "cohort values must be within 1 and fit\\$data\\$n_cohort \\(10\\)\\. Invalid cohort in rows: 1"
+  )
+})
+
+test_that("internal_target_builder_vec works with mode='snapshot'", {
+  # Successful case
+  res <- internal_target_builder_vec(
+    location = c("schlA", "schlB"),
+    age = c(2L, 3L, 4L),
+    cohort = c(5L),
+    dose = c(1L, 2L),
+    mode = "snapshot"
+  )
+
+  expect_s3_class(res, "data.table")
+  expect_equal(
+    names(res),
+    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
+  )
+  expect_equal(nrow(res), 12)
+  expect_equal(res$obs_c_id, 1:12)
+  expect_true(all(res$weight == 1.0))
+
+  # Constant sum check: max_age = 4, ref_cohort = 5, sum = 9
+  expect_true(all(res$age + res$cohort == 9L))
+
+  # Specific mappings
+  expect_equal(unique(res[age == 4L, cohort]), 5L)
+  expect_equal(unique(res[age == 3L, cohort]), 6L)
+  expect_equal(unique(res[age == 2L, cohort]), 7L)
+
+  # Error when cohort is not a single reference value
+  expect_error(
+    internal_target_builder_vec(
+      location = c("schlA", "schlB"),
+      age = c(2L, 3L),
+      cohort = c(5L, 6L),
+      dose = c(1L, 2L),
+      mode = "snapshot"
+    ),
+    "cohort must be a single reference value in 'snapshot' mode"
+  )
+})
+
+test_that("create_target works with mode='snapshot' and validates output", {
+  fit <- make_mock_fit()
+
+  # Successful case
+  res <- create_target(
+    fit = fit,
+    location = c("schlA", "schlB"),
+    age = c(2L, 3L, 4L),
+    cohort = 5L,
+    dose = c(1L, 2L),
+    mode = "snapshot"
+  )
+  expect_s3_class(res, "data.table")
+  expect_equal(
+    names(res),
+    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight", "loc_c_id")
+  )
+  expect_true(all(res$age + res$cohort == 9L))
+  expect_equal(res$loc_c_id, rep(c(4, 5), times = 6))
+
+  # Cohort bounds mismatch via calculated cohort (constant sum exceeds bounds)
+  expect_error(
+    create_target(
+      fit = fit,
+      location = "schlA",
+      age = c(1L, 2L, 4L),
+      cohort = 8L,
+      dose = 1L,
+      mode = "snapshot"
     ),
     "cohort values must be within 1 and fit\\$data\\$n_cohort \\(10\\)\\. Invalid cohort in rows: 1"
   )

@@ -25,7 +25,8 @@
 #'
 #' @autoglobal
 #' @export
-sampling <- function( # nolint
+sampling <- function(
+  # nolint
   observations,
   populations,
   locations,
@@ -100,12 +101,12 @@ sampling <- function( # nolint
 
   structure(
     list(
-      stanfit   = raw_stanfit,
-      settings  = list(
+      stanfit = raw_stanfit,
+      settings = list(
         imugap_opts = imugap_opts,
         stan_opts = stan_opts
       ),
-      data      = stan_opts$data[setdiff(names(stan_opts$data), "object")],
+      data = stan_opts$data[setdiff(names(stan_opts$data), "object")],
       locations = loc_info
     ),
     class = "imugap_fit"
@@ -139,7 +140,10 @@ compute_recycled_target_len <- function(lens) {
 #' @keywords internal
 validate_vec_inputs <- function(location, age, cohort, dose) {
   if (missing(age) || missing(cohort) || missing(dose)) {
-    stop("age, cohort, and dose must be supplied when location is a vector", call. = FALSE)
+    stop(
+      "age, cohort, and dose must be supplied when location is a vector",
+      call. = FALSE
+    )
   }
 
   n_loc <- length(location)
@@ -204,15 +208,35 @@ internal_target_builder_vec <- function(
       dose = rep_len(dose, target_len),
       weight = 1.0
     )
+  } else if (mode == "snapshot") {
+    if (length(cohort) != 1L) {
+      stop(
+        "cohort must be a single reference value in 'snapshot' mode",
+        call. = FALSE
+      )
+    }
+    ref_cohort <- cohort
+    max_age <- max(age)
+    target <- data.table::as.data.table(expand.grid(
+      loc_id = location,
+      age = age,
+      cohort = ref_cohort,
+      dose = dose,
+      weight = 1.0,
+      stringsAsFactors = FALSE
+    ))
+    target[, cohort := ref_cohort + max_age - age]
   }
   target[, obs_c_id := seq_len(.N)]
-  data.table::setcolorder(target, c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight"))
+  data.table::setcolorder(
+    target,
+    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
+  )
   target[]
 }
 
 #' @keywords internal
 internal_target_builder_df <- function(location) {
-
   tmp <- data.table::as.data.table(location)
   checked_cols(tmp, c("loc_id", "age", "cohort", "dose"))
 
@@ -243,7 +267,6 @@ internal_target_builder_df <- function(location) {
     cols <- c(cols, "obs_id")
   }
   tmp[, .SD, .SDcols = cols]
-
 }
 
 
@@ -277,19 +300,25 @@ internal_target_builder_df <- function(location) {
 #'   combinations of the arguments.
 #'   If `mode = "recycle"`, then the resulting target will recycle all the
 #'   arguments out to the least-common-multiple length.
+#'   If `mode = "snapshot"`, then the cohort argument must be a single
+#'   reference value (which represents the oldest cohort). The resulting
+#'   target will enumerate combinations of locations, ages, and doses,
+#'   calculating cohorts for each age such that the sum of age and cohort is constant
+#'   (i.e., cohort_i = cohort_ref + max_age - age_i). This corresponds to a
+#'   snapshot in time of different birth date and age combinations.
 #'
 #' @return A `data.table` representing the canonicalized target population.
 #'
 #' @importFrom data.table as.data.table copy data.table
+#' @export
 create_target <- function(
   fit,
   location,
   age,
   cohort,
   dose,
-  mode = c("error", "enumerate", "recycle")
+  mode = c("error", "enumerate", "recycle", "snapshot")
 ) {
-
   mode <- match.arg(mode)
 
   # check if location is a data.frame or vector
@@ -342,7 +371,9 @@ create_target <- function(
   }
 
   #  - check cohort is within fit$data$n_cohort
-  invalid_cohort_rows <- target[, which(!between(cohort, 1L, fit$data$n_cohort))]
+  invalid_cohort_rows <- target[, which(
+    !between(cohort, 1L, fit$data$n_cohort)
+  )]
   if (length(invalid_cohort_rows) > 0) {
     stop(
       sprintf(
@@ -394,7 +425,10 @@ predict.imugap_fit <- function(
   # Generate dummy observations
   obs <- canonicalize_observations(
     target[, .(
-      obs_id = obs_c_id, positive = 0L, sample_n = 1L, censored = NA_real_
+      obs_id = obs_c_id,
+      positive = 0L,
+      sample_n = 1L,
+      censored = NA_real_
     )]
   )
 
@@ -414,7 +448,11 @@ predict.imugap_fit <- function(
   dat_stan$predict_mode <- 1
 
   # Run gqs to generate predictions
-  gqs_res <- rstan::gqs(raw_fit@stanmodel, data = dat_stan, draws = as.matrix(raw_fit))
+  gqs_res <- rstan::gqs(
+    raw_fit@stanmodel,
+    data = dat_stan,
+    draws = as.matrix(raw_fit)
+  )
 
   # Extract predictions
   p_obs_draws <- rstan::extract(gqs_res, pars = "p_obs")$p_obs |> as.matrix()

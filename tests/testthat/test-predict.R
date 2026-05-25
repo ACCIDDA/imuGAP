@@ -1,4 +1,3 @@
-
 test_that("sampling and predict work correctly with simulated data", {
   data("locations_sim", package = "imuGAP")
   data("observations_sim", package = "imuGAP")

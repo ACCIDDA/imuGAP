@@ -8,7 +8,10 @@ test_that("extract_imugap errors on non-imugap_fit input", {
 })
 
 test_that("extract_imugap extracts from a valid imugap_fit", {
-  raw_fit <- structure(list(par_dims = list(beta_bs = 1, lambda_raw = 1)), class = "stanfit")
+  raw_fit <- structure(
+    list(par_dims = list(beta_bs = 1, lambda_raw = 1)),
+    class = "stanfit"
+  )
   testthat::with_mocked_bindings(
     {
       fit <- structure(
