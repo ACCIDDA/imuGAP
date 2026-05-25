@@ -206,7 +206,7 @@ internal_target_builder_vec <- function(
       weight = 1.0
     )
   } else if (mode %in% c("enumerate", "snapshot")) {
-    if (length(cohort) != 1L) {
+    if (mode == "snapshot" && length(cohort) != 1L) {
       stop(
         "cohort must be a single reference value in 'snapshot' mode",
         call. = FALSE

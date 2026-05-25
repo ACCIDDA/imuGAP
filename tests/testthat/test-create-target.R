@@ -116,6 +116,21 @@ test_that("internal_target_builder_vec works with mode='enumerate'", {
   expect_equal(res$obs_c_id, 1:8)
   expect_true(all(res$weight == 1.0))
   expect_setequal(res$loc_id, c("schlA", "schlB"))
+
+  # Test with all arguments having length > 1
+  res_multi <- internal_target_builder_vec(
+    location = c("schlA", "schlB"),
+    age = c(2L, 3L),
+    cohort = c(5L, 6L),
+    dose = c(1L, 2L),
+    mode = "enumerate"
+  )
+
+  # Total combinations = 2 * 2 * 2 * 2 = 16
+  expect_equal(nrow(res_multi), 16)
+  expect_equal(res_multi$obs_c_id, 1:16)
+  expect_true(all(res_multi$weight == 1.0))
+  expect_setequal(res_multi$cohort, c(5L, 6L))
 })
 
 test_that("internal_target_builder_vec works with mode='recycle'", {
