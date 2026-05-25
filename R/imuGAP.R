@@ -303,7 +303,7 @@ internal_target_builder_df <- function(location) {
 #'
 #' @return A `data.table` representing the canonicalized target population.
 #'
-#' @importFrom data.table as.data.table copy data.table
+#' @importFrom data.table as.data.table copy data.table between
 #' @export
 create_target <- function(
   fit,
