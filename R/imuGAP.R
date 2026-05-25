@@ -189,7 +189,13 @@ internal_target_builder_vec <- function(
       dose = dose,
       weight = 1.0
     )
-  } else if (mode == "enumerate") {
+  } else if (mode %in% c("enumerate", "snapshot")) {
+    if (length(cohort) != 1L) {
+      stop(
+        "cohort must be a single reference value in 'snapshot' mode",
+        call. = FALSE
+      )
+    }
     target <- data.table::as.data.table(expand.grid(
       loc_id = location,
       age = age,
@@ -198,6 +204,12 @@ internal_target_builder_vec <- function(
       weight = 1.0,
       stringsAsFactors = FALSE
     ))
+
+    if (mode == "snapshot") {
+      ref_cohort <- cohort
+      max_age <- max(age)
+      target[, cohort := ref_cohort + max_age - age]
+    }
   } else if (mode == "recycle") {
     target_len <- compute_recycled_target_len(lens)
 
@@ -208,24 +220,6 @@ internal_target_builder_vec <- function(
       dose = rep_len(dose, target_len),
       weight = 1.0
     )
-  } else if (mode == "snapshot") {
-    if (length(cohort) != 1L) {
-      stop(
-        "cohort must be a single reference value in 'snapshot' mode",
-        call. = FALSE
-      )
-    }
-    ref_cohort <- cohort
-    max_age <- max(age)
-    target <- data.table::as.data.table(expand.grid(
-      loc_id = location,
-      age = age,
-      cohort = ref_cohort,
-      dose = dose,
-      weight = 1.0,
-      stringsAsFactors = FALSE
-    ))
-    target[, cohort := ref_cohort + max_age - age]
   }
   target[, obs_c_id := seq_len(.N)]
   data.table::setcolorder(
