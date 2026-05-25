@@ -1,10 +1,13 @@
-
 library(data.table)
 library(imuGAP)
 
-.args <- if (interactive()) c(
-  "stan_res.rds"
-) else commandArgs(trailingOnly = TRUE)
+.args <- if (interactive()) {
+  c(
+    "stan_res.rds"
+  )
+} else {
+  commandArgs(trailingOnly = TRUE)
+}
 
 # grab output file
 tarfile <- tail(.args, 1)
@@ -15,7 +18,9 @@ obs <- canonicalize_observations(observations_sim)
 pop <- canonicalize_populations(populations_sim, obs, locs)
 
 res_stan <- imuGAP(
-  obs, pop, locs,
+  obs,
+  pop,
+  locs,
   stan_opts = stan_options(iter = 100, chains = 2)
 )
 
@@ -53,6 +58,3 @@ ggplot(state_series, aes(x = cohort, y = value)) +
     y = "State-level saturation"
   ) +
   theme_minimal()
-
-
-

@@ -1,4 +1,3 @@
-
 ## Assumes imuGAP is in the same parent directory as nc_measles
 
 library(tidyverse)
@@ -11,11 +10,38 @@ res_dt <- readRDS("../nc_measles/output/NC/cleaned_data.rds")
 ############### Simulate data for North Carolina ####################
 n_yr <- 33
 n_cohort <- 30
-phi_st <- c(0.8401733, 0.8458791, 0.8515769, 0.8572586, 0.8629160, 0.8685411,
-            0.8741259, 0.8796623, 0.8851422, 0.8905575, 0.8958959, 0.9011275,
-            0.9062182, 0.9111339, 0.9158404, 0.9203035, 0.9244892, 0.9283632,
-            0.9318916, 0.9350400, 0.9377351, 0.9397467, 0.9408054, 0.9407130,
-            0.9395576, 0.9375024, 0.9347246, 0.9314054, 0.9277256, 0.9298663)
+phi_st <- c(
+  0.8401733,
+  0.8458791,
+  0.8515769,
+  0.8572586,
+  0.8629160,
+  0.8685411,
+  0.8741259,
+  0.8796623,
+  0.8851422,
+  0.8905575,
+  0.8958959,
+  0.9011275,
+  0.9062182,
+  0.9111339,
+  0.9158404,
+  0.9203035,
+  0.9244892,
+  0.9283632,
+  0.9318916,
+  0.9350400,
+  0.9377351,
+  0.9397467,
+  0.9408054,
+  0.9407130,
+  0.9395576,
+  0.9375024,
+  0.9347246,
+  0.9314054,
+  0.9277256,
+  0.9298663
+)
 lambda1 <- 2.8
 lambda2 <- 3.0
 
@@ -23,7 +49,7 @@ sigma_sch <- 0.8
 sigma_cnty <- 0.4
 
 # Dose schedule
-doses <- matrix(0, nrow = n_yr, ncol  = 2)
+doses <- matrix(0, nrow = n_yr, ncol = 2)
 doses[2:nrow(doses), 1] <- 1
 doses[5:nrow(doses), 2] <- 1
 
@@ -55,30 +81,39 @@ sch_offset <- rnorm(sum(sch_per_cnty$n_sch), 0, sigma_sch)
 # Simulate child vax view
 n24 <- round(runif(n_cohort, 250, 450))
 n36 <- round(runif(n_cohort, 250, 450))
-sim_child <- bind_rows(data.frame(pop = "child",
-                                  Year = 1:n_cohort,
-                                  Age = "24 months",
-                                  X = rbinom(n_cohort, n24, phi_st * cov[2, 1]),
-                                  N = n24),
-                       data.frame(pop = "child",
-                                  Year = 1:n_cohort,
-                                  Age = "36 months",
-                                  X = rbinom(n_cohort, n36, phi_st * cov[3, 1]),
-                                  N = n36))
+sim_child <- bind_rows(
+  data.frame(
+    pop = "child",
+    Year = 1:n_cohort,
+    Age = "24 months",
+    X = rbinom(n_cohort, n24, phi_st * cov[2, 1]),
+    N = n24
+  ),
+  data.frame(
+    pop = "child",
+    Year = 1:n_cohort,
+    Age = "36 months",
+    X = rbinom(n_cohort, n36, phi_st * cov[3, 1]),
+    N = n36
+  )
+)
 
 # Simulate teen vax view
 teen_yrs <- 18:30
-sim_teen <- data.frame(pop = "teen",
-                       Year = teen_yrs,
-                       X = numeric(length(teen_yrs)),
-                       N = numeric(length(teen_yrs)))
+sim_teen <- data.frame(
+  pop = "teen",
+  Year = teen_yrs,
+  X = numeric(length(teen_yrs)),
+  N = numeric(length(teen_yrs))
+)
 
 for (i in seq_len(nrow(sim_teen))) {
   samp_size <- round(runif(1, 40, 70))
   sim_teen$N[i] <- samp_size * 5
   sim_teen$X[i] <- sum(
     rbinom(
-      5, samp_size,
+      5,
+      samp_size,
       phi_st[(teen_yrs[i] - 17):(teen_yrs[i] - 13)] * cov[18:14, 2]
     )
   )
@@ -120,15 +155,15 @@ kg_sim_full$censored <- ifelse(runif(nrow(kg_sim_full)) > target_prob, NA, 1)
 # Simulate school vax view
 annual_tots <- kg_sim_full |>
   group_by(year) |>
-  summarize(tot_enr = sum(y_smp),
-            tot_vax = sum(y_obs))
+  summarize(tot_enr = sum(y_smp), tot_vax = sum(y_obs))
 
 sim_school <- data.frame(
   pop = "school",
   Year = annual_tots$year,
   N = round(annual_tots$tot_enr * 0.9),
   X = rbinom(
-    nrow(annual_tots), round(annual_tots$tot_enr * 0.9),
+    nrow(annual_tots),
+    round(annual_tots$tot_enr * 0.9),
     phi_st[sch_yrs - 5] * cov[5, 2]
   )
 )
@@ -148,7 +183,8 @@ kg_sim <- kg_sim |>
 
 # Assign county and school names
 county_names <- c("Scruggs", "Simone", "Watson") # theme = musicians from NC
-school_names <- c( # theme = native birds
+school_names <- c(
+  # theme = native birds
   "Chickadee Elementary",
   "Nuthatch Academy",
   "Blue Heron School",
@@ -179,8 +215,16 @@ kg_sim$county <- county_names[kg_sim$enc_unit_id - 1]
 kg_sim$school <- school_names[kg_sim$unit_id - 4]
 
 kg_sim <- kg_sim |>
-  select(loc_id = school, parent_id = county, year, enc_unit_id,
-         unit_id, y_obs, y_smp, censored)
+  select(
+    loc_id = school,
+    parent_id = county,
+    year,
+    enc_unit_id,
+    unit_id,
+    y_obs,
+    y_smp,
+    censored
+  )
 
 vv_sim <- vv_sim |>
   select(vaxview_type = pop, year = Year, age = Age, y_obs = X, y_smp = N) |>
@@ -224,15 +268,16 @@ for (i in seq_len(nrow(vv_sim))) {
   }
 }
 
-observations_sim <- bind_rows(kg_sim,
-                              vv_sim |> mutate(unit_id = 1))
+observations_sim <- bind_rows(kg_sim, vv_sim |> mutate(unit_id = 1))
 
 # Now get normalized cohorts
 observations_sim <- observations_sim |>
-  mutate(by_max = year - ly_min,
-         by_min = year - ly_max,
-         cohort_min = by_min - min(by_min) +  1,
-         cohort_max = by_max - min(by_min) +  1) |>
+  mutate(
+    by_max = year - ly_min,
+    by_min = year - ly_max,
+    cohort_min = by_min - min(by_min) + 1,
+    cohort_max = by_max - min(by_min) + 1
+  ) |>
   dplyr::select(-by_min, -by_max) |>
   dplyr::rename(positive = "y_obs", sample_n = "y_smp")
 
@@ -241,12 +286,14 @@ observations_sim$obs_id <- seq_len(nrow(observations_sim))
 observations_sim <- setDT(observations_sim)
 
 # Create populations
-populations_sim <- data.frame(obs_id = numeric(),
-                              loc_id = character(),
-                              cohort = numeric(),
-                              age = numeric(),
-                              dose = numeric(),
-                              weight = numeric())
+populations_sim <- data.frame(
+  obs_id = numeric(),
+  loc_id = character(),
+  cohort = numeric(),
+  age = numeric(),
+  dose = numeric(),
+  weight = numeric()
+)
 for (i in seq_len(nrow(observations_sim))) {
   populations_sim <- bind_rows(
     populations_sim,
@@ -267,17 +314,14 @@ setDT(populations_sim)
 # Create locations mapping
 locations_sim <- bind_rows(
   # State
-  data.frame(loc_id = "State",
-             parent_id = NA),
+  data.frame(loc_id = "State", parent_id = NA),
   # Counties
-  data.frame(loc_id = county_names,
-             parent_id = "State"),
+  data.frame(loc_id = county_names, parent_id = "State"),
   #Schools
   unique(
     observations_sim |>
       filter(loc_id != "State") |>
-      dplyr::select(loc_id,
-                    parent_id)
+      dplyr::select(loc_id, parent_id)
   )
 )
 

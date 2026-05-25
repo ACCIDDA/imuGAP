@@ -77,6 +77,29 @@ test_that("internal_target_builder_vec works with mode='error'", {
     ),
     "age, cohort, and dose must be supplied"
   )
+
+  # NA cases
+  expect_error(
+    internal_target_builder_vec(
+      location = c("schlA", NA),
+      age = c(2L),
+      cohort = c(5L),
+      dose = c(1L),
+      mode = "error"
+    ),
+    "No arguments may have NA values; the following do: location"
+  )
+
+  expect_error(
+    internal_target_builder_vec(
+      location = c("schlA"),
+      age = c(NA_integer_),
+      cohort = c(NA_integer_),
+      dose = c(1L),
+      mode = "error"
+    ),
+    "No arguments may have NA values; the following do: age, cohort"
+  )
 })
 
 test_that("internal_target_builder_vec works with mode='enumerate'", {

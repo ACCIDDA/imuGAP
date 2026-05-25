@@ -26,7 +26,6 @@
 #' @autoglobal
 #' @export
 sampling <- function(
-  # nolint
   observations,
   populations,
   locations,
@@ -142,6 +141,23 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
   if (missing(age) || missing(cohort) || missing(dose)) {
     stop(
       "age, cohort, and dose must be supplied when location is a vector",
+      call. = FALSE
+    )
+  }
+
+  na_args <- c("location", "age", "cohort", "dose")[which(
+    c(
+      any(is.na(location)),
+      any(is.na(age)),
+      any(is.na(cohort)),
+      any(is.na(dose))
+    )
+  )]
+
+  if (length(na_args) > 0) {
+    stop(
+      "No arguments may have NA values; the following do: ",
+      toString(na_args),
       call. = FALSE
     )
   }
