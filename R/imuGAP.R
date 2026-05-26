@@ -319,6 +319,70 @@ internal_target_builder_df <- function(location) {
 #'
 #' @return A `data.table` representing the canonicalized target population.
 #'
+#' @examples
+#' # Load example fit object
+#' data("fit_sim")
+#'
+#' # 1. Default "error" mode: All vector inputs must have the same length.
+#' create_target(
+#'   fit = fit_sim,
+#'   location = c("Blue Heron School", "Bluebird Learning Center"),
+#'   age = c(1, 2),
+#'   cohort = c(2, 3),
+#'   dose = c(1, 1),
+#'   mode = "error"
+#' )
+#'
+#' # Providing mismatched length arguments in "error" mode throws an error:
+#' try(create_target(
+#'   fit = fit_sim,
+#'   location = c("Blue Heron School", "Bluebird Learning Center"),
+#'   age = c(1), # length mismatch
+#'   cohort = c(2, 3),
+#'   dose = c(1, 1),
+#'   mode = "error"
+#' ))
+#'
+#' # 2. "enumerate" mode: Generates all combinations of the arguments.
+#' create_target(
+#'   fit = fit_sim,
+#'   location = c("Blue Heron School", "Bluebird Learning Center"),
+#'   age = c(1, 2),
+#'   cohort = c(2, 3),
+#'   dose = c(1),
+#'   mode = "enumerate"
+#' )
+#'
+#' # 3. "recycle" mode: Recycles arguments to the least-common-multiple length.
+#' create_target(
+#'   fit = fit_sim,
+#'   location = c("Blue Heron School", "Bluebird Learning Center"),
+#'   age = c(1, 2, 3),
+#'   cohort = c(2),
+#'   dose = c(1),
+#'   mode = "recycle"
+#' )
+#'
+#' # 4. "snapshot" mode: Cohort is a single reference value. Cohorts for each
+#' # age are calculated so that cohort + age is constant (representing a snapshot in time).
+#' create_target(
+#'   fit = fit_sim,
+#'   location = c("Blue Heron School", "Bluebird Learning Center"),
+#'   age = c(1, 2, 3),
+#'   cohort = 5,
+#'   dose = c(1),
+#'   mode = "snapshot"
+#' )
+#'
+#' # 5. Providing a data.frame for validation.
+#' df_target <- data.frame(
+#'   loc_id = c("Blue Heron School", "Bluebird Learning Center"),
+#'   age = c(1, 2),
+#'   cohort = c(2, 3),
+#'   dose = c(1, 1)
+#' )
+#' create_target(fit = fit_sim, location = df_target)
+#'
 #' @importFrom data.table as.data.table copy data.table between
 #' @export
 create_target <- function(
