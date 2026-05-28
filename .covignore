@@ -8,5 +8,7 @@
 # can act on. The Stan model itself is exercised by integration tests via
 # imuGAP(), but coverage is recorded against the .stan source, which
 # covr doesn't instrument anyway.
-src/stanExports_*.cc
-src/stanExports_*.h
+src/*.cc
+src/*.cpp
+src/*.h
+R/stanmodels.R
