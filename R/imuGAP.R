@@ -468,12 +468,22 @@ create_target <- function(
 #' @title Predict coverage probabilities
 #'
 #' @description
-#' Uses the output of `[sampling()]` and a target `populations` grid to generate
+#' Uses the output of `[sampling()]` and a target grid to generate
 #' predicted coverage probabilities.
 #'
 #' @param object an `imugap_fit` object returned by `sampling()`
-#' @param populations a `[data.frame()]` of target populations to predict for
-#' @param ... additional arguments passed to other methods.
+#' @param target a `[data.frame()]` of target populations to predict for
+#'
+#' @details
+#' The `[predict()]` method takes an `imugap_fit` object (typically the output of
+#' `[sampling()]`) and a target grid (typically output from `[create_target()]`),
+#' and generates predicted coverage probabilities for each entry in the target.
+#'
+#' The `[predict()]` method can be used to generate estimated coverage for any
+#' location, cohort, or age considered within the bounds of the original
+#' sampling fit. Particularly, this includes enclosing locations without specific
+#' observation data, as long as those locations are *somewhere* in the
+#' locations hierarchy.
 #'
 #' @return A `data.table` with columns `sample_id`, `obs_id`, and `p_obs` containing
 #'   the predicted coverage probabilities for each posterior draw and target observation.
