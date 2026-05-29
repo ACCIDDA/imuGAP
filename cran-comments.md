@@ -31,7 +31,7 @@ GitHub-only project `ACCIDDA/imugap-map`.
 
 ## Notes for reviewer
 
-First submission. [Placeholder for package-specific notes — examples to
+First submission. Placeholder for package-specific notes — examples to
 consider mentioning:
 
 - imuGAP wraps Stan models built with `rstantools` and follows the
