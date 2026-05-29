@@ -41,6 +41,6 @@ consider mentioning:
   `populations_sim`, `fit_sim`) are simulated and small; `fit_sim` is a
   wiring fixture for examples and tests, not a converged posterior.
 - Citation guidance: see `inst/CITATION` (or `CITATION.cff` at the
-  repo root) for how to cite imuGAP.]
+  repo root) for how to cite imuGAP.
 
 <!-- @csmith701: please replace the bracketed placeholders above with package-specific content before release. -->
