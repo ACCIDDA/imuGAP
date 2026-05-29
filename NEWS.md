@@ -18,7 +18,6 @@ First public release. Initial feature set:
 - `stan_options()`: configures Stan sampler settings (`iter`, `chains`,
   `seed`, etc.) with input validation.
 - Bundled Stan models:
-  - `impute_school_coverage_process_stateonly` (state-level only), and
   - `impute_school_coverage_process_v6` (adds county- and school-level
     random effects; current default).
 - Bundled example datasets for end-to-end examples and tests:
