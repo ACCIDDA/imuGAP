@@ -94,3 +94,59 @@ NULL
 #'
 #' @format A `stanfit` object as returned by [rstan::sampling()].
 "fit_sim"
+
+#' @title Example Latent Parameter Values
+#'
+#' @description
+#' A list containing the true/latent parameter values used to simulate the
+#' example datasets (`locations_sim`, `populations_sim`, `observations_sim`).
+#'
+#' @format A list with 7 components:
+#'  - `phi_state`, a numeric vector of length 30 representing the state-specific
+#'    baseline vaccine uptake propensity over cohorts.
+#'  - `lambda`, a numeric vector of length 2 representing the rate parameters
+#'    for vaccine doses 1 and 2 respectively.
+#'  - `sigma_sch`, a number, the standard deviation of school-level random effects.
+#'  - `sigma_cnty`, a number, the standard deviation of county-level random effects.
+#'  - `off_sch`, a numeric vector of length 24 containing school-level random offsets.
+#'  - `off_cnty`, a numeric vector of length 3 containing county-level random offsets.
+#'  - `censor_reduction`, a number representing the censoring offset
+#'    multiplier applied to censored observations (0.95).
+"latent_params_sim"
+
+#' @title Example Prediction Target Populations
+#'
+#' @description
+#' A dataset specifying the target populations for coverage prediction, generated
+#' by calling [create_target()] on the simulated fit object `fit_sim` along
+#' with arguments for which locations, cohorts, and ages to target. Includes
+#' locations which were not present in the original simulated observations,
+#' namely the State and County levels.
+#'
+#' @format A `[data.table()]` with 1008 rows and 7 columns:
+#'  - `obs_c_id`, a number, the target observation/combination ID (primary key)
+#'  - `loc_id`, a string, the location ID
+#'  - `age`, a number, the age
+#'  - `cohort`, a number, the birth cohort
+#'  - `dose`, a number, the vaccine dose (1 or 2)
+#'  - `weight`, a number, the weight of the prediction component (always 1)
+#'  - `loc_c_id`, a number, the compiled location ID
+"target_sim"
+
+#' @title Example Coverage Predictions
+#'
+#' @description
+#' A dataset containing predicted vaccine coverage probabilities generated
+#' by calling [predict()] on `fit_sim` with `target_sim` as the target.
+#'
+#' @format A `[data.table()]` with 50400 rows and 9 columns:
+#'  - `sample_id`, a number, the posterior MCMC sample index/ID
+#'  - `p_obs`, a number, the predicted vaccine coverage probability
+#'  - `loc_id`, a string, the location ID
+#'  - `age`, a number, the age
+#'  - `cohort`, a number, the birth cohort
+#'  - `dose`, a number, the vaccine dose (1 or 2)
+#'  - `weight`, a number, the weight of the prediction component
+#'  - `loc_c_id`, a number, the compiled location ID
+#'  - `obs_id`, a number, the target observation ID matching `obs_c_id` in `target_sim`
+"predict_sim"
