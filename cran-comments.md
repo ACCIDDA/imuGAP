@@ -43,4 +43,3 @@ consider mentioning:
 - Citation guidance: see `inst/CITATION` (or `CITATION.cff` at the
   repo root) for how to cite imuGAP.
 
-<!-- @csmith701: please replace the bracketed placeholders above with package-specific content before release. -->
