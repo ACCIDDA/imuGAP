@@ -16,11 +16,12 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(imuGAP)
+library(data.table)
 ```
 
-# imuGAP: an Estimation Model for Measles Vaccination Coverage
+# Introduction
 
-The name `imuGAP` stands for "Immunity: Geographic & Age-based Projection", and as that name implies, the package provides a [stan](https://mc-stan.org/)-based model for estimating measles vaccination coverage by location and age cohort.
+The name `imuGAP` stands for "Immunity: Geographic & Age-based Projection". The package provides a [stan](https://mc-stan.org/)-based model for estimating vaccination coverage by location, cohort, and age for childhood infectious diseases, such as measles.
 
 The core model represents a target population as having a life-long propensity for vaccination; some proportion, $\phi$, of that population is unlikely to vaccinate and the complementary proportion, $1 - \phi$, is likely to vaccinate. That population then experiences a vaccination rate, $\lambda$, over the model time eras, according to the vaccination eligibility schedule, $\nu$. These core parameters can vary over time and location, in a user-specifiable way.
 
@@ -30,5 +31,171 @@ $$
 P(\ge\textrm{1 dose}) = \left(1 - \phi_{i, a}\right) \left(1 - \exp\left\{-\int_a^{t} \lambda_{i, a}(s)\nu(s) d\textrm{s}\right\}\right)
 $$
 
-Which is to say, we are representing vaccination coverage via a survival model. Leaving aside the "unlikely" population
+Which is to say, we are representing vaccination coverage via a survival-like model.
 
+# Walkthrough of Basic Usage
+
+This walkthrough demonstrates the workflow of fitting the model and predicting coverage on simulated data. The package includes seven bundled datasets for demonstration, representing a nested geographic setup (State -> Counties -> Schools).
+
+## 1. Preparing and Validating the Input Data
+
+First, let's explore the three required input datasets that define the location hierarchy, observation metadata, and the actual coverage observations. The package provides a family of `canonicalize_*` functions to validate, clean, and convert these raw structures into the canonical forms required by the sampler. You can use those directly to help troubleshoot your inputs, as we do in the following examples. However, as shown in the next section, the `sampling()` method also automatically canonicalizes the inputs.
+
+### Location Hierarchy (`locations_sim`)
+The locations dataset defines the nesting relationship of the locations in the model. In this simulation, we have a State, which contains three Counties, which in turn contain various Schools. We validate and canonicalize it using `canonicalize_locations()`.
+
+```{r locations}
+data("locations_sim", package = "imuGAP")
+head(locations_sim)
+
+# Canonicalize and validate
+canonical_locations <- canonicalize_locations(locations_sim)
+head(canonical_locations)
+```
+
+### Coverage Observations (`observations_sim`)
+The observations dataset contains the counts of individuals who were vaccinated (`positive`) out of the total sampled (`sample_n`) for each observation. It also includes a `censored` column, which is `1` if the observation is right-censored and `NA` otherwise. We validate and canonicalize it using `canonicalize_observations()`.
+
+```{r observations}
+data("observations_sim", package = "imuGAP")
+head(observations_sim[, .(obs_id, loc_id, positive, sample_n, censored)])
+
+# Canonicalize and validate
+canonical_observations <- canonicalize_observations(observations_sim)
+head(canonical_observations)
+```
+
+### Observation Metadata (`populations_sim`)
+The populations dataset acts as observation metadata, mapping each observation ID (`obs_id`) to the corresponding location, birth cohort, age at observation, vaccine dose, and observation weight. We validate and canonicalize it using `canonicalize_populations()`.
+
+```{r populations}
+data("populations_sim", package = "imuGAP")
+head(populations_sim)
+
+# Canonicalize and validate
+canonical_populations <- canonicalize_populations(
+  populations_sim,
+  observations_sim,
+  locations_sim
+)
+head(canonical_populations)
+```
+
+### Validation Failure Examples
+
+To ensure data integrity, the `canonicalize_*` functions enforce strict rules on the input data format and constraints. For example, if we modify the observations data so that the number of `positive` cases exceeds the total sample size `sample_n`, the validation function will raise a clear error:
+
+```{r validation-failure-obs}
+# Create a copy with an invalid observation (positive > sample_n)
+invalid_obs <- copy(observations_sim)
+invalid_obs[1, positive := sample_n + 10]
+
+# This will fail validation and throw an error:
+tryCatch(
+  canonicalize_observations(invalid_obs),
+  error = function(e) message("Caught expected error: ", e$message)
+)
+```
+
+Similarly, if the locations data contains duplicate location IDs, `canonicalize_locations()` will detect the duplication and throw an error:
+
+```{r validation-failure-locs}
+# Create a copy with a duplicate location ID
+invalid_locs <- rbind(
+  locations_sim,
+  data.frame(loc_id = "Scruggs", parent_id = "State")
+)
+
+# This will fail validation:
+tryCatch(
+  canonicalize_locations(invalid_locs),
+  error = function(e) message("Caught expected error: ", e$message)
+)
+```
+
+---
+
+## 2. Fitting the Model
+
+Using the prepared input datasets, we can fit the Bayesian model using `sampling()`. The options for the sampler can be configured using `stan_options()`.
+
+Because compiling the Stan model and running the MCMC chain can take some time, we set `eval = FALSE` below. In practice, you would run:
+
+```{r sampling-code, eval = FALSE}
+fit_sim <- sampling(
+  observations_sim,
+  populations_sim,
+  locations_sim,
+  stan_opts = stan_options(
+    iter = 100,
+    chains = 1,
+    refresh = 0,
+    seed = 1L
+  )
+)
+```
+
+For this walkthrough, we load the pre-computed fit object `fit_sim` bundled with the package:
+
+```{r load-fit}
+data("fit_sim", package = "imuGAP")
+```
+
+Once the model is fit, we can extract posterior draws of the model parameters using `extract_imugap()`. For example, let's extract the B-spline coefficients representing the state-level vaccine uptake baseline:
+
+```{r extract-params}
+beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
+str(beta_draws)
+```
+
+---
+
+## 3. Defining a Target for Predictions
+
+To predict vaccine coverage for a target population (which can include locations or cohorts without direct observations, as long as they exist in the locations hierarchy), we first define a target grid using `create_target()`. 
+
+For example, we can generate a "snapshot" prediction target for all locations, including the State and County levels, across ages 1 to 18:
+
+```{r target}
+target_sim <- create_target(
+  fit = fit_sim,
+  location = locations_sim$loc_id,
+  age = 1:18,
+  cohort = max(populations_sim$cohort) - 18,
+  dose = c(1, 2),
+  mode = "snapshot"
+)
+head(target_sim)
+```
+
+---
+
+## 4. Predicting Coverage
+
+Finally, we run `predict()` to generate predicted coverage probabilities for each target population combination across all posterior draws.
+
+Generating predictions also runs the Stan model (in generated quantities mode) and can be time-consuming, so we show the code below without executing it:
+
+```{r predict-code, eval = FALSE}
+predict_sim <- predict(object = fit_sim, target = target_sim)
+```
+
+Instead, we load the pre-computed prediction results `predict_sim` bundled with the package:
+
+```{r load-predictions}
+data("predict_sim", package = "imuGAP")
+head(predict_sim)
+```
+
+The output `predict_sim` is a `data.table` containing posterior coverage probability predictions (`p_obs`) for each MCMC sample (`sample_id`) and target population combination. We can summarize these predictions to get the posterior mean and credible intervals for any location, age, or dose:
+
+```{r summarize-predictions}
+# Calculate the posterior mean coverage probability for each location and dose at age 5
+summary_predict <- predict_sim[age == 5, .(
+  mean_coverage = mean(p_obs),
+  q025 = quantile(p_obs, 0.025),
+  q975 = quantile(p_obs, 0.975)
+), by = .(loc_id, dose)]
+
+head(summary_predict)
+```
