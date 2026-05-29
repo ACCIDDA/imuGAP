@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "imuGAP: Estimate Measles Vaccine Coverage"
+title: "imuGAP - Immunity: Geographic and Age-Based Projection"
 abstract: >-
   Fits Bayesian hierarchical models of measles vaccine coverage by
   location and birth cohort, with a latent survival-style process
