@@ -1,5 +1,5 @@
 Package: imuGAP
-Title: Estimate Measles Vaccine Coverage
+Title: Immunity: Geographic and Age-Based Projection
 Version: 0.1.0
 Authors@R:
     c(person("Carl", "Pearson", email = "carl.ab.pearson@gmail.com", role = c("aut", "cre"),
