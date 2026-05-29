@@ -1,6 +1,6 @@
 Package: imuGAP
-Title: Estimate Measles Vaccine Coverage
-Version: 0.0.0.9000
+Title: Immunity: Geographic and Age-Based Projection
+Version: 0.1.0
 Authors@R:
     c(person("Carl", "Pearson", email = "carl.ab.pearson@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-0701-7860")),
@@ -10,7 +10,16 @@ Authors@R:
       person("Weston", "Voglesonger", email = "westonvogle@gmail.com", role = "ctb"),
       person("Joshua", "Chen", email = "joshuazchen1@gmail.com", role = "ctb"),
       person("Minjae", "Kung", email = "minjaekung@gmail.com", role = "ctb"))
-Description: What the package does (one paragraph).
+Description: Fits Bayesian hierarchical models of vaccine
+    coverage by location, birth cohort, and age. Observations 
+    of vaccination status (which may span cohorts, ages, and doses) are
+    used to fit a latent survival-style process model that decomposes
+    coverage into a lifetime propensity to vaccinate and a
+    time-varying force of vaccination. Hierarchical spatial structure 
+    (e.g., state, county, school) supports partial pooling via random
+    effects. Models are implemented in 'Stan' and fit via 'rstan'.
+    Provides helpers to validate user-supplied input data, and to predict 
+    coverage from fitted models.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c("collate", "namespace", "rd",

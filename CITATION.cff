@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "imuGAP - Immunity: Geographic and Age-Based Projection"
+abstract: >-
+  Fits Bayesian hierarchical models of vaccine coverage by
+  location, birth cohort, and age with a latent survival-style process
+  decomposing coverage into a lifetime propensity to vaccinate and a
+  time-varying force of vaccination. Supports random effects at three 
+  hierarchical spatial units, and is implemented in Stan via rstan.
+type: software
+version: "0.1.0"
+date-released: "2026-05-22"
+license: MIT
+repository-code: "https://github.com/ACCIDDA/imuGAP"
+url: "https://accidda.github.io/imuGAP/"
+authors:
+  - family-names: Pearson
+    given-names: Carl
+    email: carl.ab.pearson@gmail.com
+    orcid: "https://orcid.org/0000-0003-0701-7860"
+  - family-names: Smith
+    given-names: Claire Perrin
+    orcid: "https://orcid.org/0000-0003-1069-9460"
+keywords:
+  - measles
+  - vaccine-coverage
+  - bayesian
+  - hierarchical-model
+  - stan
+  - rstan
+  - epidemiology
