@@ -48,6 +48,8 @@ lambda2 <- 3.0
 sigma_sch <- 0.8
 sigma_cnty <- 0.4
 
+other_vax_reduction <- 0.95
+
 # Dose schedule
 doses <- matrix(0, nrow = n_yr, ncol = 2)
 doses[2:nrow(doses), 1] <- 1
@@ -86,17 +88,19 @@ sim_child <- bind_rows(
     pop = "child",
     Year = 1:n_cohort,
     Age = "24 months",
-    X = rbinom(n_cohort, n24, phi_st * cov[2, 1]),
+    X = rbinom(n_cohort, n24, phi_st * cov[2, 1] * other_vax_reduction),
     N = n24
   ),
   data.frame(
     pop = "child",
     Year = 1:n_cohort,
     Age = "36 months",
-    X = rbinom(n_cohort, n36, phi_st * cov[3, 1]),
+    X = rbinom(n_cohort, n36, phi_st * cov[3, 1] * other_vax_reduction),
     N = n36
   )
 )
+
+sim_child$censored <- 1
 
 # Simulate teen vax view
 teen_yrs <- 18:30
@@ -147,10 +151,6 @@ for (s in seq_len(sum(sch_per_cnty$n_sch))) {
   )
 }
 kg_sim_full <- bind_rows(kg_sim_full)
-
-# Randomly select 15% of kindergarten observations to treat as censored
-target_prob <- 0.15
-kg_sim_full$censored <- ifelse(runif(nrow(kg_sim_full)) > target_prob, NA, 1)
 
 # Simulate school vax view
 annual_tots <- kg_sim_full |>
@@ -222,12 +222,18 @@ kg_sim <- kg_sim |>
     enc_unit_id,
     unit_id,
     y_obs,
-    y_smp,
-    censored
+    y_smp
   )
 
 vv_sim <- vv_sim |>
-  select(vaxview_type = pop, year = Year, age = Age, y_obs = X, y_smp = N) |>
+  select(
+    vaxview_type = pop,
+    year = Year,
+    age = Age,
+    y_obs = X,
+    y_smp = N,
+    censored
+  ) |>
   mutate(loc_id = "State")
 
 # Put years in calendar terms
@@ -327,6 +333,70 @@ locations_sim <- bind_rows(
 
 locations_sim <- setDT(locations_sim)
 
+# Create imugap input package data objects
 usethis::use_data(observations_sim, overwrite = TRUE)
 usethis::use_data(populations_sim, overwrite = TRUE)
 usethis::use_data(locations_sim, overwrite = TRUE)
+
+# Create latent parameter values
+latent_params_sim <- list(
+  phi_state = phi_st,
+  lambda = c(lambda1, lambda2),
+  sigma_sch = sigma_sch,
+  sigma_cnty = sigma_cnty,
+  off_sch = sch_offset,
+  off_cnty = cnty_offset,
+  censor_reduction = other_vax_reduction
+)
+
+usethis::use_data(latent_params_sim, overwrite = TRUE)
+
+
+# Regenerate the `fit_sim` package fixture.
+#
+# This script fits the imuGAP Stan model to the bundled `*_sim` datasets using
+# the same minimal sampler settings as `tests/testthat/test-imugap-smoke.R`
+# (1 chain, 100 iterations, seed 1). The resulting stanfit object is saved to
+# `data/fit_sim.rda` so it can be reused by tests and examples without
+# recompiling / refitting the model on every run.
+#
+# stanfit objects bundle references to the compiled Stan model and can be
+# fragile across major `rstan` / `StanHeaders` updates. If `fit_sim` fails to
+# load on a future install, regenerate it by running this script from the
+# package root:
+#
+#     Rscript data-raw/fit_sim.R
+#
+# Empirical baseline (single chain, 100 iterations, after model compilation):
+#  - runtime: ~10 seconds
+#  - on-disk size with `compress = "xz"`: ~1 MB (well under CRAN's 5 MB limit)
+fit_sim <- suppressWarnings(sampling(
+  observations_sim,
+  populations_sim,
+  locations_sim,
+  stan_opts = stan_options(
+    iter = 100,
+    chains = 1,
+    refresh = 0,
+    seed = 1L
+  )
+))
+
+usethis::use_data(fit_sim, compress = "xz", overwrite = TRUE)
+
+# Target populations for prediction
+target_sim <- create_target(
+  fit = fit_sim,
+  location = locations_sim$loc_id,
+  age = 1:18,
+  cohort = max(populations_sim$cohort) - 18,
+  dose = c(1, 2),
+  mode = "snapshot"
+)
+
+usethis::use_data(target_sim, overwrite = TRUE)
+
+# Prediction
+predict_sim <- suppressWarnings(predict(object = fit_sim, target = target_sim))
+
+usethis::use_data(predict_sim, overwrite = TRUE)
