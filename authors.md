@@ -21,13 +21,14 @@
 Source:
 [`DESCRIPTION`](https://github.com/ACCIDDA/imuGAP/blob/main/DESCRIPTION)
 
-Pearson C, Smith C (2026). *imuGAP: Estimate Measles Vaccine Coverage*.
-R package version 0.0.0.9000, <https://accidda.github.io/imuGAP/>.
+Pearson C, Smith C (2026). *imuGAP: Immunity: Geographic and Age-Based
+Projection*. R package version 0.1.0,
+<https://accidda.github.io/imuGAP/>.
 
     @Manual{,
-      title = {imuGAP: Estimate Measles Vaccine Coverage},
+      title = {imuGAP: Immunity: Geographic and Age-Based Projection},
       author = {Carl Pearson and Claire Perrin Smith},
       year = {2026},
-      note = {R package version 0.0.0.9000},
+      note = {R package version 0.1.0},
       url = {https://accidda.github.io/imuGAP/},
     }
