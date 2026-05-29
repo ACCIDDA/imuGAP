@@ -2,12 +2,11 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "imuGAP - Immunity: Geographic and Age-Based Projection"
 abstract: >-
-  Fits Bayesian hierarchical models of measles vaccine coverage by
-  location and birth cohort, with a latent survival-style process
+  Fits Bayesian hierarchical models of vaccine coverage by
+  location, birth cohort, and age with a latent survival-style process
   decomposing coverage into a lifetime propensity to vaccinate and a
-  time-varying force of vaccination smoothed with B-splines. Supports
-  state, county, and school random effects, and is implemented in Stan
-  via rstan.
+  time-varying force of vaccination. Supports random effects at three 
+  hierarchical spatial units, and is implemented in Stan via rstan.
 type: software
 version: "0.1.0"
 date-released: "2026-05-22"
