@@ -35,15 +35,33 @@ test_that("sampling and predict work correctly with simulated data", {
     clean_pops
   )
 
-  expect_s3_class(pred, "data.table")
-  expect_true(all(c("sample_id", "obs_id", "p_obs") %in% names(pred)))
+  expect_s3_class(pred, "imugap_predict")
+  expect_true(is.matrix(pred$draws))
+  expect_s3_class(pred$target, "data.table")
 
-  n_draws <- 5 # 10 iterations minus 5 warmup
+  chains <- if (!is.null(st_opts$chains)) st_opts$chains else 4L
+  iter <- if (!is.null(st_opts$iter)) st_opts$iter else 2000L
+  warmup <- if (!is.null(st_opts$warmup)) st_opts$warmup else (iter %/% 2L)
+  n_draws <- (iter - warmup) * chains
   n_obs <- length(unique(clean_pops$obs_id))
-  expect_equal(nrow(pred), n_draws * n_obs)
+  expect_equal(nrow(pred$draws), n_draws)
+  expect_equal(ncol(pred$draws), n_obs)
 
-  # Check value range of p_obs
-  expect_true(all(pred$p_obs >= 0 & pred$p_obs <= 1))
+  # Check value range of draws
+  expect_true(all(pred$draws >= 0 & pred$draws <= 1))
+
+  # Test summary method
+  sum_df <- summary(pred)
+  expect_s3_class(sum_df, "data.table")
+  expect_true(all(c("mean", "q2.5", "q50", "q97.5") %in% names(sum_df)))
+  expect_equal(nrow(sum_df), n_obs)
+  expect_true(all(sum_df$mean >= 0 & sum_df$mean <= 1))
+
+  # Test summarize method with custom quantiles
+  sum_df2 <- summarize(pred, probs = c(0.1, 0.9))
+  expect_s3_class(sum_df2, "data.table")
+  expect_true(all(c("mean", "q10", "q90") %in% names(sum_df2)))
+  expect_equal(nrow(sum_df2), n_obs)
 })
 
 test_that("predict throws informative compatibility errors", {
