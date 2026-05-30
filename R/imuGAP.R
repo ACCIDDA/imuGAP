@@ -485,8 +485,8 @@ create_target <- function(
 #' observation data, as long as those locations are *somewhere* in the
 #' locations hierarchy.
 #'
-#' @return A `data.table` with columns `sample_id`, `obs_id`, and `p_obs` containing
-#'   the predicted coverage probabilities for each posterior draw and target observation.
+#' @return An object of class `imugap_predict` wrapping the matrix of predicted
+#'   draws and the canonical target dataset.
 #'
 #' @export
 #' @importFrom data.table as.data.table copy data.table
@@ -541,16 +541,81 @@ predict.imugap_fit <- function(
   # Extract predictions
   p_obs_draws <- rstan::extract(gqs_res, pars = "p_obs")$p_obs |> as.matrix()
 
-  n_draws <- nrow(p_obs_draws)
-  n_obs <- ncol(p_obs_draws)
+  structure(
+    list(
+      draws = p_obs_draws,
+      target = target
+    ),
+    class = "imugap_predict"
+  )
+}
 
-  res_dt <- data.table::data.table(
-    sample_id = rep(seq_len(n_draws), times = n_obs),
-    obs_c_id = rep(target$obs_c_id, each = n_draws),
-    p_obs = as.vector(p_obs_draws)
-  )[target, on = .(obs_c_id)]
-  res_dt$obs_c_id <- NULL
+#' @title Summarize coverage predictions
+#'
+#' @description
+#' Summarizes predicted coverage probabilities from an `imugap_predict` object
+#' by location, cohort, age, and dose for the requested quantiles.
+#'
+#' @param object an `imugap_predict` object returned by `[predict()]`
+#' @param probs numeric vector of probabilities/quantiles to compute.
+#'   Defaults to `c(0.025, 0.5, 0.975)`.
+#' @param ... additional arguments (currently ignored)
+#'
+#' @return A `data.table` containing target population parameters, posterior mean
+#'   coverage (`mean`), and the requested quantiles (e.g. `q2.5`, `q50`, `q97.5`).
+#'
+#' @export
+#' @importFrom stats quantile
+summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
+  if (!inherits(object, "imugap_predict")) {
+    stop("object must be of class 'imugap_predict'", call. = FALSE)
+  }
+
+  draws <- object$draws
+  target <- data.table::copy(object$target)
+
+  # Compute mean for each target observation
+  mean_vals <- colMeans(draws)
+
+  # Compute quantiles
+  quantiles <- t(apply(draws, 2, stats::quantile, probs = probs, na.rm = TRUE))
+
+  # Format column names for the quantiles
+  quantile_names <- sprintf("q%g", probs * 100)
+  quantile_names <- gsub("\\.", "", quantile_names)
+  colnames(quantiles) <- quantile_names
+
+  stats_dt <- data.table::data.table(
+    mean = mean_vals,
+    quantiles
+  )
+
+  res_dt <- cbind(target, stats_dt)
   res_dt[]
+}
+
+#' @rdname summary.imugap_predict
+#' @export
+summarize <- function(object, ...) {
+  UseMethod("summarize")
+}
+
+#' @rdname summary.imugap_predict
+#' @export
+summarize.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
+  summary.imugap_predict(object, probs = probs, ...)
+}
+
+#' @rdname summary.imugap_predict
+#' @export
+summarise <- function(object, ...) {
+  UseMethod("summarise")
+}
+
+#' @rdname summary.imugap_predict
+#' @export
+summarise.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
+  summary.imugap_predict(object, probs = probs, ...)
 }
 
 #' @title Custom imuGAP fit extraction
