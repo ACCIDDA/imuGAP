@@ -1,8 +1,8 @@
 ---
-title: "imuGAP: an Estimation Model for Measles Vaccination Coverage"
+title: "imuGAP, Immunity: Geographic & Age-based Projection"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{imuGAP: an Estimation Model for Measles Vaccination Coverage}
+  %\VignetteIndexEntry{imuGAP, Immunity: Geographic & Age-based Projection}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
