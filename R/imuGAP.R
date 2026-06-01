@@ -295,6 +295,12 @@ internal_target_builder_df <- function(location) {
 #'   consistent with `[canonicalize_populations()]`
 #' @param dose vector of doses for which to predict coverage,
 #'   consistent with `[canonicalize_observations()]`
+#' @param mode how `location`, `age`, `cohort`, and `dose` are combined into the
+#'   target grid: `"error"` (default) requires equal-length vectors and pairs
+#'   them rowwise; `"enumerate"` takes all combinations; `"recycle"` recycles to
+#'   the least-common-multiple length; `"snapshot"` takes a single reference
+#'   `cohort` and derives per-age cohorts holding age + cohort constant. See
+#'   Details.
 #'
 #' @details
 #' When `location` is a `data.frame`, this function validates that object
