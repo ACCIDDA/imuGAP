@@ -51,7 +51,10 @@ Suggests:
     roxygen2,
     roxyglobals,
     lintr,
-    spelling
+    spelling,
+    bayesplot,
+    ggplot2,
+    dplyr
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: https://accidda.github.io/imuGAP/, https://github.com/ACCIDDA/imuGAP
