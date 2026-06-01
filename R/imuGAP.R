@@ -582,7 +582,7 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
 
   # Format column names for the quantiles
   quantile_names <- sprintf("q%g", probs * 100)
-  quantile_names <- gsub("\\.", "", quantile_names)
+  quantile_names <- gsub("\\.", "_", quantile_names)
   colnames(quantiles) <- quantile_names
 
   stats_dt <- data.table::data.table(
@@ -602,7 +602,11 @@ summarize <- function(object, ...) {
 
 #' @rdname summary.imugap_predict
 #' @export
-summarize.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
+summarize.imugap_predict <- function(
+  object,
+  probs = c(0.025, 0.5, 0.975),
+  ...
+) {
   summary.imugap_predict(object, probs = probs, ...)
 }
 
@@ -614,7 +618,11 @@ summarise <- function(object, ...) {
 
 #' @rdname summary.imugap_predict
 #' @export
-summarise.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
+summarise.imugap_predict <- function(
+  object,
+  probs = c(0.025, 0.5, 0.975),
+  ...
+) {
   summary.imugap_predict(object, probs = probs, ...)
 }
 
