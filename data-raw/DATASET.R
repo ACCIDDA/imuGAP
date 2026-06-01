@@ -1,6 +1,12 @@
 ## Assumes imuGAP is in the same parent directory as nc_measles
 
-library(tidyverse)
+# Load only the packages this script actually uses. Previously this attached the
+# full tidyverse, which pulls in lubridate; lubridate then got captured in the
+# fitted model's `@.MISC` environment and baked into data/fit_sim.rda, tripping
+# R CMD check's "namespace references in data files" WARNING (imuGAP #74). dplyr
+# covers the verbs used here (mutate/select/group_by/filter/summarize/bind_rows)
+# without attaching lubridate.
+library(dplyr)
 library(splines)
 library(data.table)
 library(EnvStats)
