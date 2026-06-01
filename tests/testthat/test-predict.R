@@ -53,7 +53,7 @@ test_that("sampling and predict work correctly with simulated data", {
   # Test summary method
   sum_df <- summary(pred)
   expect_s3_class(sum_df, "data.table")
-  expect_true(all(c("mean", "q2.5", "q50", "q97.5") %in% names(sum_df)))
+  expect_true(all(c("mean", "q2_5", "q50", "q97_5") %in% names(sum_df)))
   expect_equal(nrow(sum_df), n_obs)
   expect_true(all(sum_df$mean >= 0 & sum_df$mean <= 1))
 
