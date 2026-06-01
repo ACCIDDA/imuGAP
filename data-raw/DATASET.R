@@ -375,8 +375,8 @@ fit_sim <- suppressWarnings(sampling(
   populations_sim,
   locations_sim,
   stan_opts = stan_options(
-    iter = 100,
-    chains = 1,
+    iter = 1000,
+    chains = 4,
     refresh = 0,
     seed = 1L
   )
