@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 ```{r setup, echo = FALSE, message = FALSE}
 # List all suggested packages needed for this vignette
-required_pkgs <- c("imuGAP", "data.table", "bayesplot", "ggplot2", "dplyr")
+required_pkgs <- c("imuGAP", "data.table", "bayesplot", "ggplot2")
 
 # Check if they are available
 pkgs_available <- all(sapply(required_pkgs, requireNamespace, quietly = TRUE))
@@ -25,6 +25,11 @@ pkgs_available <- all(sapply(required_pkgs, requireNamespace, quietly = TRUE))
 if (!pkgs_available) {
   knitr::opts_chunk$set(eval = FALSE)
   message("Some suggested packages are missing. Vignette code will not be executed.")
+} else {
+  library(imuGAP)
+  library(data.table)
+  library(bayesplot)
+  library(ggplot2)
 }
 ```
 
@@ -219,12 +224,8 @@ head(summary_predict)
 Now let's visualize the results. First we will take a look at overall state coverage by cohort. Note that the lower coverage among 5 year olds is due to them only having been eligible for their second dose for one year.   
 
 ```{r state-viz}
-summary_predict %>%
-  filter(
-    loc_id == "State",
-    dose == 2,
-    age > 4
-  ) %>%
+summary_predict |>
+  subset(loc_id == "State" & dose == 2 & age > 4) |>
   ggplot() +
   geom_line(aes(x = age, y = q50)) +
   geom_ribbon(aes(x = age, ymin = q2_5, ymax = q97_5), alpha = 0.5) +
@@ -235,12 +236,8 @@ summary_predict %>%
 We can also look at the trend in coverage by age at the county level. Note that they follow the same trend as the state but with differing magnitude.
 
 ```{r county-viz}
-summary_predict %>%
-  filter(
-    loc_id %in% c("Scruggs", "Simone", "Watson"),
-    dose == 2,
-    age > 4
-  ) %>%
+summary_predict |>
+  subset(loc_id %in% c("Scruggs", "Simone", "Watson") & dose == 2 & age > 4) |>
   ggplot() +
   geom_line(aes(x = age, y = q50, group = loc_id, color = loc_id)) +
   geom_ribbon(aes(x = age, ymin = q2_5, ymax = q97_5, fill = loc_id), alpha = 0.2) +
@@ -254,12 +251,12 @@ summary_predict %>%
 Finally, we can look at the distribution of school-level coverage estimates by age group. Let's focus on 5-11 year olds as that is the ages for children in elementary schools. 
 
 ```{r grade-viz}
-summary_predict %>%
-  filter(
-    !(loc_id %in% c("State", "Scruggs", "Simone", "Watson")),
-    dose == 2,
-    age %in% 5:11
-  ) %>%
+summary_predict |>
+  subset(
+    !(loc_id %in% c("State", "Scruggs", "Simone", "Watson")) &
+      dose == 2 &
+      age %in% 5:11
+  ) |>
   ggplot() +
   geom_histogram(aes(x = q50)) +
   facet_wrap(~age) +
