@@ -17,6 +17,9 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(imuGAP)
 library(data.table)
+library(bayesplot)
+library(ggplot2)
+library(dplyr)
 ```
 
 # Introduction
@@ -148,6 +151,14 @@ beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 ```
 
+We can also look at trace plots for selected parameters to ensure convergence has been reached.
+
+```{r trace-plot}
+mcmc_trace(fit_sim$stanfit,
+           pars = c("beta_bs[1]", "beta_bs[2]", "beta_bs[3]", 
+                    "beta_bs[4]", "beta_bs[5]"))
+```
+
 ---
 
 ## 3. Defining a Target for Predictions
@@ -191,11 +202,51 @@ The output `predict_sim` is a `data.table` containing posterior coverage probabi
 
 ```{r summarize-predictions}
 # Calculate the posterior mean coverage probability for each location and dose at age 5
-summary_predict <- predict_sim[age == 5, .(
-  mean_coverage = mean(p_obs),
-  q025 = quantile(p_obs, 0.025),
-  q975 = quantile(p_obs, 0.975)
-), by = .(loc_id, dose)]
+summary_predict <- summary(predict_sim)
 
 head(summary_predict)
+```
+
+Now let's visualize the results. First we will take a look at overall state coverage by cohort. Note that the lower coverage among 5 year olds is due to them only having been eligible for their second dose for one year.   
+
+```{r state-viz}
+summary_predict %>%
+  filter(loc_id == "State",
+         dose == 2,
+         age > 4) %>%
+  ggplot() +
+  geom_line(aes(x = age, y = q50)) +
+  geom_ribbon(aes(x = age, ymin = q2_5, ymax = q97_5), alpha = 0.5) +
+  theme_bw() +
+  scale_x_continuous(breaks = 5:18) +
+  labs(x = "Age", y = "Coverage", title = "State-level two dose coverage")
+
+```
+We can also look at the trend in coverage by age at the county level. Note that they follow the same trend as the state but with differing magnitude.
+
+```{r county-viz}
+summary_predict %>%
+  filter(loc_id %in% c("Scruggs", "Simone", "Watson"),
+         dose == 2,
+         age > 4) %>%
+  ggplot() +
+  geom_line(aes(x = age, y = q50, group = loc_id, color = loc_id)) +
+  geom_ribbon(aes(x = age, ymin = q2_5, ymax = q97_5, fill = loc_id), alpha = 0.2) +
+  theme_bw() +
+  scale_x_continuous(breaks = 5:18) +
+  labs(x = "Age", y = "Coverage", title = "State-level two dose coverage",
+       color = "County", fill = "County")
+
+```
+Finally, we can look at the distribution of school-level coverage estimates by age group. Let's focus on 5-11 year olds as that is the ages for children in elementary schools. 
+
+```{r grade-viz}
+summary_predict %>%
+  filter(!(loc_id %in% c("State", "Scruggs", "Simone", "Watson")),
+         dose == 2,
+         age %in% 5:11) %>%
+  ggplot() +
+  geom_histogram(aes(x = q50)) +
+  facet_wrap(~age) +
+  theme_bw()
 ```
