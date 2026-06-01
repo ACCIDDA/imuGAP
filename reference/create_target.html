@@ -85,6 +85,15 @@ consistent with <code>[canonicalize_populations()]</code></p></dd>
 <dd><p>vector of doses for which to predict coverage,
 consistent with <code>[canonicalize_observations()]</code></p></dd>
 
+
+<dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
+<dd><p>how <code>location</code>, <code>age</code>, <code>cohort</code>, and <code>dose</code> are combined into the
+target grid: <code>"error"</code> (default) requires equal-length vectors and pairs
+them rowwise; <code>"enumerate"</code> takes all combinations; <code>"recycle"</code> recycles to
+the least-common-multiple length; <code>"snapshot"</code> takes a single reference
+<code>cohort</code> and derives per-age cohorts holding age + cohort constant. See
+Details.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>

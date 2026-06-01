@@ -44,6 +44,15 @@ create_target(
   vector of doses for which to predict coverage, consistent with
   `[canonicalize_observations()]`
 
+- mode:
+
+  how `location`, `age`, `cohort`, and `dose` are combined into the
+  target grid: `"error"` (default) requires equal-length vectors and
+  pairs them rowwise; `"enumerate"` takes all combinations; `"recycle"`
+  recycles to the least-common-multiple length; `"snapshot"` takes a
+  single reference `cohort` and derives per-age cohorts holding age +
+  cohort constant. See Details.
+
 ## Value
 
 A `data.table` representing the canonicalized target population.
