@@ -15,11 +15,15 @@
 <url><loc>https://accidda.github.io/imuGAP/reference/imuGAP-package.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/imugap_options.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/index.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/latent_params_sim.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/locations_sim.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/observations_sim.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/populations_sim.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/predict.imugap_fit.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/predict_sim.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/sampling.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/stan_options.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/summary.imugap_predict.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/target_sim.html</loc></url>
 </urlset>
 

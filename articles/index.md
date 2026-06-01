@@ -2,5 +2,5 @@
 
 ### All vignettes
 
-- [imuGAP: an Estimation Model for Measles Vaccination
-  Coverage](https://accidda.github.io/imuGAP/articles/imuGAP.md):
+- [imuGAP, Immunity: Geographic & Age-based
+  Projection](https://accidda.github.io/imuGAP/articles/imuGAP.md):

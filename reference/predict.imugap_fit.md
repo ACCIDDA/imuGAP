@@ -23,9 +23,8 @@ predict(object, target)
 
 ## Value
 
-A `data.table` with columns `sample_id`, `obs_id`, and `p_obs`
-containing the predicted coverage probabilities for each posterior draw
-and target observation.
+An object of class `imugap_predict` wrapping the matrix of predicted
+draws and the canonical target dataset.
 
 ## Details
 

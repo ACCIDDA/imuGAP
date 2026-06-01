@@ -23,6 +23,9 @@
 - [`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md)
   : imuGAP Model Options
 
+- [`latent_params_sim`](https://accidda.github.io/imuGAP/reference/latent_params_sim.md)
+  : Example Latent Parameter Values
+
 - [`locations_sim`](https://accidda.github.io/imuGAP/reference/locations_sim.md)
   : Example Location Data
 
@@ -35,6 +38,9 @@
 - [`predict(`*`<imugap_fit>`*`)`](https://accidda.github.io/imuGAP/reference/predict.imugap_fit.md)
   : Predict coverage probabilities
 
+- [`predict_sim`](https://accidda.github.io/imuGAP/reference/predict_sim.md)
+  : Example Coverage Predictions
+
 - [`sampling()`](https://accidda.github.io/imuGAP/reference/sampling.md)
   :
 
@@ -42,3 +48,9 @@
 
 - [`stan_options()`](https://accidda.github.io/imuGAP/reference/stan_options.md)
   : Stan Sampler Options
+
+- [`summary(`*`<imugap_predict>`*`)`](https://accidda.github.io/imuGAP/reference/summary.imugap_predict.md)
+  : Summarize coverage predictions
+
+- [`target_sim`](https://accidda.github.io/imuGAP/reference/target_sim.md)
+  : Example Prediction Target Populations
