@@ -596,24 +596,12 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
 
 #' @rdname summary.imugap_predict
 #' @export
-summarize <- function(object, ...) {
-  UseMethod("summarize")
-}
-
-#' @rdname summary.imugap_predict
-#' @export
 summarize.imugap_predict <- function(
   object,
   probs = c(0.025, 0.5, 0.975),
   ...
 ) {
   summary.imugap_predict(object, probs = probs, ...)
-}
-
-#' @rdname summary.imugap_predict
-#' @export
-summarise <- function(object, ...) {
-  UseMethod("summarise")
 }
 
 #' @rdname summary.imugap_predict

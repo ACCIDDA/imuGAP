@@ -62,6 +62,13 @@ test_that("sampling and predict work correctly with simulated data", {
   expect_s3_class(sum_df2, "data.table")
   expect_true(all(c("mean", "q10", "q90") %in% names(sum_df2)))
   expect_equal(nrow(sum_df2), n_obs)
+
+  # Test summarise method with custom quantiles
+  sum_df3 <- summarise(pred, probs = c(0.1, 0.9))
+  expect_s3_class(sum_df3, "data.table")
+  expect_true(all(c("mean", "q10", "q90") %in% names(sum_df3)))
+  expect_equal(nrow(sum_df3), n_obs)
+  expect_equal(sum_df2, sum_df3)
 })
 
 test_that("predict throws informative compatibility errors", {
@@ -120,5 +127,45 @@ test_that("predict throws informative compatibility errors", {
   expect_error(
     predict(fit, bad_cohort_pops),
     "cohort values must be within 1 and fit\\$data\\$n_cohort"
+  )
+})
+
+test_that("summarize and summarise methods run through summary.imugap_predict", {
+  # Create a dummy object of class imugap_predict
+  dummy_pred <- structure(
+    list(draws = matrix(0), target = data.frame()),
+    class = "imugap_predict"
+  )
+
+  # Mock summary.imugap_predict to verify that both summarize and summarise run through it.
+  summary_called <- FALSE
+  mock_summary <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
+    summary_called <<- TRUE
+    # Verify the object and arguments are forwarded correctly
+    expect_identical(object, dummy_pred)
+    expect_equal(probs, c(0.1, 0.9))
+    "mock_result"
+  }
+
+  testthat::with_mocked_bindings(
+    {
+      res <- summarize(dummy_pred, probs = c(0.1, 0.9))
+      expect_true(summary_called)
+      expect_equal(res, "mock_result")
+    },
+    summary.imugap_predict = mock_summary,
+    .package = "imuGAP"
+  )
+
+  summary_called <- FALSE
+
+  testthat::with_mocked_bindings(
+    {
+      res <- summarise(dummy_pred, probs = c(0.1, 0.9))
+      expect_true(summary_called)
+      expect_equal(res, "mock_result")
+    },
+    summary.imugap_predict = mock_summary,
+    .package = "imuGAP"
   )
 })
