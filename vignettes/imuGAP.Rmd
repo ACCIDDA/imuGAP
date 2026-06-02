@@ -248,6 +248,7 @@ summary_predict |>
     color = "County", fill = "County"
   )
 ```
+
 Finally, we can look at the distribution of school-level coverage estimates by age group. Let's focus on 5-11 year olds as that is the ages for children in elementary schools. 
 
 ```{r grade-viz}
