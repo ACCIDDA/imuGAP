@@ -479,6 +479,7 @@ create_target <- function(
 #'
 #' @param object an `imugap_fit` object returned by `sampling()`
 #' @param target a `[data.frame()]` of target populations to predict for
+#' @param ... additional arguments (currently ignored)
 #'
 #' @details
 #' The `[predict()]` method takes an `imugap_fit` object (typically the output of
@@ -499,7 +500,8 @@ create_target <- function(
 #' @importFrom rstan gqs extract
 predict.imugap_fit <- function(
   object,
-  target
+  target,
+  ...
 ) {
   fit <- object
   if (!inherits(fit, "imugap_fit")) {
