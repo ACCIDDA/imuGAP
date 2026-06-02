@@ -7,7 +7,7 @@ predicted coverage probabilities.
 
 ``` r
 # S3 method for class 'imugap_fit'
-predict(object, target)
+predict(object, target, ...)
 ```
 
 ## Arguments
@@ -20,6 +20,10 @@ predict(object, target)
 - target:
 
   a `[data.frame()]` of target populations to predict for
+
+- ...:
+
+  additional arguments (currently ignored)
 
 ## Value
 
