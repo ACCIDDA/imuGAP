@@ -1,6 +1,8 @@
 ---
 title: "imuGAP, Immunity: Geographic & Age-based Projection"
 output: pdf_document
+header-includes:
+  - \AtBeginDocument{\let\maketitle\relax}
 ---
 
 ```{r, include = FALSE}
@@ -12,7 +14,7 @@ knitr::opts_chunk$set(
 
 ```{r setup, echo = FALSE, message = FALSE, warning=FALSE}
 # List all suggested packages needed for this vignette
-required_pkgs <- c("imuGAP", "data.table", "bayesplot", "ggplot2", "dplyr", "knitr", "cowplot")
+required_pkgs <- c("imuGAP", "data.table", "bayesplot", "ggplot2", "dplyr", "knitr", "patchwork")
 
 # Check if they are available
 pkgs_available <- all(sapply(required_pkgs, requireNamespace, quietly = TRUE))
@@ -22,107 +24,88 @@ if (!pkgs_available) {
   knitr::opts_chunk$set(eval = FALSE)
   message("Some suggested packages are missing. Vignette code will not be executed.")
 } else {
-  library(imuGAP)
-  library(data.table)
-  library(bayesplot)
-  library(ggplot2)
-  library(dplyr)
-  library(knitr)
-  library(cowplot)
+  suppressPackageStartupMessages(
+    sapply(required_pkgs, require, character.only = TRUE)
+  )
 }
 ```
 
-# Introduction
+# `imuGAP`: Immunity: Geographic & Age-based Projection
 
-The name `imuGAP` stands for "Immunity: Geographic & Age-based Projection". The package provides a [stan](https://mc-stan.org/)-based model for estimating vaccination coverage by location, cohort, and age for childhood infectious diseases, such as measles.
+The package provides a [stan](https://mc-stan.org/)-based model for estimating vaccination coverage by location, cohort, and age for childhood infectious diseases, such as measles.
 
-The core model represents a target population as having a life-long propensity for vaccination; some proportion, $\phi$, of that population is unlikely to vaccinate and the complementary proportion, $1 - \phi$, is likely to vaccinate. That population then experiences a vaccination uptake rate, $\lambda$, over the model time eras, according to the vaccination eligibility schedule, $\nu$. These core parameters can vary over time and location, in a user-specifiable way.
+The model represents populations as hierarchical groups, with a life-long propensity for vaccination: some proportion, $\phi$, are unlikely to vaccinate. The population also experiences a vaccination uptake rate, $\lambda$, over time, gated by an eligibility schedule, $\nu(t)$ (an indicator function; 1 when eligible, 0 otherwise). These parameters vary over time and location, according to the user-provided hierarchical structure.
 
-Focusing just on the core model element, imagine a particular population location $i$ and cohort $a$ (where $a$ denotes the start of the time period when that group was born). If that cohort is now age $t$, and the vaccine schedule for the first dose is $\nu(t)$, the expected fraction of that group to have at least one dose is then:
+Imagining a particular group defined by a specific location $i$ and cohort $a$ (where $a$ denotes the start of the time period when that group was born). If that cohort is now age $t$, and the vaccine schedule for the first dose is $\nu(t)$, the expected fraction of that group to have at least one dose is then:
 
 $$
 P(\ge\textrm{1 dose}) = \left(1 - \phi_{i, a}\right) \left(1 - \exp\left\{-\int_a^{t} \lambda_{i, a}(s)\nu(s) d\textrm{s}\right\}\right)
 $$
 
-Which is to say, we are representing vaccination coverage via a survival-like model. We have implemented a generalized version of this model in `imuGAP` which allows for a vaccine with more than one dose, accounting for the fact that being eligible to receive any given dose is conditional on having received the prior required doses. In the following example, we apply the model to simulated observations of coverage for a two-dose vaccine such as MMR.  
+Which is to say: we model vaccination as a survival process. The package provides a generalized version which handles multiple doses, accounting for conditional dependencies between doses.
 
-# Walkthrough of Basic Usage
+This walkthrough demonstrates the workflow of fitting the model and predicting coverage on simulated data bundled with the package. The included demo datasets represent distribution of MMR, a two dose vaccine, across a geographic hierarchy (State -> Counties -> Schools).
 
-This walkthrough demonstrates the workflow of fitting the model and predicting coverage on simulated data. The package includes seven bundled datasets for demonstration, representing a nested geographic setup (State -> Counties -> Schools). 
+# Input Data
 
-## Input Data
+The model requires three types of input: (1) location structure/hierarchy, (2) observed coverage counts, and (3) observation metadata.
 
-The package requires three types of input data: 1) information of location structure/hierarchy, 2) observed coverage counts, and 3) observations metadata. 
-
-### 1. Location Hierarchy (`locations_sim`)
+## (1) Location Hierarchy (`locations_sim`)
 The locations dataset defines the nesting relationship of the locations in the model. For each unique location (`loc_id`), the ID of the higher-order spatial entity that this location is contained within (`parent_id`) is given. In this simulation, we have a State, which contains three Counties, which in turn contain various Schools.
 
 ```{r locations, echo = FALSE, warning=FALSE}
 data("locations_sim", package = "imuGAP")
 knitr::kable(head(locations_sim)) %>%
   kableExtra::kable_styling(latex_options = "scale_down")
-
 ```
 
-### 2. Coverage Observations (`observations_sim`)
-The observations dataset contains the counts of individuals who were vaccinated (`positive`) out of the total sampled (`sample_n`) for each observation. It also includes a `censored` column, which is `1` if the observation is right-censored and `NA` otherwise. For example, the number of students up to date on all required vaccines must be less than or equal to the number of students up to date on the MMR vaccine and is therefore a censored observation of MMR coverage. 
+## (2) Coverage Observations (`observations_sim`)
+The observations dataset contains the counts of vaccinated individuals (`positive`) out of the total sampled (`sample_n`). The model supports both uncensored and right-censored data (i.e. coverage must be higher than the observed value) via an optional `censored` column. This flexibility covers a common data gap: for example, the number of students up to date on all required vaccines is a censored observation those up to date on the MMR vaccine. 
 
 ```{r observations, echo = FALSE, warning=FALSE}
 data("observations_sim", package = "imuGAP")
 knitr::kable(head(observations_sim[, .(obs_id, loc_id, positive, sample_n, censored)])) %>%
   kableExtra::kable_styling(latex_options = "scale_down")
-
 ```
 
-### 3. Observation Metadata (`populations_sim`)
-The populations dataset acts as observation metadata, mapping each observation ID (`obs_id`) to the corresponding location, birth cohort, age at observation, vaccine dose, and observation weight.
+## (3) Observation Metadata (`populations_sim`)
+The populations dataset provides observation metadata, mapping each observation ID (`obs_id`) to the corresponding collection of location, birth cohort, age at observation, and vaccine dose, by observation weight.
 
 ```{r populations, echo=FALSE, warning=FALSE}
 data("populations_sim", package = "imuGAP")
-
 knitr::kable(head(populations_sim)) %>%
   kableExtra::kable_styling(latex_options = "scale_down")
-
 ```
 
-Observations may have multiple entries in the populations dataset as an observation correspond to multiple individual populations (defined as a unique combination of birth cohort, age, and dose). The `weight` value represent how much each individual population contributes to the overall observation and must sum to 1 across all entries for each `ods_id`.   For example, consider an observation such as the [Teen National Immunization Survey](https://www.cdc.gov/nis/about/index.html) which covers teens ages 13-17 (i.e. those in life year 14-18). If we assume the each of the underlying cohorts/ages is evenly weighted in the overall population then the weights would be as follows:
+The populations dataset provides the capability to link a single observation to the mixture of populations it may represent (i.e. the unique combination of birth cohort, age, and dose). The `weight` value represent how much each individual population contributes to the overall observation and must sum to 1 across all entries for each `ods_id`.   For example, the [Teen National Immunization Survey](https://www.cdc.gov/nis/about/index.html) covers individuals aged 13-17 (i.e. those in life year 14-18). If we assume the each of the underlying cohorts/ages is evenly weighted in the overall population then the weights would be as follows:
 
 ```{r, echo = FALSE, warning=FALSE}
-
 knitr::kable(populations_sim |> filter(obs_id == 686)) %>%
   kableExtra::kable_styling(latex_options = "scale_down")
-
 ```
 
-### Supported Data
-
-Observations can correspond to any grouping of cohorts, ages, and locations. Furthermore, the geographic units included are arbitrary. We use state/county/school for example purposes, but any nested spatial structure is supported. Additionally arbitrary time resolution is supported (although less commonly used). The following are examples of data that have been or can be used with `imuGAP`:
+In general, observations can correspond to any grouping of cohorts, ages, and locations (at equivalent hierarchical level). The geographic units themselves are arbitrary. We use state/county/school for example purposes, but any nested structure is supported. Additionally arbitrary time resolution is supported (although less commonly used). The following are examples of data that have been or can be used with `imuGAP`:
 
 - School-level vaccination coverage (including grade-specific or whole school observations)
 - County-level coverage surveys (not previously used but supported)
 - State-level coverage surveys such as the [National Immunization Survey](https://www.cdc.gov/nis/about/index.html)
 - A sub-county spatial unit which corresponds to census block group rather than school (e.g. as available for [Florida](https://www.floridahealth.gov/statistics-data/county-immunization-profiles/))
 
-## Data Processing and Valibation
+# Data Processing and Validation
 
-Often, data from non-standardized sources (e.g. some school-specific coverage data) need to be cleaned prior to use with `imuGAP`. While this functionality is not supported by `imuGAP` directly, colleagues at ACCIDDA are working on a pipeline to standardize and combine school-level vaccination data for the United States (`USImmunityProfiles`, not yet public).
+Often, data from non-standardized sources (e.g. some school-specific coverage data) need to be cleaned prior to use with `imuGAP`. This package focuses on the inference task, but colleagues have a developmental sibling package, [`tidyschoolvax`](https://github.com/ACCIDDA/tidyschoolvax) focused on data preparation.
 
-The `imuGAP` package provides a family of `canonicalize_*` functions to validate, clean, and convert these raw structures into the canonical forms required by the sampler. You can use those directly to help troubleshoot your inputs. However, as shown in the next section, the `sampling()` method also automatically canonicalizes the inputs. Please see the full package vignette for examples of canonicalization and common errors. 
+However, `imuGAP` does provide a family of `canonicalize_*` functions to validate and convert these raw structures into the canonical forms required by the sampler. You can use those directly to help troubleshoot your inputs, but they are also internally applied in `sampling()`. 
 
-## Fitting the Model
+# Fitting the Model
 
 Using the prepared input datasets, we can fit the Bayesian model using `sampling()`. The options for the sampler can be configured using `stan_options()`.
 
 ```{r sampling-code, eval = FALSE}
 fit_sim <- sampling(
-  observations_sim,
-  populations_sim,
-  locations_sim,
+  observations_sim, populations_sim, locations_sim,
   stan_opts = stan_options(
-    iter = 1000,
-    chains = 4,
-    refresh = 0,
-    seed = 1L
+    iter = 1000, chains = 4, refresh = 0, seed = 1L
   )
 )
 ```
@@ -135,28 +118,23 @@ data("fit_sim", package = "imuGAP")
 The fit object contains the `stanfit` object emitted from `sampling()`, as well as input settings and data. See the full package vignette on more details on fit diagnostics.   
 
 
-## Defining a Target for Predictions
+# Defining a Target for Predictions
 
-To predict vaccine coverage for a target population (which can include populations without direct observations, as long as they exist in the locations hierarchy), we first define a target grid using `create_target()`. 
+To predict vaccine coverage for target populations (i.e. a combination of location, cohort, age, and dose not directly observed), we define a target grid using `create_target()`. 
 
-For example, one use case for imuGAP is to help understand the current immune landscape. To do this, we can obtain a "snapshot" prediction target for all locations, including the State and County levels, across ages 1 to 18 at one point in time (i.e. today):
+For example, `imuGAP` can impute the current immune landscape. To do this, we create a "snapshot" prediction target for all locations, including the State and County levels, across ages 1 to 18 at one point in time (i.e. today):
 
 ```{r target}
 target_sim <- create_target(
   fit = fit_sim,
-  location = locations_sim$loc_id,
-  age = 1:18,
-  cohort = max(populations_sim$cohort) - 18,
-  dose = c(1, 2),
+  location = locations_sim$loc_id, age = 1:18,
+  cohort = max(populations_sim$cohort) - 18, dose = c(1, 2),
   mode = "snapshot"
 )
 head(target_sim)
 ```
 
-
-## Predicting Coverage
-
-Finally, we run `predict()` to generate predicted coverage probabilities for each target population combination across all posterior draws.
+We can then `predict()` to generate predicted coverage probabilities for each target population combination across all posterior draws.
 
 Generating predictions also runs the Stan model (in generated quantities mode):
 
@@ -177,18 +155,14 @@ summary_predict <- summary(predict_sim)
 
 # E.g. current coverage prediction for Chickadee Elementary
 summary_chick <- summary_predict |>
-  filter(loc_id == "Chickadee Elementary",
-         dose == 2,
-         age %in% 5:11) |>
+  subset(
+    loc_id == "Chickadee Elementary" & dose == 2 & age %in% 5:11
+  ) |>
   dplyr::select(loc_id, age, cohort, dose, mean, q2_5, q50, q97_5)
 
 knitr::kable(summary_chick) %>%
   kableExtra::kable_styling(latex_options = "scale_down")
-
-
 ```
-
-\newpage
 
 Now let's visualize the results. First we will take a look at overall state coverage by cohort (A). Note that the lower coverage among 5 year olds is due to them only having been eligible for their second dose for one year. The trend in coverage by age at the county level (B) follows the same trend as the state but with differing magnitude. Finally, we can look at the distribution of coverage estimates by age group for an exemplar county (C). 
 
@@ -230,7 +204,7 @@ sch_plt <- summary_predict |>
     title = "C. Distribution of School-Level Coverage For Scruggs County"
   )
 
-plot_grid(state_plt, cnty_plt, sch_plt, nrow = 3)
+(state_plt / cnty_plt / sch_plt)
 ```
 
 # Model Limitations
