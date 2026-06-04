@@ -89,9 +89,6 @@ sch_per_cnty <- res_dt |>
 cnty_offset <- rnorm(nrow(sch_per_cnty), 0, sigma_cnty)
 sch_offset <- rnorm(sum(sch_per_cnty$n_sch), 0, sigma_sch)
 
-# Empty vector to store true kindergarten vaccination probabilities
-p_obs_kg <- c()
-
 # Simulate child vax view
 n24 <- round(runif(n_cohort, 250, 450))
 n36 <- round(runif(n_cohort, 250, 450))
@@ -161,7 +158,6 @@ for (s in seq_len(sum(sch_per_cnty$n_sch))) {
     y_obs = rbinom(length(sch_yrs), nsch, cov_temp),
     y_smp = nsch
   )
-  p_obs_kg <- c(p_obs_kg, cov_temp)
 }
 kg_sim_full <- bind_rows(kg_sim_full)
 
@@ -288,7 +284,6 @@ for (i in seq_len(nrow(vv_sim))) {
 }
 
 observations_sim <- bind_rows(kg_sim, vv_sim |> mutate(unit_id = 1))
-p_obs <- c(p_obs_kg, rep(NA, nrow(vv_sim)))
 
 # Now get normalized cohorts
 observations_sim <- observations_sim |>
@@ -361,7 +356,7 @@ latent_params_sim <- list(
   off_sch = sch_offset,
   off_cnty = cnty_offset,
   censor_reduction = other_vax_reduction,
-  p_obs = p_obs
+  uptake = cov
 )
 
 usethis::use_data(latent_params_sim, overwrite = TRUE)
