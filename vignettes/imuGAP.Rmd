@@ -16,7 +16,8 @@ knitr::opts_chunk$set(
 
 ```{r setup, echo = FALSE, message = FALSE}
 # List all suggested packages needed for this vignette
-required_pkgs <- c("imuGAP", "data.table", "bayesplot", "ggplot2")
+required_pkgs <- c("imuGAP", "data.table", "bayesplot", "ggplot2",
+                   "tidyr", "dplyr")
 
 # Check if they are available
 pkgs_available <- all(sapply(required_pkgs, requireNamespace, quietly = TRUE))
@@ -249,17 +250,118 @@ summary_predict |>
   )
 ```
 
-Finally, we can look at the distribution of school-level coverage estimates by age group. Let's focus on 5-11 year olds as that is the ages for children in elementary schools. 
+Next, we can look at the distribution of school-level coverage estimates by age group. Let's focus on Scruggs County as an example. 
 
 ```{r grade-viz}
 summary_predict |>
   subset(
     !(loc_id %in% c("State", "Scruggs", "Simone", "Watson")) &
+      loc_id %in% locations_sim$loc_id[locations_sim$parent_id == "Scruggs"][-1] &
       dose == 2 &
-      age %in% 5:11
+      age > 4
   ) |>
   ggplot() +
-  geom_histogram(aes(x = q50)) +
-  facet_wrap(~age) +
-  theme_bw()
+  geom_boxplot(aes(x = factor(age), y = q50)) +
+  theme_bw() +
+  labs(
+    x = "Age", y = "Coverage",
+    title = "C. Distribution of School-Level Coverage For Scruggs County"
+  )
 ```
+Finally let's look at some selected schools and see how their predicted coverage compared to true underlying coverage from the data simulation process.
+
+```{r}
+schools <- c("Towhee Children's Academy", # ~380 per grade
+             "Flycatcher Elementary", # ~110 per grade
+             "Sparrow School") # ~60 per grade
+
+# Get county and school offsets
+off_cnty <- latent_params_sim$off_cnty[1]
+off_sch <- latent_params_sim$off_sch[match(schools, locations_sim$loc_id)-4]
+
+# Subset to targets of interest
+target_sub <- target_sim |>
+  subset(loc_id %in% schools &
+         dose == 2 &
+         age > 4)
+
+draws_sub <- predict_sim$draws[, target_sim$loc_id %in% schools &
+                                 target_sim$dose == 2 &
+                                 target_sim$age > 4]
+
+# Compute vaccine uptake curves
+n_yr <- max(target_sim$age)
+lambda1 <- latent_params_sim$lambda[1]
+lambda2 <- latent_params_sim$lambda[2]
+
+doses <- matrix(0, nrow = n_yr, ncol = 2) # pose schedule
+doses[2:nrow(doses), 1] <- 1
+doses[5:nrow(doses), 2] <- 1
+
+cov <- matrix(nrow = n_yr, ncol = 2) # uptake curves
+cov[1, ] <- 0
+
+for (i in 2:n_yr) {
+  cov[i, 1] <- cov[i - 1, 1] +
+    (1 - cov[i - 1, 1]) * (1 - exp(-lambda1 * doses[i, 1]))
+  cov[i, 2] <- cov[i - 1, 2] +
+    ((cov[i, 1] - cov[i - 1, 2]) * (1 - exp(-lambda2 * doses[i, 2])))
+}
+
+# Compute p for target
+p <- numeric(nrow(target_sub))
+phi_st <- latent_params_sim$phi_state
+
+for(i in 1:nrow(target_sub)) {
+  offset <- off_sch[schools == target_sub$loc_id[i]] + off_cnty
+  p[i] <- plogis(
+    qlogis(phi_st[target_sub$cohort[i]]) + offset
+    ) * cov[target_sub$age[i], 2]
+}
+
+# Pivot draws longer
+draws_df <- as.data.frame(draws_sub) %>%
+  mutate(draw = row_number()) %>%   # add original row number
+  pivot_longer(
+    cols = -draw,
+    names_to = "target_id",
+    values_to = "coverage"
+  ) %>%
+  mutate(target_id = as.numeric(substr(target_id, 2, nchar(target_id))))
+
+target_sub$target_id <- 1:nrow(target_sub)
+draws_df <- left_join(draws_df,
+                      target_sub) %>%
+  left_join(data.frame(target_id = 1:42,
+                       p = p))
+
+# Now plot it all
+n_draws <- 2000
+draw_samp <- sample(1:2000, n_draws, replace = FALSE)
+
+draw_plt <- draws_df %>%
+  filter(draw %in% draw_samp)
+
+ggplot() +
+  geom_point(data = draw_plt,
+             aes(x = factor(age), y = coverage, color = loc_id),
+             alpha = 0.1, shape = 16,
+             position = position_jitterdodge(dodge.width = 0.5,
+                                             jitter.width = 0.15)) +
+  geom_point(data = draw_plt %>%
+               group_by(loc_id, age) %>%
+               summarize(coverage = p[1]),
+             aes(x = factor(age), y = coverage, group = loc_id, shape = "True value"),
+             color = "black", fill = NA,
+             position = position_dodge(width = 0.5)) +
+  theme_bw() +
+  scale_shape_manual(
+    name = "",
+    values = c("True value" = 24)) +
+  guides(color = guide_legend(override.aes = list(alpha = 1))) +
+  theme(legend.position = "bottom") +
+  labs(color = "School", x = "Age", y = "Coverage")
+
+
+```
+
