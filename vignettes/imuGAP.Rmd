@@ -102,7 +102,7 @@ To ensure data integrity, the `canonicalize_*` functions enforce strict rules on
 
 ```{r validation-failure-obs}
 # Create a copy with an invalid observation (positive > sample_n)
-invalid_obs <- copy(observations_sim)
+invalid_obs <- copy(observations_sim[, .(obs_id, loc_id, positive, sample_n, censored)])
 invalid_obs[1, positive := sample_n + 10]
 
 # This will fail validation and throw an error:
@@ -171,7 +171,7 @@ mcmc_trace(fit_sim$stanfit,
     "beta_bs[1]", "beta_bs[2]", "beta_bs[3]",
     "beta_bs[4]", "beta_bs[5]"
   )
-)
+) + theme_bw()
 ```
 
 ---
@@ -206,19 +206,17 @@ Generating predictions also runs the Stan model (in generated quantities mode) a
 predict_sim <- predict(object = fit_sim, target = target_sim)
 ```
 
-Instead, we load the pre-computed prediction results `predict_sim` bundled with the package:
+Instead, we load the pre-computed prediction results `predict_sim` bundled with the package. This is an object of class `imugap_predict` which contains a draws array (`predict_sim$draws`) with the MCMC draws for each prediction target as well as the target information (`predict_sim$target`).
 
 ```{r load-predictions}
 data("predict_sim", package = "imuGAP")
-head(predict_sim)
 ```
 
-The output `predict_sim` is a `data.table` containing posterior coverage probability predictions (`p_obs`) for each MCMC sample (`sample_id`) and target population combination. We can summarize these predictions to get the posterior mean and credible intervals for any location, age, or dose:
+We can summarize these predictions to get the posterior mean and credible intervals for any location, age, or dose:
 
 ```{r summarize-predictions}
 # Calculate the posterior mean coverage probability for each location and dose at age 5
 summary_predict <- summary(predict_sim)
-
 head(summary_predict)
 ```
 
@@ -275,9 +273,15 @@ schools <- c("Towhee Children's Academy", # ~380 per grade
              "Flycatcher Elementary", # ~110 per grade
              "Sparrow School") # ~60 per grade
 
+# State-level willingness to vaccinate
+phi_st <- latent_params_sim$phi_state
+
 # Get county and school offsets
 off_cnty <- latent_params_sim$off_cnty[1]
 off_sch <- latent_params_sim$off_sch[match(schools, locations_sim$loc_id)-4]
+
+# Uptake curves
+uptake <- latent_params_sim$uptake
 
 # Subset to targets of interest
 target_sub <- target_sim |>
@@ -294,29 +298,17 @@ n_yr <- max(target_sim$age)
 lambda1 <- latent_params_sim$lambda[1]
 lambda2 <- latent_params_sim$lambda[2]
 
-doses <- matrix(0, nrow = n_yr, ncol = 2) # pose schedule
+doses <- matrix(0, nrow = n_yr, ncol = 2) # dose schedule
 doses[2:nrow(doses), 1] <- 1
 doses[5:nrow(doses), 2] <- 1
 
-cov <- matrix(nrow = n_yr, ncol = 2) # uptake curves
-cov[1, ] <- 0
-
-for (i in 2:n_yr) {
-  cov[i, 1] <- cov[i - 1, 1] +
-    (1 - cov[i - 1, 1]) * (1 - exp(-lambda1 * doses[i, 1]))
-  cov[i, 2] <- cov[i - 1, 2] +
-    ((cov[i, 1] - cov[i - 1, 2]) * (1 - exp(-lambda2 * doses[i, 2])))
-}
-
 # Compute p for target
 p <- numeric(nrow(target_sub))
-phi_st <- latent_params_sim$phi_state
-
 for(i in 1:nrow(target_sub)) {
   offset <- off_sch[schools == target_sub$loc_id[i]] + off_cnty
   p[i] <- plogis(
     qlogis(phi_st[target_sub$cohort[i]]) + offset
-    ) * cov[target_sub$age[i], 2]
+    ) * uptake[target_sub$age[i], 2]
 }
 
 # Pivot draws longer
@@ -332,7 +324,7 @@ draws_df <- as.data.frame(draws_sub) %>%
 target_sub$target_id <- 1:nrow(target_sub)
 draws_df <- left_join(draws_df,
                       target_sub) %>%
-  left_join(data.frame(target_id = 1:42,
+  left_join(data.frame(target_id = 1:nrow(target_sub),
                        p = p))
 
 # Now plot it all
