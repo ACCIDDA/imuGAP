@@ -178,3 +178,77 @@ subset.imugap_predict <- function(x, subset, iteration, chain, ...) {
     class = "imugap_predict"
   )
 }
+
+#' @title Convert coverage predictions to a data.frame
+#'
+#' @description
+#' Converts the 3D draws array of an `imugap_predict` object into a long-format
+#' `data.frame` containing `iteration`, `chain`, target metadata, and a
+#' `coverage` column.
+#'
+#' @param x an `imugap_predict` object returned by `[predict()]`.
+#' @param row.names `NULL` or a character vector giving the row names for the
+#'   data frame.
+#' @param optional logical. If `TRUE`, setting row names and converting column
+#'   names is optional.
+#' @param ... additional arguments (currently ignored).
+#'
+#' @return A `data.table` with columns `iteration`, `chain`, the target metadata
+#'   columns, and `coverage`.
+#'
+#' @export
+as.data.frame.imugap_predict <- function(
+  x,
+  row.names = NULL,
+  optional = FALSE,
+  ...
+) {
+  if (!inherits(x, "imugap_predict")) {
+    stop("x must be of class 'imugap_predict'", call. = FALSE)
+  }
+
+  dims <- dim(x$draws)
+  I <- dims[1]
+  C <- dims[2]
+  V <- dims[3]
+
+  iter_vals <- dimnames(x$draws)[[1]]
+  if (is.null(iter_vals)) {
+    iter_vals <- seq_len(I)
+  } else {
+    iter_vals_num <- suppressWarnings(as.integer(iter_vals))
+    if (!any(is.na(iter_vals_num))) {
+      iter_vals <- iter_vals_num
+    }
+  }
+
+  chain_vals <- dimnames(x$draws)[[2]]
+  if (is.null(chain_vals)) {
+    chain_vals <- seq_len(C)
+  } else {
+    chain_vals_num <- suppressWarnings(as.integer(gsub(
+      "[^0-9]",
+      "",
+      chain_vals
+    )))
+    if (!any(is.na(chain_vals_num)) && length(chain_vals_num) == C) {
+      chain_vals <- chain_vals_num
+    }
+  }
+
+  iterations <- rep(iter_vals, times = C * V)
+  chains <- rep(rep(chain_vals, each = I), times = V)
+  coverage <- as.vector(x$draws)
+
+  target_rep <- data.table::copy(x$target)
+  target_rep <- target_rep[rep(seq_len(V), each = I * C), ]
+
+  res <- data.table::data.table(
+    iteration = iterations,
+    chain = chains,
+    target_rep,
+    coverage = coverage
+  )
+
+  res[]
+}

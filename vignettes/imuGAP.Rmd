@@ -29,9 +29,9 @@ if (!pkgs_available) {
   knitr::opts_chunk$set(eval = FALSE)
   message("Some suggested packages are missing. Vignette code will not be executed.")
 } else {
-  for (pkg in required_pkgs) {
-    library(pkg, character.only = TRUE)
-  }
+  suppressPackageStartupMessages(
+    sapply(required_pkgs, require, character.only = TRUE)
+  )
 }
 ```
 
@@ -234,6 +234,7 @@ summary_predict |>
   scale_x_continuous(breaks = 5:18) +
   labs(x = "Age", y = "Coverage", title = "State-level two dose coverage")
 ```
+
 We can also look at the trend in coverage by age at the county level. Note that they follow the same trend as the state but with differing magnitude.
 
 ```{r county-viz}
@@ -269,6 +270,7 @@ summary_predict |>
     title = "C. Distribution of School-Level Coverage For Scruggs County"
   )
 ```
+
 Finally let's look at some selected schools and see how their predicted coverage compared to true underlying coverage from the data simulation process.
 
 ```{r}
@@ -289,66 +291,30 @@ off_sch <- latent_params_sim$off_sch[match(schools, locations_sim$loc_id) - 4]
 uptake <- latent_params_sim$uptake
 
 # Subset to targets of interest
-target_sub <- target_sim |>
+predict_sub <- predict_sim |>
   subset(loc_id %in% schools & dose == 2 & age > 4)
 
-draws_sub <- predict_sim$draws[, , target_sim$loc_id %in% schools &
-  target_sim$dose == 2 &
-  target_sim$age > 4, drop = FALSE]
-
-# Compute vaccine uptake curves
-n_yr <- max(target_sim$age)
-lambda1 <- latent_params_sim$lambda[1]
-lambda2 <- latent_params_sim$lambda[2]
-
-doses <- matrix(0, nrow = n_yr, ncol = 2) # dose schedule
-doses[2:nrow(doses), 1] <- 1
-doses[5:nrow(doses), 2] <- 1
-
 # Compute p for target
+target_sub <- predict_sub$target
 p <- numeric(nrow(target_sub))
-for (i in 1:nrow(target_sub)) {
+for (i in seq_len(nrow(target_sub))) {
   offset <- off_sch[schools == target_sub$loc_id[i]] + off_cnty
   p[i] <- plogis(
     qlogis(phi_st[target_sub$cohort[i]]) + offset
   ) * uptake[target_sub$age[i], 2]
 }
+latent_ref <- copy(predict_sub$target)
+latent_ref$coverage <- p
 
-# Combine iteration and chain dimensions into a single draw dimension
-dims <- dim(draws_sub)
-draws_sub_mat <- array(draws_sub, dim = c(dims[1] * dims[2], dims[3]))
-colnames(draws_sub_mat) <- dimnames(draws_sub)[[3]]
-
-# Pivot draws longer
-draws_df <- as.data.frame(draws_sub_mat) %>%
-  mutate(draw = row_number()) %>% # add original row number
-  pivot_longer(
-    cols = -draw,
-    names_to = "target_id",
-    values_to = "coverage"
-  ) %>%
-  mutate(target_id = as.numeric(substr(target_id, 2, nchar(target_id))))
-
-target_sub$target_id <- 1:nrow(target_sub)
-draws_df <- left_join(
-  draws_df,
-  target_sub
-) %>%
-  left_join(data.frame(
-    target_id = 1:nrow(target_sub),
-    p = p
-  ))
+# Convert predictions to a long-format data.frame
+draws_df <- as.data.frame(predict_sub)
 
 # Now plot it all
-n_draws <- nrow(draws_df)
-draw_samp <- sample(seq_len(n_draws), n_draws, replace = FALSE)
-
-draw_plt <- draws_df |> subset(draw %in% draw_samp)
-
 ggplot() +
+  aes(age, coverage) +
   geom_point(
-    data = draw_plt,
-    aes(x = factor(age), y = coverage, color = loc_id),
+    data = draws_df,
+    aes(color = loc_id),
     alpha = 0.1, shape = 16,
     position = position_jitterdodge(
       dodge.width = 0.5,
@@ -356,12 +322,9 @@ ggplot() +
     )
   ) +
   geom_point(
-    data = draw_plt %>%
-      group_by(loc_id, age) %>%
-      summarize(coverage = p[1]),
-    aes(x = factor(age), y = coverage, group = loc_id, shape = "True value"),
-    color = "black", fill = NA,
-    position = position_dodge(width = 0.5)
+    data = latent_ref,
+    aes(shape = "True value"),
+    color = "black", fill = NA
   ) +
   theme_bw() +
   scale_shape_manual(

@@ -163,3 +163,51 @@ test_that("subset.imugap_predict subsets draws and metadata correctly", {
   expect_equal(dim(pred_sub4$draws)[3], sum(predict_sim$target$dose == 2))
   expect_equal(nrow(pred_sub4$target), sum(predict_sim$target$dose == 2))
 })
+
+test_that("as.data.frame.imugap_predict works correctly", {
+  data("predict_sim", package = "imuGAP")
+
+  # Full object
+  df_full <- as.data.frame(predict_sim)
+  expect_s3_class(df_full, "data.table")
+  expect_s3_class(df_full, "data.frame")
+
+  dims <- dim(predict_sim$draws)
+  I <- dims[1]
+  C <- dims[2]
+  V <- dims[3]
+  expected_rows <- I * C * V
+
+  expect_equal(nrow(df_full), expected_rows)
+  expect_true(all(c("iteration", "chain", "coverage") %in% colnames(df_full)))
+
+  # Verify target columns are in df_full
+  target_cols <- colnames(predict_sim$target)
+  expect_true(all(target_cols %in% colnames(df_full)))
+
+  # Verify values mapping for first few iterations/chains/variables
+  expect_equal(df_full$coverage[1], predict_sim$draws[1, 1, 1])
+  expect_equal(df_full$coverage[2], predict_sim$draws[2, 1, 1])
+  expect_equal(df_full$coverage[I], predict_sim$draws[I, 1, 1])
+  expect_equal(df_full$coverage[I + 1], predict_sim$draws[1, 1, 2]) # since C = 1 in predict_sim
+
+  # Test with a subsetted view
+  pred_sub <- subset(predict_sim, dose == 2, iteration = 1:5)
+  df_sub <- as.data.frame(pred_sub)
+
+  sub_dims <- dim(pred_sub$draws)
+  sub_I <- sub_dims[1] # 5
+  sub_C <- sub_dims[2] # 1
+  sub_V <- sub_dims[3] # sum(predict_sim$target$dose == 2)
+  expected_sub_rows <- sub_I * sub_C * sub_V
+
+  expect_s3_class(df_sub, "data.table")
+  expect_s3_class(df_sub, "data.frame")
+  expect_equal(nrow(df_sub), expected_sub_rows)
+  expect_true(all(df_sub$dose == 2))
+  expect_true(all(df_sub$iteration %in% 1:5))
+  expect_equal(df_sub$coverage[1], pred_sub$draws[1, 1, 1])
+  expect_equal(df_sub$coverage[5], pred_sub$draws[5, 1, 1])
+  expect_equal(df_sub$coverage[6], pred_sub$draws[1, 1, 2])
+})
+
