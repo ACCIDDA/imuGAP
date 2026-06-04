@@ -51,8 +51,9 @@ phi_st <- c(
   0.9277256,
   0.9298663
 )
-lambda1 <- 2.8
-lambda2 <- 3.0
+
+lambda <- c(2.8, 3.0)
+n_doses <- length(lambda)
 
 sigma_sch <- 0.8
 sigma_cnty <- 0.4
@@ -60,18 +61,25 @@ sigma_cnty <- 0.4
 other_vax_reduction <- 0.95
 
 # Dose schedule
-doses <- matrix(0, nrow = n_yr, ncol = 2)
-doses[2:nrow(doses), 1] <- 1
-doses[5:nrow(doses), 2] <- 1
+dose_schedule <- c(1, 4)
+doses <- matrix(0, ncol = length(dose_schedule), nrow = n_yr)
+for (i in seq_along(dose_schedule)) {
+  doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
+}
 
-cov <- matrix(nrow = n_yr, ncol = 2)
+cov <- matrix(nrow = n_yr, ncol = n_doses)
 cov[1, ] <- 0
 
-for (i in 2:n_yr) {
-  cov[i, 1] <- cov[i - 1, 1] +
-    (1 - cov[i - 1, 1]) * (1 - exp(-lambda1 * doses[i, 1]))
-  cov[i, 2] <- cov[i - 1, 2] +
-    ((cov[i, 1] - cov[i - 1, 2]) * (1 - exp(-lambda2 * doses[i, 2])))
+for (d in seq_len(n_doses)) {
+  ref <- if (d == 1L) {
+    rep(1, n_yr)
+  } else {
+    cov[, d - 1L]
+  }
+  survival <- (1 - exp(-lambda[d] * doses[, d]))
+  for (i in 2:n_yr) {
+    cov[i, d] <- cov[i - 1, d] + (ref[i] - cov[i - 1, d]) * survival[i]
+  }
 }
 
 # Pick 3 contiguous NC counties (Haywood, Jackson, Transylvania)
@@ -350,7 +358,7 @@ usethis::use_data(locations_sim, overwrite = TRUE)
 # Create latent parameter values
 latent_params_sim <- list(
   phi_state = phi_st,
-  lambda = c(lambda1, lambda2),
+  lambda = lambda,
   sigma_sch = sigma_sch,
   sigma_cnty = sigma_cnty,
   off_sch = sch_offset,
