@@ -36,16 +36,19 @@ test_that("sampling and predict work correctly with simulated data", {
   )
 
   expect_s3_class(pred, "imugap_predict")
-  expect_true(is.matrix(pred$draws))
+  expect_true(is.array(pred$draws))
   expect_s3_class(pred$target, "data.table")
 
   chains <- if (!is.null(st_opts$chains)) st_opts$chains else 4L
   iter <- if (!is.null(st_opts$iter)) st_opts$iter else 2000L
   warmup <- if (!is.null(st_opts$warmup)) st_opts$warmup else (iter %/% 2L)
-  n_draws <- (iter - warmup) * chains
   n_obs <- length(unique(clean_pops$obs_id))
-  expect_equal(nrow(pred$draws), n_draws)
-  expect_equal(ncol(pred$draws), n_obs)
+
+  dims <- dim(pred$draws)
+  expect_equal(length(dims), 3L)
+  expect_equal(dims[1], (iter - warmup) * chains)
+  expect_equal(dims[2], 1L)
+  expect_equal(dims[3], n_obs)
 
   # Check value range of draws
   expect_true(all(pred$draws >= 0 & pred$draws <= 1))
@@ -121,4 +124,42 @@ test_that("predict throws informative compatibility errors", {
     predict(fit, bad_cohort_pops),
     "cohort values must be within 1 and fit\\$data\\$n_cohort"
   )
+})
+
+test_that("subset.imugap_predict subsets draws and metadata correctly", {
+  data("predict_sim", package = "imuGAP")
+
+  # Original dimensions: 2000 iterations, 1 chain, 1008 variables
+  orig_dims <- dim(predict_sim$draws)
+  expect_equal(orig_dims[1], 2000)
+  expect_equal(orig_dims[2], 1)
+  expect_equal(orig_dims[3], 1008)
+
+  # Check subsetting by metadata expression
+  pred_sub1 <- subset(predict_sim, dose == 2)
+  expect_s3_class(pred_sub1, "imugap_predict")
+  expect_equal(dim(pred_sub1$draws)[1], 2000)
+  expect_equal(dim(pred_sub1$draws)[2], 1)
+  expect_equal(dim(pred_sub1$draws)[3], sum(predict_sim$target$dose == 2))
+  expect_equal(nrow(pred_sub1$target), sum(predict_sim$target$dose == 2))
+  expect_true(all(pred_sub1$target$dose == 2))
+
+  # Check subsetting by iteration
+  pred_sub2 <- subset(predict_sim, iteration = 1:100)
+  expect_equal(dim(pred_sub2$draws)[1], 100)
+  expect_equal(dim(pred_sub2$draws)[2], 1)
+  expect_equal(dim(pred_sub2$draws)[3], 1008)
+
+  # Check subsetting by chain
+  pred_sub3 <- subset(predict_sim, chain = 1)
+  expect_equal(dim(pred_sub3$draws)[1], 2000)
+  expect_equal(dim(pred_sub3$draws)[2], 1)
+  expect_equal(dim(pred_sub3$draws)[3], 1008)
+
+  # Check subsetting by both metadata and iterations/chains
+  pred_sub4 <- subset(predict_sim, dose == 2, iteration = 1:5, chain = 1)
+  expect_equal(dim(pred_sub4$draws)[1], 5)
+  expect_equal(dim(pred_sub4$draws)[2], 1)
+  expect_equal(dim(pred_sub4$draws)[3], sum(predict_sim$target$dose == 2))
+  expect_equal(nrow(pred_sub4$target), sum(predict_sim$target$dose == 2))
 })

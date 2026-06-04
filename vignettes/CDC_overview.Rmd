@@ -176,7 +176,7 @@ predict_sim <- predict(object = fit_sim, target = target_sim)
 data("predict_sim", package = "imuGAP")
 ```
 
-This is an object of class `imugap_predict` which contains a draws array with the MCMC draws for each prediction target as well as the target information. We can summarize these predictions to get the posterior mean and credible intervals for any location, age, or dose:
+This is an object of class `imugap_predict` which contains a 3D draws array with the MCMC draws for each prediction target as well as the target information. We can summarize these predictions to get the posterior mean and credible intervals for any location, age, or dose:
 
 ```{r summarize-predictions}
 # Calculate the posterior mean coverage probability for each location and dose at age 5
