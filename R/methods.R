@@ -199,7 +199,7 @@ subset.imugap_predict <- function(x, subset, iteration, chain, ...) {
 #' @export
 as.data.frame.imugap_predict <- function(
   x,
-  row.names = NULL,
+  row.names = NULL, # nolint
   optional = FALSE,
   ...
 ) {
@@ -208,19 +208,19 @@ as.data.frame.imugap_predict <- function(
   }
 
   dims <- dim(x$draws)
-  I <- dims[1]
-  C <- dims[2]
-  V <- dims[3]
+  dim_i <- dims[1]
+  dim_c <- dims[2]
+  dim_v <- dims[3]
 
-  iter_vals <- seq_len(I)
-  chain_vals <- seq_len(C)
+  iter_vals <- seq_len(dim_i)
+  chain_vals <- seq_len(dim_c)
 
-  iterations <- rep(iter_vals, times = C * V)
-  chains <- rep(rep(chain_vals, each = I), times = V)
+  iterations <- rep(iter_vals, times = dim_c * dim_v)
+  chains <- rep(rep(chain_vals, each = dim_i), times = dim_v)
   coverage <- as.vector(x$draws)
 
   target_rep <- data.table::copy(x$target)
-  target_rep <- target_rep[rep(seq_len(V), each = I * C), ]
+  target_rep <- target_rep[rep(seq_len(dim_v), each = dim_i * dim_c), ]
 
   res <- data.table::data.table(
     iteration = iterations,

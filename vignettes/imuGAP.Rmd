@@ -256,9 +256,9 @@ Next, we can look at the distribution of school-level coverage estimates by age 
 ```{r grade-viz}
 summary_predict |>
   subset(
-      loc_id %in% locations_sim[parent_id == "Scruggs", loc_id] &
-      dose == 2 &
-      age > 4
+    loc_id %in% locations_sim[parent_id == "Scruggs", loc_id] &
+    dose == 2 &
+    age > 4
   ) |>
   ggplot() +
   geom_boxplot(aes(x = factor(age), y = q50)) +
@@ -295,7 +295,7 @@ ggplot() +
   aes(age, coverage, color = loc_id) +
   geom_point(
     data = draws_df,
-    alpha = 1/256, shape = 16,
+    alpha = 1 / 256, shape = 16,
     position = position_jitterdodge(
       dodge.width = 0.5,
       jitter.width = 0.15
