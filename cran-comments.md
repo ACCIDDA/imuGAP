@@ -1,6 +1,6 @@
 ## R CMD check results
 
-0 errors | 0 warnings | 2 notes
+0 errors | 0 warnings | 1 note
 
 This is a new submission.
 
@@ -11,11 +11,6 @@ This is a new submission.
   installed size above the usual threshold. The compiled models are required
   for the package's core functionality and cannot be reduced without removing
   it.
-
-* **S3 generic/method consistency** (`summary.imugap_predict`). [csmith701:
-  confirm wording. The `summary` method for `imugap_predict` objects takes
-  additional arguments beyond the `summary()` generic; tracked separately in
-  ACCIDDA/imuGAP#73.]
 
 (Stan model compilation also makes installation and any sampler-exercising
 examples slow; such examples are wrapped in `\dontrun{}` to keep check runtime
@@ -38,13 +33,11 @@ None on CRAN currently. The package is a dependency of the GitHub-only project
 
 ## Notes for reviewer
 
-[csmith701 to set the reviewer-facing voice; draft below per @pearsonca on #31.]
-
 First submission. Points that may be useful to the reviewer:
 
 - imuGAP wraps Stan models built with `rstantools` and follows the standard
   rstan package layout (`src/Makevars`, `src/stanExports_*`, `inst/stan/`).
-- Bundled example datasets (`locations_sim`, `observations_sim`,
-  `populations_sim`, `fit_sim`) are simulated and small; `fit_sim` is a wiring
-  fixture for examples and tests, not a converged posterior.
+- Bundled example datasets (`fit_sim`, `latent_params_sim`, `locations_sim`,
+  `observations_sim`, `populations_sim`, `predict_sim`, `target_sim`) are
+  simulated and small.
 - Citation guidance: see `CITATION.cff` at the repo root for how to cite imuGAP.
