@@ -37,7 +37,7 @@ by location, cohort, age, and dose for the requested quantiles."><meta property=
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Summarize coverage predictions</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ACCIDDA/imuGAP/blob/main/R/imuGAP.R" class="external-link"><code>R/imuGAP.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ACCIDDA/imuGAP/blob/main/R/methods.R" class="external-link"><code>R/methods.R</code></a></small>
       <div class="d-none name"><code>summary.imugap_predict.Rd</code></div>
     </div>
 
@@ -75,6 +75,71 @@ Defaults to <code>c(0.025, 0.5, 0.975)</code>.</p></dd>
 coverage (<code>mean</code>), and the requested quantiles (e.g. <code>q2.5</code>, <code>q50</code>, <code>q97.5</code>).</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Load example prediction object</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"predict_sim"</span>, package <span class="op">=</span> <span class="st">"imuGAP"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Summarize coverage predictions</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">predict_sim</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       obs_c_id                  loc_id   age cohort  dose weight loc_c_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          &lt;int&gt;                  &lt;char&gt; &lt;int&gt;  &lt;num&gt; &lt;num&gt;  &lt;num&gt;    &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    1:        1                   State     1     30     1      1        1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    2:        2                 Scruggs     1     30     1      1        2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    3:        3                  Simone     1     30     1      1        3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    4:        4                  Watson     1     30     1      1        4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    5:        5    Chickadee Elementary     1     30     1      1        8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ---                                                                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1004:     1004     Mockingbird Academy    18     13     2      1       27</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1005:     1005 Kinglet Learning Center    18     13     2      1       25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1006:     1006            Vireo School    18     13     2      1       28</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1007:     1007      Kingfisher Academy    18     13     2      1       24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1008:     1008    Cormorant Elementary    18     13     2      1       22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       obs_id      mean      q2_5       q50     q97_5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        &lt;int&gt;     &lt;num&gt;     &lt;num&gt;     &lt;num&gt;     &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    1:      1 0.0000000 0.0000000 0.0000000 0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    2:      2 0.0000000 0.0000000 0.0000000 0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    3:      3 0.0000000 0.0000000 0.0000000 0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    4:      4 0.0000000 0.0000000 0.0000000 0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    5:      5 0.0000000 0.0000000 0.0000000 0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ---                                               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1004:   1004 0.9136193 0.8900935 0.9137017 0.9356396</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1005:   1005 0.9675009 0.9457533 0.9677305 0.9873141</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1006:   1006 0.8571546 0.8392127 0.8569275 0.8755120</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1007:   1007 0.9212400 0.9035732 0.9211019 0.9392955</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1008:   1008 0.9757615 0.9593055 0.9758310 0.9912522</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Summarize with custom quantiles</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">predict_sim</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       obs_c_id                  loc_id   age cohort  dose weight loc_c_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          &lt;int&gt;                  &lt;char&gt; &lt;int&gt;  &lt;num&gt; &lt;num&gt;  &lt;num&gt;    &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    1:        1                   State     1     30     1      1        1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    2:        2                 Scruggs     1     30     1      1        2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    3:        3                  Simone     1     30     1      1        3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    4:        4                  Watson     1     30     1      1        4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    5:        5    Chickadee Elementary     1     30     1      1        8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ---                                                                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1004:     1004     Mockingbird Academy    18     13     2      1       27</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1005:     1005 Kinglet Learning Center    18     13     2      1       25</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1006:     1006            Vireo School    18     13     2      1       28</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1007:     1007      Kingfisher Academy    18     13     2      1       24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1008:     1008    Cormorant Elementary    18     13     2      1       22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       obs_id      mean       q10       q50       q90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        &lt;int&gt;     &lt;num&gt;     &lt;num&gt;     &lt;num&gt;     &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    1:      1 0.0000000 0.0000000 0.0000000 0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    2:      2 0.0000000 0.0000000 0.0000000 0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    3:      3 0.0000000 0.0000000 0.0000000 0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    4:      4 0.0000000 0.0000000 0.0000000 0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    5:      5 0.0000000 0.0000000 0.0000000 0.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ---                                               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1004:   1004 0.9136193 0.8986274 0.9137017 0.9285095</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1005:   1005 0.9675009 0.9537224 0.9677305 0.9807911</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1006:   1006 0.8571546 0.8450981 0.8569275 0.8690846</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1007:   1007 0.9212400 0.9093046 0.9211019 0.9326662</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1008:   1008 0.9757615 0.9655694 0.9758310 0.9864589</span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

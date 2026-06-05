@@ -27,7 +27,7 @@ predict(object, target, ...)
 
 ## Value
 
-An object of class `imugap_predict` wrapping the matrix of predicted
+An object of class `imugap_predict` wrapping the 3D array of predicted
 draws and the canonical target dataset.
 
 ## Details
@@ -42,3 +42,16 @@ any location, cohort, or age considered within the bounds of the
 original sampling fit. Particularly, this includes enclosing locations
 without specific observation data, as long as those locations are
 *somewhere* in the locations hierarchy.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Load example fit object and target population
+data("fit_sim", package = "imuGAP")
+data("target_sim", package = "imuGAP")
+
+# Generate predictions
+preds <- predict(fit_sim, target = target_sim)
+} # }
+```

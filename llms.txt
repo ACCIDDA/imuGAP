@@ -31,6 +31,9 @@ particular place combine the impact of all enclosing locations.
 
 ## All functions
 
+- [`as.data.frame(`*`<imugap_predict>`*`)`](https://accidda.github.io/imuGAP/reference/as.data.frame.imugap_predict.md)
+  : Convert coverage predictions to a data.frame
+
 - [`canonicalize_locations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md)
   [`canonicalize_observations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md)
   [`canonicalize_populations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md)
@@ -77,6 +80,9 @@ particular place combine the impact of all enclosing locations.
 
 - [`stan_options()`](https://accidda.github.io/imuGAP/reference/stan_options.md)
   : Stan Sampler Options
+
+- [`subset(`*`<imugap_predict>`*`)`](https://accidda.github.io/imuGAP/reference/subset.imugap_predict.md)
+  : Subset coverage predictions
 
 - [`summary(`*`<imugap_predict>`*`)`](https://accidda.github.io/imuGAP/reference/summary.imugap_predict.md)
   : Summarize coverage predictions

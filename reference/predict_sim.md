@@ -12,23 +12,10 @@ predict_sim
 
 ## Format
 
-A `[data.table()]` with 50400 rows and 9 columns:
+An object of class `imugap_predict` wrapping:
 
-- `sample_id`, a number, the posterior MCMC sample index/ID
+- `draws`, a 3D array of predicted draws with dimensions
+  `[iteration, chain, variable]`
 
-- `p_obs`, a number, the predicted vaccine coverage probability
-
-- `loc_id`, a string, the location ID
-
-- `age`, a number, the age
-
-- `cohort`, a number, the birth cohort
-
-- `dose`, a number, the vaccine dose (1 or 2)
-
-- `weight`, a number, the weight of the prediction component
-
-- `loc_c_id`, a number, the compiled location ID
-
-- `obs_id`, a number, the target observation ID matching `obs_c_id` in
-  `target_sim`
+- `target`, a `[data.table()]` containing target population parameters
+  matching the variables

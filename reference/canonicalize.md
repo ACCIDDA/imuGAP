@@ -303,17 +303,17 @@ data("observations_sim")
 observations_sim
 #>                    loc_id parent_id  year enc_unit_id unit_id positive sample_n
 #>                    <char>    <char> <num>       <num>   <num>    <num>    <num>
-#>   1: Chickadee Elementary   Scruggs  2001           2       5      140      252
-#>   2: Chickadee Elementary   Scruggs  2002           2       5      161      254
-#>   3: Chickadee Elementary   Scruggs  2003           2       5      140      256
-#>   4: Chickadee Elementary   Scruggs  2004           2       5      144      252
-#>   5: Chickadee Elementary   Scruggs  2005           2       5      151      253
+#>   1: Chickadee Elementary   Scruggs  2001           2       5       16       19
+#>   2: Chickadee Elementary   Scruggs  2002           2       5       14       20
+#>   3: Chickadee Elementary   Scruggs  2003           2       5       14       16
+#>   4: Chickadee Elementary   Scruggs  2004           2       5       10       13
+#>   5: Chickadee Elementary   Scruggs  2005           2       5        8       13
 #>  ---                                                                           
-#> 694:                State      <NA>  2021          NA       1      267      295
-#> 695:                State      <NA>  2022          NA       1      207      225
-#> 696:                State      <NA>  2023          NA       1      230      255
-#> 697:                State      <NA>  2024          NA       1      198      210
-#> 698:                State      <NA>  2025          NA       1      304      325
+#> 694:                State      <NA>  2021          NA       1      204      230
+#> 695:                State      <NA>  2022          NA       1      198      215
+#> 696:                State      <NA>  2023          NA       1      305      340
+#> 697:                State      <NA>  2024          NA       1      327      345
+#> 698:                State      <NA>  2025          NA       1      284      310
 #>      ly_min ly_max  dose weight vaxview_type    age censored cohort_min
 #>       <num>  <num> <num>  <num>       <char> <char>    <num>      <num>
 #>   1:      5      5     2    1.0         <NA>   <NA>       NA          4
@@ -344,17 +344,17 @@ canonicalize_observations(observations_sim)
 #> Key: <censored, obs_id>
 #>      obs_c_id positive sample_n censored obs_id
 #>         <int>    <int>    <int>    <num>  <int>
-#>   1:        1      140      252       NA      1
-#>   2:        2      161      254       NA      2
-#>   3:        3      140      256       NA      3
-#>   4:        4      144      252       NA      4
-#>   5:        5      151      253       NA      5
+#>   1:        1       16       19       NA      1
+#>   2:        2       14       20       NA      2
+#>   3:        3       14       16       NA      3
+#>   4:        4       10       13       NA      4
+#>   5:        5        8       13       NA      5
 #>  ---                                           
-#> 694:      694      274      309        1    656
-#> 695:      695      327      371        1    657
-#> 696:      696      328      362        1    658
-#> 697:      697      369      425        1    659
-#> 698:      698      388      450        1    660
+#> 694:      694      340      385        1    656
+#> 695:      695      268      292        1    657
+#> 696:      696      289      325        1    658
+#> 697:      697      330      374        1    659
+#> 698:      698      250      301        1    660
 # --- canonicalize_populations ---
 data("populations_sim"); data("locations_sim"); data("observations_sim")
 populations_sim
