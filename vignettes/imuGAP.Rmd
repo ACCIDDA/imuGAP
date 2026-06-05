@@ -254,11 +254,10 @@ summary_predict |>
 Next, we can look at the distribution of school-level coverage estimates by age group. Let's focus on Scruggs County as an example. 
 
 ```{r grade-viz}
+scruggs_schools <- locations_sim[parent_id == "Scruggs", loc_id]
 summary_predict |>
   subset(
-    loc_id %in% locations_sim[parent_id == "Scruggs", loc_id] &
-    dose == 2 &
-    age > 4
+    loc_id %in% scruggs_schools & dose == 2 & age > 4
   ) |>
   ggplot() +
   geom_boxplot(aes(x = factor(age), y = q50)) +
