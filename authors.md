@@ -19,7 +19,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/ACCIDDA/imuGAP/blob/v0.1.0/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/ACCIDDA/imuGAP/blob/main/DESCRIPTION)
 
 Pearson C, Smith C (2026). *imuGAP: Immunity: Geographic and Age-Based
 Projection*. R package version 0.1.0,
