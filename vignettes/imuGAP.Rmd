@@ -130,24 +130,21 @@ tryCatch(
 )
 ```
 
+See the `canonicalize_*` function documentation for more complete validation requirements.
+
 ---
 
 ## 2. Fitting the Model
 
 Using the prepared input datasets, we can fit the Bayesian model using `sampling()`. The options for the sampler can be configured using `stan_options()`.
 
-Because compiling the Stan model and running the MCMC chain can take some time, we set `eval = FALSE` below. In practice, you would run:
+Because compiling the Stan model and running the MCMC chain can take some time, we set `eval = FALSE` below. In practice, you could run:
 
 ```{r sampling-code, eval = FALSE}
 fit_sim <- sampling(
-  observations_sim,
-  populations_sim,
-  locations_sim,
+  observations_sim, populations_sim, locations_sim,
   stan_opts = stan_options(
-    iter = 100,
-    chains = 1,
-    refresh = 0,
-    seed = 1L
+    iter = 2000, chains = 4, refresh = 0, seed = 1L
   )
 )
 ```
@@ -168,12 +165,13 @@ str(beta_draws)
 We can also look at trace plots for selected parameters to ensure convergence has been reached.
 
 ```{r trace-plot}
-mcmc_trace(fit_sim$stanfit,
+bayesplot::mcmc_trace(fit_sim$stanfit,
   pars = c(
     "beta_bs[1]", "beta_bs[2]", "beta_bs[3]",
     "beta_bs[4]", "beta_bs[5]"
   )
-) + theme_bw()
+) + theme_bw() +
+  theme(legend.position = c(.9, .1), legend.justification = c(1, 0))
 ```
 
 ---
@@ -186,12 +184,8 @@ For example, we can generate a "snapshot" prediction target for all locations, i
 
 ```{r target}
 target_sim <- create_target(
-  fit = fit_sim,
-  location = locations_sim$loc_id,
-  age = 1:18,
-  cohort = max(populations_sim$cohort) - 18,
-  dose = c(1, 2),
-  mode = "snapshot"
+  fit = fit_sim, location = unique(locations_sim$loc_id), age = 1:18,
+  cohort = max(populations_sim$cohort) - 18, dose = c(1, 2), mode = "snapshot"
 )
 head(target_sim)
 ```
@@ -214,7 +208,7 @@ Instead, we load the pre-computed prediction results `predict_sim` bundled with 
 data("predict_sim", package = "imuGAP")
 ```
 
-We can summarize these predictions to get the posterior mean and credible intervals for any location, age, or dose:
+We can summarize these predictions to get the posterior mean and credible intervals across the target location, age, and doses requested:
 
 ```{r summarize-predictions}
 # Calculate the posterior mean coverage probability for each location and dose at age 5
@@ -228,10 +222,11 @@ Now let's visualize the results. First we will take a look at overall state cove
 summary_predict |>
   subset(loc_id == "State" & dose == 2 & age > 4) |>
   ggplot() +
-  geom_line(aes(x = age, y = q50)) +
-  geom_ribbon(aes(x = age, ymin = q2_5, ymax = q97_5), alpha = 0.5) +
+  aes(x = age) +
+  geom_line(aes(y = q50)) +
+  geom_ribbon(aes(ymin = q2_5, ymax = q97_5), alpha = 0.5) +
   theme_bw() +
-  scale_x_continuous(breaks = 5:18) +
+  scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
   labs(x = "Age", y = "Coverage", title = "State-level two dose coverage")
 ```
 
@@ -242,13 +237,17 @@ summary_predict |>
   subset(loc_id %in% c("Scruggs", "Simone", "Watson") & dose == 2 & age > 4) |>
   ggplot() +
   aes(x = age) +
-  geom_line(aes(y = q50, group = loc_id, color = loc_id)) +
+  geom_line(aes(y = q50, color = loc_id)) +
   geom_ribbon(aes(ymin = q2_5, ymax = q97_5, fill = loc_id), alpha = 0.2) +
   theme_bw() +
-  scale_x_continuous(breaks = 5:18) +
+  theme(
+    legend.position = "inside", legend.position.inside = c(.2, 0.05),
+    legend.justification.inside = c(0, 0)
+  ) +
+  scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
+  scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
   labs(
-    x = "Age", y = "Coverage", title = "State-level two dose coverage",
-    color = "County", fill = "County"
+    x = "Age", y = "Coverage", title = "County-level two dose coverage"
   )
 ```
 
@@ -257,8 +256,7 @@ Next, we can look at the distribution of school-level coverage estimates by age 
 ```{r grade-viz}
 summary_predict |>
   subset(
-    !(loc_id %in% c("State", "Scruggs", "Simone", "Watson")) &
-      loc_id %in% locations_sim$loc_id[locations_sim$parent_id == "Scruggs"][-1] &
+      loc_id %in% locations_sim[parent_id == "Scruggs", loc_id] &
       dose == 2 &
       age > 4
   ) |>
@@ -267,7 +265,7 @@ summary_predict |>
   theme_bw() +
   labs(
     x = "Age", y = "Coverage",
-    title = "C. Distribution of School-Level Coverage For Scruggs County"
+    title = "Distribution of School-Level Coverage For Scruggs County"
   )
 ```
 
@@ -277,34 +275,17 @@ Finally let's look at some selected schools and see how their predicted coverage
 schools <- c(
   "Towhee Children's Academy", # ~380 per grade
   "Flycatcher Elementary", # ~110 per grade
-  "Sparrow School"
-) # ~60 per grade
-
-# State-level willingness to vaccinate
-phi_st <- latent_params_sim$phi_state
-
-# Get county and school offsets
-off_cnty <- latent_params_sim$off_cnty[1]
-off_sch <- latent_params_sim$off_sch[match(schools, locations_sim$loc_id) - 4]
-
-# Uptake curves
-uptake <- latent_params_sim$uptake
+  "Sparrow School" # ~60 per grade
+)
 
 # Subset to targets of interest
 predict_sub <- predict_sim |>
   subset(loc_id %in% schools & dose == 2 & age > 4)
 
-# Compute p for target
-target_sub <- predict_sub$target
-p <- numeric(nrow(target_sub))
-for (i in seq_len(nrow(target_sub))) {
-  offset <- off_sch[schools == target_sub$loc_id[i]] + off_cnty
-  p[i] <- plogis(
-    qlogis(phi_st[target_sub$cohort[i]]) + offset
-  ) * uptake[target_sub$age[i], 2]
-}
+# Get the pre-computed background coverage matching the subsetted target
 latent_ref <- copy(predict_sub$target)
-latent_ref$coverage <- p
+latent_ref$coverage <- latent_params_sim$coverage[predict_sub$target$obs_id]
+
 
 # Convert predictions to a long-format data.frame
 draws_df <- as.data.frame(predict_sub)
