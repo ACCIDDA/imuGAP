@@ -16,7 +16,10 @@ knitr::opts_chunk$set(
 
 ```{r setup, echo = FALSE, message = FALSE}
 # List all suggested packages needed for this vignette
-required_pkgs <- c("imuGAP", "data.table", "bayesplot", "ggplot2")
+required_pkgs <- c(
+  "imuGAP", "data.table", "bayesplot", "ggplot2",
+  "tidyr", "dplyr"
+)
 
 # Check if they are available
 pkgs_available <- all(sapply(required_pkgs, requireNamespace, quietly = TRUE))
@@ -26,10 +29,9 @@ if (!pkgs_available) {
   knitr::opts_chunk$set(eval = FALSE)
   message("Some suggested packages are missing. Vignette code will not be executed.")
 } else {
-  library(imuGAP)
-  library(data.table)
-  library(bayesplot)
-  library(ggplot2)
+  suppressPackageStartupMessages(
+    sapply(required_pkgs, require, character.only = TRUE)
+  )
 }
 ```
 
@@ -45,17 +47,18 @@ $$
 P(\ge\textrm{1 dose}) = \left(1 - \phi_{i, a}\right) \left(1 - \exp\left\{-\int_a^{t} \lambda_{i, a}(s)\nu(s) d\textrm{s}\right\}\right)
 $$
 
-Which is to say, we are representing vaccination coverage via a survival-like model.
+Which is to say, we are representing vaccination coverage via a survival-like model. The model generalizes this approach to the first dose out to arbitrary sequential dose coverage, with each subsequent dose conditional on previous dose receipt.
 
 # Walkthrough of Basic Usage
 
-This walkthrough demonstrates the workflow of fitting the model and predicting coverage on simulated data. The package includes seven bundled datasets for demonstration, representing a nested geographic setup (State -> Counties -> Schools).
+This walkthrough demonstrates the workflow of fitting the model and predicting coverage on simulated data. The package includes several bundled datasets for demonstration, representing a nested geographic hierarchy (State -> Counties -> Schools) for population uptake of a two dose vaccine, like MMR for measles.
 
 ## 1. Preparing and Validating the Input Data
 
-First, let's explore the three required input datasets that define the location hierarchy, observation metadata, and the actual coverage observations. The package provides a family of `canonicalize_*` functions to validate, clean, and convert these raw structures into the canonical forms required by the sampler. You can use those directly to help troubleshoot your inputs, as we do in the following examples. However, as shown in the next section, the `sampling()` method also automatically canonicalizes the inputs.
+First, let's explore the three required inputs that define the location hierarchy, observation metadata, and the actual coverage observations. The package provides a family of `canonicalize_*` functions to validate, clean, and convert these raw structures into the canonical forms required by the sampler. You can use those directly to help troubleshoot your inputs, as we do in the following examples. However, as shown in the next section, the `sampling()` method also automatically canonicalizes the inputs.
 
 ### Location Hierarchy (`locations_sim`)
+
 The locations dataset defines the nesting relationship of the locations in the model. In this simulation, we have a State, which contains three Counties, which in turn contain various Schools. We validate and canonicalize it using `canonicalize_locations()`.
 
 ```{r locations}
@@ -68,6 +71,7 @@ head(canonical_locations)
 ```
 
 ### Coverage Observations (`observations_sim`)
+
 The observations dataset contains the counts of individuals who were vaccinated (`positive`) out of the total sampled (`sample_n`) for each observation. It also includes a `censored` column, which is `1` if the observation is right-censored and `NA` otherwise. We validate and canonicalize it using `canonicalize_observations()`.
 
 ```{r observations}
@@ -80,6 +84,7 @@ head(canonical_observations)
 ```
 
 ### Observation Metadata (`populations_sim`)
+
 The populations dataset acts as observation metadata, mapping each observation ID (`obs_id`) to the corresponding location, birth cohort, age at observation, vaccine dose, and observation weight. We validate and canonicalize it using `canonicalize_populations()`.
 
 ```{r populations}
@@ -88,9 +93,7 @@ head(populations_sim)
 
 # Canonicalize and validate
 canonical_populations <- canonicalize_populations(
-  populations_sim,
-  observations_sim,
-  locations_sim
+  populations_sim, observations_sim, locations_sim
 )
 head(canonical_populations)
 ```
@@ -101,7 +104,7 @@ To ensure data integrity, the `canonicalize_*` functions enforce strict rules on
 
 ```{r validation-failure-obs}
 # Create a copy with an invalid observation (positive > sample_n)
-invalid_obs <- copy(observations_sim)
+invalid_obs <- copy(observations_sim[, .(obs_id, loc_id, positive, sample_n, censored)])
 invalid_obs[1, positive := sample_n + 10]
 
 # This will fail validation and throw an error:
@@ -127,24 +130,21 @@ tryCatch(
 )
 ```
 
+See the `canonicalize_*` function documentation for more complete validation requirements.
+
 ---
 
 ## 2. Fitting the Model
 
 Using the prepared input datasets, we can fit the Bayesian model using `sampling()`. The options for the sampler can be configured using `stan_options()`.
 
-Because compiling the Stan model and running the MCMC chain can take some time, we set `eval = FALSE` below. In practice, you would run:
+Because compiling the Stan model and running the MCMC chain can take some time, we set `eval = FALSE` below. In practice, you could run:
 
 ```{r sampling-code, eval = FALSE}
 fit_sim <- sampling(
-  observations_sim,
-  populations_sim,
-  locations_sim,
+  observations_sim, populations_sim, locations_sim,
   stan_opts = stan_options(
-    iter = 100,
-    chains = 1,
-    refresh = 0,
-    seed = 1L
+    iter = 2000, chains = 4, refresh = 0, seed = 1L
   )
 )
 ```
@@ -165,12 +165,13 @@ str(beta_draws)
 We can also look at trace plots for selected parameters to ensure convergence has been reached.
 
 ```{r trace-plot}
-mcmc_trace(fit_sim$stanfit,
+bayesplot::mcmc_trace(fit_sim$stanfit,
   pars = c(
     "beta_bs[1]", "beta_bs[2]", "beta_bs[3]",
     "beta_bs[4]", "beta_bs[5]"
   )
-)
+) + theme_bw() +
+  theme(legend.position = c(.9, .1), legend.justification = c(1, 0))
 ```
 
 ---
@@ -183,12 +184,8 @@ For example, we can generate a "snapshot" prediction target for all locations, i
 
 ```{r target}
 target_sim <- create_target(
-  fit = fit_sim,
-  location = locations_sim$loc_id,
-  age = 1:18,
-  cohort = max(populations_sim$cohort) - 18,
-  dose = c(1, 2),
-  mode = "snapshot"
+  fit = fit_sim, location = unique(locations_sim$loc_id), age = 1:18,
+  cohort = max(populations_sim$cohort) - 18, dose = c(1, 2), mode = "snapshot"
 )
 head(target_sim)
 ```
@@ -205,19 +202,17 @@ Generating predictions also runs the Stan model (in generated quantities mode) a
 predict_sim <- predict(object = fit_sim, target = target_sim)
 ```
 
-Instead, we load the pre-computed prediction results `predict_sim` bundled with the package:
+Instead, we load the pre-computed prediction results `predict_sim` bundled with the package. This is an object of class `imugap_predict` which contains a 3D draws array (`predict_sim$draws`) with the MCMC draws for each prediction target as well as the target information (`predict_sim$target`).
 
 ```{r load-predictions}
 data("predict_sim", package = "imuGAP")
-head(predict_sim)
 ```
 
-The output `predict_sim` is a `data.table` containing posterior coverage probability predictions (`p_obs`) for each MCMC sample (`sample_id`) and target population combination. We can summarize these predictions to get the posterior mean and credible intervals for any location, age, or dose:
+We can summarize these predictions to get the posterior mean and credible intervals across the target location, age, and doses requested:
 
 ```{r summarize-predictions}
 # Calculate the posterior mean coverage probability for each location and dose at age 5
 summary_predict <- summary(predict_sim)
-
 head(summary_predict)
 ```
 
@@ -227,38 +222,97 @@ Now let's visualize the results. First we will take a look at overall state cove
 summary_predict |>
   subset(loc_id == "State" & dose == 2 & age > 4) |>
   ggplot() +
-  geom_line(aes(x = age, y = q50)) +
-  geom_ribbon(aes(x = age, ymin = q2_5, ymax = q97_5), alpha = 0.5) +
+  aes(x = age) +
+  geom_line(aes(y = q50)) +
+  geom_ribbon(aes(ymin = q2_5, ymax = q97_5), alpha = 0.5) +
   theme_bw() +
-  scale_x_continuous(breaks = 5:18) +
+  scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
   labs(x = "Age", y = "Coverage", title = "State-level two dose coverage")
 ```
+
 We can also look at the trend in coverage by age at the county level. Note that they follow the same trend as the state but with differing magnitude.
 
 ```{r county-viz}
 summary_predict |>
   subset(loc_id %in% c("Scruggs", "Simone", "Watson") & dose == 2 & age > 4) |>
   ggplot() +
-  geom_line(aes(x = age, y = q50, group = loc_id, color = loc_id)) +
-  geom_ribbon(aes(x = age, ymin = q2_5, ymax = q97_5, fill = loc_id), alpha = 0.2) +
+  aes(x = age) +
+  geom_line(aes(y = q50, color = loc_id)) +
+  geom_ribbon(aes(ymin = q2_5, ymax = q97_5, fill = loc_id), alpha = 0.2) +
   theme_bw() +
-  scale_x_continuous(breaks = 5:18) +
+  theme(
+    legend.position = "inside", legend.position.inside = c(.2, 0.05),
+    legend.justification.inside = c(0, 0)
+  ) +
+  scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
+  scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
   labs(
-    x = "Age", y = "Coverage", title = "State-level two dose coverage",
-    color = "County", fill = "County"
+    x = "Age", y = "Coverage", title = "County-level two dose coverage"
   )
 ```
-Finally, we can look at the distribution of school-level coverage estimates by age group. Let's focus on 5-11 year olds as that is the ages for children in elementary schools. 
+
+Next, we can look at the distribution of school-level coverage estimates by age group. Let's focus on Scruggs County as an example. 
 
 ```{r grade-viz}
+scruggs_schools <- locations_sim[parent_id == "Scruggs", loc_id]
 summary_predict |>
   subset(
-    !(loc_id %in% c("State", "Scruggs", "Simone", "Watson")) &
-      dose == 2 &
-      age %in% 5:11
+    loc_id %in% scruggs_schools & dose == 2 & age > 4
   ) |>
   ggplot() +
-  geom_histogram(aes(x = q50)) +
-  facet_wrap(~age) +
-  theme_bw()
+  geom_boxplot(aes(x = factor(age), y = q50)) +
+  theme_bw() +
+  labs(
+    x = "Age", y = "Coverage",
+    title = "Distribution of School-Level Coverage For Scruggs County"
+  )
 ```
+
+Finally let's look at some selected schools and see how their predicted coverage compared to true underlying coverage from the data simulation process.
+
+```{r}
+schools <- c(
+  "Towhee Children's Academy", # ~380 per grade
+  "Flycatcher Elementary", # ~110 per grade
+  "Sparrow School" # ~60 per grade
+)
+
+# Subset to targets of interest
+predict_sub <- predict_sim |>
+  subset(loc_id %in% schools & dose == 2 & age > 4, iteration = 500:1000)
+
+# Get the pre-computed background coverage matching the subsetted target
+latent_ref <- copy(predict_sub$target)
+latent_ref$coverage <- latent_params_sim$coverage[predict_sub$target$obs_id]
+
+
+# Convert predictions to a long-format data.frame
+draws_df <- as.data.frame(predict_sub)
+
+# Now plot it all
+ggplot() +
+  aes(age, coverage, color = loc_id) +
+  geom_point(
+    data = draws_df,
+    alpha = 1 / 256, shape = 16,
+    position = position_jitterdodge(
+      dodge.width = 0.5,
+      jitter.width = 0.15
+    )
+  ) +
+  geom_point(
+    data = latent_ref,
+    mapping = aes(shape = "True value"),
+    fill = NA
+  ) +
+  theme_bw() +
+  scale_shape_manual(
+    name = "",
+    values = c("True value" = 24)
+  ) +
+  scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
+  scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
+  theme(legend.position = "bottom") +
+  labs(color = "School", x = "Age", y = "Coverage")
+```
+
