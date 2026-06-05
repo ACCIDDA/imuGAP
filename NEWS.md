@@ -21,7 +21,8 @@ First public release. Initial feature set:
   - `impute_school_coverage_process_v6` (adds county- and school-level
     random effects; current default).
 - Bundled example datasets for end-to-end examples and tests:
-  `locations_sim`, `observations_sim`, `populations_sim`, and the
-  reference `fit_sim` `stanfit` fixture.
+  `locations_sim`, `observations_sim`, `populations_sim`,
+  `latent_params_sim`, `predict_sim`, `target_sim`, and the reference
+  `fit_sim` `stanfit` fixture.
 - pkgdown documentation site published at
   <https://accidda.github.io/imuGAP/>.
