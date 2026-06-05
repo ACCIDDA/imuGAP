@@ -85,6 +85,9 @@ predict.imugap_fit <- function(
 
   # Extract predictions as 3D array (iterations x chains x parameters)
   p_obs_draws <- as.array(gqs_res, pars = "p_obs")
+  if (length(dim(p_obs_draws)) == 2L) {
+    dim(p_obs_draws) <- c(dim(p_obs_draws)[1], 1L, dim(p_obs_draws)[2])
+  }
 
   structure(
     list(
