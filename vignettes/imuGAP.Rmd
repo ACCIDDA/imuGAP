@@ -280,7 +280,7 @@ schools <- c(
 
 # Subset to targets of interest
 predict_sub <- predict_sim |>
-  subset(loc_id %in% schools & dose == 2 & age > 4)
+  subset(loc_id %in% schools & dose == 2 & age > 4, iteration = 500:1000)
 
 # Get the pre-computed background coverage matching the subsetted target
 latent_ref <- copy(predict_sub$target)
@@ -292,11 +292,10 @@ draws_df <- as.data.frame(predict_sub)
 
 # Now plot it all
 ggplot() +
-  aes(age, coverage) +
+  aes(age, coverage, color = loc_id) +
   geom_point(
     data = draws_df,
-    aes(color = loc_id),
-    alpha = 0.1, shape = 16,
+    alpha = 1/256, shape = 16,
     position = position_jitterdodge(
       dodge.width = 0.5,
       jitter.width = 0.15
@@ -304,15 +303,16 @@ ggplot() +
   ) +
   geom_point(
     data = latent_ref,
-    aes(shape = "True value"),
-    color = "black", fill = NA
+    mapping = aes(shape = "True value"),
+    fill = NA
   ) +
   theme_bw() +
   scale_shape_manual(
     name = "",
     values = c("True value" = 24)
   ) +
-  guides(color = guide_legend(override.aes = list(alpha = 1))) +
+  scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
+  scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
   theme(legend.position = "bottom") +
   labs(color = "School", x = "Age", y = "Coverage")
 ```

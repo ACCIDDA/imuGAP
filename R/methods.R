@@ -164,8 +164,8 @@ subset.imugap_predict <- function(x, subset, iteration, chain, ...) {
   }
 
   # Subset iterations and chains
-  iter_idx <- if (missing(iteration)) TRUE else iteration
-  chain_idx <- if (missing(chain)) TRUE else chain
+  iter_idx <- if (missing(iteration)) seq_len(dim(x$draws)[1]) else iteration
+  chain_idx <- if (missing(chain)) seq_len(dim(x$draws)[2]) else chain
 
   new_draws <- x$draws[iter_idx, chain_idx, r, drop = FALSE]
   new_target <- x$target[r, ]
@@ -212,29 +212,8 @@ as.data.frame.imugap_predict <- function(
   C <- dims[2]
   V <- dims[3]
 
-  iter_vals <- dimnames(x$draws)[[1]]
-  if (is.null(iter_vals)) {
-    iter_vals <- seq_len(I)
-  } else {
-    iter_vals_num <- suppressWarnings(as.integer(iter_vals))
-    if (!any(is.na(iter_vals_num))) {
-      iter_vals <- iter_vals_num
-    }
-  }
-
-  chain_vals <- dimnames(x$draws)[[2]]
-  if (is.null(chain_vals)) {
-    chain_vals <- seq_len(C)
-  } else {
-    chain_vals_num <- suppressWarnings(as.integer(gsub(
-      "[^0-9]",
-      "",
-      chain_vals
-    )))
-    if (!any(is.na(chain_vals_num)) && length(chain_vals_num) == C) {
-      chain_vals <- chain_vals_num
-    }
-  }
+  iter_vals <- seq_len(I)
+  chain_vals <- seq_len(C)
 
   iterations <- rep(iter_vals, times = C * V)
   chains <- rep(rep(chain_vals, each = I), times = V)
