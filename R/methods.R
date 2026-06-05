@@ -22,6 +22,16 @@
 #' @return An object of class `imugap_predict` wrapping the 3D array of predicted
 #'   draws and the canonical target dataset.
 #'
+#' @examples
+#' \dontrun{
+#' # Load example fit object and target population
+#' data("fit_sim", package = "imuGAP")
+#' data("target_sim", package = "imuGAP")
+#'
+#' # Generate predictions
+#' preds <- predict(fit_sim, target = target_sim)
+#' }
+#'
 #' @export
 #' @importFrom data.table as.data.table copy data.table
 #' @importFrom rstan gqs extract
@@ -99,6 +109,16 @@ predict.imugap_fit <- function(
 #' @return A `data.table` containing target population parameters, posterior mean
 #'   coverage (`mean`), and the requested quantiles (e.g. `q2.5`, `q50`, `q97.5`).
 #'
+#' @examples
+#' # Load example prediction object
+#' data("predict_sim", package = "imuGAP")
+#'
+#' # Summarize coverage predictions
+#' summary(predict_sim)
+#'
+#' # Summarize with custom quantiles
+#' summary(predict_sim, probs = c(0.1, 0.5, 0.9))
+#'
 #' @export
 #' @importFrom stats quantile
 summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
@@ -144,6 +164,16 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
 #'
 #' @return A subsetted `imugap_predict` object with corresponding subsetted `draws`
 #'   and `target` metadata.
+#'
+#' @examples
+#' # Load example prediction object
+#' data("predict_sim", package = "imuGAP")
+#'
+#' # Subset predictions by target metadata
+#' subset(predict_sim, dose == 2)
+#'
+#' # Subset predictions by iteration and chain
+#' subset(predict_sim, iteration = 1:500, chain = 1)
 #'
 #' @export
 subset.imugap_predict <- function(x, subset, iteration, chain, ...) {
@@ -195,6 +225,14 @@ subset.imugap_predict <- function(x, subset, iteration, chain, ...) {
 #'
 #' @return A `data.table` with columns `iteration`, `chain`, the target metadata
 #'   columns, and `coverage`.
+#'
+#' @examples
+#' # Load example prediction object
+#' data("predict_sim", package = "imuGAP")
+#'
+#' # Convert predictions to a data.frame/data.table
+#' df <- as.data.frame(predict_sim)
+#' head(df)
 #'
 #' @export
 as.data.frame.imugap_predict <- function(
