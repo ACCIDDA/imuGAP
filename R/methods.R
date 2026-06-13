@@ -23,7 +23,7 @@
 #'   draws and the canonical target dataset.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Load example fit object and target population
 #' data("fit_sim", package = "imuGAP")
 #' data("target_sim", package = "imuGAP")
