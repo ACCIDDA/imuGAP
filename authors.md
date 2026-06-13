@@ -2,15 +2,16 @@
 
 ## Authors
 
-- **Carl Pearson**. Author, maintainer.
+- **[Carl Pearson](https://github.com/pearsonca)**. Author, maintainer.
   [](https://orcid.org/0000-0003-0701-7860)
 
-- **Claire Perrin Smith**. Author.
+- **[Claire Perrin Smith](https://github.com/csmith701)**. Author.
   [](https://orcid.org/0000-0003-1069-9460)
 
 - **Kelly Zhen**. Contributor.
 
-- **Weston Voglesonger**. Contributor.
+- **[Weston Voglesonger](https://github.com/WestonVoglesonger)**.
+  Contributor.
 
 - **Joshua Chen**. Contributor.
 
