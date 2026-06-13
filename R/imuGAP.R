@@ -14,7 +14,7 @@
 #'   along with settings and dataset metadata.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data("locations_sim"); data("observations_sim"); data("populations_sim")
 #' st_opts <- stan_options(chains = 2, iter = 500)
 #' sampling(
