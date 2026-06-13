@@ -3,13 +3,23 @@ template:
   light-switch: true
   bootstrap: 5
 
+authors:
+  sidebar:
+    roles: [aut, cre, ctb]
+  Carl Pearson:
+    href: https://github.com/pearsonca
+  Claire Perrin Smith:
+    href: https://github.com/csmith701
+  Weston Voglesonger:
+    href: https://github.com/WestonVoglesonger
+
 footer:
   structure:
-    left: [developed_by, accidda]
-    right: built_with
+    left: developed_by
+    right: [built_with, accidda]
   components:
     accidda: |
-      <br><a href="https://accidda.org/" class="accidda-footer-link"
+      <a href="https://accidda.org/" class="accidda-footer-link"
       aria-label="Part of the ACCIDDA project"><img
       src="https://raw.githubusercontent.com/ACCIDDA/ACCIDDA-Images/refs/heads/main/accidda/accidda-logo-small.png"
       alt="ACCIDDA" class="accidda-footer-logo accidda-footer-logo-light"
