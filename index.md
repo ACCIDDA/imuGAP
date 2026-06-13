@@ -1,6 +1,7 @@
 # imuGAP
 
 [![codecov](https://codecov.io/gh/ACCIDDA/imuGAP/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ACCIDDA/imuGAP)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20562250.svg)](https://doi.org/10.5281/zenodo.20562250)
 
 [imuGAP](https://accidda.github.io/imuGAP/), which stands for “Immunity:
 Geographic & Age-based Projection”, provides a fitting and imputation /

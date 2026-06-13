@@ -87,8 +87,8 @@ sampling(
 #> 
 #> SAMPLING FOR MODEL 'impute_school_coverage_process_v6' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000205 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.05 seconds.
+#> Chain 1: Gradient evaluation took 0.000206 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.06 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -105,9 +105,9 @@ sampling(
 #> Chain 1: Iteration: 450 / 500 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 500 / 500 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 10.25 seconds (Warm-up)
-#> Chain 1:                4.583 seconds (Sampling)
-#> Chain 1:                14.833 seconds (Total)
+#> Chain 1:  Elapsed Time: 10.72 seconds (Warm-up)
+#> Chain 1:                4.797 seconds (Sampling)
+#> Chain 1:                15.517 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'impute_school_coverage_process_v6' NOW (CHAIN 2).
@@ -130,9 +130,9 @@ sampling(
 #> Chain 2: Iteration: 450 / 500 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 500 / 500 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 10.066 seconds (Warm-up)
-#> Chain 2:                5.54 seconds (Sampling)
-#> Chain 2:                15.606 seconds (Total)
+#> Chain 2:  Elapsed Time: 10.478 seconds (Warm-up)
+#> Chain 2:                5.761 seconds (Sampling)
+#> Chain 2:                16.239 seconds (Total)
 #> Chain 2: 
 #> Warning: There were 6 divergent transitions after warmup. See
 #> https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
@@ -226,7 +226,7 @@ sampling(
 #> lambda_raw[2]     1.11   214 1.00
 #> lp__          -1576.30   112 1.00
 #> 
-#> Samples were drawn using NUTS(diag_e) at Sat Jun 13 16:57:30 2026.
+#> Samples were drawn using NUTS(diag_e) at Sat Jun 13 17:06:35 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
