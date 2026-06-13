@@ -1,3 +1,21 @@
+## Test environments
+
+Continuous integration (GitHub Actions, `R-CMD-check.yaml`), each run with
+`R CMD check --as-cran`:
+
+- ubuntu-latest, R release / oldrel / devel
+- macos-latest, R release / oldrel / devel
+- windows-latest, R release / oldrel / devel
+
+Local development:
+
+- aarch64-apple-darwin (macOS), R 4.5.3
+
+win-builder (devel + release) and R-hub: pending pre-submission check. These
+are run with `devtools::check_win_devel()`, `devtools::check_win_release()`,
+and `rhub::rhub_check()` immediately before submission, and their results are
+recorded here at that point.
+
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note
@@ -15,16 +33,6 @@ This is a new submission.
 (Stan model compilation also makes installation and any sampler-exercising
 examples slow; such examples are wrapped in `\dontrun{}` to keep check runtime
 modest.)
-
-## Test environments
-
-- ubuntu-latest (R release, R oldrel, R devel) [GitHub Actions]: 0 errors, 0 warnings
-- macos-latest (R release, R oldrel, R devel) [GitHub Actions]: 0 errors, 0 warnings
-- windows-latest (R release, R oldrel, R devel) [GitHub Actions]
-- [TODO before submission: win-builder (devel + release) results]
-- [TODO before submission: R-hub results]
-
-Local development: [TODO: add platform + R version].
 
 ## Downstream dependencies
 
