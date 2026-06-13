@@ -1,0 +1,13 @@
+citHeader("To cite imuGAP in publications, please use the Zenodo archive:")
+
+bibentry(
+  bibtype = "Manual",
+  title   = "imuGAP: Immunity: Geographic and Age-Based Projection",
+  author  = c(
+    person("Carl", "Pearson"),
+    person("Claire Perrin", "Smith")
+  ),
+  year    = "2026",
+  note    = "R package version 0.1.0",
+  doi     = "10.5281/zenodo.20562250"
+)
