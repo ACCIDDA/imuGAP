@@ -46,12 +46,12 @@ without specific observation data, as long as those locations are
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 # Load example fit object and target population
 data("fit_sim", package = "imuGAP")
 data("target_sim", package = "imuGAP")
 
 # Generate predictions
 preds <- predict(fit_sim, target = target_sim)
-} # }
+# }
 ```
