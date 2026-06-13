@@ -1,6 +1,6 @@
 # imuGAP <img src="man/figures/logo.png" align="right" height="139" alt="imuGAP logo" />
 
-[![codecov](https://codecov.io/gh/ACCIDDA/imuGAP/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ACCIDDA/imuGAP)
+[![codecov](https://codecov.io/gh/ACCIDDA/imuGAP/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ACCIDDA/imuGAP) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20562250.svg)](https://doi.org/10.5281/zenodo.20562250)
 
 `{imuGAP}`, which stands for "Immunity: Geographic & Age-based Projection", provides a fitting and imputation / prediction tool for a process-based model of vaccination uptake.
 
