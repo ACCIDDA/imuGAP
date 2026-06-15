@@ -6,6 +6,11 @@
 #'
 #' @param object an `imugap_fit` object returned by `sampling()`
 #' @param target a `[data.frame()]` of target populations to predict for
+#' @param posterior_size optional single positive integer giving the number of
+#'   posterior draws to predict over. Draws are taken from the end of each chain
+#'   (the converged tail) and apportioned as evenly as possible across chains,
+#'   and the value must not exceed the number of draws in the fit. Defaults to
+#'   `NULL`, which uses every available draw.
 #' @param ... additional arguments (currently ignored)
 #'
 #' @details
@@ -19,6 +24,13 @@
 #' observation data, as long as those locations are *somewhere* in the
 #' locations hierarchy.
 #'
+#' By default `predict()` uses every posterior draw in the fit. Supply
+#' `posterior_size` to predict over a smaller number of draws taken from the
+#' converged end of each chain; this is how the bundled `predict_sim` fixture is
+#' kept small. `predict()` does not yet check whether the retained draws are
+#' adequate (chain mixing, effective sample size) and always warns to that
+#' effect.
+#'
 #' @return An object of class `imugap_predict` wrapping the 3D array of predicted
 #'   draws and the canonical target dataset.
 #'
@@ -28,8 +40,8 @@
 #' data("fit_sim", package = "imuGAP")
 #' data("target_sim", package = "imuGAP")
 #'
-#' # Generate predictions
-#' preds <- predict(fit_sim, target = target_sim)
+#' # Generate predictions over 100 posterior draws
+#' preds <- predict(fit_sim, target = target_sim, posterior_size = 100)
 #' }
 #'
 #' @export
@@ -38,6 +50,7 @@
 predict.imugap_fit <- function(
   object,
   target,
+  posterior_size = NULL,
   ...
 ) {
   fit <- object
@@ -46,6 +59,34 @@ predict.imugap_fit <- function(
   }
 
   raw_fit <- fit$stanfit
+
+  # Posterior draws available across all chains (post-warmup).
+  draws_arr <- as.array(raw_fit)
+  n_iter <- dim(draws_arr)[1]
+  n_chains <- dim(draws_arr)[2]
+  n_avail <- n_iter * n_chains
+
+  # Hard error on a nonsensical requested posterior size.
+  if (!is.null(posterior_size)) {
+    if (
+      !is.numeric(posterior_size) || length(posterior_size) != 1L ||
+        is.na(posterior_size) || posterior_size <= 0 ||
+        posterior_size != as.integer(posterior_size)
+    ) {
+      stop("`posterior_size` must be a single positive integer.", call. = FALSE)
+    }
+    if (posterior_size > n_avail) {
+      stop(
+        sprintf(
+          "`posterior_size` (%d) exceeds the %d posterior draws in the fit.",
+          as.integer(posterior_size),
+          n_avail
+        ),
+        call. = FALSE
+      )
+    }
+  }
+
   target <- create_target(fit, target)
   if (!"obs_id" %in% names(target)) {
     target[, obs_id := obs_c_id]
@@ -76,11 +117,45 @@ predict.imugap_fit <- function(
   dat_stan$weights <- target$weight
   dat_stan$predict_mode <- 1
 
+  # No adequacy check yet (chain mixing, effective sample size); warn so callers
+  # verify the retained draws are sufficient themselves.
+  warning(
+    "predict() does not check whether the posterior draws are adequate ",
+    "(chain mixing, effective sample size); verify the sufficiency statistics ",
+    "yourself.",
+    call. = FALSE
+  )
+
+  # Select the posterior draws to predict over. With `posterior_size`, keep that
+  # many draws from the end of each chain (the converged tail), apportioned as
+  # evenly as possible across chains; otherwise use every draw.
+  if (is.null(posterior_size)) {
+    draws_mat <- as.matrix(raw_fit)
+  } else {
+    size <- as.integer(posterior_size)
+    base <- size %/% n_chains
+    extra <- size %% n_chains
+    per_chain <- rep(base, n_chains) +
+      c(rep(1L, extra), rep(0L, n_chains - extra))
+    par_names <- dimnames(draws_arr)[[3]]
+    chain_mats <- lapply(seq_len(n_chains), function(ch) {
+      k <- per_chain[ch]
+      if (k == 0L) {
+        return(NULL)
+      }
+      rows <- seq.int(n_iter - k + 1L, n_iter)
+      m <- matrix(draws_arr[rows, ch, ], nrow = k, ncol = length(par_names))
+      colnames(m) <- par_names
+      m
+    })
+    draws_mat <- do.call(rbind, chain_mats)
+  }
+
   # Run gqs to generate predictions
   gqs_res <- rstan::gqs(
     raw_fit@stanmodel,
     data = dat_stan,
-    draws = as.matrix(raw_fit)
+    draws = draws_mat
   )
 
   # Extract predictions as 3D array (iterations x chains x parameters)

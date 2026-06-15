@@ -194,12 +194,12 @@ head(target_sim)
 
 ## 4. Predicting Coverage
 
-Finally, we run `predict()` to generate predicted coverage probabilities for each target population combination across all posterior draws.
+Finally, we run `predict()` to generate predicted coverage probabilities for each target population combination. By default it uses every posterior draw; here we pass `posterior_size` to predict over a smaller sub-sample taken from the end of each chain.
 
 Generating predictions also runs the Stan model (in generated quantities mode) and can be time-consuming, so we show the code below without executing it:
 
 ```{r predict-code, eval = FALSE}
-predict_sim <- predict(object = fit_sim, target = target_sim)
+predict_sim <- predict(object = fit_sim, target = target_sim, posterior_size = 100)
 ```
 
 Instead, we load the pre-computed prediction results `predict_sim` bundled with the package. This is an object of class `imugap_predict` which contains a 3D draws array (`predict_sim$draws`) with the MCMC draws for each prediction target as well as the target information (`predict_sim$target`).

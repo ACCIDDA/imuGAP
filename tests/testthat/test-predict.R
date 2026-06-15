@@ -30,10 +30,10 @@ test_that("sampling and predict work correctly with simulated data", {
   clean_pops$weight <- 1.0
   clean_pops <- clean_pops[!duplicated(clean_pops$obs_id), ]
 
-  pred <- predict(
+  pred <- suppressWarnings(predict(
     fit,
     clean_pops
-  )
+  ))
 
   expect_s3_class(pred, "imugap_predict")
   expect_true(is.array(pred$draws))
@@ -129,30 +129,30 @@ test_that("predict throws informative compatibility errors", {
 test_that("subset.imugap_predict subsets draws and metadata correctly", {
   data("predict_sim", package = "imuGAP")
 
-  # Original dimensions: 2000 iterations, 1 chain, 1008 variables
+  # Original dimensions: 100 iterations, 1 chain, 1008 variables
   orig_dims <- dim(predict_sim$draws)
-  expect_equal(orig_dims[1], 2000)
+  expect_equal(orig_dims[1], 100)
   expect_equal(orig_dims[2], 1)
   expect_equal(orig_dims[3], 1008)
 
   # Check subsetting by metadata expression
   pred_sub1 <- subset(predict_sim, dose == 2)
   expect_s3_class(pred_sub1, "imugap_predict")
-  expect_equal(dim(pred_sub1$draws)[1], 2000)
+  expect_equal(dim(pred_sub1$draws)[1], 100)
   expect_equal(dim(pred_sub1$draws)[2], 1)
   expect_equal(dim(pred_sub1$draws)[3], sum(predict_sim$target$dose == 2))
   expect_equal(nrow(pred_sub1$target), sum(predict_sim$target$dose == 2))
   expect_true(all(pred_sub1$target$dose == 2))
 
   # Check subsetting by iteration
-  pred_sub2 <- subset(predict_sim, iteration = 1:100)
-  expect_equal(dim(pred_sub2$draws)[1], 100)
+  pred_sub2 <- subset(predict_sim, iteration = 1:50)
+  expect_equal(dim(pred_sub2$draws)[1], 50)
   expect_equal(dim(pred_sub2$draws)[2], 1)
   expect_equal(dim(pred_sub2$draws)[3], 1008)
 
   # Check subsetting by chain
   pred_sub3 <- subset(predict_sim, chain = 1)
-  expect_equal(dim(pred_sub3$draws)[1], 2000)
+  expect_equal(dim(pred_sub3$draws)[1], 100)
   expect_equal(dim(pred_sub3$draws)[2], 1)
   expect_equal(dim(pred_sub3$draws)[3], 1008)
 
@@ -206,4 +206,59 @@ test_that("as.data.frame.imugap_predict works correctly", {
   expect_equal(df_sub$coverage[1], pred_sub$draws[1, 1, 1])
   expect_equal(df_sub$coverage[5], pred_sub$draws[5, 1, 1])
   expect_equal(df_sub$coverage[6], pred_sub$draws[1, 1, 2])
+})
+
+test_that("predict respects posterior_size and validates it", {
+  data("locations_sim", package = "imuGAP")
+  data("observations_sim", package = "imuGAP")
+  data("populations_sim", package = "imuGAP")
+
+  # 2 chains x 5 post-warmup draws = 10 draws available
+  st_opts <- stan_options(chains = 2, iter = 10, warmup = 5, refresh = 0)
+  imugap_opts <- imugap_options(df = 5, dose_schedule = c(1, 4))
+
+  fit <- suppressWarnings(imuGAP::sampling(
+    observations = observations_sim,
+    populations = populations_sim,
+    locations = locations_sim,
+    imugap_opts = imugap_opts,
+    stan_opts = st_opts
+  ))
+
+  clean_pops <- data.table::copy(populations_sim)
+  clean_pops$weight <- 1.0
+  clean_pops <- clean_pops[!duplicated(clean_pops$obs_id), ]
+
+  # Requesting 6 draws keeps 3 from the end of each of the 2 chains.
+  pred <- suppressWarnings(predict(fit, clean_pops, posterior_size = 6))
+  expect_equal(dim(pred$draws)[1], 6)
+  expect_true(all(pred$draws >= 0 & pred$draws <= 1))
+
+  # Always warns that adequacy is not checked.
+  expect_warning(
+    predict(fit, clean_pops, posterior_size = 6),
+    "sufficiency statistics"
+  )
+
+  # Hard errors on nonsensical sizes.
+  expect_error(
+    predict(fit, clean_pops, posterior_size = 0),
+    "single positive integer"
+  )
+  expect_error(
+    predict(fit, clean_pops, posterior_size = -3),
+    "single positive integer"
+  )
+  expect_error(
+    predict(fit, clean_pops, posterior_size = 2.5),
+    "single positive integer"
+  )
+  expect_error(
+    predict(fit, clean_pops, posterior_size = c(2, 4)),
+    "single positive integer"
+  )
+  expect_error(
+    predict(fit, clean_pops, posterior_size = 10000),
+    "exceeds"
+  )
 })
