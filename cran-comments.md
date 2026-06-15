@@ -1,3 +1,17 @@
+## Resubmission
+
+This is a resubmission of the initial 0.1.0 submission, which was auto-rejected
+for tarball size. It addresses the points raised in the CRAN pre-test:
+
+* **Tarball size.** The source tarball is now under the 10 MB limit. The
+  previous 13.6 MB was dominated by one bundled object, `predict_sim` (12 MB);
+  `predict()` now predicts over a sub-sample of posterior draws, so the bundled
+  fixture is regenerated at under 0.5 MB and the tarball is ~1.7 MB.
+* **Examples.** Replaced `\dontrun{}` with `\donttest{}` in the examples for
+  `sampling()` and `predict.imugap_fit()`.
+* **References.** The package methods are not yet described in a published
+  reference, so no `<doi:...>` reference was added to the Description field.
+
 ## Test environments
 
 Continuous integration (GitHub Actions, `R-CMD-check.yaml`), each run with
@@ -31,7 +45,7 @@ This is a new submission.
   it.
 
 (Stan model compilation also makes installation and any sampler-exercising
-examples slow; such examples are wrapped in `\dontrun{}` to keep check runtime
+examples slow; such examples are wrapped in `\donttest{}` to keep check runtime
 modest.)
 
 ## Downstream dependencies
