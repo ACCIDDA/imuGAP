@@ -96,7 +96,11 @@ predict.imugap_fit <- function(
     # No adequacy check (mixing, ESS); warn only when a sub-sample is taken.
     warning(
       sprintf(
-        "predict() is using a sub-sample of %d posterior draws and does not check whether it is adequate (chain mixing, effective sample size); verify the sufficiency statistics yourself.",
+        paste0(
+          "predict() is using a sub-sample of %d posterior draws and does ",
+          "not check whether it is adequate (chain mixing, effective sample ",
+          "size); verify the sufficiency statistics yourself."
+        ),
         posterior_size
       ),
       call. = FALSE
