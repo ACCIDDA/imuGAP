@@ -251,7 +251,7 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
 #' subset(predict_sim, dose == 2)
 #'
 #' # Subset predictions by iteration and chain
-#' subset(predict_sim, iteration = 1:500, chain = 1)
+#' subset(predict_sim, iteration = 1:50, chain = 1)
 #'
 #' @export
 subset.imugap_predict <- function(x, subset, iteration, chain, ...) {
