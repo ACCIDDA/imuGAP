@@ -277,9 +277,9 @@ schools <- c(
   "Sparrow School" # ~60 per grade
 )
 
-# Subset to targets of interest
+# Subset to targets of interest (all retained posterior draws)
 predict_sub <- predict_sim |>
-  subset(loc_id %in% schools & dose == 2 & age > 4, iteration = 500:1000)
+  subset(loc_id %in% schools & dose == 2 & age > 4)
 
 # Get the pre-computed background coverage matching the subsetted target
 latent_ref <- copy(predict_sub$target)
