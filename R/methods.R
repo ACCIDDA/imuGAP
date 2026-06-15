@@ -7,8 +7,9 @@
 #' @param object an `imugap_fit` object returned by `sampling()`
 #' @param target a `[data.frame()]` of target populations to predict for
 #' @param posterior_size optional single positive integer. When set, predict
-#'   over only the last `posterior_size` draws from the fit's output (the
-#'   converged tail) instead of every draw; the value must not exceed the number
+#'   over only this many draws, taken from the end of each chain (the converged
+#'   tail). Must be a multiple of the number of chains; a value that isn't is
+#'   rounded up to the next multiple, with a warning. Must not exceed the number
 #'   of draws in the fit. Defaults to `NULL`, which uses every draw.
 #' @param ... additional arguments (currently ignored)
 #'
@@ -24,10 +25,11 @@
 #' locations hierarchy.
 #'
 #' By default `predict()` uses every posterior draw in the fit. Supply
-#' `posterior_size` to predict over only the last that-many draws from the fit's
-#' output; this is how the bundled `predict_sim` fixture is kept small. When a
-#' sub-sample is taken `predict()` warns that it has not checked whether those
-#' draws are adequate (chain mixing, effective sample size).
+#' `posterior_size` to predict over a sub-sample taken from the end of each
+#' chain; this is how the bundled `predict_sim` fixture is kept small. The
+#' returned draws keep the per-chain structure (iterations x chains x targets).
+#' When a sub-sample is taken `predict()` warns that it has not checked whether
+#' those draws are adequate (chain mixing, effective sample size).
 #'
 #' @return An object of class `imugap_predict` wrapping the 3D array of predicted
 #'   draws and the canonical target dataset.
@@ -58,36 +60,45 @@ predict.imugap_fit <- function(
 
   raw_fit <- fit$stanfit
 
-  # All posterior draws the fit produced (post-warmup), stacked across chains.
-  all_draws <- as.matrix(raw_fit)
-  n_avail <- nrow(all_draws)
+  # Posterior draws as a 3D array: iterations x chains x parameters.
+  draws_array <- as.array(raw_fit)
+  n_iter <- dim(draws_array)[1]
+  n_chains <- dim(draws_array)[2]
+  n_avail <- n_iter * n_chains
 
   if (!is.null(posterior_size)) {
-    # Hard error on a nonsensical requested size.
-    if (
-      !is.numeric(posterior_size) || length(posterior_size) != 1L ||
-        is.na(posterior_size) || posterior_size <= 0 ||
-        posterior_size != as.integer(posterior_size)
-    ) {
-      stop("`posterior_size` must be a single positive integer.", call. = FALSE)
+    posterior_size <- check_positive_int(posterior_size, "posterior_size")
+    if (length(posterior_size) != 1L) {
+      stop("`posterior_size` must be a single value.", call. = FALSE)
+    }
+    # The slice keeps an equal number of draws from the end of each chain, so
+    # the size must be a multiple of the chain count; round up if it isn't.
+    if (posterior_size %% n_chains != 0L) {
+      rounded <- as.integer(ceiling(posterior_size / n_chains) * n_chains)
+      warning(
+        sprintf(
+          "`posterior_size` (%d) is not a multiple of the %d chains; using %d draws instead.",
+          posterior_size, n_chains, rounded
+        ),
+        call. = FALSE
+      )
+      posterior_size <- rounded
     }
     if (posterior_size > n_avail) {
       stop(
         sprintf(
           "`posterior_size` (%d) exceeds the %d posterior draws in the fit.",
-          as.integer(posterior_size),
-          n_avail
+          posterior_size, n_avail
         ),
         call. = FALSE
       )
     }
-    # Sub-sampling without an adequacy check (mixing, ESS); warn only when a
-    # slice is actually taken, not on every predict().
+    # No adequacy check (mixing, ESS); warn only when a sub-sample is taken.
     warning(
-      "predict() is using the last ", as.integer(posterior_size),
-      " posterior draws and does not check whether that sub-sample is adequate ",
-      "(chain mixing, effective sample size); verify the sufficiency statistics ",
-      "yourself.",
+      sprintf(
+        "predict() is using a sub-sample of %d posterior draws and does not check whether it is adequate (chain mixing, effective sample size); verify the sufficiency statistics yourself.",
+        posterior_size
+      ),
       call. = FALSE
     )
   }
@@ -122,14 +133,18 @@ predict.imugap_fit <- function(
   dat_stan$weights <- target$weight
   dat_stan$predict_mode <- 1
 
-  # Slice the requested number of draws from the end of the fit's outputs (the
-  # converged tail); otherwise use every draw.
-  draws_mat <- if (is.null(posterior_size)) {
-    all_draws
+  # Slice the iterations dimension, keeping an equal number of draws from the
+  # end of each chain (the converged tail); otherwise use every draw.
+  draws_sub <- if (is.null(posterior_size)) {
+    draws_array
   } else {
-    size <- as.integer(posterior_size)
-    all_draws[(n_avail - size + 1L):n_avail, , drop = FALSE]
+    keep <- posterior_size %/% n_chains
+    draws_array[seq.int(n_iter - keep + 1L, n_iter), , , drop = FALSE]
   }
+  n_keep <- dim(draws_sub)[1]
+
+  # Flatten to the 2D draws matrix gqs expects (rows = draws, cols = params).
+  draws_mat <- apply(draws_sub, 3L, c)
 
   # Run gqs to generate predictions
   gqs_res <- rstan::gqs(
@@ -138,11 +153,10 @@ predict.imugap_fit <- function(
     draws = draws_mat
   )
 
-  # Extract predictions as 3D array (iterations x chains x parameters)
-  p_obs_draws <- as.array(gqs_res, pars = "p_obs")
-  if (length(dim(p_obs_draws)) == 2L) {
-    dim(p_obs_draws) <- c(dim(p_obs_draws)[1], 1L, dim(p_obs_draws)[2])
-  }
+  # Predicted coverage, reshaped to iterations x chains x targets so the
+  # per-chain structure is preserved.
+  p_obs_mat <- as.matrix(gqs_res, pars = "p_obs")
+  p_obs_draws <- array(p_obs_mat, dim = c(n_keep, n_chains, ncol(p_obs_mat)))
 
   structure(
     list(
@@ -231,7 +245,7 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
 #' subset(predict_sim, dose == 2)
 #'
 #' # Subset predictions by iteration and chain
-#' subset(predict_sim, iteration = 1:50, chain = 1)
+#' subset(predict_sim, iteration = 1:10, chain = 1)
 #'
 #' @export
 subset.imugap_predict <- function(x, subset, iteration, chain, ...) {
