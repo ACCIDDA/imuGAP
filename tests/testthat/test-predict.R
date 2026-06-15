@@ -30,10 +30,10 @@ test_that("sampling and predict work correctly with simulated data", {
   clean_pops$weight <- 1.0
   clean_pops <- clean_pops[!duplicated(clean_pops$obs_id), ]
 
-  pred <- suppressWarnings(predict(
+  pred <- predict(
     fit,
     clean_pops
-  ))
+  )
 
   expect_s3_class(pred, "imugap_predict")
   expect_true(is.array(pred$draws))

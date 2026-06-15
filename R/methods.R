@@ -6,11 +6,10 @@
 #'
 #' @param object an `imugap_fit` object returned by `sampling()`
 #' @param target a `[data.frame()]` of target populations to predict for
-#' @param posterior_size optional single positive integer giving the number of
-#'   posterior draws to predict over. Draws are taken from the end of each chain
-#'   (the converged tail) and apportioned as evenly as possible across chains,
-#'   and the value must not exceed the number of draws in the fit. Defaults to
-#'   `NULL`, which uses every available draw.
+#' @param posterior_size optional single positive integer. When set, predict
+#'   over only the last `posterior_size` draws from the fit's output (the
+#'   converged tail) instead of every draw; the value must not exceed the number
+#'   of draws in the fit. Defaults to `NULL`, which uses every draw.
 #' @param ... additional arguments (currently ignored)
 #'
 #' @details
@@ -25,11 +24,10 @@
 #' locations hierarchy.
 #'
 #' By default `predict()` uses every posterior draw in the fit. Supply
-#' `posterior_size` to predict over a smaller number of draws taken from the
-#' converged end of each chain; this is how the bundled `predict_sim` fixture is
-#' kept small. `predict()` does not yet check whether the retained draws are
-#' adequate (chain mixing, effective sample size) and always warns to that
-#' effect.
+#' `posterior_size` to predict over only the last that-many draws from the fit's
+#' output; this is how the bundled `predict_sim` fixture is kept small. When a
+#' sub-sample is taken `predict()` warns that it has not checked whether those
+#' draws are adequate (chain mixing, effective sample size).
 #'
 #' @return An object of class `imugap_predict` wrapping the 3D array of predicted
 #'   draws and the canonical target dataset.
@@ -60,14 +58,12 @@ predict.imugap_fit <- function(
 
   raw_fit <- fit$stanfit
 
-  # Posterior draws available across all chains (post-warmup).
-  draws_arr <- as.array(raw_fit)
-  n_iter <- dim(draws_arr)[1]
-  n_chains <- dim(draws_arr)[2]
-  n_avail <- n_iter * n_chains
+  # All posterior draws the fit produced (post-warmup), stacked across chains.
+  all_draws <- as.matrix(raw_fit)
+  n_avail <- nrow(all_draws)
 
-  # Hard error on a nonsensical requested posterior size.
   if (!is.null(posterior_size)) {
+    # Hard error on a nonsensical requested size.
     if (
       !is.numeric(posterior_size) || length(posterior_size) != 1L ||
         is.na(posterior_size) || posterior_size <= 0 ||
@@ -85,6 +81,15 @@ predict.imugap_fit <- function(
         call. = FALSE
       )
     }
+    # Sub-sampling without an adequacy check (mixing, ESS); warn only when a
+    # slice is actually taken, not on every predict().
+    warning(
+      "predict() is using the last ", as.integer(posterior_size),
+      " posterior draws and does not check whether that sub-sample is adequate ",
+      "(chain mixing, effective sample size); verify the sufficiency statistics ",
+      "yourself.",
+      call. = FALSE
+    )
   }
 
   target <- create_target(fit, target)
@@ -117,38 +122,13 @@ predict.imugap_fit <- function(
   dat_stan$weights <- target$weight
   dat_stan$predict_mode <- 1
 
-  # No adequacy check yet (chain mixing, effective sample size); warn so callers
-  # verify the retained draws are sufficient themselves.
-  warning(
-    "predict() does not check whether the posterior draws are adequate ",
-    "(chain mixing, effective sample size); verify the sufficiency statistics ",
-    "yourself.",
-    call. = FALSE
-  )
-
-  # Select the posterior draws to predict over. With `posterior_size`, keep that
-  # many draws from the end of each chain (the converged tail), apportioned as
-  # evenly as possible across chains; otherwise use every draw.
-  if (is.null(posterior_size)) {
-    draws_mat <- as.matrix(raw_fit)
+  # Slice the requested number of draws from the end of the fit's outputs (the
+  # converged tail); otherwise use every draw.
+  draws_mat <- if (is.null(posterior_size)) {
+    all_draws
   } else {
     size <- as.integer(posterior_size)
-    base <- size %/% n_chains
-    extra <- size %% n_chains
-    per_chain <- rep(base, n_chains) +
-      c(rep(1L, extra), rep(0L, n_chains - extra))
-    par_names <- dimnames(draws_arr)[[3]]
-    chain_mats <- lapply(seq_len(n_chains), function(ch) {
-      k <- per_chain[ch]
-      if (k == 0L) {
-        return(NULL)
-      }
-      rows <- seq.int(n_iter - k + 1L, n_iter)
-      m <- matrix(draws_arr[rows, ch, ], nrow = k, ncol = length(par_names))
-      colnames(m) <- par_names
-      m
-    })
-    draws_mat <- do.call(rbind, chain_mats)
+    all_draws[(n_avail - size + 1L):n_avail, , drop = FALSE]
   }
 
   # Run gqs to generate predictions
