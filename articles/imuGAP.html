@@ -364,13 +364,14 @@ locations, including the State and County levels, across ages 1 to
 <h3 id="predicting-coverage">4. Predicting Coverage<a class="anchor" aria-label="anchor" href="#predicting-coverage"></a>
 </h3>
 <p>Finally, we run <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> to generate predicted coverage
-probabilities for each target population combination across all
-posterior draws.</p>
+probabilities for each target population combination. By default it uses
+every posterior draw; here we pass <code>posterior_size</code> to
+predict over a smaller sub-sample taken from the end of each chain.</p>
 <p>Generating predictions also runs the Stan model (in generated
 quantities mode) and can be time-consuming, so we show the code below
 without executing it:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">predict_sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">fit_sim</span>, target <span class="op">=</span> <span class="va">target_sim</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">predict_sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">fit_sim</span>, target <span class="op">=</span> <span class="va">target_sim</span>, posterior_size <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></code></pre></div>
 <p>Instead, we load the pre-computed prediction results
 <code>predict_sim</code> bundled with the package. This is an object of
 class <code>imugap_predict</code> which contains a 3D draws array
@@ -464,9 +465,9 @@ simulation process.</p>
 <span>  <span class="st">"Sparrow School"</span> <span class="co"># ~60 per grade</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Subset to targets of interest</span></span>
+<span><span class="co"># Subset to targets of interest (all retained posterior draws)</span></span>
 <span><span class="va">predict_sub</span> <span class="op">&lt;-</span> <span class="va">predict_sim</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">loc_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">schools</span> <span class="op">&amp;</span> <span class="va">dose</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;</span> <span class="va">age</span> <span class="op">&gt;</span> <span class="fl">4</span>, iteration <span class="op">=</span> <span class="fl">500</span><span class="op">:</span><span class="fl">1000</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">loc_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">schools</span> <span class="op">&amp;</span> <span class="va">dose</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;</span> <span class="va">age</span> <span class="op">&gt;</span> <span class="fl">4</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Get the pre-computed background coverage matching the subsetted target</span></span>
 <span><span class="va">latent_ref</span> <span class="op">&lt;-</span> <span class="fu">copy</span><span class="op">(</span><span class="va">predict_sub</span><span class="op">$</span><span class="va">target</span><span class="op">)</span></span>

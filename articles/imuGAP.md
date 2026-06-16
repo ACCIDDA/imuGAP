@@ -312,7 +312,9 @@ head(target_sim)
 
 Finally, we run [`predict()`](https://rdrr.io/r/stats/predict.html) to
 generate predicted coverage probabilities for each target population
-combination across all posterior draws.
+combination. By default it uses every posterior draw; here we pass
+`posterior_size` to predict over a smaller sub-sample taken from the end
+of each chain.
 
 Generating predictions also runs the Stan model (in generated quantities
 mode) and can be time-consuming, so we show the code below without
@@ -320,7 +322,7 @@ executing it:
 
 ``` r
 
-predict_sim <- predict(object = fit_sim, target = target_sim)
+predict_sim <- predict(object = fit_sim, target = target_sim, posterior_size = 100)
 ```
 
 Instead, we load the pre-computed prediction results `predict_sim`
@@ -439,9 +441,9 @@ schools <- c(
   "Sparrow School" # ~60 per grade
 )
 
-# Subset to targets of interest
+# Subset to targets of interest (all retained posterior draws)
 predict_sub <- predict_sim |>
-  subset(loc_id %in% schools & dose == 2 & age > 4, iteration = 500:1000)
+  subset(loc_id %in% schools & dose == 2 & age > 4)
 
 # Get the pre-computed background coverage matching the subsetted target
 latent_ref <- copy(predict_sub$target)

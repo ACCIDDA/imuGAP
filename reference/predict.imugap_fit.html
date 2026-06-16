@@ -49,7 +49,7 @@ predicted coverage probabilities.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'imugap_fit'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">target</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">target</span>, posterior_size <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -62,6 +62,14 @@ predicted coverage probabilities.</p>
 
 <dt id="arg-target">target<a class="anchor" aria-label="anchor" href="#arg-target"></a></dt>
 <dd><p>a <code>[data.frame()]</code> of target populations to predict for</p></dd>
+
+
+<dt id="arg-posterior-size">posterior_size<a class="anchor" aria-label="anchor" href="#arg-posterior-size"></a></dt>
+<dd><p>optional single positive integer. When set, predict
+over only this many draws, taken from the end of each chain (the converged
+tail). Must be a multiple of the number of chains; a value that isn't is
+rounded up to the next multiple, with a warning. Must not exceed the number
+of draws in the fit. Defaults to <code>NULL</code>, which uses every draw.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -83,6 +91,12 @@ location, cohort, or age considered within the bounds of the original
 sampling fit. Particularly, this includes enclosing locations without specific
 observation data, as long as those locations are <em>somewhere</em> in the
 locations hierarchy.</p>
+<p>By default <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> uses every posterior draw in the fit. Supply
+<code>posterior_size</code> to predict over a sub-sample taken from the end of each
+chain; this is how the bundled <code>predict_sim</code> fixture is kept small. The
+returned draws keep the per-chain structure (iterations x chains x targets).
+When a sub-sample is taken <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> warns that it has not checked whether
+those draws are adequate (chain mixing, effective sample size).</p>
     </div>
 
     <div class="section level2">
@@ -92,8 +106,9 @@ locations hierarchy.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"fit_sim"</span>, package <span class="op">=</span> <span class="st">"imuGAP"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"target_sim"</span>, package <span class="op">=</span> <span class="st">"imuGAP"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Generate predictions</span></span></span>
-<span class="r-in"><span><span class="va">preds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_sim</span>, target <span class="op">=</span> <span class="va">target_sim</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Generate predictions over 100 posterior draws</span></span></span>
+<span class="r-in"><span><span class="va">preds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit_sim</span>, target <span class="op">=</span> <span class="va">target_sim</span>, posterior_size <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>predict() is using a sub-sample of 100 posterior draws and does not check whether it is adequate (chain mixing, effective sample size); verify the sufficiency statistics yourself.</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

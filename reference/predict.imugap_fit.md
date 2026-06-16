@@ -7,7 +7,7 @@ predicted coverage probabilities.
 
 ``` r
 # S3 method for class 'imugap_fit'
-predict(object, target, ...)
+predict(object, target, posterior_size = NULL, ...)
 ```
 
 ## Arguments
@@ -20,6 +20,14 @@ predict(object, target, ...)
 - target:
 
   a `[data.frame()]` of target populations to predict for
+
+- posterior_size:
+
+  optional single positive integer. When set, predict over only this
+  many draws, taken from the end of each chain (the converged tail).
+  Must be a multiple of the number of chains; a value that isn't is
+  rounded up to the next multiple, with a warning. Must not exceed the
+  number of draws in the fit. Defaults to `NULL`, which uses every draw.
 
 - ...:
 
@@ -43,6 +51,15 @@ original sampling fit. Particularly, this includes enclosing locations
 without specific observation data, as long as those locations are
 *somewhere* in the locations hierarchy.
 
+By default [`predict()`](https://rdrr.io/r/stats/predict.html) uses
+every posterior draw in the fit. Supply `posterior_size` to predict over
+a sub-sample taken from the end of each chain; this is how the bundled
+`predict_sim` fixture is kept small. The returned draws keep the
+per-chain structure (iterations x chains x targets). When a sub-sample
+is taken [`predict()`](https://rdrr.io/r/stats/predict.html) warns that
+it has not checked whether those draws are adequate (chain mixing,
+effective sample size).
+
 ## Examples
 
 ``` r
@@ -51,7 +68,8 @@ without specific observation data, as long as those locations are
 data("fit_sim", package = "imuGAP")
 data("target_sim", package = "imuGAP")
 
-# Generate predictions
-preds <- predict(fit_sim, target = target_sim)
+# Generate predictions over 100 posterior draws
+preds <- predict(fit_sim, target = target_sim, posterior_size = 100)
+#> Warning: predict() is using a sub-sample of 100 posterior draws and does not check whether it is adequate (chain mixing, effective sample size); verify the sufficiency statistics yourself.
 # }
 ```
