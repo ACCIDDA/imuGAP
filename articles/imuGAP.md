@@ -1,22 +1,31 @@
 # imuGAP, Immunity: Geographic & Age-based Projection
 
-    #>     imuGAP data.table  bayesplot    ggplot2      tidyr      dplyr 
-    #>       TRUE       TRUE       TRUE       TRUE       TRUE       TRUE
-
 ## Introduction
 
 The name `imuGAP` stands for “Immunity: Geographic & Age-based
-Projection”. The package provides a [stan](https://mc-stan.org/)-based
-model for estimating vaccination coverage by location, cohort, and age
-for childhood infectious diseases, such as measles.
+Projection”. This package allows the user to synthesize across multiple
+data sources to make predictions of vaccination coverage for
+user-defined populations of interest. For example, one could use the
+package to:
 
-The core model represents a target population as having a life-long
-propensity for vaccination; some proportion, $`\phi`$, of that
-population is unlikely to vaccinate and the complementary proportion,
-$`1 - \phi`$, is likely to vaccinate. That population then experiences a
-vaccination rate, $`\lambda`$, over the model time eras, according to
-the vaccination eligibility schedule, $`\nu`$. These core parameters can
-vary over time and location, in a user-specifiable way.
+1.  Estimate current vaccination coverage by location across different
+    age groups
+2.  Estimate coverage (or uptake) for a given birth cohort (e.g. people
+    born in 1990) across their life course (i.e. at each age from birth
+    to current age)
+3.  Fill in gaps in observed coverage data (e.g. a school that doesn’t
+    report vaccination coverage in a certain year)
+
+More specifically, the package provides a
+[stan](https://mc-stan.org/)-based model for estimating vaccination
+coverage by location, cohort, and age for childhood infectious diseases,
+such as measles. The core model represents a target population as having
+a life-long propensity for vaccination; some proportion, $`\phi`$, of
+that population is unlikely to vaccinate and the complementary
+proportion, $`1 - \phi`$, is likely to vaccinate. That population then
+experiences a vaccination rate, $`\lambda`$, over the model time eras,
+according to the vaccination eligibility schedule, $`\nu`$. These core
+parameters can vary over time and location, in a user-specifiable way.
 
 Focusing just on the core model element, imagine a particular population
 location $`i`$ and cohort $`a`$ (where $`a`$ denotes the start of the
@@ -224,7 +233,7 @@ The options for the sampler can be configured using
 [`stan_options()`](https://accidda.github.io/imuGAP/reference/stan_options.md).
 
 Because compiling the Stan model and running the MCMC chain can take
-some time, we set `eval = FALSE` below. In practice, you could run:
+some time, we show the code below without executing it.
 
 ``` r
 
@@ -285,6 +294,10 @@ To predict vaccine coverage for a target population (which can include
 locations or cohorts without direct observations, as long as they exist
 in the locations hierarchy), we first define a target grid using
 [`create_target()`](https://accidda.github.io/imuGAP/reference/create_target.md).
+Note that predictions can only be made for birth cohorts and locations
+that have at least some observations included in the estimation run. In
+other words, the model cannot predict coverage for future birth cohorts
+or unobserved locations.
 
 For example, we can generate a “snapshot” prediction target for all
 locations, including the State and County levels, across ages 1 to 18:

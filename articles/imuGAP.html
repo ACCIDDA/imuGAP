@@ -73,17 +73,28 @@
 
     
     
-<pre><code><span><span class="co">#&gt;     imuGAP data.table  bayesplot    ggplot2      tidyr      dplyr </span></span>
-<span><span class="co">#&gt;       TRUE       TRUE       TRUE       TRUE       TRUE       TRUE</span></span></code></pre>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>The name <code>imuGAP</code> stands for “Immunity: Geographic &amp;
-Age-based Projection”. The package provides a <a href="https://mc-stan.org/" class="external-link">stan</a>-based model for estimating
+Age-based Projection”. This package allows the user to synthesize across
+multiple data sources to make predictions of vaccination coverage for
+user-defined populations of interest. For example, one could use the
+package to:</p>
+<ol style="list-style-type: decimal">
+<li>Estimate current vaccination coverage by location across different
+age groups</li>
+<li>Estimate coverage (or uptake) for a given birth cohort (e.g. people
+born in 1990) across their life course (i.e. at each age from birth to
+current age)</li>
+<li>Fill in gaps in observed coverage data (e.g. a school that doesn’t
+report vaccination coverage in a certain year)</li>
+</ol>
+<p>More specifically, the package provides a <a href="https://mc-stan.org/" class="external-link">stan</a>-based model for estimating
 vaccination coverage by location, cohort, and age for childhood
-infectious diseases, such as measles.</p>
-<p>The core model represents a target population as having a life-long
-propensity for vaccination; some proportion,
+infectious diseases, such as measles. The core model represents a target
+population as having a life-long propensity for vaccination; some
+proportion,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>,
 of that population is unlikely to vaccinate and the complementary
 proportion,
@@ -146,7 +157,7 @@ locations in the model. In this simulation, we have a State, which
 contains three Counties, which in turn contain various Schools. We
 validate and canonicalize it using
 <code><a href="../reference/canonicalize.html">canonicalize_locations()</a></code>.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"locations_sim"</span>, package <span class="op">=</span> <span class="st">"imuGAP"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">locations_sim</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                  loc_id parent_id</span></span>
@@ -180,7 +191,7 @@ vaccinated (<code>positive</code>) out of the total sampled
 <code>censored</code> column, which is <code>1</code> if the observation
 is right-censored and <code>NA</code> otherwise. We validate and
 canonicalize it using <code><a href="../reference/canonicalize.html">canonicalize_observations()</a></code>.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"observations_sim"</span>, package <span class="op">=</span> <span class="st">"imuGAP"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">observations_sim</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">obs_id</span>, <span class="va">loc_id</span>, <span class="va">positive</span>, <span class="va">sample_n</span>, <span class="va">censored</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    obs_id               loc_id positive sample_n censored</span></span>
@@ -213,7 +224,7 @@ observation ID (<code>obs_id</code>) to the corresponding location,
 birth cohort, age at observation, vaccine dose, and observation weight.
 We validate and canonicalize it using
 <code><a href="../reference/canonicalize.html">canonicalize_populations()</a></code>.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"populations_sim"</span>, package <span class="op">=</span> <span class="st">"imuGAP"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">populations_sim</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    obs_id               loc_id cohort   age  dose weight</span></span>
@@ -257,7 +268,7 @@ example, if we modify the observations data so that the number of
 <code>positive</code> cases exceeds the total sample size
 <code>sample_n</code>, the validation function will raise a clear
 error:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a copy with an invalid observation (positive &gt; sample_n)</span></span>
 <span><span class="va">invalid_obs</span> <span class="op">&lt;-</span> <span class="fu">copy</span><span class="op">(</span><span class="va">observations_sim</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">obs_id</span>, <span class="va">loc_id</span>, <span class="va">positive</span>, <span class="va">sample_n</span>, <span class="va">censored</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">invalid_obs</span><span class="op">[</span><span class="fl">1</span>, <span class="va">positive</span> <span class="op">:=</span> <span class="va">sample_n</span> <span class="op">+</span> <span class="fl">10</span><span class="op">]</span></span>
@@ -271,7 +282,7 @@ error:</p>
 <p>Similarly, if the locations data contains duplicate location IDs,
 <code><a href="../reference/canonicalize.html">canonicalize_locations()</a></code> will detect the duplication and
 throw an error:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a copy with a duplicate location ID</span></span>
 <span><span class="va">invalid_locs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
 <span>  <span class="va">locations_sim</span>,</span>
@@ -296,9 +307,8 @@ complete validation requirements.</p>
 using <code><a href="../reference/sampling.html">sampling()</a></code>. The options for the sampler can be
 configured using <code><a href="../reference/stan_options.html">stan_options()</a></code>.</p>
 <p>Because compiling the Stan model and running the MCMC chain can take
-some time, we set <code>eval = FALSE</code> below. In practice, you
-could run:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+some time, we show the code below without executing it.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sampling.html">sampling</a></span><span class="op">(</span></span>
 <span>  <span class="va">observations_sim</span>, <span class="va">populations_sim</span>, <span class="va">locations_sim</span>,</span>
 <span>  stan_opts <span class="op">=</span> <span class="fu"><a href="../reference/stan_options.html">stan_options</a></span><span class="op">(</span></span>
@@ -307,13 +317,13 @@ could run:</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>For this walkthrough, we load the pre-computed fit object
 <code>fit_sim</code> bundled with the package:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"fit_sim"</span>, package <span class="op">=</span> <span class="st">"imuGAP"</span><span class="op">)</span></span></code></pre></div>
 <p>Once the model is fit, we can extract posterior draws of the model
 parameters using <code><a href="../reference/extract_imugap.html">extract_imugap()</a></code>. For example, let’s
 extract the B-spline coefficients representing the state-level vaccine
 uptake baseline:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">beta_draws</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_imugap.html">extract_imugap</a></span><span class="op">(</span><span class="va">fit_sim</span>, pars <span class="op">=</span> <span class="st">"beta_bs"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">beta_draws</span><span class="op">)</span></span>
 <span><span class="co">#&gt; List of 1</span></span>
@@ -323,7 +333,7 @@ uptake baseline:</p>
 <span><span class="co">#&gt;   .. ..$           : NULL</span></span></code></pre></div>
 <p>We can also look at trace plots for selected parameters to ensure
 convergence has been reached.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">bayesplot</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/bayesplot/reference/MCMC-traces.html" class="external-link">mcmc_trace</a></span><span class="op">(</span><span class="va">fit_sim</span><span class="op">$</span><span class="va">stanfit</span>,</span>
 <span>  pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>    <span class="st">"beta_bs[1]"</span>, <span class="st">"beta_bs[2]"</span>, <span class="st">"beta_bs[3]"</span>,</span>
@@ -340,11 +350,15 @@ convergence has been reached.</p>
 <p>To predict vaccine coverage for a target population (which can
 include locations or cohorts without direct observations, as long as
 they exist in the locations hierarchy), we first define a target grid
-using <code><a href="../reference/create_target.html">create_target()</a></code>.</p>
+using <code><a href="../reference/create_target.html">create_target()</a></code>. Note that predictions can only be
+made for birth cohorts and locations that have at least some
+observations included in the estimation run. In other words, the model
+cannot predict coverage for future birth cohorts or unobserved
+locations.</p>
 <p>For example, we can generate a “snapshot” prediction target for all
 locations, including the State and County levels, across ages 1 to
 18:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">target_sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create_target.html">create_target</a></span><span class="op">(</span></span>
 <span>  fit <span class="op">=</span> <span class="va">fit_sim</span>, location <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">locations_sim</span><span class="op">$</span><span class="va">loc_id</span><span class="op">)</span>, age <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">18</span>,</span>
 <span>  cohort <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">populations_sim</span><span class="op">$</span><span class="va">cohort</span><span class="op">)</span> <span class="op">-</span> <span class="fl">18</span>, dose <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, mode <span class="op">=</span> <span class="st">"snapshot"</span></span>
@@ -370,7 +384,7 @@ predict over a smaller sub-sample taken from the end of each chain.</p>
 <p>Generating predictions also runs the Stan model (in generated
 quantities mode) and can be time-consuming, so we show the code below
 without executing it:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">predict_sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">fit_sim</span>, target <span class="op">=</span> <span class="va">target_sim</span>, posterior_size <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></code></pre></div>
 <p>Instead, we load the pre-computed prediction results
 <code>predict_sim</code> bundled with the package. This is an object of
@@ -378,12 +392,12 @@ class <code>imugap_predict</code> which contains a 3D draws array
 (<code>predict_sim$draws</code>) with the MCMC draws for each prediction
 target as well as the target information
 (<code>predict_sim$target</code>).</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"predict_sim"</span>, package <span class="op">=</span> <span class="st">"imuGAP"</span><span class="op">)</span></span></code></pre></div>
 <p>We can summarize these predictions to get the posterior mean and
 credible intervals across the target location, age, and doses
 requested:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate the posterior mean coverage probability for each location and dose at age 5</span></span>
 <span><span class="va">summary_predict</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">predict_sim</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">summary_predict</span><span class="op">)</span></span>
@@ -407,7 +421,7 @@ requested:</p>
 state coverage by cohort. Note that the lower coverage among 5 year olds
 is due to them only having been eligible for their second dose for one
 year.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">summary_predict</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">loc_id</span> <span class="op">==</span> <span class="st">"State"</span> <span class="op">&amp;</span> <span class="va">dose</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;</span> <span class="va">age</span> <span class="op">&gt;</span> <span class="fl">4</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">ggplot</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -421,7 +435,7 @@ year.</p>
 <p>We can also look at the trend in coverage by age at the county level.
 Note that they follow the same trend as the state but with differing
 magnitude.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">summary_predict</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">loc_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Scruggs"</span>, <span class="st">"Simone"</span>, <span class="st">"Watson"</span><span class="op">)</span> <span class="op">&amp;</span> <span class="va">dose</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;</span> <span class="va">age</span> <span class="op">&gt;</span> <span class="fl">4</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">ggplot</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -441,7 +455,7 @@ magnitude.</p>
 <p><img src="imuGAP_files/figure-html/county-viz-1.png" class="r-plt" alt="" width="700"></p>
 <p>Next, we can look at the distribution of school-level coverage
 estimates by age group. Let’s focus on Scruggs County as an example.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scruggs_schools</span> <span class="op">&lt;-</span> <span class="va">locations_sim</span><span class="op">[</span><span class="va">parent_id</span> <span class="op">==</span> <span class="st">"Scruggs"</span>, <span class="va">loc_id</span><span class="op">]</span></span>
 <span><span class="va">summary_predict</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span></span>
@@ -458,7 +472,7 @@ estimates by age group. Let’s focus on Scruggs County as an example.</p>
 <p>Finally let’s look at some selected schools and see how their
 predicted coverage compared to true underlying coverage from the data
 simulation process.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">schools</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"Towhee Children's Academy"</span>, <span class="co"># ~380 per grade</span></span>
 <span>  <span class="st">"Flycatcher Elementary"</span>, <span class="co"># ~110 per grade</span></span>
