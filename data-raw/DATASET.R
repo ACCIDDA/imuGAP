@@ -442,7 +442,11 @@ for (i in seq_len(nrow(target_sim_dt))) {
 latent_params_sim$coverage <- p_true
 usethis::use_data(latent_params_sim, overwrite = TRUE)
 
-# Prediction
-predict_sim <- suppressWarnings(predict(object = fit_sim, target = target_sim))
+# Prediction. Keep a small posterior sub-sample (100 draws from the end of the
+# chains) so the bundled fixture stays well under CRAN's tarball size limit;
+# predicting over all draws produces a ~12 MB object (imuGAP #86).
+predict_sim <- suppressWarnings(
+  predict(object = fit_sim, target = target_sim, posterior_size = 100)
+)
 
-usethis::use_data(predict_sim, overwrite = TRUE)
+usethis::use_data(predict_sim, compress = "xz", overwrite = TRUE)
