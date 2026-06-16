@@ -25,9 +25,6 @@ Local development:
 
 - aarch64-apple-darwin (macOS), R 4.5.3
 
-win-builder: R-devel and R-release, submitted before this release. Results are
-recorded here once returned.
-
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note
