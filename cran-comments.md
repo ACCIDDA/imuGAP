@@ -25,10 +25,8 @@ Local development:
 
 - aarch64-apple-darwin (macOS), R 4.5.3
 
-win-builder (devel + release) and R-hub: pending pre-submission check. These
-are run with `devtools::check_win_devel()`, `devtools::check_win_release()`,
-and `rhub::rhub_check()` immediately before submission, and their results are
-recorded here at that point.
+win-builder: R-devel and R-release, submitted before this release. Results are
+recorded here once returned.
 
 ## R CMD check results
 
