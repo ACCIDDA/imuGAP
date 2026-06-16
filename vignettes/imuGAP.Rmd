@@ -29,7 +29,9 @@ if (!pkgs_available) {
   knitr::opts_chunk$set(eval = FALSE)
   message("Some suggested packages are missing. Vignette code will not be executed.")
 } else {
-  suppressPackageStartupMessages(
+  # Assign the result so the chunk does not auto-print the logical vector
+  # sapply() returns (the setup block should render no output).
+  chk <- suppressPackageStartupMessages(
     sapply(required_pkgs, require, character.only = TRUE)
   )
 }
