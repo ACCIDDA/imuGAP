@@ -62,3 +62,26 @@ test_that("fit_model errors on an unknown backend", {
     "Unknown backend"
   )
 })
+
+# A cmdstanr fit returns a CmdStanMCMC, not a stanfit; the rstan-only
+# downstream functions must reject it clearly. We fake the fit object so these
+# run without cmdstanr or a CmdStan toolchain.
+test_that("predict() rejects a cmdstanr (non-stanfit) fit", {
+  fake_fit <- structure(
+    list(
+      stanfit = structure(list(), class = "CmdStanMCMC"),
+      data = list(),
+      locations = data.frame()
+    ),
+    class = "imugap_fit"
+  )
+  expect_error(predict(fake_fit, target = data.frame()), "rstan backend")
+})
+
+test_that("extract_imugap() rejects a cmdstanr (non-stanfit) fit", {
+  fake_fit <- structure(
+    list(stanfit = structure(list(), class = "CmdStanMCMC")),
+    class = "imugap_fit"
+  )
+  expect_error(extract_imugap(fake_fit), "rstan backend")
+})
