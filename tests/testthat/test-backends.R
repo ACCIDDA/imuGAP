@@ -85,3 +85,62 @@ test_that("extract_imugap() rejects a cmdstanr (non-stanfit) fit", {
   )
   expect_error(extract_imugap(fake_fit), "rstan backend")
 })
+
+# The cmdstanr code paths can't run without the cmdstanr package and a CmdStan
+# toolchain (absent on CI/CRAN). Mock the availability check, the cmdstanr fit,
+# and rstan::sampling so the surrounding logic is still exercised.
+
+test_that("stan_options validates the cmdstanr-native option set", {
+  with_mocked_bindings(
+    {
+      opts <- stan_options(
+        backend = "cmdstanr",
+        iter_warmup = 500,
+        iter_sampling = 250,
+        parallel_chains = 2
+      )
+      expect_identical(attr(opts, "stan_backend"), "cmdstanr")
+      expect_identical(opts$iter_warmup, 500L)
+      expect_identical(opts$iter_sampling, 250L)
+      expect_identical(opts$parallel_chains, 2L)
+    },
+    check_backend_available = function(backend) invisible(NULL)
+  )
+})
+
+test_that("fit_model dispatches to the cmdstanr backend", {
+  with_mocked_bindings(
+    {
+      res <- fit_model(
+        "cmdstanr", "impute_school_coverage_process_v6",
+        list(), NULL, stan_options(), NULL
+      )
+      expect_identical(res, "cmdstanr_fit")
+    },
+    fit_cmdstanr = function(model_name, dat_stan, init, stan_opts,
+                            drop_pars = NULL) {
+      "cmdstanr_fit"
+    }
+  )
+})
+
+test_that("fit_rstan forwards drop_pars to rstan::sampling", {
+  captured <- NULL
+  with_mocked_bindings(
+    {
+      fit_rstan(
+        "impute_school_coverage_process_v6",
+        dat_stan = list(), init = NULL,
+        stan_opts = stan_options(chains = 1),
+        drop_pars = "logalpha"
+      )
+      expect_identical(captured$pars, "logalpha")
+      expect_false(captured$include)
+    },
+    sampling = function(...) {
+      captured <<- list(...)
+      "rstan_fit"
+    },
+    .package = "rstan"
+  )
+})
