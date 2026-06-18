@@ -113,7 +113,6 @@ sampling <- function(
   structure(
     list(
       stanfit = raw_fit,
-      backend = backend,
       settings = list(
         imugap_opts = imugap_opts,
         stan_opts = stan_opts
