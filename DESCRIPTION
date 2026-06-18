@@ -55,10 +55,7 @@ Suggests:
     lintr,
     spelling,
     bayesplot,
-    ggplot2,
-    cmdstanr
-Additional_repositories:
-    https://stan-dev.r-universe.dev
+    ggplot2
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: https://accidda.github.io/imuGAP/, https://github.com/ACCIDDA/imuGAP
