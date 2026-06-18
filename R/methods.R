@@ -59,6 +59,17 @@ predict.imugap_fit <- function(
   }
 
   raw_fit <- fit$stanfit
+  # predict() runs generated quantities via rstan::gqs(), which needs a stanfit.
+  # cmdstanr fits return a CmdStanMCMC; their generated-quantities support is a
+  # separate piece of work (tracked in #100), so fail clearly for now.
+  if (!inherits(raw_fit, "stanfit")) {
+    stop(
+      "predict() currently supports only the rstan backend. Refit with ",
+      "stan_options(backend = 'rstan'); cmdstanr generated-quantities support ",
+      "is not yet implemented.",
+      call. = FALSE
+    )
+  }
 
   # Posterior draws as a 3D array: iterations x chains x parameters.
   draws_array <- as.array(raw_fit)
