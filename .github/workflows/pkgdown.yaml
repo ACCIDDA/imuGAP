@@ -33,7 +33,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, any::roxygen2, any::roxyglobals, local::.
+          extra-packages: any::pkgdown, any::roxygen2, any::roxyglobals, any::pkgload, local::.
           needs: website
 
       - name: Cache Stan compilation objects
@@ -58,6 +58,7 @@ jobs:
       # site -- the reference examples and vignette use fit_sim/target_sim/
       # predict_sim/latent_params_sim. Mirrors R-CMD-check.yaml.
       - name: Generate fitted data artifacts
+        timeout-minutes: 30
         env:
           PKG_BUILD_EXTRA_FLAGS: "false"
         run: Rscript data-raw/fit_data.R

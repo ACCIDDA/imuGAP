@@ -53,7 +53,7 @@ jobs:
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, any::roxygen2, any::roxyglobals
+          extra-packages: any::rcmdcheck, any::roxygen2, any::roxyglobals, any::pkgload
           needs: check
 
       - name: Cache Stan compilation objects
@@ -81,6 +81,7 @@ jobs:
       # and before the check, which needs these datasets present for examples,
       # the vignette, and the documented-data check.
       - name: Generate fitted data artifacts
+        timeout-minutes: 30
         env:
           PKG_BUILD_EXTRA_FLAGS: "false"
         run: Rscript data-raw/fit_data.R

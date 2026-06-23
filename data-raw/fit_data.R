@@ -23,6 +23,9 @@ pkgload::load_all(quiet = TRUE)
 internals <- readRDS("data-raw/sim_internals.rds")
 
 # --- Fit -------------------------------------------------------------------
+# cores = 4 runs the chains in parallel (the draws are seed-determined, so the
+# result is identical to sequential sampling); this matters because the fit is
+# regenerated on every build, including each CI matrix leg.
 fit_sim <- suppressWarnings(sampling(
   observations_sim,
   populations_sim,
@@ -30,10 +33,20 @@ fit_sim <- suppressWarnings(sampling(
   stan_opts = stan_options(
     iter = 1000,
     chains = 4,
+    cores = 4,
     refresh = 0,
     seed = 1L
   )
 ))
+
+# Fail loudly on a degenerate fit rather than silently saving a broken fixture.
+# suppressWarnings() above hides rstan's routine sampler warnings, but it would
+# also hide a fit where chains failed to initialise, so assert the basics here.
+stopifnot(
+  inherits(fit_sim$stanfit, "stanfit"),
+  all(c("beta_bs", "lambda_raw") %in% fit_sim$stanfit@model_pars),
+  all(is.finite(rstan::extract(fit_sim$stanfit, pars = "beta_bs")$beta_bs))
+)
 save(fit_sim, file = "data/fit_sim.rda", compress = "xz")
 
 # --- Target population for prediction --------------------------------------

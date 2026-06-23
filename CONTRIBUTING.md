@@ -43,6 +43,11 @@ R CMD INSTALL --preclean .
 # Regenerate documentation from roxygen comments
 Rscript -e 'devtools::document()'
 
+# Regenerate the fitted data artifacts (NOT tracked in git, like man/*.Rd).
+# fit_sim/target_sim/predict_sim/latent_params_sim must exist before `R CMD
+# build`/`check`, the vignette, or the examples will run. Needs a Stan toolchain.
+just data-fit   # or: Rscript data-raw/fit_data.R
+
 # Run the test suite
 Rscript -e 'devtools::test()'
 

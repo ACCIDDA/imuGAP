@@ -101,7 +101,7 @@ NULL
 #' A list containing the true/latent parameter values used to simulate the
 #' example datasets (`locations_sim`, `populations_sim`, `observations_sim`).
 #'
-#' @format A list with 7 components:
+#' @format A list with 8 components:
 #'  - `phi_state`, a numeric vector of length 30 representing the state-specific
 #'    baseline vaccine uptake propensity over cohorts.
 #'  - `lambda`, a numeric vector of length 2 representing the rate parameters
@@ -112,6 +112,8 @@ NULL
 #'  - `off_cnty`, a numeric vector of length 3 containing county-level random offsets.
 #'  - `censor_reduction`, a number representing the censoring offset
 #'    multiplier applied to censored observations (0.95).
+#'  - `coverage`, a numeric vector of the true/background coverage for each row
+#'    of `target_sim`, computed from the latent parameters above.
 "latent_params_sim"
 
 #' @title Example Prediction Target Populations
