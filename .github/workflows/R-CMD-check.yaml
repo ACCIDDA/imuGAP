@@ -75,6 +75,16 @@ jobs:
         run: roxygen2::roxygenise()
         shell: Rscript {0}
 
+      # fit_sim/target_sim/predict_sim/latent_params_sim are gitignored and
+      # regenerated on build by Part B of the data pipeline (#64). Run it after
+      # roxygenise() (which compiled the package, so load_all() reuses the build)
+      # and before the check, which needs these datasets present for examples,
+      # the vignette, and the documented-data check.
+      - name: Generate fitted data artifacts
+        env:
+          PKG_BUILD_EXTRA_FLAGS: "false"
+        run: Rscript data-raw/fit_data.R
+
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
         with:

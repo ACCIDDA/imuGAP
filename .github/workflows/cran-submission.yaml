@@ -59,6 +59,14 @@ jobs:
         run: roxygen2::roxygenise()
         shell: Rscript {0}
 
+      # fit_sim/target_sim/predict_sim/latent_params_sim are gitignored and
+      # regenerated on build (#64); the submission tarball must include them.
+      # Mirrors the "Generate documentation" step above.
+      - name: Generate fitted data artifacts
+        env:
+          PKG_BUILD_EXTRA_FLAGS: "false"
+        run: Rscript data-raw/fit_data.R
+
       - uses: coatless-actions/cran-submission@v1
         with:
           error-on: 'warning'

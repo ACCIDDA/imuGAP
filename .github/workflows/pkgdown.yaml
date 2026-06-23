@@ -54,6 +54,14 @@ jobs:
         run: roxygen2::roxygenise()
         shell: Rscript {0}
 
+      # Regenerate the gitignored fitted-data artifacts (#64) before building the
+      # site -- the reference examples and vignette use fit_sim/target_sim/
+      # predict_sim/latent_params_sim. Mirrors R-CMD-check.yaml.
+      - name: Generate fitted data artifacts
+        env:
+          PKG_BUILD_EXTRA_FLAGS: "false"
+        run: Rscript data-raw/fit_data.R
+
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
