@@ -2,6 +2,8 @@
 
 ## imuGAP 0.1.0
 
+CRAN release: 2026-06-22
+
 First public release. Initial feature set:
 
 - [`sampling()`](https://accidda.github.io/imuGAP/reference/sampling.md):
