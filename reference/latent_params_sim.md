@@ -12,7 +12,7 @@ latent_params_sim
 
 ## Format
 
-A list with 7 components:
+A list with 8 components:
 
 - `phi_state`, a numeric vector of length 30 representing the
   state-specific baseline vaccine uptake propensity over cohorts.
@@ -34,3 +34,6 @@ A list with 7 components:
 
 - `censor_reduction`, a number representing the censoring offset
   multiplier applied to censored observations (0.95).
+
+- `coverage`, a numeric vector of the true/background coverage for each
+  row of `target_sim`, computed from the latent parameters above.

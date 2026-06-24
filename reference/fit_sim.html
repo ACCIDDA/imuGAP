@@ -71,13 +71,13 @@ Stan model.</p>
 <li><p><code>seed = 1L</code></p></li>
 <li><p><code>refresh = 0</code></p></li>
 </ul><p>These settings are not enough for convergence; <code>fit_sim</code> is a wiring
-fixture, not a scientifically meaningful posterior. The generating script
-lives at <code>data-raw/fit_sim.R</code> and can be re-run from the package root with
-<code>Rscript data-raw/fit_sim.R</code>.</p>
+fixture, not a scientifically meaningful posterior. It is not tracked in
+git: it is regenerated on build by <code>data-raw/fit_data.R</code> (run <code>just data-fit</code>
+locally, or <code>just data</code> for the full pipeline).</p>
 <p>Note that <code>stanfit</code> objects bundle references to the compiled Stan model
 and can be sensitive to major version changes in <code>rstan</code> and
 <code>StanHeaders</code>. If a future install fails to load <code>fit_sim</code>, regenerate it
-via <code>data-raw/fit_sim.R</code>.</p>
+via <code>data-raw/fit_data.R</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

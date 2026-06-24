@@ -53,7 +53,7 @@ example datasets (<code>locations_sim</code>, <code>populations_sim</code>, <cod
 
     <div class="section level2">
     <h2 id="format">Format<a class="anchor" aria-label="anchor" href="#format"></a></h2>
-    <p>A list with 7 components:</p><ul><li><p><code>phi_state</code>, a numeric vector of length 30 representing the state-specific
+    <p>A list with 8 components:</p><ul><li><p><code>phi_state</code>, a numeric vector of length 30 representing the state-specific
 baseline vaccine uptake propensity over cohorts.</p></li>
 <li><p><code>lambda</code>, a numeric vector of length 2 representing the rate parameters
 for vaccine doses 1 and 2 respectively.</p></li>
@@ -63,6 +63,8 @@ for vaccine doses 1 and 2 respectively.</p></li>
 <li><p><code>off_cnty</code>, a numeric vector of length 3 containing county-level random offsets.</p></li>
 <li><p><code>censor_reduction</code>, a number representing the censoring offset
 multiplier applied to censored observations (0.95).</p></li>
+<li><p><code>coverage</code>, a numeric vector of the true/background coverage for each row
+of <code>target_sim</code>, computed from the latent parameters above.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
