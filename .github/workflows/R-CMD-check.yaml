@@ -72,7 +72,7 @@ jobs:
       # fit_data.R's load_all() compiles the package, so roxygenise() and the
       # check reuse that build. PKG_BUILD_EXTRA_FLAGS=false matches the doc step.
       - name: Generate fitted data artifacts
-        timeout-minutes: 30
+        timeout-minutes: 45
         env:
           PKG_BUILD_EXTRA_FLAGS: "false"
         run: Rscript data-raw/fit_data.R

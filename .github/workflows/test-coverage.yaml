@@ -41,7 +41,7 @@ jobs:
       # regenerated on build (#64); test-predict.R loads predict_sim, so it must
       # exist before covr installs the package and runs the tests.
       - name: Generate fitted data artifacts
-        timeout-minutes: 30
+        timeout-minutes: 45
         env:
           PKG_BUILD_EXTRA_FLAGS: "false"
         run: Rscript data-raw/fit_data.R

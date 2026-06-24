@@ -55,7 +55,7 @@ jobs:
       # to build their .Rd and errors if they are absent. The submission tarball
       # also needs them present.
       - name: Generate fitted data artifacts
-        timeout-minutes: 30
+        timeout-minutes: 45
         env:
           PKG_BUILD_EXTRA_FLAGS: "false"
         run: Rscript data-raw/fit_data.R

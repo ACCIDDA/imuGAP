@@ -50,7 +50,7 @@ jobs:
       # objects to build their .Rd and errors if they are absent. The site's
       # reference examples and vignette also use them. Mirrors R-CMD-check.yaml.
       - name: Generate fitted data artifacts
-        timeout-minutes: 30
+        timeout-minutes: 45
         env:
           PKG_BUILD_EXTRA_FLAGS: "false"
         run: Rscript data-raw/fit_data.R
@@ -64,8 +64,12 @@ jobs:
         run: roxygen2::roxygenise()
         shell: Rscript {0}
 
+      # install = TRUE so the package is (re)installed AFTER the fitted data are
+      # regenerated above -- otherwise the vignette renders against the
+      # setup-time local::. install, which predates the regenerated data and
+      # fails with "object 'fit_sim' not found" (#64).
       - name: Build site
-        run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+        run: pkgdown::build_site_github_pages(new_process = FALSE, install = TRUE)
         shell: Rscript {0}
 
       - name: Deploy to GitHub pages

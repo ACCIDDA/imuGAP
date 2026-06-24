@@ -23,9 +23,13 @@ pkgload::load_all(quiet = TRUE)
 internals <- readRDS("data-raw/sim_internals.rds")
 
 # --- Fit -------------------------------------------------------------------
-# cores = 4 runs the chains in parallel (the draws are seed-determined, so the
-# result is identical to sequential sampling); this matters because the fit is
-# regenerated on every build, including each CI matrix leg.
+# Run the chains in parallel where it is safe to: the draws are seed-determined,
+# so parallel and sequential give identical results, and this fit runs on every
+# build (each CI matrix leg). On unix, rstan parallelises via fork, so the forked
+# workers inherit the pkgload::load_all()'d compiled model. On Windows rstan uses
+# PSOCK worker processes that do NOT inherit it (they fail with "object
+# 'rstantools_model_*' not found"), so fall back to sequential there.
+fit_cores <- if (.Platform$OS.type == "windows") 1L else 4L
 fit_sim <- suppressWarnings(sampling(
   observations_sim,
   populations_sim,
@@ -33,7 +37,7 @@ fit_sim <- suppressWarnings(sampling(
   stan_opts = stan_options(
     iter = 1000,
     chains = 4,
-    cores = 4,
+    cores = fit_cores,
     refresh = 0,
     seed = 1L
   )
