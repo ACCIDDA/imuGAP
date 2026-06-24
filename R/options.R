@@ -1,18 +1,35 @@
 #' @title Stan Sampler Options
 #'
 #' @description
-#' This function encapsulates option passing to the stan sampler, with the
-#' exception of the model object, which is passed in `imugap_options`.
+#' Collects and validates sampler arguments for the chosen `backend`, forwarding
+#' them **verbatim** so calls feel native to that backend. Use the backend's own
+#' argument names; mixing one backend's vocabulary into the other errors with a
+#' hint. The model object is supplied separately via `imugap_options()`, and
+#' `data` is constructed internally, so neither may be set here.
 #'
-#' @inheritDotParams rstan::sampling -object
+#' @param ... sampler arguments forwarded verbatim to the chosen backend's
+#'   sampler. Use the backend's own names: for `"rstan"`, the
+#'   [rstan::sampling()] arguments (`iter`, `chains`, `cores`, `seed`); for
+#'   `"cmdstanr"`, the `$sample()` arguments (`iter_warmup`, `iter_sampling`,
+#'   `parallel_chains`, ...).
+#' @param backend which Stan interface to target, one of `"rstan"` (default) or
+#'   `"cmdstanr"`. Determines which argument vocabulary is accepted and which
+#'   sampler [sampling()] calls. Selecting `"cmdstanr"` errors if the cmdstanr
+#'   package is not installed.
 #'
 #' @examples
 #' stan_options()
 #' stan_options(chains = 2, iter = 500)
+#' if (requireNamespace("cmdstanr", quietly = TRUE)) {
+#'   stan_options(backend = "cmdstanr", parallel_chains = 4, iter_warmup = 500)
+#' }
 #'
-#' @return a list of arguments matching [rstan::sampling()] inputs
+#' @return a named list of validated sampler arguments, tagged with the backend
+#'   it was built for
 #' @export
-stan_options <- function(...) {
+stan_options <- function(..., backend = "rstan") {
+  backend <- match.arg(backend, c("rstan", "cmdstanr"))
+  check_backend_available(backend)
   res <- list(...)
   if ("object" %in% names(res)) {
     stop(
@@ -26,8 +43,17 @@ stan_options <- function(...) {
       "The `sampling` or `predict` functions construct the 'data' argument internally."
     )
   }
-  int_args_in_sampling <- c("iter", "chains", "warmup", "cores")
-  for (arg in intersect(names(res), int_args_in_sampling)) {
+
+  # Reject the other backend's vocabulary with a "did you mean" hint.
+  check_backend_vocab(names(res), backend)
+
+  # Validate the positive-integer count arguments native to this backend.
+  int_args <- if (backend == "rstan") {
+    c("iter", "chains", "warmup", "cores")
+  } else {
+    c("iter_warmup", "iter_sampling", "thin", "parallel_chains", "chains")
+  }
+  for (arg in intersect(names(res), int_args)) {
     if (length(res[[arg]]) != 1L) {
       stop(
         sprintf("'%s' must be a single positive integer", arg),
@@ -47,6 +73,7 @@ stan_options <- function(...) {
     }
     res[["seed"]] <- val
   }
+  attr(res, "stan_backend") <- backend
   res
 }
 
