@@ -45,6 +45,16 @@ jobs:
             ${{ runner.os }}-stan-pkgdown-
             ${{ runner.os }}-stan-
 
+      # Regenerate the gitignored fitted-data artifacts (#64) BEFORE roxygenise():
+      # the data are documented (the "fit_sim" string form), so roxygen2 reads the
+      # objects to build their .Rd and errors if they are absent. The site's
+      # reference examples and vignette also use them. Mirrors R-CMD-check.yaml.
+      - name: Generate fitted data artifacts
+        timeout-minutes: 30
+        env:
+          PKG_BUILD_EXTRA_FLAGS: "false"
+        run: Rscript data-raw/fit_data.R
+
       # PKG_BUILD_EXTRA_FLAGS=false stops pkgbuild from injecting its
       # debug flags (-g -O0) when pkgload::load_all() recompiles the
       # package under roxygen2. See R-CMD-check.yaml for full context.
@@ -53,15 +63,6 @@ jobs:
           PKG_BUILD_EXTRA_FLAGS: "false"
         run: roxygen2::roxygenise()
         shell: Rscript {0}
-
-      # Regenerate the gitignored fitted-data artifacts (#64) before building the
-      # site -- the reference examples and vignette use fit_sim/target_sim/
-      # predict_sim/latent_params_sim. Mirrors R-CMD-check.yaml.
-      - name: Generate fitted data artifacts
-        timeout-minutes: 30
-        env:
-          PKG_BUILD_EXTRA_FLAGS: "false"
-        run: Rscript data-raw/fit_data.R
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)

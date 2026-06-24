@@ -64,6 +64,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-r${{ matrix.config.r }}-stan-
 
+      # fit_sim/target_sim/predict_sim/latent_params_sim are gitignored and
+      # regenerated on build by Part B of the data pipeline (#64). This MUST run
+      # before roxygenise(): the data are documented (the "fit_sim" string form),
+      # so roxygen2 loads the package and reads the objects to build their .Rd --
+      # it errors ("'fit_sim' is not an exported object") if they are absent.
+      # fit_data.R's load_all() compiles the package, so roxygenise() and the
+      # check reuse that build. PKG_BUILD_EXTRA_FLAGS=false matches the doc step.
+      - name: Generate fitted data artifacts
+        timeout-minutes: 30
+        env:
+          PKG_BUILD_EXTRA_FLAGS: "false"
+        run: Rscript data-raw/fit_data.R
+
       # PKG_BUILD_EXTRA_FLAGS=false stops pkgbuild from injecting its
       # debug flags (-g -O0) when pkgload::load_all() recompiles the
       # package under roxygen2. -O0 inflates Stan template object files
@@ -74,17 +87,6 @@ jobs:
           PKG_BUILD_EXTRA_FLAGS: "false"
         run: roxygen2::roxygenise()
         shell: Rscript {0}
-
-      # fit_sim/target_sim/predict_sim/latent_params_sim are gitignored and
-      # regenerated on build by Part B of the data pipeline (#64). Run it after
-      # roxygenise() (which compiled the package, so load_all() reuses the build)
-      # and before the check, which needs these datasets present for examples,
-      # the vignette, and the documented-data check.
-      - name: Generate fitted data artifacts
-        timeout-minutes: 30
-        env:
-          PKG_BUILD_EXTRA_FLAGS: "false"
-        run: Rscript data-raw/fit_data.R
 
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
