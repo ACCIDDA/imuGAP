@@ -1,25 +1,30 @@
 # Backend selection + cross-backend vocabulary guard. The vocabulary logic is
-# tested directly via check_backend_vocab() so it runs without cmdstanr
+# tested directly via assert_backend_vocab() so it runs without cmdstanr
 # installed; the stan_options() integration tests for cmdstanr are skipped when
 # cmdstanr is unavailable (e.g. on CI / CRAN).
 
-test_that("check_backend_vocab rejects the other backend's vocabulary", {
-  expect_error(check_backend_vocab("parallel_chains", "rstan"), "parallel_chains")
-  expect_error(check_backend_vocab("iter_warmup", "rstan"), "iter_warmup")
-  expect_error(check_backend_vocab("cores", "cmdstanr"), "cores")
-  expect_error(check_backend_vocab("control", "cmdstanr"), "control")
-  expect_error(check_backend_vocab("iter", "cmdstanr"), "iter")
+test_that("assert_backend_vocab rejects the other backend's vocabulary", {
+  expect_error(assert_backend_vocab("parallel_chains", "rstan"), "parallel_chains")
+  expect_error(assert_backend_vocab("iter_warmup", "rstan"), "iter_warmup")
+  expect_error(assert_backend_vocab("cores", "cmdstanr"), "cores")
+  expect_error(assert_backend_vocab("control", "cmdstanr"), "control")
+  expect_error(assert_backend_vocab("iter", "cmdstanr"), "iter")
 })
 
-test_that("check_backend_vocab passes clean argument sets", {
-  expect_silent(check_backend_vocab(c("iter", "cores"), "rstan"))
+test_that("assert_backend_vocab passes clean argument sets and returns them", {
+  expect_identical(assert_backend_vocab(c("iter", "cores"), "rstan"), c("iter", "cores"))
   expect_silent(
-    check_backend_vocab(c("iter_warmup", "parallel_chains"), "cmdstanr")
+    assert_backend_vocab(c("iter_warmup", "parallel_chains"), "cmdstanr")
   )
 })
 
-test_that("stan_options() defaults to and tags the rstan backend", {
-  expect_identical(attr(stan_options(), "stan_backend"), "rstan")
+test_that("assert_backend_available validates and returns the backend", {
+  expect_identical(assert_backend_available("rstan"), "rstan")
+  expect_error(assert_backend_available("nonsense"), "should be one of")
+})
+
+test_that("stan_options() defaults to and records the rstan backend", {
+  expect_identical(stan_options()$backend, "rstan")
   expect_error(stan_options(backend = "nonsense"))
 })
 
@@ -34,7 +39,7 @@ test_that("stan_options errors for cmdstanr when it is not installed", {
   expect_error(stan_options(backend = "cmdstanr"), "cmdstanr")
 })
 
-test_that("cmdstanr backend builds and tags native options when available", {
+test_that("cmdstanr backend builds and records native options when available", {
   skip_if_not_installed("cmdstanr")
   opts <- stan_options(
     backend = "cmdstanr",
@@ -42,7 +47,7 @@ test_that("cmdstanr backend builds and tags native options when available", {
     iter_warmup = 500,
     iter_sampling = 500
   )
-  expect_identical(attr(opts, "stan_backend"), "cmdstanr")
+  expect_identical(opts$backend, "cmdstanr")
   expect_identical(opts$parallel_chains, 4L)
   expect_identical(opts$iter_warmup, 500L)
 })
@@ -59,7 +64,7 @@ test_that("fit_model errors on an unknown backend", {
       "nonsense", "impute_school_coverage_process_v6",
       list(), NULL, stan_options(), NULL
     ),
-    "Unknown backend"
+    "should be one of"
   )
 })
 
@@ -99,12 +104,15 @@ test_that("stan_options validates the cmdstanr-native option set", {
         iter_sampling = 250,
         parallel_chains = 2
       )
-      expect_identical(attr(opts, "stan_backend"), "cmdstanr")
+      expect_identical(opts$backend, "cmdstanr")
       expect_identical(opts$iter_warmup, 500L)
       expect_identical(opts$iter_sampling, 250L)
       expect_identical(opts$parallel_chains, 2L)
     },
-    check_backend_available = function(backend) invisible(NULL)
+    # Bypass the cmdstanr-installed check but keep match.arg validation.
+    assert_backend_available = function(backend) {
+      match.arg(backend, c("rstan", "cmdstanr"))
+    }
   )
 })
 
@@ -117,6 +125,9 @@ test_that("fit_model dispatches to the cmdstanr backend", {
       )
       expect_identical(res, "cmdstanr_fit")
     },
+    # fit_model() asserts availability first; bypass it so the dispatch (to the
+    # mocked fit_cmdstanr) is what's exercised, with no cmdstanr installed.
+    assert_backend_available = function(backend) invisible(backend),
     fit_cmdstanr = function(model_name, dat_stan, init, stan_opts,
                             drop_pars = NULL) {
       "cmdstanr_fit"

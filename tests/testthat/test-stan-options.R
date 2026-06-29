@@ -1,9 +1,11 @@
 # Tests for stan_options()
 
-test_that("stan_options returns an empty list with no arguments", {
+test_that("stan_options returns just the backend element with no arguments", {
   sopts <- stan_options()
   expect_type(sopts, "list")
-  expect_length(sopts, 0L)
+  # Only the recorded backend marker is present; no sampler args.
+  expect_named(sopts, "backend")
+  expect_identical(sopts$backend, "rstan")
 })
 
 test_that("stan_options passes named arguments through", {
@@ -15,7 +17,7 @@ test_that("stan_options passes named arguments through", {
 
 test_that("stan_options preserves argument names and values verbatim", {
   sopts <- stan_options(seed = 42L, cores = 4L, refresh = 0)
-  expect_setequal(names(sopts), c("seed", "cores", "refresh"))
+  expect_setequal(names(sopts), c("seed", "cores", "refresh", "backend"))
   expect_equal(sopts$seed, 42L)
   expect_equal(sopts$cores, 4L)
   expect_equal(sopts$refresh, 0)

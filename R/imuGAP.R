@@ -95,9 +95,9 @@ sampling <- function(
     predict_mode = 0
   )
 
-  # The backend tag is the marker that stan_opts came from stan_options(); its
-  # absence means a hand-built list. Whatever backend it names wins.
-  backend <- attr(stan_opts, "stan_backend")
+  # The `backend` element is the marker that stan_opts came from stan_options();
+  # its absence means a hand-built list. Whatever backend it names wins.
+  backend <- stan_opts$backend
   if (is.null(backend)) {
     stop("`stan_opts` must be created by stan_options().", call. = FALSE)
   }
