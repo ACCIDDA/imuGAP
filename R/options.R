@@ -23,9 +23,9 @@ imugap_options <- function(
   if (length(df) != 1L) {
     stop("'df' must be a single positive integer", call. = FALSE)
   }
-  df <- check_positive_int(df, "df")
+  df <- assert_positive_int(df, "df")
 
-  dose_schedule <- check_positive_int(dose_schedule, "dose_schedule")
+  dose_schedule <- assert_positive_int(dose_schedule, "dose_schedule")
   if (is.unsorted(dose_schedule, strictly = TRUE)) {
     stop(
       "'dose_schedule' must be an ascending vector of positive integers",

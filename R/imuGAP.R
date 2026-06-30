@@ -260,7 +260,7 @@ internal_target_builder_vec <- function(
 #' @keywords internal
 internal_target_builder_df <- function(location) {
   tmp <- data.table::as.data.table(location)
-  checked_cols(tmp, c("loc_id", "age", "cohort", "dose"))
+  assert_cols(tmp, c("loc_id", "age", "cohort", "dose"))
 
   if (!"obs_c_id" %in% names(tmp)) {
     tmp[, obs_c_id := seq_len(.N)]

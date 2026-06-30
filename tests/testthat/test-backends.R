@@ -135,6 +135,21 @@ test_that("fit_model dispatches to the cmdstanr backend", {
   )
 })
 
+test_that("assert_positive_int returns the coerced positive integer(s)", {
+  expect_identical(assert_positive_int(4, "x"), 4L)
+  expect_identical(assert_positive_int(c(1, 2, 3), "x"), c(1L, 2L, 3L))
+  expect_type(assert_positive_int(2L, "x"), "integer")
+})
+
+test_that("assert_positive_int errors on invalid input", {
+  expect_error(assert_positive_int("3", "x"), "numeric")
+  expect_error(assert_positive_int(integer(0), "x"), ">= 1")
+  expect_error(assert_positive_int(NA_integer_, "x"), "NA")
+  expect_error(assert_positive_int(1.5, "x"), "integer")
+  expect_error(assert_positive_int(0L, "x"), "positive")
+  expect_error(assert_positive_int(-2L, "x"), "positive")
+})
+
 test_that("fit_rstan forwards drop_pars to rstan::sampling", {
   captured <- NULL
   with_mocked_bindings(

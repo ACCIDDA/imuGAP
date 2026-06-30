@@ -102,14 +102,45 @@ backend_int_args <- function(backend) {
   )
 }
 
+#' Assert a value is a positive integer (vector)
+#'
+#' Errors on invalid input (non-numeric, empty, `NA`, non-integer, or
+#' non-positive values); otherwise returns the value coerced to integer. Used to
+#' validate count-like arguments. Kept here so this file stays self-contained.
+#'
+#' @param val the value to validate.
+#' @param name the argument name, used in error messages.
+#' @returns `val`, coerced to a positive integer (vector).
+#' @keywords internal
+assert_positive_int <- function(val, name) {
+  if (!is.numeric(val)) {
+    stop(sprintf("'%s' must be numeric", name), call. = FALSE)
+  }
+  if (length(val) < 1L) {
+    stop(sprintf("length('%s') must be >= 1", name), call. = FALSE)
+  }
+  if (any(is.na(val))) {
+    stop(sprintf("'%s' may not contain NAs", name), call. = FALSE)
+  }
+  if (any(val != as.integer(val))) {
+    stop(sprintf("'%s' must be integers", name), call. = FALSE)
+  }
+  if (any(val < 1L)) {
+    stop(sprintf("'%s' must be positive", name), call. = FALSE)
+  }
+  as.integer(val)
+}
+
 #' @title Stan Sampler Options
 #'
 #' @description
 #' Collects and validates sampler arguments for the chosen `backend`, forwarding
 #' them **verbatim** so calls feel native to that backend. Use the backend's own
 #' argument names; mixing one backend's vocabulary into the other errors with a
-#' hint. The model object is supplied separately via `imugap_options()`, and
-#' `data` is constructed internally, so neither may be set here.
+#' hint. The model object is supplied separately via the package's model
+#' options, while `data` and `init` are constructed internally, so none of these
+#' may be set here. `chains` defaults to `4` so downstream code can always size
+#' per-chain structures from it.
 #'
 #' @param ... sampler arguments forwarded verbatim to the chosen backend's
 #'   sampler. Use the backend's own names: for `"rstan"`, the
@@ -137,18 +168,30 @@ stan_options <- function(..., backend = "rstan") {
   if ("object" %in% names(res)) {
     stop(
       "Passing 'object' in stan_options is not allowed; ",
-      "The model object should be passed in `imugap_options` instead."
+      "the model object should be supplied via the model options instead."
     )
   }
   if ("data" %in% names(res)) {
     stop(
       "Passing 'data' in stan_options is not allowed; ",
-      "The `sampling` or `predict` functions construct the 'data' argument internally."
+      "the 'data' argument is constructed internally by the fitting functions."
+    )
+  }
+  if ("init" %in% names(res)) {
+    stop(
+      "Passing 'init' in stan_options is not allowed; ",
+      "the 'init' values are constructed internally by the fitting functions."
     )
   }
 
   # Reject the other backend's vocabulary with a "did you mean" hint.
   assert_backend_vocab(names(res), backend)
+
+  # Default the chain count (valid for both backends) so downstream code can
+  # always size per-chain structures (e.g. inits) from it.
+  if (!("chains" %in% names(res))) {
+    res$chains <- 4L
+  }
 
   # Validate the positive-integer count arguments native to this backend.
   for (arg in intersect(names(res), backend_int_args(backend))) {
@@ -158,7 +201,7 @@ stan_options <- function(..., backend = "rstan") {
         call. = FALSE
       )
     }
-    res[[arg]] <- check_positive_int(res[[arg]], arg)
+    res[[arg]] <- assert_positive_int(res[[arg]], arg)
   }
   if ("seed" %in% names(res)) {
     val <- res[["seed"]]
