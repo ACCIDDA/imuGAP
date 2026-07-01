@@ -280,6 +280,17 @@ fit_cmdstanr <- function(model_name, dat_stan, init, stan_opts,
                          drop_pars = NULL) {
   # nocov start: needs the CmdStan toolchain, unavailable on CI/CRAN.
   # cmdstanr availability is already guaranteed by assert_backend_available().
+  # The cmdstanr package is only a wrapper; compiling and running also need the
+  # CmdStan toolchain. cmdstan_version() errors when CmdStan is not installed, so
+  # probe it and fail early with an actionable message rather than deep inside
+  # cmdstan_model().
+  if (inherits(try(cmdstanr::cmdstan_version(), silent = TRUE), "try-error")) {
+    stop(
+      "backend = 'cmdstanr' requires a CmdStan installation, which was not ",
+      "found. Install it with cmdstanr::install_cmdstan().",
+      call. = FALSE
+    )
+  }
   if (length(drop_pars) > 0) {
     warning(
       "dropping parameters is not supported by the cmdstanr backend; ",
