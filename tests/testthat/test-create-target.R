@@ -15,9 +15,9 @@ make_mock_fit <- function() {
   fit
 }
 
-test_that("internal_target_builder_vec works with mode='error'", {
+test_that("create_target builds a grid with mode='error'", {
   # Successful case
-  res <- internal_target_builder_vec(
+  res <- create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L),
     cohort = c(5L, 6L),
@@ -36,7 +36,7 @@ test_that("internal_target_builder_vec works with mode='error'", {
 
   # Length mismatch case
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = c("schlA", "schlB"),
       age = c(2L),
       cohort = c(5L, 6L),
@@ -48,7 +48,7 @@ test_that("internal_target_builder_vec works with mode='error'", {
 
   # Zero length cases
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = character(0),
       age = c(2L),
       cohort = c(5L),
@@ -59,7 +59,7 @@ test_that("internal_target_builder_vec works with mode='error'", {
   )
 
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = character(0),
       age = integer(0),
       cohort = c(5L),
@@ -71,7 +71,7 @@ test_that("internal_target_builder_vec works with mode='error'", {
 
   # Missing arguments case
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = c("schlA", "schlB"),
       mode = "error"
     ),
@@ -80,7 +80,7 @@ test_that("internal_target_builder_vec works with mode='error'", {
 
   # NA cases
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = c("schlA", NA),
       age = c(2L),
       cohort = c(5L),
@@ -91,7 +91,7 @@ test_that("internal_target_builder_vec works with mode='error'", {
   )
 
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = c("schlA"),
       age = c(NA_integer_),
       cohort = c(NA_integer_),
@@ -102,8 +102,8 @@ test_that("internal_target_builder_vec works with mode='error'", {
   )
 })
 
-test_that("internal_target_builder_vec works with mode='enumerate'", {
-  res <- internal_target_builder_vec(
+test_that("create_target builds a grid with mode='enumerate'", {
+  res <- create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L),
     cohort = c(5L),
@@ -118,7 +118,7 @@ test_that("internal_target_builder_vec works with mode='enumerate'", {
   expect_setequal(res$loc_id, c("schlA", "schlB"))
 
   # Test with all arguments having length > 1
-  res_multi <- internal_target_builder_vec(
+  res_multi <- create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L),
     cohort = c(5L, 6L),
@@ -133,8 +133,8 @@ test_that("internal_target_builder_vec works with mode='enumerate'", {
   expect_setequal(res_multi$cohort, c(5L, 6L))
 })
 
-test_that("internal_target_builder_vec works with mode='recycle'", {
-  res <- internal_target_builder_vec(
+test_that("create_target builds a grid with mode='recycle'", {
+  res <- create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L, 4L),
     cohort = c(5L),
@@ -216,7 +216,7 @@ test_that("canonicalize_target validates custom obs_c_id, weight, and obs_id col
   )
 })
 
-test_that("create_target delegates to builders and processes location mappings", {
+test_that("canonicalize_target maps loc_c_id for create_target output and data.frame targets", {
   fit <- make_mock_fit()
 
   # Test vector branch delegation
@@ -248,12 +248,6 @@ test_that("create_target delegates to builders and processes location mappings",
     c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight", "loc_c_id")
   )
   expect_equal(res_df$loc_c_id, c(4, 5))
-
-  # create_target no longer accepts a data.frame
-  expect_error(
-    create_target(location = df_loc),
-    "takes vector inputs"
-  )
 })
 
 test_that("canonicalize_target performs correct bounds checking against fit object", {
@@ -304,9 +298,9 @@ test_that("canonicalize_target performs correct bounds checking against fit obje
   )
 })
 
-test_that("internal_target_builder_vec works with mode='snapshot'", {
+test_that("create_target builds a grid with mode='snapshot'", {
   # Successful case
-  res <- internal_target_builder_vec(
+  res <- create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L, 4L),
     cohort = c(5L),
@@ -333,7 +327,7 @@ test_that("internal_target_builder_vec works with mode='snapshot'", {
 
   # Error when cohort is not a single reference value
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = c("schlA", "schlB"),
       age = c(2L, 3L),
       cohort = c(5L, 6L),

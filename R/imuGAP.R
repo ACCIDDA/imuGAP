@@ -181,70 +181,6 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
   c(n_loc = n_loc, n_age = n_age, n_coh = n_coh, n_dos = n_dos)
 }
 
-#' @keywords internal
-internal_target_builder_vec <- function(
-  location,
-  age,
-  cohort,
-  dose,
-  mode
-) {
-  lens <- validate_vec_inputs(location, age, cohort, dose)
-
-  if (mode == "error") {
-    if (length(unique(lens)) > 1L) {
-      stop(
-        "All arguments must have the same length in 'error' mode",
-        call. = FALSE
-      )
-    }
-    target <- data.table::data.table(
-      loc_id = location,
-      age = age,
-      cohort = cohort,
-      dose = dose,
-      weight = 1.0
-    )
-  } else if (mode %in% c("enumerate", "snapshot")) {
-    if (mode == "snapshot" && length(cohort) != 1L) {
-      stop(
-        "cohort must be a single reference value in 'snapshot' mode",
-        call. = FALSE
-      )
-    }
-    target <- data.table::as.data.table(expand.grid(
-      loc_id = location,
-      age = age,
-      cohort = cohort,
-      dose = dose,
-      weight = 1.0,
-      stringsAsFactors = FALSE
-    ))
-
-    if (mode == "snapshot") {
-      ref_cohort <- cohort
-      max_age <- max(age)
-      target[, cohort := ref_cohort + max_age - age]
-    }
-  } else if (mode == "recycle") {
-    target_len <- compute_recycled_target_len(lens)
-
-    target <- data.table::data.table(
-      loc_id = rep_len(location, target_len),
-      age = rep_len(age, target_len),
-      cohort = rep_len(cohort, target_len),
-      dose = rep_len(dose, target_len),
-      weight = 1.0
-    )
-  }
-  target[, obs_c_id := seq_len(.N)]
-  data.table::setcolorder(
-    target,
-    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
-  )
-  target[]
-}
-
 #' @title Construct a target grid for prediction
 #'
 #' @description
@@ -310,14 +246,60 @@ create_target <- function(
   mode = c("error", "enumerate", "recycle", "snapshot")
 ) {
   mode <- match.arg(mode)
-  if (is.data.frame(location)) {
-    stop(
-      "create_target() takes vector inputs; pass a data.frame target to ",
-      "canonicalize_target() instead.",
-      call. = FALSE
+  lens <- validate_vec_inputs(location, age, cohort, dose)
+
+  if (mode == "error") {
+    if (length(unique(lens)) > 1L) {
+      stop(
+        "All arguments must have the same length in 'error' mode",
+        call. = FALSE
+      )
+    }
+    target <- data.table::data.table(
+      loc_id = location,
+      age = age,
+      cohort = cohort,
+      dose = dose,
+      weight = 1.0
+    )
+  } else if (mode %in% c("enumerate", "snapshot")) {
+    if (mode == "snapshot" && length(cohort) != 1L) {
+      stop(
+        "cohort must be a single reference value in 'snapshot' mode",
+        call. = FALSE
+      )
+    }
+    target <- data.table::as.data.table(expand.grid(
+      loc_id = location,
+      age = age,
+      cohort = cohort,
+      dose = dose,
+      weight = 1.0,
+      stringsAsFactors = FALSE
+    ))
+
+    if (mode == "snapshot") {
+      ref_cohort <- cohort
+      max_age <- max(age)
+      target[, cohort := ref_cohort + max_age - age]
+    }
+  } else if (mode == "recycle") {
+    target_len <- compute_recycled_target_len(lens)
+
+    target <- data.table::data.table(
+      loc_id = rep_len(location, target_len),
+      age = rep_len(age, target_len),
+      cohort = rep_len(cohort, target_len),
+      dose = rep_len(dose, target_len),
+      weight = 1.0
     )
   }
-  internal_target_builder_vec(location, age, cohort, dose, mode)
+  target[, obs_c_id := seq_len(.N)]
+  data.table::setcolorder(
+    target,
+    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
+  )
+  target[]
 }
 
 #' @title Custom imuGAP fit extraction
