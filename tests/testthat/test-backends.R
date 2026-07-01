@@ -129,8 +129,7 @@ test_that("fit_model dispatches to the cmdstanr backend", {
     # fit_model() asserts availability first; bypass it so the dispatch (to the
     # mocked fit_cmdstanr) is what's exercised, with no cmdstanr installed.
     assert_backend_available = function(backend) invisible(backend),
-    fit_cmdstanr = function(model_name, dat_stan, init, stan_opts,
-                            drop_pars = NULL) {
+    fit_cmdstanr = function(model_name, args, drop_pars = NULL) {
       "cmdstanr_fit"
     }
   )
@@ -157,8 +156,7 @@ test_that("fit_rstan forwards drop_pars to rstan::sampling", {
     {
       fit_rstan(
         "impute_school_coverage_process_v6",
-        dat_stan = list(), init = NULL,
-        stan_opts = stan_options(chains = 1),
+        args = stan_options(chains = 1),
         drop_pars = "logalpha"
       )
       expect_identical(captured$pars, "logalpha")

@@ -253,20 +253,23 @@ stan_options <- function(..., chains = 4L, backend = "rstan") {
 fit_model <- function(model_name, dat_stan, init, stan_opts, drop_pars = NULL) {
   # backend rides on stan_opts; assert_* also subsumes match.arg + installed check.
   backend <- assert_backend_available(stan_opts$backend)
+  # Build the sampler argument list once: drop the backend marker (the native
+  # samplers don't accept it) and inject the internally-built data and init, so
+  # each fit_BACKEND() receives a ready-to-forward `args` list.
+  args <- stan_opts
+  args$backend <- NULL
+  args$data <- dat_stan
+  args$init <- init
   switch(
     backend,
-    rstan    = fit_rstan(model_name, dat_stan, init, stan_opts, drop_pars),
-    cmdstanr = fit_cmdstanr(model_name, dat_stan, init, stan_opts, drop_pars)
+    rstan    = fit_rstan(model_name, args, drop_pars),
+    cmdstanr = fit_cmdstanr(model_name, args, drop_pars)
   )
 }
 
 #' @keywords internal
-fit_rstan <- function(model_name, dat_stan, init, stan_opts, drop_pars = NULL) {
-  args <- stan_opts
-  args$backend <- NULL
+fit_rstan <- function(model_name, args, drop_pars = NULL) {
   args$object <- stanmodels[[model_name]]
-  args$data   <- dat_stan
-  args$init   <- init
   if (length(drop_pars) > 0) {
     # Exclude the named parameters from the saved output.
     args$pars    <- drop_pars
@@ -276,8 +279,7 @@ fit_rstan <- function(model_name, dat_stan, init, stan_opts, drop_pars = NULL) {
 }
 
 #' @keywords internal
-fit_cmdstanr <- function(model_name, dat_stan, init, stan_opts,
-                         drop_pars = NULL) {
+fit_cmdstanr <- function(model_name, args, drop_pars = NULL) {
   # nocov start: needs the CmdStan toolchain, unavailable on CI/CRAN.
   # cmdstanr availability is already guaranteed by assert_backend_available().
   # The cmdstanr package is only a wrapper; compiling and running also need the
@@ -311,11 +313,6 @@ fit_cmdstanr <- function(model_name, dat_stan, init, stan_opts,
   exe_dir <- tools::R_user_dir(pkg, "cache")
   dir.create(exe_dir, showWarnings = FALSE, recursive = TRUE)
   mod <- cmdstanr::cmdstan_model(stan_file, dir = exe_dir)
-
-  args <- stan_opts
-  args$backend <- NULL
-  args$data <- dat_stan
-  args$init <- init
   do.call(mod$sample, args)
   # nocov end
 }
