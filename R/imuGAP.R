@@ -280,58 +280,46 @@ internal_target_builder_df <- function(location) {
 }
 
 
-#' @title Create target population for prediction
+#' @title Construct a target grid for prediction
 #'
 #' @description
-#' Creates a target object appropriate for use with `[predict.imugap_fit()]`,
-#' which will be used with a specific `imugap_fit` object.
+#' Builds a target grid for use with `[predict.imugap_fit()]`. This is pure
+#' construction and does **not** reference a fitted model, so it can be called
+#' without a fit (e.g. to expand a request into rows before any fit exists). To
+#' check a constructed target against a specific fit, use
+#' `[canonicalize_target()]`; `[predict.imugap_fit()]` does this for you.
 #'
-#' @param fit an `imugap_fit` object returned by `[sampling()]`
-#' @param location either a vector of locations or a `data.frame`; if a vector of locations,
-#'   treated as the target locations; if a `data.frame`, then validated as the target object.
-#' @param age vector of ages for which to predict coverage,
-#'   consistent with `[canonicalize_populations()]`
-#' @param cohort vector of cohorts for which to predict coverage,
-#'   consistent with `[canonicalize_populations()]`
-#' @param dose vector of doses for which to predict coverage,
-#'   consistent with `[canonicalize_observations()]`
-#' @param mode how `location`, `age`, `cohort`, and `dose` are combined into the
-#'   target grid: `"error"` (default) requires equal-length vectors and pairs
-#'   them rowwise; `"enumerate"` takes all combinations; `"recycle"` recycles to
-#'   the least-common-multiple length; `"snapshot"` takes a single reference
-#'   `cohort` and derives per-age cohorts holding age + cohort constant. See
-#'   Details.
+#' @param location either a vector of locations or a `data.frame`; if a vector of
+#'   locations, treated as the target locations (and `age`, `cohort`, `dose` must
+#'   be supplied); if a `data.frame`, it is normalised as the target grid and
+#'   `age`, `cohort`, and `dose` must not be supplied.
+#' @param age vector of ages for which to predict coverage, consistent with
+#'   `[canonicalize_populations()]`
+#' @param cohort vector of cohorts for which to predict coverage, consistent with
+#'   `[canonicalize_populations()]`
+#' @param dose vector of doses for which to predict coverage, consistent with
+#'   `[canonicalize_observations()]`
+#' @param mode one of `"error"` (default), `"enumerate"`, `"recycle"`, or
+#'   `"snapshot"`, controlling how vector inputs combine:
+#'   \describe{
+#'     \item{`"error"`}{all vector inputs must have the same length.}
+#'     \item{`"enumerate"`}{all combinations of the inputs.}
+#'     \item{`"recycle"`}{recycle inputs to the least-common-multiple length.}
+#'     \item{`"snapshot"`}{`cohort` must be a single reference value (the oldest
+#'       cohort); locations, ages, and doses are enumerated with a cohort for each
+#'       age such that `age + cohort` is constant
+#'       (`cohort_i = cohort_ref + max_age - age_i`), i.e. a snapshot in time.}
+#'   }
+#'   Ignored when `location` is a `data.frame`.
 #'
-#' @details
-#' When `location` is a `data.frame`, this function validates that object
-#' against the `fit` argument. Non-missing values for the other arguments
-#' are an error for that approach.
+#' @return a `data.table` target grid with columns `obs_c_id`, `loc_id`, `age`,
+#'   `cohort`, `dose`, and `weight` (plus `obs_id` if supplied).
 #'
-#' Otherwise, `location` must correspond to a vector of location IDs and
-#' `age`, `cohort`, and `dose` must also be supplied. Depending on the
-#' `mode` argument, these arguments may have different lengths.
-#'   If `mode = "error"` (default), then all of these arguments must have
-#'   the same length.
-#'   If `mode = "enumerate"`, then the resulting target will be all
-#'   combinations of the arguments.
-#'   If `mode = "recycle"`, then the resulting target will recycle all the
-#'   arguments out to the least-common-multiple length.
-#'   If `mode = "snapshot"`, then the cohort argument must be a single
-#'   reference value (which represents the oldest cohort). The resulting
-#'   target will enumerate combinations of locations, ages, and doses,
-#'   calculating cohorts for each age such that the sum of age and cohort is constant
-#'   (i.e., cohort_i = cohort_ref + max_age - age_i). This corresponds to a
-#'   snapshot in time of different birth date and age combinations.
-#'
-#' @return A `data.table` representing the canonicalized target population.
+#' @seealso `[canonicalize_target()]`, `[predict.imugap_fit()]`
 #'
 #' @examples
-#' # Load example fit object
-#' data("fit_sim")
-#'
-#' # 1. Default "error" mode: All vector inputs must have the same length.
+#' # 1. Default "error" mode: all vector inputs must have the same length.
 #' create_target(
-#'   fit = fit_sim,
 #'   location = c("Blue Heron School", "Bluebird Learning Center"),
 #'   age = c(1, 2),
 #'   cohort = c(2, 3),
@@ -339,19 +327,17 @@ internal_target_builder_df <- function(location) {
 #'   mode = "error"
 #' )
 #'
-#' # Providing mismatched length arguments in "error" mode throws an error:
+#' # Mismatched lengths in "error" mode throw an error:
 #' try(create_target(
-#'   fit = fit_sim,
 #'   location = c("Blue Heron School", "Bluebird Learning Center"),
-#'   age = c(1), # length mismatch
+#'   age = c(1),
 #'   cohort = c(2, 3),
 #'   dose = c(1, 1),
 #'   mode = "error"
 #' ))
 #'
-#' # 2. "enumerate" mode: Generates all combinations of the arguments.
+#' # 2. "enumerate" mode: all combinations of the arguments.
 #' create_target(
-#'   fit = fit_sim,
 #'   location = c("Blue Heron School", "Bluebird Learning Center"),
 #'   age = c(1, 2),
 #'   cohort = c(2, 3),
@@ -359,9 +345,8 @@ internal_target_builder_df <- function(location) {
 #'   mode = "enumerate"
 #' )
 #'
-#' # 3. "recycle" mode: Recycles arguments to the least-common-multiple length.
+#' # 3. "recycle" mode: recycle arguments to the least-common-multiple length.
 #' create_target(
-#'   fit = fit_sim,
 #'   location = c("Blue Heron School", "Bluebird Learning Center"),
 #'   age = c(1, 2, 3),
 #'   cohort = c(2),
@@ -369,10 +354,9 @@ internal_target_builder_df <- function(location) {
 #'   mode = "recycle"
 #' )
 #'
-#' # 4. "snapshot" mode: Cohort is a single reference value. Cohorts for each
-#' # age are calculated so that cohort + age is constant (representing a snapshot in time).
+#' # 4. "snapshot" mode: cohort is a single reference value; cohorts are set so
+#' # that cohort + age is constant (a snapshot in time).
 #' create_target(
-#'   fit = fit_sim,
 #'   location = c("Blue Heron School", "Bluebird Learning Center"),
 #'   age = c(1, 2, 3),
 #'   cohort = 5,
@@ -380,19 +364,9 @@ internal_target_builder_df <- function(location) {
 #'   mode = "snapshot"
 #' )
 #'
-#' # 5. Providing a data.frame for validation.
-#' df_target <- data.frame(
-#'   loc_id = c("Blue Heron School", "Bluebird Learning Center"),
-#'   age = c(1, 2),
-#'   cohort = c(2, 3),
-#'   dose = c(1, 1)
-#' )
-#' create_target(fit = fit_sim, location = df_target)
-#'
-#' @importFrom data.table as.data.table copy data.table between
+#' @importFrom data.table as.data.table copy data.table
 #' @export
 create_target <- function(
-  fit,
   location,
   age,
   cohort,
@@ -402,7 +376,7 @@ create_target <- function(
   mode <- match.arg(mode)
 
   # check if location is a data.frame or vector
-  target <- if (!is.data.frame(location)) {
+  if (!is.data.frame(location)) {
     internal_target_builder_vec(location, age, cohort, dose, mode)
   } else {
     if (!missing(age) || !missing(cohort) || !missing(dose)) {
@@ -413,6 +387,40 @@ create_target <- function(
     }
     internal_target_builder_df(location)
   }
+}
+
+#' @title Validate a target grid against a fit
+#'
+#' @description
+#' Checks a constructed target (see `[create_target()]`) against a specific
+#' `imugap_fit`: every `loc_id` must exist in the fit, and `dose`, `age`, and
+#' `cohort` must be within the fit's ranges. The canonical `loc_c_id` is added
+#' from the fit. Errors on any out-of-range value. `[predict.imugap_fit()]` calls
+#' this internally, so most users do not call it directly.
+#'
+#' @param fit an `imugap_fit` object returned by `[sampling()]`
+#' @param target a target grid, e.g. the output of `[create_target()]`
+#'
+#' @return the validated `target` (a `data.table`) with `loc_c_id` added.
+#'
+#' @seealso `[create_target()]`, `[predict.imugap_fit()]`
+#'
+#' @examples
+#' data("fit_sim")
+#' target <- create_target(
+#'   location = c("Blue Heron School", "Bluebird Learning Center"),
+#'   age = c(1, 2, 3),
+#'   cohort = 5,
+#'   dose = c(1),
+#'   mode = "snapshot"
+#' )
+#' canonicalize_target(fit_sim, target)
+#'
+#' @importFrom data.table as.data.table between
+#' @autoglobal
+#' @export
+canonicalize_target <- function(fit, target) {
+  target <- data.table::as.data.table(target)
 
   #  - check that all locations are within fit$locations
   invalid_locs <- setdiff(target$loc_id, fit$locations$loc_id)

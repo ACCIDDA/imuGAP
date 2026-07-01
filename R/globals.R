@@ -27,5 +27,10 @@ utils::globalVariables(c(
   "cohort", # <sampling>
   "censored", # <sampling>
   "layer_bound", # <sampling>
+  "dose", # <canonicalize_target>
+  "age", # <canonicalize_target>
+  "cohort", # <canonicalize_target>
+  "loc_id", # <canonicalize_target>
+  "loc_c_id", # <canonicalize_target>
   NULL
 ))

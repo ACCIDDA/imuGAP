@@ -218,14 +218,13 @@ test_that("create_target delegates to builders and processes location mappings",
   fit <- make_mock_fit()
 
   # Test vector branch delegation
-  res_vec <- create_target(
-    fit = fit,
+  res_vec <- canonicalize_target(fit, create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L),
     cohort = c(5L, 6L),
     dose = c(1L, 2L),
     mode = "error"
-  )
+  ))
   expect_s3_class(res_vec, "data.table")
   expect_equal(
     names(res_vec),
@@ -240,7 +239,7 @@ test_that("create_target delegates to builders and processes location mappings",
     cohort = c(3L, 4L),
     dose = c(1L, 2L)
   )
-  res_df <- create_target(fit = fit, location = df_loc)
+  res_df <- canonicalize_target(fit, create_target(location = df_loc))
   expect_s3_class(res_df, "data.table")
   expect_equal(
     names(res_df),
@@ -248,61 +247,57 @@ test_that("create_target delegates to builders and processes location mappings",
   )
   expect_equal(res_df$loc_c_id, c(4, 5))
 
-  # Error when additional arguments are supplied for df
+  # Error when additional arguments are supplied for df (construction-time check)
   expect_error(
-    create_target(fit = fit, location = df_loc, age = 1L),
+    create_target(location = df_loc, age = 1L),
     "age, cohort, and dose must not be supplied"
   )
 })
 
-test_that("create_target performs correct bounds checking against fit object", {
+test_that("canonicalize_target performs correct bounds checking against fit object", {
   fit <- make_mock_fit()
 
   # Location bounds mismatch
   expect_error(
-    create_target(
-      fit = fit,
+    canonicalize_target(fit, create_target(
       location = "unknown_loc",
       age = 1L,
       cohort = 1L,
       dose = 1L
-    ),
+    )),
     "all locations must be within fit\\$locations. Invalid locations: unknown_loc"
   )
 
   # Dose bounds mismatch
   expect_error(
-    create_target(
-      fit = fit,
+    canonicalize_target(fit, create_target(
       location = "schlA",
       age = 1L,
       cohort = 1L,
       dose = 3L
-    ),
+    )),
     "dose values must be within 1 and fit\\$data\\$n_doses \\(2\\)\\. Invalid dose in rows: 1"
   )
 
   # Age bounds mismatch
   expect_error(
-    create_target(
-      fit = fit,
+    canonicalize_target(fit, create_target(
       location = "schlA",
       age = 6L,
       cohort = 1L,
       dose = 1L
-    ),
+    )),
     "age values must be within 1 and fit\\$data\\$n_yr \\(5\\)\\. Invalid age in rows: 1"
   )
 
   # Cohort bounds mismatch
   expect_error(
-    create_target(
-      fit = fit,
+    canonicalize_target(fit, create_target(
       location = "schlA",
       age = 1L,
       cohort = 11L,
       dose = 1L
-    ),
+    )),
     "cohort values must be within 1 and fit\\$data\\$n_cohort \\(10\\)\\. Invalid cohort in rows: 1"
   )
 })
@@ -351,14 +346,13 @@ test_that("create_target works with mode='snapshot' and validates output", {
   fit <- make_mock_fit()
 
   # Successful case
-  res <- create_target(
-    fit = fit,
+  res <- canonicalize_target(fit, create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L, 4L),
     cohort = 5L,
     dose = c(1L, 2L),
     mode = "snapshot"
-  )
+  ))
   expect_s3_class(res, "data.table")
   expect_equal(
     names(res),
@@ -369,14 +363,13 @@ test_that("create_target works with mode='snapshot' and validates output", {
 
   # Cohort bounds mismatch via calculated cohort (constant sum exceeds bounds)
   expect_error(
-    create_target(
-      fit = fit,
+    canonicalize_target(fit, create_target(
       location = "schlA",
       age = c(1L, 2L, 4L),
       cohort = 8L,
       dose = 1L,
       mode = "snapshot"
-    ),
+    )),
     "cohort values must be within 1 and fit\\$data\\$n_cohort \\(10\\)\\. Invalid cohort in rows: 1"
   )
 })

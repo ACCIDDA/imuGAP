@@ -190,7 +190,7 @@ For example, we can generate a "snapshot" prediction target for all locations, i
 
 ```{r target}
 target_sim <- create_target(
-  fit = fit_sim, location = unique(locations_sim$loc_id), age = 1:18,
+  location = unique(locations_sim$loc_id), age = 1:18,
   cohort = max(populations_sim$cohort) - 18, dose = c(1, 2), mode = "snapshot"
 )
 head(target_sim)
