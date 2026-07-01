@@ -1,7 +1,9 @@
 # Backend selection + cross-backend vocabulary guard. The vocabulary logic is
 # tested directly via assert_backend_vocab() so it runs without cmdstanr
-# installed; the stan_options() integration tests for cmdstanr are skipped when
-# cmdstanr is unavailable (e.g. on CI / CRAN).
+# installed. cmdstanr is available on CI (fetched via the DESCRIPTION Remotes
+# field), so the "when available" integration tests run there; they skip only
+# where cmdstanr is genuinely absent. The not-installed guard is exercised by
+# mocking requireNamespace, so it runs regardless of the environment.
 
 test_that("assert_backend_vocab rejects the other backend's vocabulary", {
   expect_error(assert_backend_vocab("parallel_chains", "rstan"), "parallel_chains")
@@ -35,8 +37,18 @@ test_that("rstan backend rejects cmdstanr vocabulary via stan_options", {
 })
 
 test_that("stan_options errors for cmdstanr when it is not installed", {
-  skip_if(requireNamespace("cmdstanr", quietly = TRUE), "cmdstanr is installed")
-  expect_error(stan_options(backend = "cmdstanr"), "cmdstanr")
+  # Force cmdstanr to appear unavailable so the not-installed guard is exercised
+  # even when cmdstanr *is* installed (as on CI, where it is fetched via the
+  # DESCRIPTION Remotes field). Mocking base::requireNamespace keeps this test
+  # meaningful regardless of the local environment.
+  with_mocked_bindings(
+    expect_error(
+      stan_options(backend = "cmdstanr"),
+      "requires the cmdstanr package"
+    ),
+    requireNamespace = function(...) FALSE,
+    .package = "base"
+  )
 })
 
 test_that("cmdstanr backend builds and records native options when available", {
