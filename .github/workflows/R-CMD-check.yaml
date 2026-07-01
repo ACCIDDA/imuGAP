@@ -54,7 +54,13 @@ jobs:
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, any::roxygen2, any::roxyglobals
+          # Pin the Stan stack to CRAN: the stan-dev r-universe (added above for
+          # cmdstanr) also serves *dev* rstan/StanHeaders/bayesplot, and pak would
+          # otherwise pick those higher versions -- dev StanHeaders' stanc rejects
+          # the model. Pinning keeps the r-universe supplying only cmdstanr.
+          extra-packages: >-
+            any::rcmdcheck, any::roxygen2, any::roxyglobals,
+            cran::rstan, cran::StanHeaders, cran::bayesplot
           needs: check
 
       - name: Cache Stan compilation objects

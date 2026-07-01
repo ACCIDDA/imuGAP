@@ -27,7 +27,11 @@ jobs:
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr, any::xml2
+          # Pin the Stan stack to CRAN (the r-universe added for cmdstanr also
+          # serves dev rstan/StanHeaders/bayesplot; dev StanHeaders breaks stanc).
+          extra-packages: >-
+            any::covr, any::xml2,
+            cran::rstan, cran::StanHeaders, cran::bayesplot
           needs: coverage
 
       - name: Cache Stan compilation objects

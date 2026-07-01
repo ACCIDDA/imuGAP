@@ -34,7 +34,11 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, any::roxygen2, any::roxyglobals, local::.
+          # Pin the Stan stack to CRAN (the r-universe added for cmdstanr also
+          # serves dev rstan/StanHeaders/bayesplot; dev StanHeaders breaks stanc).
+          extra-packages: >-
+            any::pkgdown, any::roxygen2, any::roxyglobals, local::.,
+            cran::rstan, cran::StanHeaders, cran::bayesplot
           needs: website
 
       - name: Cache Stan compilation objects
