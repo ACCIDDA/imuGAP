@@ -43,15 +43,10 @@ jobs:
         with:
           r-version: 'release'
           use-public-rspm: true
-          extra-repositories: https://stan-dev.r-universe.dev
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          # Pin the Stan stack to CRAN (the r-universe added for cmdstanr also
-          # serves dev rstan/StanHeaders/bayesplot; dev StanHeaders breaks stanc).
-          extra-packages: >-
-            any::rcmdcheck, any::roxygen2, any::roxyglobals, any::pkgload,
-            cran::rstan, cran::StanHeaders, cran::bayesplot
+          extra-packages: any::rcmdcheck, any::roxygen2, any::roxyglobals, any::pkgload
           needs: check
 
       # fit_sim/target_sim/predict_sim/latent_params_sim are gitignored and
