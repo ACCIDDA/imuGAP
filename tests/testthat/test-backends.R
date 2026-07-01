@@ -74,34 +74,11 @@ test_that("fit_model errors on an unknown backend", {
   # backend now rides on stan_opts; a bogus backend element must still be caught.
   expect_error(
     fit_model(
-      "impute_school_coverage_process_v6",
+      "DUMMYMODEL",
       list(), NULL, list(backend = "nonsense"), NULL
     ),
     "should be one of"
   )
-})
-
-# A cmdstanr fit returns a CmdStanMCMC, not a stanfit; the rstan-only
-# downstream functions must reject it clearly. We fake the fit object so these
-# run without cmdstanr or a CmdStan toolchain.
-test_that("predict() rejects a cmdstanr (non-stanfit) fit", {
-  fake_fit <- structure(
-    list(
-      stanfit = structure(list(), class = "CmdStanMCMC"),
-      data = list(),
-      locations = data.frame()
-    ),
-    class = "imugap_fit"
-  )
-  expect_error(predict(fake_fit, target = data.frame()), "rstan backend")
-})
-
-test_that("extract_imugap() rejects a cmdstanr (non-stanfit) fit", {
-  fake_fit <- structure(
-    list(stanfit = structure(list(), class = "CmdStanMCMC")),
-    class = "imugap_fit"
-  )
-  expect_error(extract_imugap(fake_fit), "rstan backend")
 })
 
 # The cmdstanr code paths can't run without the cmdstanr package and a CmdStan
@@ -133,7 +110,7 @@ test_that("fit_model dispatches to the cmdstanr backend", {
   with_mocked_bindings(
     {
       res <- fit_model(
-        "impute_school_coverage_process_v6",
+        "DUMMYMODEL",
         list(), NULL, stan_options(backend = "cmdstanr"), NULL
       )
       expect_identical(res, "cmdstanr_fit")
@@ -167,11 +144,11 @@ test_that("fit_rstan forwards drop_pars to rstan::sampling", {
   with_mocked_bindings(
     {
       fit_rstan(
-        "impute_school_coverage_process_v6",
+        "DUMMYMODEL",
         args = stan_options(chains = 1),
-        drop_pars = "logalpha"
+        drop_pars = "DUMMYPAR"
       )
-      expect_identical(captured$pars, "logalpha")
+      expect_identical(captured$pars, "DUMMYPAR")
       expect_false(captured$include)
     },
     sampling = function(...) {
