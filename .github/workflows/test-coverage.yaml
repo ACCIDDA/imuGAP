@@ -23,15 +23,15 @@ jobs:
           r-version: 'release'
           use-public-rspm: true
 
-      # cmdstanr (a Suggests) is not on CRAN; install it from GitHub. Do NOT add
-      # the stan-dev r-universe to the repo pool: pak would then pull its DEV
-      # StanHeaders/rstan, which fail to compile against CRAN's RcppEigen. cmdstanr
-      # is pure R (no Stan headers of its own), so the GitHub install stays
-      # isolated and the rest of the Stan stack resolves from CRAN.
+      # cmdstanr (a non-CRAN Suggests) is fetched from GitHub via DESCRIPTION's
+      # Remotes field, which pak reads. Do NOT add the stan-dev r-universe to the
+      # repo pool: pak would then pull its DEV StanHeaders/rstan, which fail to
+      # compile against CRAN's RcppEigen. cmdstanr is pure R (no Stan headers of
+      # its own), so Remotes pins only cmdstanr and the Stan stack stays on CRAN.
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr, any::xml2, any::pkgload, stan-dev/cmdstanr
+          extra-packages: any::covr, any::xml2, any::pkgload
           needs: coverage
 
       - name: Cache Stan compilation objects

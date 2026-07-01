@@ -44,14 +44,14 @@ jobs:
           r-version: 'release'
           use-public-rspm: true
 
-      # cmdstanr (a Suggests) is not on CRAN; install it from GitHub. Do NOT add
-      # the stan-dev r-universe to the repo pool: pak would then pull its DEV
-      # StanHeaders/rstan, which fail to compile against CRAN's RcppEigen. cmdstanr
-      # is pure R (no Stan headers of its own), so the GitHub install stays
-      # isolated and the rest of the Stan stack resolves from CRAN.
+      # cmdstanr (a non-CRAN Suggests) is fetched from GitHub via DESCRIPTION's
+      # Remotes field, which pak reads. Do NOT add the stan-dev r-universe to the
+      # repo pool: pak would then pull its DEV StanHeaders/rstan, which fail to
+      # compile against CRAN's RcppEigen. cmdstanr is pure R (no Stan headers of
+      # its own), so Remotes pins only cmdstanr and the Stan stack stays on CRAN.
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, any::roxygen2, any::roxyglobals, any::pkgload, stan-dev/cmdstanr
+          extra-packages: any::rcmdcheck, any::roxygen2, any::roxyglobals, any::pkgload
           needs: check
 
       # fit_sim/target_sim/predict_sim/latent_params_sim are gitignored and
