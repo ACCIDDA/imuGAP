@@ -49,11 +49,12 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
           use-public-rspm: true
+          extra-repositories: https://stan-dev.r-universe.dev
 
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, any::roxygen2, any::roxyglobals, any::pkgload
+          extra-packages: any::rcmdcheck, any::roxygen2, any::roxyglobals, any::pkgload, cran::rstan, cran::StanHeaders, cran::bayesplot
           needs: check
 
       - name: Cache Stan compilation objects
