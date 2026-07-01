@@ -59,10 +59,11 @@ test_that("cmdstanr backend rejects rstan vocabulary when available", {
 })
 
 test_that("fit_model errors on an unknown backend", {
+  # backend now rides on stan_opts; a bogus backend element must still be caught.
   expect_error(
     fit_model(
-      "nonsense", "impute_school_coverage_process_v6",
-      list(), NULL, stan_options(), NULL
+      "impute_school_coverage_process_v6",
+      list(), NULL, list(backend = "nonsense"), NULL
     ),
     "should be one of"
   )
@@ -120,8 +121,8 @@ test_that("fit_model dispatches to the cmdstanr backend", {
   with_mocked_bindings(
     {
       res <- fit_model(
-        "cmdstanr", "impute_school_coverage_process_v6",
-        list(), NULL, stan_options(), NULL
+        "impute_school_coverage_process_v6",
+        list(), NULL, stan_options(backend = "cmdstanr"), NULL
       )
       expect_identical(res, "cmdstanr_fit")
     },

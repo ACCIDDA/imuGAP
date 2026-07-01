@@ -10,6 +10,17 @@
 # the package name is derived with `utils::packageName()`, and parameters to
 # drop from the saved draws are injected by the caller via `drop_pars`. Anything
 # package-specific belongs elsewhere.
+#
+# To adopt this file in another Stan package, declare its dependencies once
+# (run manually, then the file drops in verbatim):
+# nolint start: commented_code_linter.
+#   usethis::use_package("rstan")                # default backend (hard dependency)
+#   usethis::use_package("utils")                # utils::packageName()
+#   usethis::use_package("tools")                # tools::R_user_dir()
+#   usethis::use_package("cmdstanr", "Suggests") # optional backend (see below)
+# nolint end
+# cmdstanr is not on CRAN, so a host that Suggests it also needs, in DESCRIPTION:
+#   Additional_repositories: https://stan-dev.r-universe.dev
 
 # cmdstanr-only argument names, shown when the active backend is rstan (i.e. the
 # user reached for a cmdstanr word), each mapped to the rstan way to do it.
@@ -144,9 +155,13 @@ assert_positive_int <- function(val, name) {
 #'
 #' @param ... sampler arguments forwarded verbatim to the chosen backend's
 #'   sampler. Use the backend's own names: for `"rstan"`, the
-#'   [rstan::sampling()] arguments (`iter`, `chains`, `cores`, `seed`); for
+#'   [rstan::sampling()] arguments (`iter`, `cores`, `seed`); for
 #'   `"cmdstanr"`, the `$sample()` arguments (`iter_warmup`, `iter_sampling`,
 #'   `parallel_chains`, ...).
+#' @param chains the number of Markov chains, a positive integer (default `4`).
+#'   Exposed as an explicit argument (rather than one of `...`) so the default is
+#'   part of the documented signature and downstream code can always size
+#'   per-chain structures (e.g. inits) from it. Valid for both backends.
 #' @param backend which Stan interface to target, one of `"rstan"` (default) or
 #'   `"cmdstanr"`. Determines which argument vocabulary is accepted and which
 #'   sampler [sampling()] calls. Selecting `"cmdstanr"` errors if the cmdstanr
@@ -162,7 +177,7 @@ assert_positive_int <- function(val, name) {
 #' @return a named list of validated sampler arguments, carrying a `backend`
 #'   element recording the backend it was built for
 #' @export
-stan_options <- function(..., backend = "rstan") {
+stan_options <- function(..., chains = 4L, backend = "rstan") {
   backend <- assert_backend_available(backend)
   res <- list(...)
   if ("object" %in% names(res)) {
@@ -187,11 +202,9 @@ stan_options <- function(..., backend = "rstan") {
   # Reject the other backend's vocabulary with a "did you mean" hint.
   assert_backend_vocab(names(res), backend)
 
-  # Default the chain count (valid for both backends) so downstream code can
-  # always size per-chain structures (e.g. inits) from it.
-  if (!("chains" %in% names(res))) {
-    res$chains <- 4L
-  }
+  # `chains` is an explicit argument (default 4, valid for both backends); fold
+  # it into the forwarded options so it is validated and passed through below.
+  res$chains <- chains
 
   # Validate the positive-integer count arguments native to this backend.
   for (arg in intersect(names(res), backend_int_args(backend))) {
@@ -222,7 +235,9 @@ stan_options <- function(..., backend = "rstan") {
 
 #' Dispatch a fit to the chosen backend
 #'
-#' @param backend one of `"rstan"` or `"cmdstanr"`.
+#' The backend is read from `stan_opts$backend` (guaranteed present by the caller,
+#' which requires a [stan_options()] result), so it is not passed separately.
+#'
 #' @param model_name name of the Stan model; used to look up the compiled model
 #'   in this package's `stanmodels` (rstan) and to locate the `.stan` source
 #'   file under `inst/stan/` (cmdstanr).
@@ -235,9 +250,9 @@ stan_options <- function(..., backend = "rstan") {
 #'   cannot drop parameters and warns if any are requested.
 #' @returns the backend's fit object (a `stanfit` or `CmdStanMCMC`).
 #' @keywords internal
-fit_model <- function(backend, model_name, dat_stan, init, stan_opts,
-                      drop_pars = NULL) {
-  assert_backend_available(backend)
+fit_model <- function(model_name, dat_stan, init, stan_opts, drop_pars = NULL) {
+  # backend rides on stan_opts; assert_* also subsumes match.arg + installed check.
+  backend <- assert_backend_available(stan_opts$backend)
   switch(
     backend,
     rstan    = fit_rstan(model_name, dat_stan, init, stan_opts, drop_pars),
