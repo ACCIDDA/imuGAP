@@ -113,6 +113,25 @@ with_captured_sampling <- function(code) {
   )
 }
 
+test_that("sampling() raises imugap_no_draws when the sampler produces no draws", {
+  # rstan returns an empty mode-2 stanfit on failed init; imuGAP must not pass it
+  # through silently (#107). new("stanfit") is a real S4 stanfit with an empty
+  # @sim, matching what a failed initialization produces.
+  empty_fit <- methods::new("stanfit")
+  expect_error(
+    with_mocked_bindings(
+      suppressWarnings(imuGAP::sampling(
+        observations = make_minimal_obs(),
+        populations = make_minimal_pops(),
+        locations = make_3layer_locs()
+      )),
+      sampling = function(...) empty_fit,
+      .package = "rstan"
+    ),
+    class = "imugap_no_draws"
+  )
+})
+
 test_that("sampling assembles stan_opts$data with all expected fields", {
   out <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(

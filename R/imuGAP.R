@@ -13,6 +13,12 @@
 #' @return An object of class `imugap_fit` wrapping the raw `stanfit` object
 #'   along with settings and dataset metadata.
 #'
+#' @details
+#' If the Stan sampler fails to initialize and produces no draws (a mode-2
+#' `stanfit` with an empty `@sim`), `sampling()` raises an error of class
+#' `imugap_no_draws` rather than returning an empty fit, so the failure can be
+#' handled with `tryCatch()`.
+#'
 #' @examples
 #' \donttest{
 #' data("locations_sim"); data("observations_sim"); data("populations_sim")
@@ -97,6 +103,25 @@ sampling <- function(
   stan_opts$object <- imugap_opts$object
 
   raw_stanfit <- do.call(rstan::sampling, stan_opts)
+
+  # rstan returns a mode-2 stanfit with zero draws (rather than erroring) when
+  # the sampler fails to initialize -- e.g. a data/dimension problem. Passing
+  # that empty fit through would let a caller using tryCatch(error=) mistake the
+  # failure for success. Raise a typed error instead so it can be handled. Guard
+  # on `is(stanfit)` so non-stanfit test mocks pass through untouched. (#107)
+  if (
+    methods::is(raw_stanfit, "stanfit") &&
+      (length(raw_stanfit@sim) == 0L || !isTRUE(raw_stanfit@mode == 0L))
+  ) {
+    stop(errorCondition(
+      paste0(
+        "the Stan sampler produced no draws; it most likely failed to ",
+        "initialize on a data or dimension problem, so no usable fit was ",
+        "produced."
+      ),
+      class = "imugap_no_draws"
+    ))
+  }
 
   structure(
     list(
