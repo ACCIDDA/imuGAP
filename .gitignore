@@ -15,3 +15,11 @@ docs/
 # the package logo and other curated assets aren't roxygen output.
 man/*.Rd
 .bin/
+
+# Fitted-data artifacts regenerated on build by data-raw/fit_data.R (#64). The
+# *_sim inputs (locations/observations/populations_sim) stay tracked; these
+# four are derived from them and are large/version-fragile, so they are not.
+data/fit_sim.rda
+data/target_sim.rda
+data/predict_sim.rda
+data/latent_params_sim.rda

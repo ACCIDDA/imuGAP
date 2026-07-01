@@ -30,7 +30,7 @@ jobs:
           # Pin the Stan stack to CRAN (the r-universe added for cmdstanr also
           # serves dev rstan/StanHeaders/bayesplot; dev StanHeaders breaks stanc).
           extra-packages: >-
-            any::covr, any::xml2,
+            any::covr, any::xml2, any::pkgload,
             cran::rstan, cran::StanHeaders, cran::bayesplot
           needs: coverage
 
@@ -41,6 +41,15 @@ jobs:
           key: ${{ runner.os }}-rrelease-stan-${{ hashFiles('inst/stan/**/*.stan', 'src/**/*.stan') }}
           restore-keys: |
             ${{ runner.os }}-rrelease-stan-
+
+      # predict_sim (and the other fitted artifacts) are gitignored and
+      # regenerated on build (#64); test-predict.R loads predict_sim, so it must
+      # exist before covr installs the package and runs the tests.
+      - name: Generate fitted data artifacts
+        timeout-minutes: 45
+        env:
+          PKG_BUILD_EXTRA_FLAGS: "false"
+        run: Rscript data-raw/fit_data.R
 
       - name: Run tests with coverage
         run: |

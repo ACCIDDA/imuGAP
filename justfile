@@ -78,6 +78,20 @@ install: renv-install
 remove:
 	R CMD REMOVE {{ PKG }}
 
+[group('data')]
+[doc('Regenerate all package data (inputs + fitted artifacts; inputs need nc_measles)')]
+data: data-inputs data-fit
+
+[group('data')]
+[doc('Regenerate the *_sim inputs from the simulation (requires the private nc_measles dataset)')]
+data-inputs:
+	Rscript data-raw/DATASET.R
+
+[group('data')]
+[doc('Regenerate the fitted-data artifacts (fit_sim/target_sim/predict_sim/latent_params_sim) from tracked inputs; needs a Stan toolchain')]
+data-fit:
+	Rscript data-raw/fit_data.R
+
 [doc('Build a tar.gz artifact')]
 build:
 	R CMD build .

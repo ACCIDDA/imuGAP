@@ -1,3 +1,12 @@
+# Part A of the package-data pipeline: simulate the *_sim inputs.
+#
+# This step depends on the private nc_measles dataset (read below) and so cannot
+# run in CI; the resulting *_sim inputs are tracked in git. It also writes
+# data-raw/sim_internals.rds, consumed by Part B (data-raw/fit_data.R) to build
+# the fitted artifacts (fit_sim/target_sim/predict_sim/latent_params_sim) from
+# the tracked inputs without re-running this simulation. Run with `just data` (or
+# `just data-inputs` for this step alone).
+#
 ## Assumes imuGAP is in the same parent directory as nc_measles
 
 # Load only the packages this script actually uses. Previously this attached the
@@ -357,96 +366,26 @@ usethis::use_data(observations_sim, overwrite = TRUE)
 usethis::use_data(populations_sim, overwrite = TRUE)
 usethis::use_data(locations_sim, overwrite = TRUE)
 
-# Create latent parameter values
-latent_params_sim <- list(
-  phi_state = phi_st,
+# Persist the simulation internals that the fitted-data step needs.
+#
+# data-raw/fit_data.R rebuilds the fitted artifacts (fit_sim, target_sim,
+# predict_sim, latent_params_sim) from the tracked *_sim inputs. The true
+# (latent) coverage and the latent-parameter fixture depend on simulation
+# internals that are not recoverable from those inputs alone -- the per-school
+# and per-county offsets, the underlying coverage curves, etc. They are saved
+# here so fit_data.R can run without re-running this nc_measles-dependent
+# simulation. This file is build-ignored (see .Rbuildignore) but tracked in git.
+sim_internals <- list(
+  phi_st = phi_st,
   lambda = lambda,
   sigma_sch = sigma_sch,
   sigma_cnty = sigma_cnty,
   off_sch = sch_offset,
   off_cnty = cnty_offset,
   censor_reduction = other_vax_reduction,
-  uptake = cov
+  uptake = cov,
+  county_names = county_names,
+  school_names = school_names,
+  cnty_ids = cnty_ids
 )
-
-
-# Regenerate the `fit_sim` package fixture.
-#
-# This script fits the imuGAP Stan model to the bundled `*_sim` datasets using
-# the same minimal sampler settings as `tests/testthat/test-imugap-smoke.R`
-# (1 chain, 100 iterations, seed 1). The resulting stanfit object is saved to
-# `data/fit_sim.rda` so it can be reused by tests and examples without
-# recompiling / refitting the model on every run.
-#
-# stanfit objects bundle references to the compiled Stan model and can be
-# fragile across major `rstan` / `StanHeaders` updates. If `fit_sim` fails to
-# load on a future install, regenerate it by running this script from the
-# package root:
-#
-#     Rscript data-raw/fit_sim.R
-#
-# Empirical baseline (single chain, 100 iterations, after model compilation):
-#  - runtime: ~10 seconds
-#  - on-disk size with `compress = "xz"`: ~1 MB (well under CRAN's 5 MB limit)
-fit_sim <- suppressWarnings(sampling(
-  observations_sim,
-  populations_sim,
-  locations_sim,
-  stan_opts = stan_options(
-    iter = 1000,
-    chains = 4,
-    refresh = 0,
-    seed = 1L
-  )
-))
-
-usethis::use_data(fit_sim, compress = "xz", overwrite = TRUE)
-
-# Target populations for prediction
-target_sim <- create_target(
-  fit = fit_sim,
-  location = unique(locations_sim$loc_id),
-  age = 1:18,
-  cohort = max(populations_sim$cohort) - 18,
-  dose = c(1, 2),
-  mode = "snapshot"
-)
-
-usethis::use_data(target_sim, overwrite = TRUE)
-
-# Compute background true coverage for target_sim
-target_sim_dt <- as.data.table(target_sim)
-p_true <- numeric(nrow(target_sim_dt))
-for (i in seq_len(nrow(target_sim_dt))) {
-  loc <- target_sim_dt$loc_id[i]
-  cohort_val <- target_sim_dt$cohort[i]
-  age_val <- target_sim_dt$age[i]
-  dose_val <- target_sim_dt$dose[i]
-
-  if (loc == "State") {
-    offset <- 0
-  } else if (loc %in% county_names) {
-    c_idx <- match(loc, county_names)
-    offset <- cnty_offset[c_idx]
-  } else {
-    s_idx <- match(loc, school_names)
-    offset <- sch_offset[s_idx] + cnty_offset[cnty_ids[s_idx]]
-  }
-
-  p_true[i] <- stats::plogis(
-    stats::qlogis(phi_st[cohort_val]) + offset
-  ) *
-    cov[age_val, dose_val]
-}
-
-latent_params_sim$coverage <- p_true
-usethis::use_data(latent_params_sim, overwrite = TRUE)
-
-# Prediction. Keep a small posterior sub-sample (100 draws from the end of the
-# chains) so the bundled fixture stays well under CRAN's tarball size limit;
-# predicting over all draws produces a ~12 MB object (imuGAP #86).
-predict_sim <- suppressWarnings(
-  predict(object = fit_sim, target = target_sim, posterior_size = 100)
-)
-
-usethis::use_data(predict_sim, compress = "xz", overwrite = TRUE)
+saveRDS(sim_internals, "data-raw/sim_internals.rds")
