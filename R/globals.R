@@ -22,15 +22,17 @@ utils::globalVariables(c(
   "age", # <canonicalize_populations>
   "dose", # <canonicalize_populations>
   "range_start", # <canonicalize_populations>
-  "layer", # <sampling>
-  "N", # <sampling>
-  "cohort", # <sampling>
-  "censored", # <sampling>
-  "layer_bound", # <sampling>
+  "obs_c_id", # <canonicalize_target>
+  "weight", # <canonicalize_target>
   "dose", # <canonicalize_target>
   "age", # <canonicalize_target>
   "cohort", # <canonicalize_target>
   "loc_id", # <canonicalize_target>
   "loc_c_id", # <canonicalize_target>
+  "layer", # <sampling>
+  "N", # <sampling>
+  "cohort", # <sampling>
+  "censored", # <sampling>
+  "layer_bound", # <sampling>
   NULL
 ))

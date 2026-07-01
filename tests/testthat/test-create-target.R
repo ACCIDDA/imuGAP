@@ -150,7 +150,8 @@ test_that("internal_target_builder_vec works with mode='recycle'", {
   expect_equal(res$dose, rep(c(1L, 2L), 3))
 })
 
-test_that("internal_target_builder_df works and creates target successfully", {
+test_that("canonicalize_target normalizes a plain data.frame target", {
+  fit <- make_mock_fit()
   df_loc <- data.frame(
     loc_id = c("schlA", "schlB"),
     age = c(1L, 2L),
@@ -158,12 +159,12 @@ test_that("internal_target_builder_df works and creates target successfully", {
     dose = c(1L, 2L)
   )
 
-  # Successful case
-  res <- internal_target_builder_df(df_loc)
+  # Successful case: fills obs_c_id/weight, validates, and adds loc_c_id
+  res <- canonicalize_target(fit, df_loc)
   expect_s3_class(res, "data.table")
   expect_equal(
     names(res),
-    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
+    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight", "loc_c_id")
   )
   expect_equal(res$obs_c_id, 1:2)
   expect_equal(res$weight, c(1, 1))
@@ -171,12 +172,13 @@ test_that("internal_target_builder_df works and creates target successfully", {
   # Error when required columns are missing
   bad_df <- df_loc[, c("loc_id", "age")]
   expect_error(
-    internal_target_builder_df(bad_df),
+    canonicalize_target(fit, bad_df),
     "missing the following required column"
   )
 })
 
-test_that("internal_target_builder_df validates custom obs_c_id and weight columns", {
+test_that("canonicalize_target validates custom obs_c_id, weight, and obs_id columns", {
+  fit <- make_mock_fit()
   df_custom <- data.frame(
     loc_id = c("schlA", "schlB"),
     age = c(1L, 2L),
@@ -185,7 +187,7 @@ test_that("internal_target_builder_df validates custom obs_c_id and weight colum
     obs_c_id = 1:2,
     weight = c(1, 1)
   )
-  res <- internal_target_builder_df(df_custom)
+  res <- canonicalize_target(fit, df_custom)
   expect_equal(res$obs_c_id, 1:2)
   expect_equal(res$weight, c(1, 1))
 
@@ -193,7 +195,7 @@ test_that("internal_target_builder_df validates custom obs_c_id and weight colum
   df_bad_id <- df_custom
   df_bad_id$obs_c_id <- c(1, 3)
   expect_error(
-    internal_target_builder_df(df_bad_id),
+    canonicalize_target(fit, df_bad_id),
     "if supplied, obs_c_id must be 1:nrow"
   )
 
@@ -201,7 +203,7 @@ test_that("internal_target_builder_df validates custom obs_c_id and weight colum
   df_bad_wt <- df_custom
   df_bad_wt$weight <- c(1, -2)
   expect_error(
-    internal_target_builder_df(df_bad_wt),
+    canonicalize_target(fit, df_bad_wt),
     "if supplied, weight must be"
   )
 
@@ -209,7 +211,7 @@ test_that("internal_target_builder_df validates custom obs_c_id and weight colum
   df_bad_obs_id <- df_custom
   df_bad_obs_id$obs_id <- c("o1", "o1")
   expect_error(
-    internal_target_builder_df(df_bad_obs_id),
+    canonicalize_target(fit, df_bad_obs_id),
     "if supplied, obs_id must be unique"
   )
 })
@@ -232,14 +234,14 @@ test_that("create_target delegates to builders and processes location mappings",
   )
   expect_equal(res_vec$loc_c_id, c(4, 5))
 
-  # Test df branch delegation
+  # canonicalize_target accepts a plain data.frame directly
   df_loc <- data.frame(
     loc_id = c("schlA", "schlB"),
     age = c(1L, 2L),
     cohort = c(3L, 4L),
     dose = c(1L, 2L)
   )
-  res_df <- canonicalize_target(fit, create_target(location = df_loc))
+  res_df <- canonicalize_target(fit, df_loc)
   expect_s3_class(res_df, "data.table")
   expect_equal(
     names(res_df),
@@ -247,10 +249,10 @@ test_that("create_target delegates to builders and processes location mappings",
   )
   expect_equal(res_df$loc_c_id, c(4, 5))
 
-  # Error when additional arguments are supplied for df (construction-time check)
+  # create_target no longer accepts a data.frame
   expect_error(
-    create_target(location = df_loc, age = 1L),
-    "age, cohort, and dose must not be supplied"
+    create_target(location = df_loc),
+    "takes vector inputs"
   )
 })
 
