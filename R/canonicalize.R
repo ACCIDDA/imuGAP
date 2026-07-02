@@ -402,17 +402,19 @@ canonicalize_populations <- function(
 #'
 #' @description
 #' Normalizes a target grid and validates it against a specific `imugap_fit`.
+#'
+#' @details
 #' Accepts either the output of `[create_target()]` or a plain `data.frame` /
 #' `data.table` with `loc_id`, `age`, `cohort`, and `dose` columns (optionally
 #' `weight` / `obs_id`). Fills `obs_c_id` and `weight` when absent, checks that
-#' every `loc_id` exists in the fit and that `dose`, `age`, and `cohort` are within
-#' the fit's ranges, and adds the canonical `loc_c_id`. Errors on any out-of-range
-#' value. `[predict.imugap_fit()]` calls this internally, so most users do not call
-#' it directly.
+#' every `loc_id` exists in the fit and that `dose`, `age`, and `cohort` are
+#' within the fit's ranges, and adds the canonical `loc_c_id`. Errors on any
+#' out-of-range value. `[predict.imugap_fit()]` calls this internally, so most
+#' users do not call it directly.
 #'
-#' @param fit an `imugap_fit` object returned by `[sampling()]`.
 #' @param target a target grid: the output of `[create_target()]`, or a
 #'   `data.frame` / `data.table` with `loc_id`, `age`, `cohort`, and `dose` columns.
+#' @param fit an `imugap_fit` object returned by `[sampling()]`.
 #'
 #' @return the validated `target` (a `data.table`) with `loc_c_id` added.
 #'
@@ -424,14 +426,30 @@ canonicalize_populations <- function(
 #'   location = c("Blue Heron School", "Bluebird Learning Center"),
 #'   age = c(1, 2, 3), cohort = 5, dose = c(1), mode = "snapshot"
 #' )
-#' canonicalize_target(fit_sim, target)
+#' canonicalize_target(target, fit_sim)
 #'
 #' @importFrom data.table as.data.table between
 #' @autoglobal
 #' @export
-canonicalize_target <- function(fit, target) {
+canonicalize_target <- function(target, fit) {
   target <- data.table::as.data.table(target)
   checked_cols(target, c("loc_id", "age", "cohort", "dose"))
+
+  # TODO(#79): non-unique observation ids will be allowed when the row weights
+  # sum to 1 (several rows aggregating into one observation). That is not
+  # implemented yet, so reject the non-unique-obs + weights combination with a
+  # clear error rather than letting it hit the generic uniqueness/weight checks.
+  dup_obs_id <-
+    "obs_id" %in% names(target) && anyDuplicated(target$obs_id) > 0L
+  dup_obs_c_id <-
+    "obs_c_id" %in% names(target) && anyDuplicated(target$obs_c_id) > 0L
+  if ((dup_obs_id || dup_obs_c_id) && "weight" %in% names(target)) {
+    stop(
+      "non-unique observation ids with weights are not yet supported ",
+      "(see https://github.com/ACCIDDA/imuGAP/issues/79)",
+      call. = FALSE
+    )
+  }
 
   # obs_c_id: fill sequentially when absent, else require it to be 1:nrow.
   if (!"obs_c_id" %in% names(target)) {
@@ -508,5 +526,5 @@ canonicalize_target <- function(fit, target) {
   }
   target <- target[, .SD, .SDcols = cols]
   target[fit$locations, on = .(loc_id), loc_c_id := loc_c_id]
-  target[]
+  mark_canonical(target, "target")
 }

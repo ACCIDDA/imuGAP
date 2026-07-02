@@ -160,7 +160,7 @@ test_that("canonicalize_target normalizes a plain data.frame target", {
   )
 
   # Successful case: fills obs_c_id/weight, validates, and adds loc_c_id
-  res <- canonicalize_target(fit, df_loc)
+  res <- canonicalize_target(df_loc, fit)
   expect_s3_class(res, "data.table")
   expect_equal(
     names(res),
@@ -172,7 +172,7 @@ test_that("canonicalize_target normalizes a plain data.frame target", {
   # Error when required columns are missing
   bad_df <- df_loc[, c("loc_id", "age")]
   expect_error(
-    canonicalize_target(fit, bad_df),
+    canonicalize_target(bad_df, fit),
     "missing the following required column"
   )
 })
@@ -187,7 +187,7 @@ test_that("canonicalize_target validates custom obs_c_id, weight, and obs_id col
     obs_c_id = 1:2,
     weight = c(1, 1)
   )
-  res <- canonicalize_target(fit, df_custom)
+  res <- canonicalize_target(df_custom, fit)
   expect_equal(res$obs_c_id, 1:2)
   expect_equal(res$weight, c(1, 1))
 
@@ -195,7 +195,7 @@ test_that("canonicalize_target validates custom obs_c_id, weight, and obs_id col
   df_bad_id <- df_custom
   df_bad_id$obs_c_id <- c(1, 3)
   expect_error(
-    canonicalize_target(fit, df_bad_id),
+    canonicalize_target(df_bad_id, fit),
     "if supplied, obs_c_id must be 1:nrow"
   )
 
@@ -203,15 +203,24 @@ test_that("canonicalize_target validates custom obs_c_id, weight, and obs_id col
   df_bad_wt <- df_custom
   df_bad_wt$weight <- c(1, -2)
   expect_error(
-    canonicalize_target(fit, df_bad_wt),
+    canonicalize_target(df_bad_wt, fit),
     "if supplied, weight must be"
   )
 
-  # Invalid obs_id (duplicated)
-  df_bad_obs_id <- df_custom
-  df_bad_obs_id$obs_id <- c("o1", "o1")
+  # Non-unique obs_id with a weight column: not yet supported (see #79).
+  df_dup_obs_weighted <- df_custom
+  df_dup_obs_weighted$obs_id <- c("o1", "o1")
   expect_error(
-    canonicalize_target(fit, df_bad_obs_id),
+    canonicalize_target(df_dup_obs_weighted, fit),
+    "not yet supported"
+  )
+
+  # Non-unique obs_id without weights still hits the plain uniqueness check.
+  df_dup_obs <- df_custom
+  df_dup_obs$obs_id <- c("o1", "o1")
+  df_dup_obs$weight <- NULL
+  expect_error(
+    canonicalize_target(df_dup_obs, fit),
     "if supplied, obs_id must be unique"
   )
 })
@@ -220,13 +229,13 @@ test_that("canonicalize_target maps loc_c_id for create_target output and data.f
   fit <- make_mock_fit()
 
   # Test vector branch delegation
-  res_vec <- canonicalize_target(fit, create_target(
+  res_vec <- canonicalize_target(create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L),
     cohort = c(5L, 6L),
     dose = c(1L, 2L),
     mode = "error"
-  ))
+  ), fit)
   expect_s3_class(res_vec, "data.table")
   expect_equal(
     names(res_vec),
@@ -241,7 +250,7 @@ test_that("canonicalize_target maps loc_c_id for create_target output and data.f
     cohort = c(3L, 4L),
     dose = c(1L, 2L)
   )
-  res_df <- canonicalize_target(fit, df_loc)
+  res_df <- canonicalize_target(df_loc, fit)
   expect_s3_class(res_df, "data.table")
   expect_equal(
     names(res_df),
@@ -255,45 +264,45 @@ test_that("canonicalize_target performs correct bounds checking against fit obje
 
   # Location bounds mismatch
   expect_error(
-    canonicalize_target(fit, create_target(
+    canonicalize_target(create_target(
       location = "unknown_loc",
       age = 1L,
       cohort = 1L,
       dose = 1L
-    )),
+    ), fit),
     "all locations must be within fit\\$locations. Invalid locations: unknown_loc"
   )
 
   # Dose bounds mismatch
   expect_error(
-    canonicalize_target(fit, create_target(
+    canonicalize_target(create_target(
       location = "schlA",
       age = 1L,
       cohort = 1L,
       dose = 3L
-    )),
+    ), fit),
     "dose values must be within 1 and fit\\$data\\$n_doses \\(2\\)\\. Invalid dose in rows: 1"
   )
 
   # Age bounds mismatch
   expect_error(
-    canonicalize_target(fit, create_target(
+    canonicalize_target(create_target(
       location = "schlA",
       age = 6L,
       cohort = 1L,
       dose = 1L
-    )),
+    ), fit),
     "age values must be within 1 and fit\\$data\\$n_yr \\(5\\)\\. Invalid age in rows: 1"
   )
 
   # Cohort bounds mismatch
   expect_error(
-    canonicalize_target(fit, create_target(
+    canonicalize_target(create_target(
       location = "schlA",
       age = 1L,
       cohort = 11L,
       dose = 1L
-    )),
+    ), fit),
     "cohort values must be within 1 and fit\\$data\\$n_cohort \\(10\\)\\. Invalid cohort in rows: 1"
   )
 })
@@ -342,13 +351,13 @@ test_that("create_target works with mode='snapshot' and validates output", {
   fit <- make_mock_fit()
 
   # Successful case
-  res <- canonicalize_target(fit, create_target(
+  res <- canonicalize_target(create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L, 4L),
     cohort = 5L,
     dose = c(1L, 2L),
     mode = "snapshot"
-  ))
+  ), fit)
   expect_s3_class(res, "data.table")
   expect_equal(
     names(res),
@@ -359,13 +368,13 @@ test_that("create_target works with mode='snapshot' and validates output", {
 
   # Cohort bounds mismatch via calculated cohort (constant sum exceeds bounds)
   expect_error(
-    canonicalize_target(fit, create_target(
+    canonicalize_target(create_target(
       location = "schlA",
       age = c(1L, 2L, 4L),
       cohort = 8L,
       dose = 1L,
       mode = "snapshot"
-    )),
+    ), fit),
     "cohort values must be within 1 and fit\\$data\\$n_cohort \\(10\\)\\. Invalid cohort in rows: 1"
   )
 })
