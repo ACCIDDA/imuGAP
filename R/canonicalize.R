@@ -591,7 +591,11 @@ create_observation_populations <- function(
     )
   }
 
-  if (any(duplicated(obs_dt$obs_id))) {
+  if (anyNA(obs_dt$obs_id)) {
+    stop("column 'obs_id' may not contain NA", call. = FALSE)
+  }
+
+  if (anyDuplicated(obs_dt$obs_id) > 0L) {
     stop("column 'obs_id' must be unique", call. = FALSE)
   }
 
