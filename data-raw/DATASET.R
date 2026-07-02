@@ -279,92 +279,34 @@ vv_sim <- rbindlist(
 # Subset data (for now full data)
 kg_sim <- kg_sim_full
 
-# Assign county and school names
+# Assign age_min and dose to kg_sim
+kg_sim$age_min <- 5
+kg_sim$dose <- 2L
 
-kg_sim$county <- county_names[kg_sim$enc_unit_id - 1]
-kg_sim$school <- school_names[kg_sim$unit_id - 4]
+# Combine kg_sim and vv_sim
+observations_sim <- rbindlist(
+  list(kg_sim, vv_sim),
+  use.names = TRUE,
+  fill = TRUE
+)
 
-kg_sim <- kg_sim |>
-  select(
-    loc_id = school,
-    parent_id = county,
-    year,
-    enc_unit_id,
-    unit_id,
-    y_obs,
-    y_smp
-  )
-
-vv_sim <- vv_sim |>
-  select(
-    vaxview_type = pop,
-    year = Year,
-    age = Age,
-    y_obs = X,
-    y_smp = N,
-    censored
-  ) |>
-  mutate(loc_id = "State")
-
-# Put years in calendar terms
-kg_sim$year <- kg_sim$year + 1995
-vv_sim$year <- vv_sim$year + 1995
-
-# Add in weight info
-kg_sim$ly_min <- 5
-kg_sim$ly_max <- 5
-kg_sim$dose <- 2
-kg_sim$weight <- 1
-
-vv_sim$ly_min <- NA
-vv_sim$ly_max <- NA
-vv_sim$dose <- NA
-vv_sim$weight <- NA
-for (i in seq_len(nrow(vv_sim))) {
-  if (vv_sim$vaxview_type[i] == "school") {
-    vv_sim$ly_min[i] <- 5
-    vv_sim$ly_max[i] <- 5
-    vv_sim$dose[i] <- 2
-    vv_sim$weight[i] <- 1
-  } else if (vv_sim$vaxview_type[i] == "teen") {
-    vv_sim$ly_min[i] <- 14
-    vv_sim$ly_max[i] <- 18
-    vv_sim$dose[i] <- 2
-    vv_sim$weight[i] <- 1 / 5
-  } else if (vv_sim$age[i] == "24 months") {
-    vv_sim$ly_min[i] <- 2
-    vv_sim$ly_max[i] <- 2
-    vv_sim$dose[i] <- 1
-    vv_sim$weight[i] <- 1
-  } else {
-    vv_sim$ly_min[i] <- 3
-    vv_sim$ly_max[i] <- 3
-    vv_sim$dose[i] <- 1
-    vv_sim$weight[i] <- 1
-  }
-}
-
-observations_sim <- bind_rows(kg_sim, vv_sim |> mutate(unit_id = 1))
-
-# Now get normalized cohorts
+# Calculate normalized cohorts (using age_min and age_max)
 observations_sim <- observations_sim |>
   mutate(
-    by_max = year - ly_min,
-    by_min = year - ly_max,
+    age_max_val = ifelse(is.na(age_max), age_min + 1, age_max),
+    by_max = year - age_min,
+    by_min = year - age_max_val + 1,
     cohort_min = by_min - min(by_min) + 1,
     cohort_max = by_max - min(by_min) + 1
   ) |>
-  dplyr::select(-by_min, -by_max) |>
-  dplyr::rename(positive = "y_obs", sample_n = "y_smp")
+  dplyr::select(-by_min, -by_max, -age_max_val)
 
+# Assign sequential obs_id
 observations_sim$obs_id <- seq_len(nrow(observations_sim))
-
 observations_sim <- setDT(observations_sim)
 
 # Create populations
 obs_for_pop <- copy(observations_sim)
-obs_for_pop[, age_min := ly_min]
-obs_for_pop[, age_max := ly_max]
 obs_for_pop[, cohort := cohort_min]
 
 populations_sim <- create_observation_populations(
@@ -373,17 +315,14 @@ populations_sim <- create_observation_populations(
 )
 
 # Create locations mapping
-locations_sim <- bind_rows(
-  # State
-  data.frame(loc_id = "State", parent_id = NA),
-  # Counties
-  data.frame(loc_id = county_names, parent_id = "State"),
-  #Schools
-  unique(
-    observations_sim |>
-      filter(loc_id != "State") |>
-      dplyr::select(loc_id, parent_id)
-  )
+locations_sim <- rbindlist(
+  list(
+    data.frame(loc_id = "State", parent_id = NA_character_),
+    data.frame(loc_id = county_names, parent_id = "State"),
+    unique(observations_sim[loc_id != "State", .(loc_id, parent_id)])
+  ),
+  use.names = TRUE,
+  fill = TRUE
 )
 
 locations_sim <- setDT(locations_sim)
