@@ -1,9 +1,12 @@
 # Tests for stan_options()
 
-test_that("stan_options returns an empty list with no arguments", {
+test_that("stan_options returns the backend and default chains with no args", {
   sopts <- stan_options()
   expect_type(sopts, "list")
-  expect_length(sopts, 0L)
+  # The recorded backend marker plus the defaulted chain count.
+  expect_setequal(names(sopts), c("chains", "backend"))
+  expect_identical(sopts$backend, "rstan")
+  expect_identical(sopts$chains, 4L)
 })
 
 test_that("stan_options passes named arguments through", {
@@ -15,37 +18,60 @@ test_that("stan_options passes named arguments through", {
 
 test_that("stan_options preserves argument names and values verbatim", {
   sopts <- stan_options(seed = 42L, cores = 4L, refresh = 0)
-  expect_setequal(names(sopts), c("seed", "cores", "refresh"))
+  # chains is defaulted in alongside the args supplied verbatim.
+  expect_setequal(names(sopts), c("seed", "cores", "refresh", "chains", "backend"))
   expect_equal(sopts$seed, 42L)
   expect_equal(sopts$cores, 4L)
   expect_equal(sopts$refresh, 0)
 })
 
+test_that("stan_options defaults chains to 4 but honours an explicit value", {
+  expect_identical(stan_options()$chains, 4L)
+  expect_identical(stan_options(chains = 2)$chains, 2L)
+  expect_identical(
+    stan_options(backend = "rstan", chains = 1L)$chains, 1L
+  )
+})
+
 test_that("stan_options rejects 'object' argument", {
   expect_error(
     stan_options(object = "foo"),
-    regexp = "object.*imugap_options"
+    regexp = "object.*model options"
   )
 })
 
 test_that("stan_options rejects 'object' even when mixed with valid args", {
   expect_error(
     stan_options(iter = 100, object = "foo"),
-    regexp = "object.*imugap_options"
+    regexp = "object.*model options"
   )
 })
 
 test_that("stan_options rejects 'data' argument", {
   expect_error(
     stan_options(data = list()),
-    regexp = "data.*sampling"
+    regexp = "data.*internally"
   )
 })
 
 test_that("stan_options rejects 'data' even when mixed with valid args", {
   expect_error(
     stan_options(iter = 100, data = list()),
-    regexp = "data.*sampling"
+    regexp = "data.*internally"
+  )
+})
+
+test_that("stan_options rejects 'init' argument", {
+  expect_error(
+    stan_options(init = list()),
+    regexp = "init.*internally"
+  )
+})
+
+test_that("stan_options rejects 'init' even when mixed with valid args", {
+  expect_error(
+    stan_options(iter = 100, init = list()),
+    regexp = "init.*internally"
   )
 })
 

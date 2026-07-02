@@ -263,3 +263,18 @@ test_that("predict respects posterior_size and validates it", {
   )
   expect_error(predict(fit, clean_pops, posterior_size = 10000), "exceeds")
 })
+
+# A cmdstanr fit returns a CmdStanMCMC, not a stanfit; predict() is rstan-only
+# and must reject it clearly. Fake the fit so this runs without cmdstanr or a
+# CmdStan toolchain.
+test_that("predict() rejects a cmdstanr (non-stanfit) fit", {
+  fake_fit <- structure(
+    list(
+      stanfit = structure(list(), class = "CmdStanMCMC"),
+      data = list(),
+      locations = data.frame()
+    ),
+    class = "imugap_fit"
+  )
+  expect_error(predict(fake_fit, target = data.frame()), "rstan backend")
+})
