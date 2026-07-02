@@ -103,7 +103,13 @@ mark_canonical <- function(x, target_class) {
   x[]
 }
 
+#' @title Check if an object is canonical
+#'
+#' @param dt a `[data.table()]` (or compatible object)
+#' @param target_class a string, one of 'locations', 'observations', 'populations'
+#'
 #' @keywords internal
+#' @return `TRUE` if `dt` is canonical for `target_class`, `FALSE` otherwise.
 is_canonical <- function(dt, target_class) {
   canonical <- attr(dt, "imuGAP-canonical", exact = TRUE)
   !is.null(canonical) && (canonical == target_class)
@@ -530,4 +536,153 @@ canonicalize_target <- function(target, fit) {
   target <- target[, .SD, .SDcols = cols]
   target[fit$locations, on = .(loc_id), loc_c_id := loc_c_id]
   mark_canonical(target, "target")
+}
+
+#' @title Create observation populations
+#'
+#' @description
+#' `create_observation_populations` is a convenience function to construct a properly weighted
+#' `populations` object for typical modes of observation.
+#'
+#' @param observations a pre- or post-canonicalization `observations` object.
+#'   Optionally contains additional columns required for the specified `mode` that vary by row.
+#' @param mode character; the mode for populations creation (default: "snapshot").
+#' @param ... additional arguments determined by the specified `mode` requirements
+#'   for values which do not vary by row.
+#
+#' @details
+#' This function uses a combination of varying information from `observations` and
+#' fixed information from `...` arguments to provide the necessary information
+#' for the modes to produce a `[canonicalize_populations()]` ready-object.
+#'
+#' Supported modes and required information:
+#'
+#' # "snapshot" mode
+#' As with `[create_target()]`, a snapshot view is looking at a particular place,
+#' time, and dose target, but with varying birth cohorts. That means the sum of
+#' birth cohort and age is constant: if birth cohort 1 is age 10, then cohort 2 is 9,
+#' and so on.
+#'
+#' Snapshots requires `obs_id`, `loc_id`, `dose`, `age_min`, and `cohort`
+#' the reference cohort corresponding to the oldest age. `age_max` may be provided,
+#' but if missing or `NA`, is assumed to be `age_min` + 1. `age_max` corresponds
+#' to the first *excluded* age - i.e.
+#'
+#' $$
+#' \textrm{age}\in\left[\textrm{age_min},\textrm{age_max}\right)
+#' $$
+#'
+#' @return A `data.table` representing the populations mapping.
+#' @autoglobal
+#' @export
+create_observation_populations <- function(
+  observations,
+  mode = "snapshot",
+  ...
+) {
+  mode <- match.arg(mode)
+
+  obs_dt <- data.table::as.data.table(observations)
+
+  if (!"obs_id" %in% names(obs_dt)) {
+    stop(
+      "'observations' must contain the observation ID column: obs_id",
+      call. = FALSE
+    )
+  }
+
+  if (any(duplicated(obs_dt$obs_id))) {
+    stop("column 'obs_id' must be unique", call. = FALSE)
+  }
+
+  required_cols <- switch(
+    mode,
+    "snapshot" = c("loc_id", "cohort", "age_min", "dose")
+  )
+
+  # check that required columns are present in either observations or ...
+  dot_args <- list(...)
+  missing_cols <- setdiff(
+    required_cols,
+    c(names(observations), names(dot_args))
+  )
+  if (length(missing_cols) > 0) {
+    stop(
+      "The ",
+      mode,
+      " requires the following column(s): ",
+      toString(required_cols),
+      "; but the following are missing from the combination of ",
+      "'observations' and '...': ",
+      toString(missing_cols),
+      call. = FALSE
+    )
+  }
+
+  optional_cols <- c("age_max")
+
+  dup_cols <- intersect(
+    c(required_cols, optional_cols),
+    intersect(names(observations), names(dot_args))
+  )
+  if (length(dup_cols) > 0) {
+    stop(
+      "The following column(s) are specified in both 'observations' and '...': ",
+      toString(dup_cols),
+      call. = FALSE
+    )
+  }
+
+  # merge required columns into obs_dt
+  if (length(dot_args) > 0) {
+    obs_dt[, c(names(dot_args)) := dot_args]
+  }
+
+  if (mode == "snapshot") {
+    # confirm: dose and cohort are positive integers
+    checked_positive_integer(obs_dt, "dose")
+    checked_positive_integer(obs_dt, "cohort")
+
+    # confirm: age_min, age_max are in positive numerics, with age_min <= age_max
+    checked_positive_numeric(obs_dt, "age_min")
+    # age_max is optional; if completely missing or rows == NA, assumed to be age_min
+    if (!("age_max") %in% names(obs_dt)) {
+      obs_dt[, age_max := NA_integer_]
+    }
+    obs_dt[is.na(age_max), age_max := age_min + 1L]
+    checked_positive_numeric(obs_dt, "age_max")
+
+    if (obs_dt[, !all(age_min < age_max)]) {
+      stop("age_min must be strictly less than age_max", call. = FALSE)
+    }
+
+    pop_dt <- obs_dt[,
+      {
+        age_span <- age_max - age_min
+        a_min <- as.integer(age_min)
+        a_max <- as.integer(ceiling(age_max - 1L))
+        age_seq <- seq.int(a_min, a_max)
+
+        contrib <- pmin(age_seq + 1, age_max) - pmax(age_seq, age_min)
+        wts <- contrib / age_span
+
+        .(
+          loc_id = loc_id,
+          cohort = as.integer(cohort + a_max - age_seq),
+          age = age_seq,
+          dose = dose,
+          weight = wts
+        )
+      },
+      by = obs_id
+    ]
+
+    col_order <- intersect(
+      c("obs_id", "loc_id", "cohort", "age", "dose", "weight"),
+      names(pop_dt)
+    )
+    data.table::setcolorder(pop_dt, col_order)
+
+    pop_dt[]
+  }
 }

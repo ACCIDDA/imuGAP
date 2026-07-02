@@ -121,3 +121,21 @@ assert_cols <- function(dt, cols, warn_extra = FALSE) {
   }
   dt[]
 }
+
+#' @keywords internal
+checked_positive_numeric <- function(dt, x, na_allowed = FALSE) {
+  if (dt[, !is.numeric(get(x))]) {
+    stopper(deparse(substitute(dt)), x, "'%s' column '%s' must be numeric")
+  }
+  if (!na_allowed && dt[, any(is.na(get(x)))]) {
+    stopper(
+      deparse(substitute(dt)),
+      x,
+      "'%s' column '%s' cannot have NA values"
+    )
+  }
+  if (dt[, any(get(x) <= 0)]) {
+    stopper(deparse(substitute(dt)), x, "'%s' column '%s' must all be > 0")
+  }
+  dt[]
+}
