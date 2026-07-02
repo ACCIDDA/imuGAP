@@ -14,10 +14,11 @@
 #'   along with settings and dataset metadata.
 #'
 #' @details
-#' If the Stan sampler fails to initialize and produces no draws (a mode-2
-#' `stanfit` with an empty `@sim`), `sampling()` raises an error of class
-#' `imugap_no_draws` rather than returning an empty fit, so the failure can be
-#' handled with `tryCatch()`.
+#' If the Stan sampler fails to initialize and produces no draws (for the rstan
+#' backend, a mode-2 `stanfit` with an empty `@sim`), `sampling()` raises an
+#' error of class `imugap_no_draws` rather than returning an empty fit, so the
+#' failure can be handled with `tryCatch()`. The check is backend-agnostic (see
+#' `backend_has_draws()`).
 #'
 #' @examples
 #' \donttest{
@@ -116,15 +117,13 @@ sampling <- function(
     model_name, dat_stan, init = NULL, stan_opts, drop_pars = NULL
   )
 
-  # rstan returns a mode-2 stanfit with zero draws (rather than erroring) when
-  # the sampler fails to initialize -- e.g. a data/dimension problem. Passing
-  # that empty fit through would let a caller using tryCatch(error=) mistake the
-  # failure for success. Raise a typed error instead so it can be handled. Guard
-  # on `is(stanfit)` so non-stanfit test mocks pass through untouched. (#107)
-  if (
-    methods::is(raw_stanfit, "stanfit") &&
-      (length(raw_stanfit@sim) == 0L || !isTRUE(raw_stanfit@mode == 0L))
-  ) {
+  # fit_model() dispatches to the active backend, so the fit may be an rstan
+  # stanfit or a cmdstanr CmdStanMCMC. A sampler that fails to initialize can
+  # return an empty fit rather than erroring (rstan does this with a mode-2
+  # stanfit); passing it through would let a caller using tryCatch(error=)
+  # mistake the failure for success. Detect the no-draws case in a
+  # backend-agnostic way and raise a typed error instead. (#107)
+  if (!backend_has_draws(raw_fit)) {
     stop(errorCondition(
       paste0(
         "the Stan sampler produced no draws; it most likely failed to ",
