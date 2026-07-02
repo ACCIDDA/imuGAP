@@ -50,27 +50,27 @@
 # cmdstanr-only argument names, shown when the active backend is rstan (i.e. the
 # user reached for a cmdstanr word), each mapped to the rstan way to do it.
 cmdstanr_hints <- c(
-  parallel_chains   = "use `cores`",
-  iter_warmup       = "use `iter` (with `warmup`)",
-  iter_sampling     = "use `iter` (with `warmup`)",
-  adapt_delta       = "set inside `control = list(adapt_delta = ...)`",
-  max_treedepth     = "set inside `control = list(max_treedepth = ...)`",
-  step_size         = "set inside `control = list(stepsize = ...)`",
+  parallel_chains = "use `cores`",
+  iter_warmup = "use `iter` (with `warmup`)",
+  iter_sampling = "use `iter` (with `warmup`)",
+  adapt_delta = "set inside `control = list(adapt_delta = ...)`",
+  max_treedepth = "set inside `control = list(max_treedepth = ...)`",
+  step_size = "set inside `control = list(stepsize = ...)`",
   threads_per_chain = "set `Sys.setenv(STAN_NUM_THREADS = n)`; chains parallelize via `cores`",
-  output_dir        = "no rstan equivalent",
-  sig_figs          = "no rstan equivalent"
+  output_dir = "no rstan equivalent",
+  sig_figs = "no rstan equivalent"
 )
 
 # rstan-only argument names, shown when the active backend is cmdstanr, mapped to
 # the cmdstanr way to do it.
 rstan_hints <- c(
-  cores           = "use `parallel_chains`",
-  control         = "set `adapt_delta`/`max_treedepth`/`step_size` as top-level arguments",
-  iter            = "use `iter_warmup` and `iter_sampling`",
-  warmup          = "use `iter_warmup`",
-  pars            = "not supported by the cmdstanr backend",
-  include         = "not supported by the cmdstanr backend",
-  sample_file     = "no cmdstanr equivalent",
+  cores = "use `parallel_chains`",
+  control = "set `adapt_delta`/`max_treedepth`/`step_size` as top-level arguments",
+  iter = "use `iter_warmup` and `iter_sampling`",
+  warmup = "use `iter_warmup`",
+  pars = "not supported by the cmdstanr backend",
+  include = "not supported by the cmdstanr backend",
+  sample_file = "no cmdstanr equivalent",
   diagnostic_file = "no cmdstanr equivalent"
 )
 
@@ -86,15 +86,17 @@ rstan_hints <- c(
 assert_backend_vocab <- function(arg_names, backend) {
   foreign <- switch(
     backend,
-    rstan    = cmdstanr_hints,
+    rstan = cmdstanr_hints,
     cmdstanr = rstan_hints
   )
   bad <- intersect(arg_names, names(foreign))
   if (length(bad) > 0) {
     bullets <- paste0("  - `", bad, "`: ", foreign[bad], collapse = "\n")
     stop(
-      "These stan_options() arguments are not valid for the '", backend,
-      "' backend:\n", bullets,
+      "These stan_options() arguments are not valid for the '",
+      backend,
+      "' backend:\n",
+      bullets,
       call. = FALSE
     )
   }
@@ -133,9 +135,13 @@ assert_backend_available <- function(backend) {
 backend_int_args <- function(backend) {
   switch(
     backend,
-    rstan    = c("iter", "chains", "warmup", "cores"),
+    rstan = c("iter", "chains", "warmup", "cores"),
     cmdstanr = c(
-      "iter_warmup", "iter_sampling", "thin", "parallel_chains", "chains",
+      "iter_warmup",
+      "iter_sampling",
+      "thin",
+      "parallel_chains",
+      "chains",
       "threads_per_chain"
     )
   )
@@ -312,7 +318,7 @@ fit_model <- function(model_name, dat_stan, init, stan_opts, drop_pars = NULL) {
   args$init <- init
   switch(
     backend,
-    rstan    = fit_rstan(model_name, args, drop_pars),
+    rstan = fit_rstan(model_name, args, drop_pars),
     cmdstanr = fit_cmdstanr(model_name, args, drop_pars)
   )
 }
@@ -322,7 +328,7 @@ fit_rstan <- function(model_name, args, drop_pars = NULL) {
   args$object <- stanmodels[[model_name]]
   if (length(drop_pars) > 0) {
     # Exclude the named parameters from the saved output.
-    args$pars    <- drop_pars
+    args$pars <- drop_pars
     args$include <- FALSE
   }
   do.call(rstan::sampling, args)
@@ -346,14 +352,17 @@ fit_cmdstanr <- function(model_name, args, drop_pars = NULL) {
   if (length(drop_pars) > 0) {
     warning(
       "dropping parameters is not supported by the cmdstanr backend; ",
-      paste(drop_pars, collapse = ", "), " will be written to the output.",
+      paste(drop_pars, collapse = ", "),
+      " will be written to the output.",
       call. = FALSE
     )
   }
   pkg <- utils::packageName()
   stan_file <- system.file(
-    "stan", paste0(model_name, ".stan"),
-    package = pkg, mustWork = TRUE
+    "stan",
+    paste0(model_name, ".stan"),
+    package = pkg,
+    mustWork = TRUE
   )
   # Compile into a writable user cache, not next to the installed .stan file
   # (the package directory may be read-only, and stray executables there trip
