@@ -264,7 +264,7 @@ state-level vaccine uptake baseline:
 beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 #> List of 1
-#>  $ beta_bs: num [1:2000, 1:5] -1.85 -1.9 -1.73 -1.64 -1.69 ...
+#>  $ beta_bs: num [1:2000, 1:5] -1.86 -2.01 -1.8 -1.91 -1.92 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ iterations: NULL
 #>   .. ..$           : NULL

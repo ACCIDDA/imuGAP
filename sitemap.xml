@@ -12,12 +12,16 @@
 <url><loc>https://accidda.github.io/imuGAP/reference/assert_backend_available.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/assert_backend_vocab.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/assert_positive_int.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/backend_draws_array.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/backend_extract.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/backend_generate_quantities.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/backend_int_args.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/canonicalize.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/canonicalize_target.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/check_threaded.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/create_target.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/extract_imugap.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/fit_backend.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/fit_model.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/fit_sim.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/imuGAP-package.html</loc></url>
