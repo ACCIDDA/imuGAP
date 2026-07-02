@@ -21,6 +21,13 @@
 # nolint end
 # cmdstanr is not on CRAN, so a host that Suggests it also needs, in DESCRIPTION:
 #   Additional_repositories: https://stan-dev.r-universe.dev
+# pak-based CI (e.g. r-lib/actions setup-r-dependencies) does not read that
+# field (r-lib/pak#424); for it the host also needs, in DESCRIPTION:
+# nolint start: commented_code_linter.
+#   Remotes: stan-dev/cmdstanr
+# nolint end
+# Do not point pak at the r-universe as a repository instead: it serves dev
+# builds of the whole Stan stack, which pak will prefer over CRAN's.
 
 # cmdstanr-only argument names, shown when the active backend is rstan (i.e. the
 # user reached for a cmdstanr word), each mapped to the rstan way to do it.
