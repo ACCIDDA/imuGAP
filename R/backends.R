@@ -163,15 +163,12 @@ assert_positive_int <- function(val, name) {
 #' may be set here. `chains` defaults to `4` so downstream code can always size
 #' per-chain structures from it.
 #'
+#' @inheritParams rstan::sampling
 #' @param ... sampler arguments forwarded verbatim to the chosen backend's
 #'   sampler. Use the backend's own names: for `"rstan"`, the
 #'   [rstan::sampling()] arguments (`iter`, `cores`, `seed`); for
 #'   `"cmdstanr"`, the `$sample()` arguments (`iter_warmup`, `iter_sampling`,
 #'   `parallel_chains`, ...).
-#' @param chains the number of Markov chains, a positive integer (default `4`).
-#'   Exposed as an explicit argument (rather than one of `...`) so the default is
-#'   part of the documented signature and downstream code can always size
-#'   per-chain structures (e.g. inits) from it. Valid for both backends.
 #' @param backend which Stan interface to target, one of `"rstan"` (default) or
 #'   `"cmdstanr"`. Determines which argument vocabulary is accepted and which
 #'   sampler [sampling()] calls. Selecting `"cmdstanr"` errors if the cmdstanr
