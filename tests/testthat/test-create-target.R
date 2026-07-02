@@ -15,9 +15,9 @@ make_mock_fit <- function() {
   fit
 }
 
-test_that("internal_target_builder_vec works with mode='error'", {
+test_that("create_target builds a grid with mode='error'", {
   # Successful case
-  res <- internal_target_builder_vec(
+  res <- create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L),
     cohort = c(5L, 6L),
@@ -36,7 +36,7 @@ test_that("internal_target_builder_vec works with mode='error'", {
 
   # Length mismatch case
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = c("schlA", "schlB"),
       age = c(2L),
       cohort = c(5L, 6L),
@@ -48,7 +48,7 @@ test_that("internal_target_builder_vec works with mode='error'", {
 
   # Zero length cases
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = character(0),
       age = c(2L),
       cohort = c(5L),
@@ -59,7 +59,7 @@ test_that("internal_target_builder_vec works with mode='error'", {
   )
 
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = character(0),
       age = integer(0),
       cohort = c(5L),
@@ -71,7 +71,7 @@ test_that("internal_target_builder_vec works with mode='error'", {
 
   # Missing arguments case
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = c("schlA", "schlB"),
       mode = "error"
     ),
@@ -80,7 +80,7 @@ test_that("internal_target_builder_vec works with mode='error'", {
 
   # NA cases
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = c("schlA", NA),
       age = c(2L),
       cohort = c(5L),
@@ -91,7 +91,7 @@ test_that("internal_target_builder_vec works with mode='error'", {
   )
 
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = c("schlA"),
       age = c(NA_integer_),
       cohort = c(NA_integer_),
@@ -102,8 +102,8 @@ test_that("internal_target_builder_vec works with mode='error'", {
   )
 })
 
-test_that("internal_target_builder_vec works with mode='enumerate'", {
-  res <- internal_target_builder_vec(
+test_that("create_target builds a grid with mode='enumerate'", {
+  res <- create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L),
     cohort = c(5L),
@@ -118,7 +118,7 @@ test_that("internal_target_builder_vec works with mode='enumerate'", {
   expect_setequal(res$loc_id, c("schlA", "schlB"))
 
   # Test with all arguments having length > 1
-  res_multi <- internal_target_builder_vec(
+  res_multi <- create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L),
     cohort = c(5L, 6L),
@@ -133,8 +133,8 @@ test_that("internal_target_builder_vec works with mode='enumerate'", {
   expect_setequal(res_multi$cohort, c(5L, 6L))
 })
 
-test_that("internal_target_builder_vec works with mode='recycle'", {
-  res <- internal_target_builder_vec(
+test_that("create_target builds a grid with mode='recycle'", {
+  res <- create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L, 4L),
     cohort = c(5L),
@@ -150,7 +150,8 @@ test_that("internal_target_builder_vec works with mode='recycle'", {
   expect_equal(res$dose, rep(c(1L, 2L), 3))
 })
 
-test_that("internal_target_builder_df works and creates target successfully", {
+test_that("canonicalize_target normalizes a plain data.frame target", {
+  fit <- make_mock_fit()
   df_loc <- data.frame(
     loc_id = c("schlA", "schlB"),
     age = c(1L, 2L),
@@ -158,12 +159,12 @@ test_that("internal_target_builder_df works and creates target successfully", {
     dose = c(1L, 2L)
   )
 
-  # Successful case
-  res <- internal_target_builder_df(df_loc)
+  # Successful case: fills obs_c_id/weight, validates, and adds loc_c_id
+  res <- canonicalize_target(df_loc, fit)
   expect_s3_class(res, "data.table")
   expect_equal(
     names(res),
-    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
+    c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight", "loc_c_id")
   )
   expect_equal(res$obs_c_id, 1:2)
   expect_equal(res$weight, c(1, 1))
@@ -171,12 +172,13 @@ test_that("internal_target_builder_df works and creates target successfully", {
   # Error when required columns are missing
   bad_df <- df_loc[, c("loc_id", "age")]
   expect_error(
-    internal_target_builder_df(bad_df),
+    canonicalize_target(bad_df, fit),
     "missing the following required column"
   )
 })
 
-test_that("internal_target_builder_df validates custom obs_c_id and weight columns", {
+test_that("canonicalize_target validates custom obs_c_id, weight, and obs_id columns", {
+  fit <- make_mock_fit()
   df_custom <- data.frame(
     loc_id = c("schlA", "schlB"),
     age = c(1L, 2L),
@@ -185,7 +187,7 @@ test_that("internal_target_builder_df validates custom obs_c_id and weight colum
     obs_c_id = 1:2,
     weight = c(1, 1)
   )
-  res <- internal_target_builder_df(df_custom)
+  res <- canonicalize_target(df_custom, fit)
   expect_equal(res$obs_c_id, 1:2)
   expect_equal(res$weight, c(1, 1))
 
@@ -193,7 +195,7 @@ test_that("internal_target_builder_df validates custom obs_c_id and weight colum
   df_bad_id <- df_custom
   df_bad_id$obs_c_id <- c(1, 3)
   expect_error(
-    internal_target_builder_df(df_bad_id),
+    canonicalize_target(df_bad_id, fit),
     "if supplied, obs_c_id must be 1:nrow"
   )
 
@@ -201,31 +203,39 @@ test_that("internal_target_builder_df validates custom obs_c_id and weight colum
   df_bad_wt <- df_custom
   df_bad_wt$weight <- c(1, -2)
   expect_error(
-    internal_target_builder_df(df_bad_wt),
+    canonicalize_target(df_bad_wt, fit),
     "if supplied, weight must be"
   )
 
-  # Invalid obs_id (duplicated)
-  df_bad_obs_id <- df_custom
-  df_bad_obs_id$obs_id <- c("o1", "o1")
+  # Non-unique obs_id with a weight column: not yet supported (see #79).
+  df_dup_obs_weighted <- df_custom
+  df_dup_obs_weighted$obs_id <- c("o1", "o1")
   expect_error(
-    internal_target_builder_df(df_bad_obs_id),
+    canonicalize_target(df_dup_obs_weighted, fit),
+    "not yet supported"
+  )
+
+  # Non-unique obs_id without weights still hits the plain uniqueness check.
+  df_dup_obs <- df_custom
+  df_dup_obs$obs_id <- c("o1", "o1")
+  df_dup_obs$weight <- NULL
+  expect_error(
+    canonicalize_target(df_dup_obs, fit),
     "if supplied, obs_id must be unique"
   )
 })
 
-test_that("create_target delegates to builders and processes location mappings", {
+test_that("canonicalize_target maps loc_c_id for create_target output and data.frame targets", {
   fit <- make_mock_fit()
 
   # Test vector branch delegation
-  res_vec <- create_target(
-    fit = fit,
+  res_vec <- canonicalize_target(create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L),
     cohort = c(5L, 6L),
     dose = c(1L, 2L),
     mode = "error"
-  )
+  ), fit)
   expect_s3_class(res_vec, "data.table")
   expect_equal(
     names(res_vec),
@@ -233,83 +243,73 @@ test_that("create_target delegates to builders and processes location mappings",
   )
   expect_equal(res_vec$loc_c_id, c(4, 5))
 
-  # Test df branch delegation
+  # canonicalize_target accepts a plain data.frame directly
   df_loc <- data.frame(
     loc_id = c("schlA", "schlB"),
     age = c(1L, 2L),
     cohort = c(3L, 4L),
     dose = c(1L, 2L)
   )
-  res_df <- create_target(fit = fit, location = df_loc)
+  res_df <- canonicalize_target(df_loc, fit)
   expect_s3_class(res_df, "data.table")
   expect_equal(
     names(res_df),
     c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight", "loc_c_id")
   )
   expect_equal(res_df$loc_c_id, c(4, 5))
-
-  # Error when additional arguments are supplied for df
-  expect_error(
-    create_target(fit = fit, location = df_loc, age = 1L),
-    "age, cohort, and dose must not be supplied"
-  )
 })
 
-test_that("create_target performs correct bounds checking against fit object", {
+test_that("canonicalize_target performs correct bounds checking against fit object", {
   fit <- make_mock_fit()
 
   # Location bounds mismatch
   expect_error(
-    create_target(
-      fit = fit,
+    canonicalize_target(create_target(
       location = "unknown_loc",
       age = 1L,
       cohort = 1L,
       dose = 1L
-    ),
+    ), fit),
     "all locations must be within fit\\$locations. Invalid locations: unknown_loc"
   )
 
   # Dose bounds mismatch
   expect_error(
-    create_target(
-      fit = fit,
+    canonicalize_target(create_target(
       location = "schlA",
       age = 1L,
       cohort = 1L,
       dose = 3L
-    ),
+    ), fit),
     "dose values must be within 1 and fit\\$data\\$n_doses \\(2\\)\\. Invalid dose in rows: 1"
   )
 
   # Age bounds mismatch
   expect_error(
-    create_target(
-      fit = fit,
+    canonicalize_target(create_target(
       location = "schlA",
       age = 6L,
       cohort = 1L,
       dose = 1L
-    ),
+    ), fit),
     "age values must be within 1 and fit\\$data\\$n_yr \\(5\\)\\. Invalid age in rows: 1"
   )
 
   # Cohort bounds mismatch
   expect_error(
-    create_target(
-      fit = fit,
+    canonicalize_target(create_target(
       location = "schlA",
       age = 1L,
       cohort = 11L,
       dose = 1L
-    ),
+    ), fit),
     "cohort values must be within 1 and fit\\$data\\$n_cohort \\(10\\)\\. Invalid cohort in rows: 1"
   )
 })
 
-test_that("internal_target_builder_vec works with mode='snapshot'", {
+test_that("create_target builds a grid with mode='snapshot'", {
   # Successful case
-  res <- internal_target_builder_vec(
+  res <- create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L, 4L),
     cohort = c(5L),
@@ -336,7 +336,7 @@ test_that("internal_target_builder_vec works with mode='snapshot'", {
 
   # Error when cohort is not a single reference value
   expect_error(
-    internal_target_builder_vec(
+    create_target(
       location = c("schlA", "schlB"),
       age = c(2L, 3L),
       cohort = c(5L, 6L),
@@ -351,14 +351,13 @@ test_that("create_target works with mode='snapshot' and validates output", {
   fit <- make_mock_fit()
 
   # Successful case
-  res <- create_target(
-    fit = fit,
+  res <- canonicalize_target(create_target(
     location = c("schlA", "schlB"),
     age = c(2L, 3L, 4L),
     cohort = 5L,
     dose = c(1L, 2L),
     mode = "snapshot"
-  )
+  ), fit)
   expect_s3_class(res, "data.table")
   expect_equal(
     names(res),
@@ -369,14 +368,13 @@ test_that("create_target works with mode='snapshot' and validates output", {
 
   # Cohort bounds mismatch via calculated cohort (constant sum exceeds bounds)
   expect_error(
-    create_target(
-      fit = fit,
+    canonicalize_target(create_target(
       location = "schlA",
       age = c(1L, 2L, 4L),
       cohort = 8L,
       dose = 1L,
       mode = "snapshot"
-    ),
+    ), fit),
     "cohort values must be within 1 and fit\\$data\\$n_cohort \\(10\\)\\. Invalid cohort in rows: 1"
   )
 })
