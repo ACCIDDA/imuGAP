@@ -120,9 +120,8 @@ NULL
 #'
 #' @description
 #' A dataset specifying the target populations for coverage prediction, generated
-#' by constructing a target grid with [create_target()] and validating it against
-#' the simulated fit `fit_sim` with [canonicalize_target()], for the chosen
-#' locations, cohorts, and ages to target. Includes
+#' by calling [create_target()] on the simulated fit object `fit_sim` along
+#' with arguments for which locations, cohorts, and ages to target. Includes
 #' locations which were not present in the original simulated observations,
 #' namely the State and County levels.
 #'
