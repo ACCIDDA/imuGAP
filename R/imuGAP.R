@@ -13,6 +13,13 @@
 #' @return An object of class `imugap_fit` wrapping the raw `stanfit` object
 #'   along with settings and dataset metadata.
 #'
+#' @details
+#' If the Stan sampler fails to initialize and produces no draws (for the rstan
+#' backend, a mode-2 `stanfit` with an empty `@sim`), `sampling()` raises an
+#' error of class `imugap_no_draws` rather than returning an empty fit, so the
+#' failure can be handled with `tryCatch()`. The check is backend-agnostic (see
+#' `backend_has_draws()`).
+#'
 #' @examples
 #' \donttest{
 #' data("locations_sim"); data("observations_sim"); data("populations_sim")
@@ -109,6 +116,23 @@ sampling <- function(
   raw_fit <- fit_model(
     model_name, dat_stan, init = NULL, stan_opts, drop_pars = NULL
   )
+
+  # fit_model() dispatches to the active backend, so the fit may be an rstan
+  # stanfit or a cmdstanr CmdStanMCMC. A sampler that fails to initialize can
+  # return an empty fit rather than erroring (rstan does this with a mode-2
+  # stanfit); passing it through would let a caller using tryCatch(error=)
+  # mistake the failure for success. Detect the no-draws case in a
+  # backend-agnostic way and raise a typed error instead. (#107)
+  if (!backend_has_draws(raw_fit)) {
+    stop(errorCondition(
+      paste0(
+        "the Stan sampler produced no draws; it most likely failed to ",
+        "initialize on a data or dimension problem, so no usable fit was ",
+        "produced."
+      ),
+      class = "imugap_no_draws"
+    ))
+  }
 
   structure(
     list(

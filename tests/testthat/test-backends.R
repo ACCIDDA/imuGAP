@@ -199,6 +199,13 @@ test_that("fit_rstan forwards drop_pars to rstan::sampling", {
   )
 })
 
+test_that("backend_has_draws flags a degenerate rstan fit, passes mocks through", {
+  # new("stanfit") has an empty @sim, matching a failed initialization.
+  expect_false(backend_has_draws(methods::new("stanfit")))
+  # unrecognized objects (e.g. test mocks) are treated as having draws.
+  expect_true(backend_has_draws(list()))
+})
+
 # --- Fit-consumption accessors (the portable predict/extract seam) -----------
 # The rstan paths are exercised end-to-end by the predict()/extract_imugap()
 # tests; here we cover the backend dispatch and the not-yet-implemented cmdstanr
