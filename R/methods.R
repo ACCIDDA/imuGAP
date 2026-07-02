@@ -118,7 +118,7 @@ predict.imugap_fit <- function(
     )
   }
 
-  target <- create_target(fit, target)
+  target <- canonicalize_target(target, fit)
   if (!"obs_id" %in% names(target)) {
     target[, obs_id := obs_c_id]
   }
