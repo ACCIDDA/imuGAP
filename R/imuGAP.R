@@ -335,8 +335,9 @@ extract_imugap <- function(fit, pars = c("beta_bs"), ...) {
   if (!inherits(fit, "imugap_fit")) {
     stop("fit must be an object of class 'imugap_fit'", call. = FALSE)
   }
-  # rstan::extract() needs a stanfit; cmdstanr fits expose draws differently
-  # (see #100), so fail clearly rather than erroring deep inside rstan.
+  # Extraction goes through the backend accessor, which only implements the
+  # rstan path today; cmdstanr fits expose draws differently, so fail clearly
+  # here rather than deep inside the accessor.
   if (!inherits(fit$stanfit, "stanfit")) {
     stop(
       "extract_imugap() currently supports only the rstan backend. Refit with ",
@@ -344,5 +345,5 @@ extract_imugap <- function(fit, pars = c("beta_bs"), ...) {
       call. = FALSE
     )
   }
-  rstan::extract(fit$stanfit, pars = pars, ...)
+  backend_extract(fit$stanfit, pars = pars, ...)
 }
