@@ -348,3 +348,99 @@ fit_cmdstanr <- function(model_name, args, drop_pars = NULL) {
   do.call(mod$sample, args)
   # nocov end
 }
+
+# --- Fit consumption ---------------------------------------------------------
+# The fit_BACKEND() functions above produce a backend-native fit object (an
+# rstan stanfit or a cmdstanr CmdStanMCMC). Downstream code (prediction,
+# parameter extraction) needs to read draws and run generated quantities off
+# that object without knowing which backend produced it. These accessors are
+# that portable seam: dispatch on the fit object's backend, so callers stay
+# backend-agnostic. Only the rstan paths are implemented today; the cmdstanr
+# paths are stubs pending backend support downstream (they require the CmdStan
+# toolchain, so they cannot run on CI/CRAN regardless).
+
+#' Identify the backend that produced a fit object
+#'
+#' @param raw_fit a backend-native fit object (an rstan `stanfit` or a cmdstanr
+#'   `CmdStanMCMC`).
+#' @returns `"rstan"` or `"cmdstanr"`.
+#' @keywords internal
+fit_backend <- function(raw_fit) {
+  if (inherits(raw_fit, "stanfit")) {
+    "rstan"
+  } else if (inherits(raw_fit, "CmdStanMCMC")) {
+    "cmdstanr"
+  } else {
+    stop(
+      "unrecognized fit object; expected an rstan 'stanfit' or a cmdstanr ",
+      "'CmdStanMCMC'.",
+      call. = FALSE
+    )
+  }
+}
+
+#' Posterior draws of a fit as an iterations x chains x parameters array
+#'
+#' @param raw_fit a backend-native fit object.
+#' @returns a 3-D array, dimensions iterations x chains x parameters.
+#' @keywords internal
+backend_draws_array <- function(raw_fit) {
+  switch(
+    fit_backend(raw_fit),
+    rstan = as.array(raw_fit),
+    # nocov start: needs the cmdstanr backend + CmdStan toolchain.
+    cmdstanr = stop(
+      "reading draws from a cmdstanr fit is not yet implemented.",
+      call. = FALSE
+    )
+    # nocov end
+  )
+}
+
+#' Extract named parameters from a fit as a list of arrays
+#'
+#' Matches the shape returned by [rstan::extract()].
+#'
+#' @param raw_fit a backend-native fit object.
+#' @param pars character vector of parameter names to extract.
+#' @param ... forwarded to the backend's extractor.
+#' @returns a named list of draw arrays, one per parameter.
+#' @importFrom rstan extract
+#' @keywords internal
+backend_extract <- function(raw_fit, pars, ...) {
+  switch(
+    fit_backend(raw_fit),
+    rstan = rstan::extract(raw_fit, pars = pars, ...),
+    # nocov start: needs the cmdstanr backend + CmdStan toolchain.
+    cmdstanr = stop(
+      "extracting parameters from a cmdstanr fit is not yet implemented.",
+      call. = FALSE
+    )
+    # nocov end
+  )
+}
+
+#' Run generated quantities against a fit and return a parameter matrix
+#'
+#' @param raw_fit a backend-native fit object.
+#' @param data the Stan data list for the generated-quantities run.
+#' @param draws_mat a draws matrix (rows = draws, columns = parameters).
+#' @param pars name of the generated parameter to return.
+#' @returns a matrix of the requested generated parameter (rows = draws).
+#' @importFrom rstan gqs
+#' @keywords internal
+backend_generate_quantities <- function(raw_fit, data, draws_mat, pars) {
+  switch(
+    fit_backend(raw_fit),
+    rstan = as.matrix(
+      rstan::gqs(raw_fit@stanmodel, data = data, draws = draws_mat),
+      pars = pars
+    ),
+    # nocov start: needs the cmdstanr backend + CmdStan toolchain.
+    cmdstanr = stop(
+      "generated quantities from a cmdstanr fit are not yet implemented.",
+      call. = FALSE
+    )
+    # nocov end
+  )
+}
