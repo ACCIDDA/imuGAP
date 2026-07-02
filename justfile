@@ -27,7 +27,7 @@ docs: bootstrap-namespace
 format:
 	air format .
 
-[doc('Check R code using air')]
+[doc('Check R code using air and lintr')]
 lint: lintair lintr
 
 [doc('Check R code using air')]
