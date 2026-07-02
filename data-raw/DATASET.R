@@ -150,12 +150,12 @@ sch_offset <- rnorm(tot_sch, 0, sigma_sch)
 n_cvv <- round(runif(n_cohort, 250, 450))
 vax_inc <- cov[3, 1] - cov[2, 1]
 at_24 <- rbinom(n_cohort, n_cvv, phi_st * cov[2, 1] * other_vax_reduction)
-at_36 <- rbinom(
-  n_cohort,
-  n_cvv - at_24,
-  phi_st * vax_inc * other_vax_reduction
-) +
-  at_24
+at_36 <- at_24 +
+  rbinom(
+    n_cohort,
+    n_cvv - at_24,
+    phi_st * vax_inc * other_vax_reduction
+  )
 
 sim_child <- rbind(
   data.frame(
@@ -244,10 +244,10 @@ for (s in seq_len(tot_sch)) {
     sample_n = nsch
   )
 }
-kg_sim_full <- rbindlist(kg_sim_full)
+kg_sim <- rbindlist(kg_sim_full)
 
 # Aggregate school-data in SchoolVaxView
-sim_school <- kg_sim_full[,
+sim_school <- kg_sim[,
   {
     tot_vax <- sum(positive)
     .(
@@ -276,9 +276,6 @@ vv_sim <- rbindlist(
   fill = TRUE
 )
 
-# Subset data (for now full data)
-kg_sim <- kg_sim_full
-
 # Assign age_min and dose to kg_sim
 kg_sim$age_min <- 5
 kg_sim$dose <- 2L
@@ -294,12 +291,10 @@ observations_sim <- rbindlist(
 observations_sim <- observations_sim |>
   mutate(
     age_max_val = ifelse(is.na(age_max), age_min + 1, age_max),
-    by_max = year - age_min,
     by_min = year - age_max_val + 1,
-    cohort_min = by_min - min(by_min) + 1,
-    cohort_max = by_max - min(by_min) + 1
+    cohort_min = by_min - min(by_min) + 1
   ) |>
-  dplyr::select(-by_min, -by_max, -age_max_val)
+  dplyr::select(-by_min, -age_max_val)
 
 # Assign sequential obs_id
 observations_sim$obs_id <- seq_len(nrow(observations_sim))
