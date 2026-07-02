@@ -5,7 +5,7 @@ stopper <- function(dt, x, fmt, ...) {
 }
 
 #' @keywords internal
-checked_as_integer <- function(dt, x, na_allowed = FALSE) {
+assert_as_integer <- function(dt, x, na_allowed = FALSE) {
   if (dt[, !is.integer(get(x))]) {
     if (!all(as.integer(dt[, get(x)]) == dt[, get(x)])) {
       stopper(deparse(substitute(dt)), x, "'%s' column '%s' must be integer")
@@ -25,24 +25,24 @@ checked_as_integer <- function(dt, x, na_allowed = FALSE) {
 }
 
 #' @keywords internal
-checked_positive_integer <- function(dt, x, na_allowed = FALSE) {
-  if (checked_as_integer(dt, x, na_allowed)[, any(get(x) < 1L)]) {
+assert_positive_integer <- function(dt, x, na_allowed = FALSE) {
+  if (assert_as_integer(dt, x, na_allowed)[, any(get(x) < 1L)]) {
     stopper(deparse(substitute(dt)), x, "'%s' column '%s' must all be > 0")
   }
   dt[]
 }
 
 #' @keywords internal
-checked_nonneg_integer <- function(dt, x, na_allowed = FALSE) {
-  if (checked_as_integer(dt, x, na_allowed)[, any(get(x) < 0L)]) {
+assert_nonneg_integer <- function(dt, x, na_allowed = FALSE) {
+  if (assert_as_integer(dt, x, na_allowed)[, any(get(x) < 0L)]) {
     stopper(deparse(substitute(dt)), x, "'%s' column '%s' must all be >= 0")
   }
   dt[]
 }
 
 #' @keywords internal
-checked_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE) {
-  checked_positive_integer(dt, x, na_allowed)
+assert_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE) {
+  assert_positive_integer(dt, x, na_allowed)
   if (!missing(max)) {
     if (dt[, any(get(x) > max)]) {
       stopper(
@@ -57,7 +57,7 @@ checked_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE) {
 }
 
 #' @keywords internal
-checked_set_equivalence <- function(dt, x, tarset) {
+assert_set_equivalence <- function(dt, x, tarset) {
   tarset <- unique(tarset)
   setlen <- length(tarset)
   if (length(intersect(tarset, dt[, get(x)])) != setlen) {
@@ -77,7 +77,7 @@ checked_set_equivalence <- function(dt, x, tarset) {
 }
 
 #' @keywords internal
-checked_subset <- function(dt, x, tarset) {
+assert_subset <- function(dt, x, tarset) {
   checkset <- unique(dt[, get(x)])
   if (!all(checkset %in% tarset)) {
     stopper(
@@ -93,38 +93,12 @@ checked_subset <- function(dt, x, tarset) {
 #' @keywords internal
 #' @importFrom data.table setDT
 #' @importFrom data.table as.data.table
-checked_dt_able <- function(dt, copy = FALSE) {
+assert_dt_able <- function(dt, copy = FALSE) {
   if (copy) as.data.table(dt) else setDT(dt)
 }
 
 #' @keywords internal
-check_positive_int <- function(val, name) {
-  if (!is.numeric(val)) {
-    stop(
-      sprintf("'%s' must be numeric", name),
-      call. = FALSE
-    )
-  }
-  if (length(val) < 1L) {
-    stop(
-      sprintf("length('%s') must be >= 1", name),
-      call. = FALSE
-    )
-  }
-  if (any(is.na(val))) {
-    stop(sprintf("'%s' may not contain NAs", name), call. = FALSE)
-  }
-  if (any(val != as.integer(val))) {
-    stop(sprintf("'%s' must be integers", name), call. = FALSE)
-  }
-  if (any(val < 1L)) {
-    stop(sprintf("'%s' must be positive", name), call. = FALSE)
-  }
-  as.integer(val)
-}
-
-#' @keywords internal
-checked_cols <- function(dt, cols, warn_extra = FALSE) {
+assert_cols <- function(dt, cols, warn_extra = FALSE) {
   missing_cols <- setdiff(cols, names(dt))
   if (length(missing_cols) > 0) {
     stop(

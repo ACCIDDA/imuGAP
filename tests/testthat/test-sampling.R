@@ -229,3 +229,17 @@ test_that("sampling returns a structured imugap_fit object", {
   expect_type(fit$settings, "list")
   expect_named(fit$settings, c("imugap_opts", "stan_opts"))
 })
+
+test_that("sampling errors when stan_opts was not built by stan_options()", {
+  # A hand-built list carries no backend tag; sampling() must reject it before
+  # reaching the sampler (so this needs no Stan compilation).
+  expect_error(
+    suppressWarnings(imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs(),
+      stan_opts = list(chains = 1)
+    )),
+    "stan_options"
+  )
+})
