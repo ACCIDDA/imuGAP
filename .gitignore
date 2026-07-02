@@ -32,3 +32,5 @@ data/fit_sim.rda
 data/target_sim.rda
 data/predict_sim.rda
 data/latent_params_sim.rda
+/doc/
+/Meta/
