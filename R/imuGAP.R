@@ -71,7 +71,7 @@ sampling <- function(
   }
 
   # prepare dat_stan
-  stan_opts$data <- list(
+  dat_stan <- list(
     n_uncensored_obs = obs[is.na(censored), .N],
     n_yr = max(wts$age),
     n_cohort = max(wts$cohort),
@@ -94,18 +94,30 @@ sampling <- function(
     cnty_bounds = loc_info[layer == 3, unique(layer_bound)],
     predict_mode = 0
   )
-  stan_opts$object <- imugap_opts$object
 
-  raw_stanfit <- do.call(rstan::sampling, stan_opts)
+  # The `backend` element is the marker that stan_opts came from stan_options();
+  # its absence means a hand-built list. Whatever backend it names wins.
+  backend <- stan_opts$backend
+  if (is.null(backend)) {
+    stop("`stan_opts` must be created by stan_options().", call. = FALSE)
+  }
+
+  # imuGAP has a single model; fit_model() looks it up in `stanmodels` (rstan)
+  # and locates inst/stan/<model_name>.stan (cmdstanr). No init is supplied, so
+  # the backend uses its own default.
+  model_name <- "impute_school_coverage_process_v6"
+  raw_fit <- fit_model(
+    model_name, dat_stan, init = NULL, stan_opts, drop_pars = NULL
+  )
 
   structure(
     list(
-      stanfit = raw_stanfit,
+      stanfit = raw_fit,
       settings = list(
         imugap_opts = imugap_opts,
         stan_opts = stan_opts
       ),
-      data = stan_opts$data[setdiff(names(stan_opts$data), "object")],
+      data = dat_stan,
       locations = loc_info
     ),
     class = "imugap_fit"
@@ -322,6 +334,15 @@ create_target <- function(
 extract_imugap <- function(fit, pars = c("beta_bs"), ...) {
   if (!inherits(fit, "imugap_fit")) {
     stop("fit must be an object of class 'imugap_fit'", call. = FALSE)
+  }
+  # rstan::extract() needs a stanfit; cmdstanr fits expose draws differently
+  # (see #100), so fail clearly rather than erroring deep inside rstan.
+  if (!inherits(fit$stanfit, "stanfit")) {
+    stop(
+      "extract_imugap() currently supports only the rstan backend. Refit with ",
+      "stan_options(backend = 'rstan').",
+      call. = FALSE
+    )
   }
   rstan::extract(fit$stanfit, pars = pars, ...)
 }

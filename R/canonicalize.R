@@ -140,7 +140,7 @@ canonicalize_locations <- function(locations) {
   locations <- data.table::as.data.table(locations)
 
   # Check that locations has required structure
-  checked_cols(locations, c("loc_id", "parent_id"), warn_extra = TRUE)
+  assert_cols(locations, c("loc_id", "parent_id"), warn_extra = TRUE)
 
   # check for duplicate ids
   if (length(dupes <- locations[, which(duplicated(loc_id))])) {
@@ -244,7 +244,7 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
   }
 
   observations <- data.table::as.data.table(observations)
-  checked_cols(observations, c("obs_id", "positive", "sample_n"))
+  assert_cols(observations, c("obs_id", "positive", "sample_n"))
 
   # check id column validity
   if (observations[, any(is.na(obs_id))]) {
@@ -267,8 +267,8 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
   }
 
   # check scientific data validity
-  checked_nonneg_integer(observations, "positive")
-  checked_positive_integer(observations, "sample_n")
+  assert_nonneg_integer(observations, "positive")
+  assert_positive_integer(observations, "sample_n")
 
   if (observations[, any(positive > sample_n)]) {
     stop(
@@ -343,7 +343,7 @@ canonicalize_populations <- function(
   # using internal methods, check that populations has the correct structure
   populations <- data.table::as.data.table(populations)
 
-  checked_cols(
+  assert_cols(
     populations,
     c("obs_id", "loc_id", "cohort", "age", "dose")
   )
@@ -360,17 +360,17 @@ canonicalize_populations <- function(
   observations <- canonicalize_observations(observations)
   locations <- canonicalize_locations(locations)
 
-  checked_subset(populations, "dose", seq_len(max_dose))
+  assert_subset(populations, "dose", seq_len(max_dose))
 
   # check that populations id correspond to all observation ids
-  checked_set_equivalence(populations, "obs_id", observations$obs_id)
+  assert_set_equivalence(populations, "obs_id", observations$obs_id)
 
   # check that populations locations are all *within* locations ids;
-  checked_subset(populations, "loc_id", locations$loc_id)
+  assert_subset(populations, "loc_id", locations$loc_id)
 
   # check cohort and age if max values provided
-  checked_maxed_pos_integer(populations, "cohort", max_cohort)
-  checked_maxed_pos_integer(populations, "age", max_age)
+  assert_maxed_pos_integer(populations, "cohort", max_cohort)
+  assert_maxed_pos_integer(populations, "age", max_age)
 
   # check that weight is a positive numeric; > 1 weights caught in next block
   if (populations[, any(!is.numeric(weight) | weight <= 0)]) {

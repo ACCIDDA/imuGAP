@@ -59,6 +59,17 @@ predict.imugap_fit <- function(
   }
 
   raw_fit <- fit$stanfit
+  # predict() runs generated quantities via rstan::gqs(), which needs a stanfit.
+  # cmdstanr fits return a CmdStanMCMC; their generated-quantities support is a
+  # separate piece of work (tracked in #100), so fail clearly for now.
+  if (!inherits(raw_fit, "stanfit")) {
+    stop(
+      "predict() currently supports only the rstan backend. Refit with ",
+      "stan_options(backend = 'rstan'); cmdstanr generated-quantities support ",
+      "is not yet implemented.",
+      call. = FALSE
+    )
+  }
 
   # Posterior draws as a 3D array: iterations x chains x parameters.
   draws_array <- as.array(raw_fit)
@@ -67,7 +78,7 @@ predict.imugap_fit <- function(
   n_avail <- n_iter * n_chains
 
   if (!is.null(posterior_size)) {
-    posterior_size <- check_positive_int(posterior_size, "posterior_size")
+    posterior_size <- assert_positive_int(posterior_size, "posterior_size")
     if (length(posterior_size) != 1L) {
       stop("`posterior_size` must be a single value.", call. = FALSE)
     }

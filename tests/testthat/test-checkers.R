@@ -1,6 +1,6 @@
 library(data.table)
 
-test_that("checked_as_integer works", {
+test_that("assert_as_integer works", {
   ref <- c(1.0, 2.0, 3.0)
   ref_dt <- data.table(
     a = as.integer(ref), # integers
@@ -8,19 +8,19 @@ test_that("checked_as_integer works", {
     c = ref + 0.5 # not coercible
   )
 
-  expect_silent(checked_as_integer(ref_dt, "a"))
+  expect_silent(assert_as_integer(ref_dt, "a"))
   expect_equal(ref_dt$a, as.integer(ref))
 
-  expect_silent(checked_as_integer(ref_dt, "b"))
+  expect_silent(assert_as_integer(ref_dt, "b"))
   expect_equal(class(ref_dt$b), "integer")
 
   expect_error(
-    checked_as_integer(ref_dt, "c"),
+    assert_as_integer(ref_dt, "c"),
     "'ref_dt'.*'c'"
   )
 
   somefun <- function(some_dt, col) {
-    eval(substitute(checked_as_integer(some_dt, col)))
+    eval(substitute(assert_as_integer(some_dt, col)))
   }
 
   expect_silent(somefun(ref_dt, "a"))
@@ -31,56 +31,56 @@ test_that("checked_as_integer works", {
   )
 })
 
-test_that("checked_positive_integer works", {
+test_that("assert_positive_integer works", {
   ref <- c(1.0, 2.0, 3.0)
   ref_dt <- data.table(
     a = ref, # still coercible to integers
     b = -as.integer(ref) # error: negative integers
   )
 
-  expect_silent(checked_positive_integer(ref_dt, "a"))
+  expect_silent(assert_positive_integer(ref_dt, "a"))
   expect_equal(ref_dt$a, as.integer(ref))
   expect_equal(class(ref_dt$a), "integer")
 
   expect_error(
-    checked_positive_integer(ref_dt, "b"),
+    assert_positive_integer(ref_dt, "b"),
     "'ref_dt'.*'b'"
   )
 
   somefun <- function(some_dt, col) {
-    eval(substitute(checked_positive_integer(some_dt, col)))
+    eval(substitute(assert_positive_integer(some_dt, col)))
   }
 
   expect_silent(somefun(ref_dt, "a"))
 })
 
-test_that("checked_maxed_pos_integer works", {
+test_that("assert_maxed_pos_integer works", {
   ref <- c(1.0, 2.0, 3.0, 4.0, 5.0)
   ref_dt <- data.table(
     a = ref, # still coercible to integers
     b = ref + 10.0 # error: will exceed max
   )
 
-  expect_silent(checked_maxed_pos_integer(ref_dt, "a", 5))
+  expect_silent(assert_maxed_pos_integer(ref_dt, "a", 5))
   expect_equal(ref_dt$a, as.integer(ref))
   expect_equal(class(ref_dt$a), "integer")
 
   expect_error(
-    checked_maxed_pos_integer(ref_dt, "b", 5),
+    assert_maxed_pos_integer(ref_dt, "b", 5),
     "'ref_dt'.*'b'"
   )
 
-  expect_silent(checked_maxed_pos_integer(ref_dt, "b"))
+  expect_silent(assert_maxed_pos_integer(ref_dt, "b"))
 
   somefun <- function(some_dt, col, max) {
-    eval(substitute(checked_maxed_pos_integer(some_dt, col, max)))
+    eval(substitute(assert_maxed_pos_integer(some_dt, col, max)))
   }
 
   expect_silent(somefun(ref_dt, "a", 5))
   expect_silent(somefun(ref_dt, "a"))
 })
 
-test_that("checked_set_equivalence works", {
+test_that("assert_set_equivalence works", {
   refset <- c(1L, 2L, 3L)
 
   ref_dt <- data.table(
@@ -89,18 +89,18 @@ test_that("checked_set_equivalence works", {
     d = refset + 1.0 # extras
   )
 
-  expect_silent(checked_set_equivalence(ref_dt, "a", refset))
+  expect_silent(assert_set_equivalence(ref_dt, "a", refset))
   expect_error(
-    checked_set_equivalence(ref_dt, "b", refset),
+    assert_set_equivalence(ref_dt, "b", refset),
     "'ref_dt'.*'b'"
   )
   expect_error(
-    checked_set_equivalence(ref_dt, "d", refset),
+    assert_set_equivalence(ref_dt, "d", refset),
     "'ref_dt'.*'d'"
   )
 })
 
-test_that("checked_set_equivalence flags values outside the set", {
+test_that("assert_set_equivalence flags values outside the set", {
   # Column 'c' contains all refset members AND extras (4) — triggers the
   # "values outside of set" branch (i.e. union > setlen but intersect == setlen).
   refset <- c(1L, 2L, 3L)
@@ -108,54 +108,54 @@ test_that("checked_set_equivalence flags values outside the set", {
     c = c(refset, 4L)
   )
   expect_error(
-    checked_set_equivalence(ref_dt, "c", refset),
+    assert_set_equivalence(ref_dt, "c", refset),
     "outside of set"
   )
 })
 
-test_that("checked_as_integer errors on NA when na_allowed = FALSE", {
+test_that("assert_as_integer errors on NA when na_allowed = FALSE", {
   ref_dt <- data.table(a = c(1L, NA_integer_, 3L))
   expect_error(
-    checked_as_integer(ref_dt, "a"),
+    assert_as_integer(ref_dt, "a"),
     "cannot have NA"
   )
 })
 
-test_that("checked_as_integer allows NA when na_allowed = TRUE", {
+test_that("assert_as_integer allows NA when na_allowed = TRUE", {
   ref_dt <- data.table(a = c(1L, NA_integer_, 3L))
-  expect_silent(checked_as_integer(ref_dt, "a", na_allowed = TRUE))
+  expect_silent(assert_as_integer(ref_dt, "a", na_allowed = TRUE))
 })
 
-test_that("checked_subset accepts column whose values are all in tarset", {
+test_that("assert_subset accepts column whose values are all in tarset", {
   ref_dt <- data.table(a = c(1L, 2L, 1L))
-  expect_silent(checked_subset(ref_dt, "a", c(1L, 2L, 3L)))
+  expect_silent(assert_subset(ref_dt, "a", c(1L, 2L, 3L)))
 })
 
-test_that("checked_subset errors when column has values outside tarset", {
+test_that("assert_subset errors when column has values outside tarset", {
   ref_dt <- data.table(a = c(1L, 2L, 99L))
   expect_error(
-    checked_subset(ref_dt, "a", c(1L, 2L, 3L)),
+    assert_subset(ref_dt, "a", c(1L, 2L, 3L)),
     "parent set"
   )
 })
 
-test_that("checked_subset error message names missing values", {
+test_that("assert_subset error message names missing values", {
   ref_dt <- data.table(a = c(1L, 7L, 8L))
   expect_error(
-    checked_subset(ref_dt, "a", c(1L, 2L, 3L)),
+    assert_subset(ref_dt, "a", c(1L, 2L, 3L)),
     "7"
   )
 })
 
-test_that("checked_dt_able returns data.table via setDT when copy = FALSE", {
+test_that("assert_dt_able returns data.table via setDT when copy = FALSE", {
   df <- data.frame(a = 1:3, b = 4:6)
-  res <- checked_dt_able(df, copy = FALSE)
+  res <- assert_dt_able(df, copy = FALSE)
   expect_s3_class(res, "data.table")
 })
 
-test_that("checked_dt_able returns data.table via as.data.table when copy = TRUE", {
+test_that("assert_dt_able returns data.table via as.data.table when copy = TRUE", {
   df <- data.frame(a = 1:3, b = 4:6)
-  res <- checked_dt_able(df, copy = TRUE)
+  res <- assert_dt_able(df, copy = TRUE)
   expect_s3_class(res, "data.table")
   # Should be a fresh copy, not modify df
   expect_s3_class(df, "data.frame")
