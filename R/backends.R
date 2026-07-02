@@ -38,7 +38,7 @@ cmdstanr_hints <- c(
   adapt_delta       = "set inside `control = list(adapt_delta = ...)`",
   max_treedepth     = "set inside `control = list(max_treedepth = ...)`",
   step_size         = "set inside `control = list(stepsize = ...)`",
-  threads_per_chain = "rstan parallelises chains via `cores`",
+  threads_per_chain = "set `Sys.setenv(STAN_NUM_THREADS = n)`; chains parallelize via `cores`",
   output_dir        = "no rstan equivalent",
   sig_figs          = "no rstan equivalent"
 )
@@ -116,7 +116,10 @@ backend_int_args <- function(backend) {
   switch(
     backend,
     rstan    = c("iter", "chains", "warmup", "cores"),
-    cmdstanr = c("iter_warmup", "iter_sampling", "thin", "parallel_chains", "chains")
+    cmdstanr = c(
+      "iter_warmup", "iter_sampling", "thin", "parallel_chains", "chains",
+      "threads_per_chain"
+    )
   )
 }
 
@@ -238,6 +241,31 @@ stan_options <- function(..., chains = 4L, backend = "rstan") {
   # the fit functions strip it before forwarding to the native sampler.
   res$backend <- backend
   res
+}
+
+#' Check whether per-chain threading is enabled for the active backend
+#'
+#' cmdstanr configures threading through the `threads_per_chain` sampler
+#' argument; rstan reads the `STAN_NUM_THREADS` environment variable at run
+#' time (`-1` meaning all available cores). Only the run-time configuration is
+#' checked, not whether the model was compiled with threading support. The fit
+#' functions do not consult this themselves: a host package running a threaded
+#' model calls it to warn when the user has not made threads available.
+#'
+#' @param stan_opts a [stan_options()] result.
+#' @returns logical; `TRUE` if per-chain threading is enabled, otherwise `FALSE`.
+#' @keywords internal
+check_threaded <- function(stan_opts) {
+  switch(
+    stan_opts$backend,
+    rstan = {
+      threads <- suppressWarnings(
+        as.integer(Sys.getenv("STAN_NUM_THREADS", unset = "1"))
+      )
+      !is.na(threads) && (threads > 1L || threads == -1L)
+    },
+    cmdstanr = isTRUE(stan_opts$threads_per_chain > 1L)
+  )
 }
 
 #' Dispatch a fit to the chosen backend

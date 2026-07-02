@@ -139,6 +139,46 @@ test_that("assert_positive_int errors on invalid input", {
   expect_error(assert_positive_int(-2L, "x"), "positive")
 })
 
+test_that("check_threaded reads STAN_NUM_THREADS for the rstan backend", {
+  opts <- stan_options()
+  withr::with_envvar(c(STAN_NUM_THREADS = NA), {
+    expect_false(check_threaded(opts))
+  })
+  withr::with_envvar(c(STAN_NUM_THREADS = "1"), {
+    expect_false(check_threaded(opts))
+  })
+  withr::with_envvar(c(STAN_NUM_THREADS = "4"), {
+    expect_true(check_threaded(opts))
+  })
+  # Stan treats -1 as "use all available cores".
+  withr::with_envvar(c(STAN_NUM_THREADS = "-1"), {
+    expect_true(check_threaded(opts))
+  })
+  # Stan falls back to a single thread on unparseable values.
+  withr::with_envvar(c(STAN_NUM_THREADS = "not a number"), {
+    expect_false(check_threaded(opts))
+  })
+})
+
+test_that("check_threaded reads threads_per_chain for the cmdstanr backend", {
+  with_mocked_bindings(
+    {
+      expect_false(check_threaded(stan_options(backend = "cmdstanr")))
+      expect_false(
+        check_threaded(stan_options(backend = "cmdstanr", threads_per_chain = 1))
+      )
+      opts <- stan_options(backend = "cmdstanr", threads_per_chain = 4)
+      # threads_per_chain is validated/coerced like the other count arguments.
+      expect_identical(opts$threads_per_chain, 4L)
+      expect_true(check_threaded(opts))
+    },
+    # Bypass the cmdstanr-installed check but keep match.arg validation.
+    assert_backend_available = function(backend) {
+      match.arg(backend, c("rstan", "cmdstanr"))
+    }
+  )
+})
+
 test_that("fit_rstan forwards drop_pars to rstan::sampling", {
   captured <- NULL
   with_mocked_bindings(
