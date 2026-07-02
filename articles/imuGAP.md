@@ -264,7 +264,7 @@ state-level vaccine uptake baseline:
 beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 #> List of 1
-#>  $ beta_bs: num [1:2000, 1:5] -1.86 -1.96 -1.58 -2.05 -1.91 ...
+#>  $ beta_bs: num [1:2000, 1:5] -1.85 -1.9 -1.73 -1.64 -1.69 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ iterations: NULL
 #>   .. ..$           : NULL
@@ -305,18 +305,18 @@ locations, including the State and County levels, across ages 1 to 18:
 ``` r
 
 target_sim <- create_target(
-  fit = fit_sim, location = unique(locations_sim$loc_id), age = 1:18,
+  location = unique(locations_sim$loc_id), age = 1:18,
   cohort = max(populations_sim$cohort) - 18, dose = c(1, 2), mode = "snapshot"
 )
 head(target_sim)
-#>    obs_c_id               loc_id   age cohort  dose weight loc_c_id
-#>       <int>               <char> <int>  <num> <num>  <num>    <int>
-#> 1:        1                State     1     30     1      1        1
-#> 2:        2              Scruggs     1     30     1      1        2
-#> 3:        3               Simone     1     30     1      1        3
-#> 4:        4               Watson     1     30     1      1        4
-#> 5:        5 Chickadee Elementary     1     30     1      1        8
-#> 6:        6     Nuthatch Academy     1     30     1      1       11
+#>    obs_c_id               loc_id   age cohort  dose weight
+#>       <int>               <char> <int>  <num> <num>  <num>
+#> 1:        1                State     1     30     1      1
+#> 2:        2              Scruggs     1     30     1      1
+#> 3:        3               Simone     1     30     1      1
+#> 4:        4               Watson     1     30     1      1
+#> 5:        5 Chickadee Elementary     1     30     1      1
+#> 6:        6     Nuthatch Academy     1     30     1      1
 ```
 
 ------------------------------------------------------------------------
