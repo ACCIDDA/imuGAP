@@ -123,7 +123,7 @@ assert_cols <- function(dt, cols, warn_extra = FALSE) {
 }
 
 #' @keywords internal
-checked_positive_numeric <- function(dt, x, na_allowed = FALSE) {
+assert_positive_numeric <- function(dt, x, na_allowed = FALSE) {
   if (dt[, !is.numeric(get(x))]) {
     stopper(deparse(substitute(dt)), x, "'%s' column '%s' must be numeric")
   }

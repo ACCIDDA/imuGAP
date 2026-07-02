@@ -640,17 +640,17 @@ create_observation_populations <- function(
 
   if (mode == "snapshot") {
     # confirm: dose and cohort are positive integers
-    checked_positive_integer(obs_dt, "dose")
-    checked_positive_integer(obs_dt, "cohort")
+    assert_positive_integer(obs_dt, "dose")
+    assert_positive_integer(obs_dt, "cohort")
 
     # confirm: age_min, age_max are in positive numerics, with age_min <= age_max
-    checked_positive_numeric(obs_dt, "age_min")
+    assert_positive_numeric(obs_dt, "age_min")
     # age_max is optional; if completely missing or rows == NA, assumed to be age_min
     if (!("age_max") %in% names(obs_dt)) {
       obs_dt[, age_max := NA_integer_]
     }
     obs_dt[is.na(age_max), age_max := age_min + 1L]
-    checked_positive_numeric(obs_dt, "age_max")
+    assert_positive_numeric(obs_dt, "age_max")
 
     if (obs_dt[, !all(age_min < age_max)]) {
       stop("age_min must be strictly less than age_max", call. = FALSE)
