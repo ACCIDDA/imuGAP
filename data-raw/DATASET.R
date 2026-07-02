@@ -7,7 +7,7 @@
 # `just data-inputs` for this step alone).
 
 # Load only the packages this script actually uses. If you attach e.g. the
-# full tidyverse, you'll pulls in lubridate; lubridate then gets captured in the
+# full tidyverse, you'll pull in lubridate; lubridate then gets captured in the
 # fitted model's `@.MISC` environment and baked into data/fit_sim.rda, tripping
 # R CMD check's "namespace references in data files".
 library(data.table)
