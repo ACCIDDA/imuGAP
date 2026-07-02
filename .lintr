@@ -10,4 +10,4 @@ linters: linters_with_defaults(
     )
   )
 encoding: "UTF-8"
-exclusions: list("R/stanmodels.R", "inst/analysis", "inst/scripts")
+exclusions: list("R/stanmodels.R", "R/import-standalone-backends.R", "inst/analysis", "inst/scripts")
