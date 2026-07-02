@@ -46,7 +46,6 @@
 #'
 #' @export
 #' @importFrom data.table as.data.table copy data.table
-#' @importFrom rstan gqs extract
 predict.imugap_fit <- function(
   object,
   target,
@@ -59,9 +58,10 @@ predict.imugap_fit <- function(
   }
 
   raw_fit <- fit$stanfit
-  # predict() runs generated quantities via rstan::gqs(), which needs a stanfit.
-  # cmdstanr fits return a CmdStanMCMC; their generated-quantities support is a
-  # separate piece of work (tracked in #100), so fail clearly for now.
+  # predict() runs generated quantities through the backend accessors, which
+  # only implement the rstan path today. cmdstanr fits return a CmdStanMCMC;
+  # their generated-quantities support is a separate piece of work, so fail
+  # clearly here rather than deep inside the accessor.
   if (!inherits(raw_fit, "stanfit")) {
     stop(
       "predict() currently supports only the rstan backend. Refit with ",
@@ -72,7 +72,7 @@ predict.imugap_fit <- function(
   }
 
   # Posterior draws as a 3D array: iterations x chains x parameters.
-  draws_array <- as.array(raw_fit)
+  draws_array <- backend_draws_array(raw_fit)
   n_iter <- dim(draws_array)[1]
   n_chains <- dim(draws_array)[2]
   n_avail <- n_iter * n_chains
@@ -161,16 +161,11 @@ predict.imugap_fit <- function(
   # Flatten to the 2D draws matrix gqs expects (rows = draws, cols = params).
   draws_mat <- apply(draws_sub, 3L, c)
 
-  # Run gqs to generate predictions
-  gqs_res <- rstan::gqs(
-    raw_fit@stanmodel,
-    data = dat_stan,
-    draws = draws_mat
+  # Predicted coverage via the backend's generated-quantities run, reshaped to
+  # iterations x chains x targets so the per-chain structure is preserved.
+  p_obs_mat <- backend_generate_quantities(
+    raw_fit, dat_stan, draws_mat, "p_obs"
   )
-
-  # Predicted coverage, reshaped to iterations x chains x targets so the
-  # per-chain structure is preserved.
-  p_obs_mat <- as.matrix(gqs_res, pars = "p_obs")
   p_obs_draws <- array(p_obs_mat, dim = c(n_keep, n_chains, ncol(p_obs_mat)))
 
   structure(
