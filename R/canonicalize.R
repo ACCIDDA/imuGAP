@@ -397,3 +397,134 @@ canonicalize_populations <- function(
 
   mark_canonical(populations, "populations")
 }
+
+#' @title Canonicalize a target grid against a fit
+#'
+#' @description
+#' Normalizes a target grid and validates it against a specific `imugap_fit`.
+#'
+#' @details
+#' Accepts either the output of `[create_target()]` or a plain `data.frame` /
+#' `data.table` with `loc_id`, `age`, `cohort`, and `dose` columns (optionally
+#' `weight` / `obs_id`). Fills `obs_c_id` and `weight` when absent, checks that
+#' every `loc_id` exists in the fit and that `dose`, `age`, and `cohort` are
+#' within the fit's ranges, and adds the canonical `loc_c_id`. Errors on any
+#' out-of-range value. `[predict.imugap_fit()]` calls this internally, so most
+#' users do not call it directly.
+#'
+#' @param target a target grid: the output of `[create_target()]`, or a
+#'   `data.frame` / `data.table` with `loc_id`, `age`, `cohort`, and `dose` columns.
+#' @param fit an `imugap_fit` object returned by `[sampling()]`.
+#'
+#' @return the validated `target` (a `data.table`) with `loc_c_id` added.
+#'
+#' @seealso `[create_target()]`, `[predict.imugap_fit()]`
+#'
+#' @examples
+#' data("fit_sim")
+#' target <- create_target(
+#'   location = c("Blue Heron School", "Bluebird Learning Center"),
+#'   age = c(1, 2, 3), cohort = 5, dose = c(1), mode = "snapshot"
+#' )
+#' canonicalize_target(target, fit_sim)
+#'
+#' @importFrom data.table as.data.table between
+#' @autoglobal
+#' @export
+canonicalize_target <- function(target, fit) {
+  target <- data.table::as.data.table(target)
+  assert_cols(target, c("loc_id", "age", "cohort", "dose"))
+
+  # TODO(#79): non-unique observation ids will be allowed when the row weights
+  # sum to 1 (several rows aggregating into one observation). That is not
+  # implemented yet, so reject the non-unique-obs + weights combination with a
+  # clear error rather than letting it hit the generic uniqueness/weight checks.
+  dup_obs_id <-
+    "obs_id" %in% names(target) && anyDuplicated(target$obs_id) > 0L
+  dup_obs_c_id <-
+    "obs_c_id" %in% names(target) && anyDuplicated(target$obs_c_id) > 0L
+  if ((dup_obs_id || dup_obs_c_id) && "weight" %in% names(target)) {
+    stop(
+      "non-unique observation ids with weights are not yet supported ",
+      "(see https://github.com/ACCIDDA/imuGAP/issues/79)",
+      call. = FALSE
+    )
+  }
+
+  # obs_c_id: fill sequentially when absent, else require it to be 1:nrow.
+  if (!"obs_c_id" %in% names(target)) {
+    target[, obs_c_id := seq_len(.N)]
+  } else if (!all(target$obs_c_id == seq_len(nrow(target)))) {
+    stop("if supplied, obs_c_id must be 1:nrow(target)", call. = FALSE)
+  }
+
+  # obs_id: if supplied, must be unique and not NA.
+  if (
+    "obs_id" %in% names(target) &&
+      (anyDuplicated(target$obs_id) > 0L || anyNA(target$obs_id))
+  ) {
+    stop("if supplied, obs_id must be unique and not NA", call. = FALSE)
+  }
+
+  # weight: default to 1, else require all 1.
+  if (!"weight" %in% names(target)) {
+    target[, weight := 1.0]
+  } else if (!all(target$weight == 1.0)) {
+    stop("if supplied, weight must be 1", call. = FALSE)
+  }
+
+  # --- validate against the fit ---
+  invalid_locs <- setdiff(target$loc_id, fit$locations$loc_id)
+  if (length(invalid_locs) > 0) {
+    stop(
+      "all locations must be within fit$locations. Invalid locations: ",
+      toString(invalid_locs, width = 60),
+      call. = FALSE
+    )
+  }
+
+  invalid_dose_rows <- target[, which(!between(dose, 1L, fit$data$n_doses))]
+  if (length(invalid_dose_rows) > 0) {
+    stop(
+      sprintf(
+        "dose values must be within 1 and fit$data$n_doses (%i). Invalid dose in rows: ",
+        fit$data$n_doses
+      ),
+      toString(invalid_dose_rows, width = 60),
+      call. = FALSE
+    )
+  }
+
+  invalid_age_rows <- target[, which(!between(age, 1L, fit$data$n_yr))]
+  if (length(invalid_age_rows) > 0) {
+    stop(
+      sprintf(
+        "age values must be within 1 and fit$data$n_yr (%i). Invalid age in rows: ",
+        fit$data$n_yr
+      ),
+      toString(invalid_age_rows, width = 60),
+      call. = FALSE
+    )
+  }
+
+  invalid_cohort_rows <- target[, which(!between(cohort, 1L, fit$data$n_cohort))]
+  if (length(invalid_cohort_rows) > 0) {
+    stop(
+      sprintf(
+        "cohort values must be within 1 and fit$data$n_cohort (%i). Invalid cohort in rows: ",
+        fit$data$n_cohort
+      ),
+      toString(invalid_cohort_rows, width = 60),
+      call. = FALSE
+    )
+  }
+
+  # keep the canonical columns in order, then add loc_c_id from the fit.
+  cols <- c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
+  if ("obs_id" %in% names(target)) {
+    cols <- c(cols, "obs_id")
+  }
+  target <- target[, .SD, .SDcols = cols]
+  target[fit$locations, on = .(loc_id), loc_c_id := loc_c_id]
+  mark_canonical(target, "target")
+}
