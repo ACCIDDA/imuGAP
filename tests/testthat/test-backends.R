@@ -198,3 +198,35 @@ test_that("fit_rstan forwards drop_pars to rstan::sampling", {
     .package = "rstan"
   )
 })
+
+# --- Fit-consumption accessors (the portable predict/extract seam) -----------
+# The rstan paths are exercised end-to-end by the predict()/extract_imugap()
+# tests; here we cover the backend dispatch and the not-yet-implemented cmdstanr
+# stubs directly, with fake fit objects, so no Stan toolchain is needed.
+
+test_that("fit_backend identifies the backend and rejects unknown fits", {
+  expect_identical(fit_backend(structure(list(), class = "stanfit")), "rstan")
+  expect_identical(
+    fit_backend(structure(list(), class = "CmdStanMCMC")), "cmdstanr"
+  )
+  expect_error(fit_backend(list()), "unrecognized fit object")
+})
+
+test_that("backend_extract dispatches to rstan::extract for an rstan fit", {
+  fake_rstan <- structure(list(), class = "stanfit")
+  with_mocked_bindings(
+    expect_identical(backend_extract(fake_rstan, "beta_bs"), "mocked_extract"),
+    extract = function(object, pars, ...) "mocked_extract",
+    .package = "rstan"
+  )
+})
+
+test_that("the cmdstanr accessors error until cmdstanr support lands", {
+  cmd <- structure(list(), class = "CmdStanMCMC")
+  expect_error(backend_draws_array(cmd), "not yet implemented")
+  expect_error(backend_extract(cmd, "beta_bs"), "not yet implemented")
+  expect_error(
+    backend_generate_quantities(cmd, list(), matrix(0), "p_obs"),
+    "not yet implemented"
+  )
+})
