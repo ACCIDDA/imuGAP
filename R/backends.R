@@ -1,0 +1,353 @@
+# Backend handling for the Stan fit: option construction, the cross-backend
+# vocabulary guard, and the per-backend fit functions. Each fit function
+# forwards the user's stan_options() verbatim to that backend's native sampler,
+# so calls feel like using rstan / cmdstanr directly.
+#
+# This file is intended to be portable -- a single self-contained
+# implementation that any Stan-based R package can adopt verbatim. Keep it free
+# of package-specific names and assumptions (comments included): the model is
+# selected by `model_name` (resolved against each package's own `stanmodels`),
+# the package name is derived with `utils::packageName()`, and parameters to
+# drop from the saved draws are injected by the caller via `drop_pars`. Anything
+# package-specific belongs elsewhere.
+#
+# To adopt this file in another Stan package, declare its dependencies once
+# (run manually, then the file drops in verbatim):
+# nolint start: commented_code_linter.
+#   usethis::use_package("rstan")                # default backend (hard dependency)
+#   usethis::use_package("utils")                # utils::packageName()
+#   usethis::use_package("tools")                # tools::R_user_dir()
+#   usethis::use_package("cmdstanr", "Suggests") # optional backend (see below)
+# nolint end
+# cmdstanr is not on CRAN, so a host that Suggests it also needs, in DESCRIPTION:
+#   Additional_repositories: https://stan-dev.r-universe.dev
+# pak-based CI (e.g. r-lib/actions setup-r-dependencies) does not read that
+# field (r-lib/pak#424); for it the host also needs, in DESCRIPTION:
+# nolint start: commented_code_linter.
+#   Remotes: stan-dev/cmdstanr
+# nolint end
+# Do not point pak at the r-universe as a repository instead: it serves dev
+# builds of the whole Stan stack, which pak will prefer over CRAN's.
+
+# cmdstanr-only argument names, shown when the active backend is rstan (i.e. the
+# user reached for a cmdstanr word), each mapped to the rstan way to do it.
+cmdstanr_hints <- c(
+  parallel_chains   = "use `cores`",
+  iter_warmup       = "use `iter` (with `warmup`)",
+  iter_sampling     = "use `iter` (with `warmup`)",
+  adapt_delta       = "set inside `control = list(adapt_delta = ...)`",
+  max_treedepth     = "set inside `control = list(max_treedepth = ...)`",
+  step_size         = "set inside `control = list(stepsize = ...)`",
+  threads_per_chain = "set `Sys.setenv(STAN_NUM_THREADS = n)`; chains parallelize via `cores`",
+  output_dir        = "no rstan equivalent",
+  sig_figs          = "no rstan equivalent"
+)
+
+# rstan-only argument names, shown when the active backend is cmdstanr, mapped to
+# the cmdstanr way to do it.
+rstan_hints <- c(
+  cores           = "use `parallel_chains`",
+  control         = "set `adapt_delta`/`max_treedepth`/`step_size` as top-level arguments",
+  iter            = "use `iter_warmup` and `iter_sampling`",
+  warmup          = "use `iter_warmup`",
+  pars            = "not supported by the cmdstanr backend",
+  include         = "not supported by the cmdstanr backend",
+  sample_file     = "no cmdstanr equivalent",
+  diagnostic_file = "no cmdstanr equivalent"
+)
+
+#' Assert that no foreign-backend argument vocabulary was used
+#'
+#' Errors if any argument name belongs to the *other* backend's vocabulary,
+#' with a "did you mean" hint. On success returns the argument names invisibly.
+#'
+#' @param arg_names names of the arguments supplied to [stan_options()].
+#' @param backend the backend the options are being built for.
+#' @returns `arg_names`, invisibly.
+#' @keywords internal
+assert_backend_vocab <- function(arg_names, backend) {
+  foreign <- switch(
+    backend,
+    rstan    = cmdstanr_hints,
+    cmdstanr = rstan_hints
+  )
+  bad <- intersect(arg_names, names(foreign))
+  if (length(bad) > 0) {
+    bullets <- paste0("  - `", bad, "`: ", foreign[bad], collapse = "\n")
+    stop(
+      "These stan_options() arguments are not valid for the '", backend,
+      "' backend:\n", bullets,
+      call. = FALSE
+    )
+  }
+  invisible(arg_names)
+}
+
+#' Assert a backend name is valid and its package is installed
+#'
+#' Validates `backend` against the known choices (so it also subsumes
+#' `match.arg()`) and, for the optional cmdstanr backend, that its package is
+#' installed. rstan is always available (a hard dependency); cmdstanr is
+#' optional, so selecting it without the package installed fails early here
+#' rather than deep inside the fit. Returns the validated backend invisibly.
+#'
+#' @param backend the backend to validate.
+#' @returns the validated backend string, invisibly.
+#' @keywords internal
+assert_backend_available <- function(backend) {
+  backend <- match.arg(backend, c("rstan", "cmdstanr"))
+  if (backend == "cmdstanr" && !requireNamespace("cmdstanr", quietly = TRUE)) {
+    stop(
+      "backend = 'cmdstanr' requires the cmdstanr package, which is not ",
+      "installed. Install it from https://mc-stan.org/cmdstanr/, or use ",
+      "backend = 'rstan'.",
+      call. = FALSE
+    )
+  }
+  invisible(backend)
+}
+
+#' Positive-integer count arguments native to a backend's sampler
+#'
+#' @param backend one of `"rstan"` or `"cmdstanr"`.
+#' @returns a character vector of argument names that must be positive integers.
+#' @keywords internal
+backend_int_args <- function(backend) {
+  switch(
+    backend,
+    rstan    = c("iter", "chains", "warmup", "cores"),
+    cmdstanr = c(
+      "iter_warmup", "iter_sampling", "thin", "parallel_chains", "chains",
+      "threads_per_chain"
+    )
+  )
+}
+
+#' Assert a value is a positive integer (vector)
+#'
+#' Errors on invalid input (non-numeric, empty, `NA`, non-integer, or
+#' non-positive values); otherwise returns the value coerced to integer. Used to
+#' validate count-like arguments. Kept here so this file stays self-contained.
+#'
+#' @param val the value to validate.
+#' @param name the argument name, used in error messages.
+#' @returns `val`, coerced to a positive integer (vector).
+#' @keywords internal
+assert_positive_int <- function(val, name) {
+  if (!is.numeric(val)) {
+    stop(sprintf("'%s' must be numeric", name), call. = FALSE)
+  }
+  if (length(val) < 1L) {
+    stop(sprintf("length('%s') must be >= 1", name), call. = FALSE)
+  }
+  if (any(is.na(val))) {
+    stop(sprintf("'%s' may not contain NAs", name), call. = FALSE)
+  }
+  if (any(val != as.integer(val))) {
+    stop(sprintf("'%s' must be integers", name), call. = FALSE)
+  }
+  if (any(val < 1L)) {
+    stop(sprintf("'%s' must be positive", name), call. = FALSE)
+  }
+  as.integer(val)
+}
+
+#' @title Stan Sampler Options
+#'
+#' @description
+#' Collects and validates sampler arguments for the chosen `backend`, forwarding
+#' them **verbatim** so calls feel native to that backend. Use the backend's own
+#' argument names; mixing one backend's vocabulary into the other errors with a
+#' hint. The model object is supplied separately via the package's model
+#' options, while `data` and `init` are constructed internally, so none of these
+#' may be set here. `chains` defaults to `4` so downstream code can always size
+#' per-chain structures from it.
+#'
+#' @param ... sampler arguments forwarded verbatim to the chosen backend's
+#'   sampler. Use the backend's own names: for `"rstan"`, the
+#'   [rstan::sampling()] arguments (`iter`, `cores`, `seed`); for
+#'   `"cmdstanr"`, the `$sample()` arguments (`iter_warmup`, `iter_sampling`,
+#'   `parallel_chains`, ...).
+#' @param chains the number of Markov chains, a positive integer (default `4`).
+#'   Exposed as an explicit argument (rather than one of `...`) so the default is
+#'   part of the documented signature and downstream code can always size
+#'   per-chain structures (e.g. inits) from it. Valid for both backends.
+#' @param backend which Stan interface to target, one of `"rstan"` (default) or
+#'   `"cmdstanr"`. Determines which argument vocabulary is accepted and which
+#'   sampler [sampling()] calls. Selecting `"cmdstanr"` errors if the cmdstanr
+#'   package is not installed.
+#'
+#' @examples
+#' stan_options()
+#' stan_options(chains = 2, iter = 500)
+#' if (requireNamespace("cmdstanr", quietly = TRUE)) {
+#'   stan_options(backend = "cmdstanr", parallel_chains = 4, iter_warmup = 500)
+#' }
+#'
+#' @return a named list of validated sampler arguments, carrying a `backend`
+#'   element recording the backend it was built for
+#' @export
+stan_options <- function(..., chains = 4L, backend = "rstan") {
+  backend <- assert_backend_available(backend)
+  res <- list(...)
+  if ("object" %in% names(res)) {
+    stop(
+      "Passing 'object' in stan_options is not allowed; ",
+      "the model object should be supplied via the model options instead."
+    )
+  }
+  if ("data" %in% names(res)) {
+    stop(
+      "Passing 'data' in stan_options is not allowed; ",
+      "the 'data' argument is constructed internally by the fitting functions."
+    )
+  }
+  if ("init" %in% names(res)) {
+    stop(
+      "Passing 'init' in stan_options is not allowed; ",
+      "the 'init' values are constructed internally by the fitting functions."
+    )
+  }
+
+  # Reject the other backend's vocabulary with a "did you mean" hint.
+  assert_backend_vocab(names(res), backend)
+
+  # `chains` is an explicit argument (default 4, valid for both backends); fold
+  # it into the forwarded options so it is validated and passed through below.
+  res$chains <- chains
+
+  # Validate the positive-integer count arguments native to this backend.
+  for (arg in intersect(names(res), backend_int_args(backend))) {
+    if (length(res[[arg]]) != 1L) {
+      stop(
+        sprintf("'%s' must be a single positive integer", arg),
+        call. = FALSE
+      )
+    }
+    res[[arg]] <- assert_positive_int(res[[arg]], arg)
+  }
+  if ("seed" %in% names(res)) {
+    val <- res[["seed"]]
+    if (length(val) != 1L) {
+      stop("'seed' must be a single value", call. = FALSE)
+    }
+    val <- suppressWarnings(as.integer(val))
+    if (is.na(val)) {
+      stop("'seed' must be coercible to an integer", call. = FALSE)
+    }
+    res[["seed"]] <- val
+  }
+  # Record the backend as an inspectable element; sampling() reads it back and
+  # the fit functions strip it before forwarding to the native sampler.
+  res$backend <- backend
+  res
+}
+
+#' Check whether per-chain threading is enabled for the active backend
+#'
+#' cmdstanr configures threading through the `threads_per_chain` sampler
+#' argument; rstan reads the `STAN_NUM_THREADS` environment variable at run
+#' time (`-1` meaning all available cores). Only the run-time configuration is
+#' checked, not whether the model was compiled with threading support. The fit
+#' functions do not consult this themselves: a host package running a threaded
+#' model calls it to warn when the user has not made threads available.
+#'
+#' @param stan_opts a [stan_options()] result.
+#' @returns logical; `TRUE` if per-chain threading is enabled, otherwise `FALSE`.
+#' @keywords internal
+check_threaded <- function(stan_opts) {
+  switch(
+    stan_opts$backend,
+    rstan = {
+      threads <- suppressWarnings(
+        as.integer(Sys.getenv("STAN_NUM_THREADS", unset = "1"))
+      )
+      !is.na(threads) && (threads > 1L || threads == -1L)
+    },
+    cmdstanr = isTRUE(stan_opts$threads_per_chain > 1L)
+  )
+}
+
+#' Dispatch a fit to the chosen backend
+#'
+#' The backend is read from `stan_opts$backend` (guaranteed present by the caller,
+#' which requires a [stan_options()] result), so it is not passed separately.
+#'
+#' @param model_name name of the Stan model; used to look up the compiled model
+#'   in this package's `stanmodels` (rstan) and to locate the `.stan` source
+#'   file under `inst/stan/` (cmdstanr).
+#' @param dat_stan the Stan data list.
+#' @param init the init list, sized to the chain count.
+#' @param stan_opts the validated `stan_options()` list (carrying a `backend`
+#'   element).
+#' @param drop_pars character vector of parameter names to exclude from the
+#'   saved draws, or `NULL` to keep everything. Honored by rstan; cmdstanr
+#'   cannot drop parameters and warns if any are requested.
+#' @returns the backend's fit object (a `stanfit` or `CmdStanMCMC`).
+#' @keywords internal
+fit_model <- function(model_name, dat_stan, init, stan_opts, drop_pars = NULL) {
+  # backend rides on stan_opts; assert_* also subsumes match.arg + installed check.
+  backend <- assert_backend_available(stan_opts$backend)
+  # Build the sampler argument list once: drop the backend marker (the native
+  # samplers don't accept it) and inject the internally-built data and init, so
+  # each fit_BACKEND() receives a ready-to-forward `args` list.
+  args <- stan_opts
+  args$backend <- NULL
+  args$data <- dat_stan
+  args$init <- init
+  switch(
+    backend,
+    rstan    = fit_rstan(model_name, args, drop_pars),
+    cmdstanr = fit_cmdstanr(model_name, args, drop_pars)
+  )
+}
+
+#' @keywords internal
+fit_rstan <- function(model_name, args, drop_pars = NULL) {
+  args$object <- stanmodels[[model_name]]
+  if (length(drop_pars) > 0) {
+    # Exclude the named parameters from the saved output.
+    args$pars    <- drop_pars
+    args$include <- FALSE
+  }
+  do.call(rstan::sampling, args)
+}
+
+#' @keywords internal
+fit_cmdstanr <- function(model_name, args, drop_pars = NULL) {
+  # nocov start: needs the CmdStan toolchain, unavailable on CI/CRAN.
+  # cmdstanr availability is already guaranteed by assert_backend_available().
+  # The cmdstanr package is only a wrapper; compiling and running also need the
+  # CmdStan toolchain. cmdstan_version() errors when CmdStan is not installed, so
+  # probe it and fail early with an actionable message rather than deep inside
+  # cmdstan_model().
+  if (inherits(try(cmdstanr::cmdstan_version(), silent = TRUE), "try-error")) {
+    stop(
+      "backend = 'cmdstanr' requires a CmdStan installation, which was not ",
+      "found. Install it with cmdstanr::install_cmdstan().",
+      call. = FALSE
+    )
+  }
+  if (length(drop_pars) > 0) {
+    warning(
+      "dropping parameters is not supported by the cmdstanr backend; ",
+      paste(drop_pars, collapse = ", "), " will be written to the output.",
+      call. = FALSE
+    )
+  }
+  pkg <- utils::packageName()
+  stan_file <- system.file(
+    "stan", paste0(model_name, ".stan"),
+    package = pkg, mustWork = TRUE
+  )
+  # Compile into a writable user cache, not next to the installed .stan file
+  # (the package directory may be read-only, and stray executables there trip
+  # R CMD check's "executable files" warning). cmdstan_model() reuses the cached
+  # executable across sessions and recompiles only when the .stan source is
+  # newer than it -- e.g. after a package update reinstalls the .stan file.
+  exe_dir <- tools::R_user_dir(pkg, "cache")
+  dir.create(exe_dir, showWarnings = FALSE, recursive = TRUE)
+  mod <- cmdstanr::cmdstan_model(stan_file, dir = exe_dir)
+  do.call(mod$sample, args)
+  # nocov end
+}

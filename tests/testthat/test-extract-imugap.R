@@ -54,3 +54,14 @@ test_that("extract_imugap extracts from a valid imugap_fit", {
     .package = "rstan"
   )
 })
+
+# A cmdstanr fit returns a CmdStanMCMC, not a stanfit; extract_imugap() is
+# rstan-only and must reject it clearly. Fake the fit so this runs without
+# cmdstanr or a CmdStan toolchain.
+test_that("extract_imugap() rejects a cmdstanr (non-stanfit) fit", {
+  fake_fit <- structure(
+    list(stanfit = structure(list(), class = "CmdStanMCMC")),
+    class = "imugap_fit"
+  )
+  expect_error(extract_imugap(fake_fit), "rstan backend")
+})
