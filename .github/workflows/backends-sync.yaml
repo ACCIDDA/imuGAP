@@ -1,0 +1,62 @@
+name: backends-sync
+
+# Read-only drift check: is the vendored R/import-standalone-backends.R still in
+# step with its canonical source, ACCIDDA/flexstanr (imuGAP#112)?
+#
+# usethis::use_standalone() is a one-shot copy -- it does not track upstream --
+# so the vendored file can silently fall behind. This job fetches flexstanr's
+# file and compares; if they differ it fails. A failing scheduled run (red in
+# the Actions tab, plus GitHub's scheduled-failure email) is the signal to
+# re-sync locally with usethis::use_standalone("ACCIDDA/flexstanr", "backends")
+# (then revert any DESCRIPTION churn it introduces) and commit the result.
+#
+# It never writes anything and opens no PR. flexstanr is private, so reading it
+# needs a token with read access: set a FLEXSTANR_TOKEN secret (a read-only PAT),
+# or make flexstanr public so the default GITHUB_TOKEN suffices.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  check-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check vendored backend is in sync with flexstanr
+        env:
+          GH_TOKEN: ${{ secrets.FLEXSTANR_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          vendored="R/import-standalone-backends.R"
+          if [ ! -f "$vendored" ]; then
+            echo "::error::$vendored not found."
+            exit 1
+          fi
+
+          if ! gh api repos/ACCIDDA/flexstanr/contents/R/standalone-backends.R \
+                 --jq '.content' 2>/tmp/gh_err | base64 -d > /tmp/canonical.R; then
+            echo "::error::Could not read ACCIDDA/flexstanr. Make it public, or set"
+            echo "::error::a FLEXSTANR_TOKEN secret with read access."
+            cat /tmp/gh_err || true
+            exit 1
+          fi
+
+          # The vendored file is [generated header] + flexstanr's file. Drop the
+          # header by starting at the first '# ---' (yaml open) and compare.
+          start=$(grep -n '^# ---$' "$vendored" | head -1 | cut -d: -f1 || true)
+          if [ -z "${start:-}" ]; then
+            echo "::error::Could not locate the standalone yaml header in $vendored."
+            exit 1
+          fi
+          tail -n "+${start}" "$vendored" > /tmp/vendored_body.R
+
+          if diff -u /tmp/canonical.R /tmp/vendored_body.R; then
+            echo "In sync with ACCIDDA/flexstanr."
+          else
+            echo "::error::$vendored has drifted from ACCIDDA/flexstanr; re-sync with"
+            echo "::error::usethis::use_standalone(\"ACCIDDA/flexstanr\", \"backends\")."
+            exit 1
+          fi
