@@ -8,7 +8,7 @@
 # file: standalone-backends.R
 # last-updated: 2026-07-02
 # license: https://spdx.org/licenses/MIT.html
-# imports: [rstan]
+# imports: [rstan, utils, tools]
 # ---
 #
 # A portable Stan-backend layer (rstan, with an optional cmdstanr backend) for R
@@ -29,13 +29,13 @@
 # drop from the saved draws are injected by the caller via `drop_pars`. Anything
 # package-specific belongs elsewhere.
 #
-# To adopt this file in another Stan package, declare its dependencies once
-# (run manually, then the file drops in verbatim):
+# To adopt this file, run usethis::use_standalone("ACCIDDA/flexstanr",
+# "backends") once (then it drops in verbatim). That adds rstan, utils, and
+# tools (the `imports:` field above) to the host's DESCRIPTION automatically.
+# cmdstanr is an optional backend that use_standalone cannot add (it is a
+# non-CRAN Suggests), so a host that wants it must also declare it:
 # nolint start: commented_code_linter.
-#   usethis::use_package("rstan")                # default backend (hard dependency)
-#   usethis::use_package("utils")                # utils::packageName()
-#   usethis::use_package("tools")                # tools::R_user_dir()
-#   usethis::use_package("cmdstanr", "Suggests") # optional backend (see below)
+#   usethis::use_package("cmdstanr", "Suggests")
 # nolint end
 # cmdstanr is not on CRAN, so a host that Suggests it also needs, in DESCRIPTION:
 #   Additional_repositories: https://stan-dev.r-universe.dev
