@@ -76,19 +76,31 @@ R CMD build . && R CMD check imuGAP_*.tar.gz
 vendored from [ACCIDDA/flexstanr](https://github.com/ACCIDDA/flexstanr) — the
 single source of truth for the portable backend layer shared across imuGAP,
 hestia, and SeverityEstimate (see #112). Its header says *"do not edit by
-hand,"* and it is excluded from linting.
+hand."*
 
-- To change backend behavior, edit **flexstanr**, then re-sync here:
+- To change backend behavior, edit **flexstanr**, then re-sync here. The
+  preferred way is the justfile recipe:
+  ```sh
+  just update-standalones
+  ```
+  It re-runs `use_standalone` for each vendored source and restores `DESCRIPTION`
+  afterwards. The manual equivalent is:
   ```r
   usethis::use_standalone("ACCIDDA/flexstanr", "backends")
   ```
-  That call also rewrites `DESCRIPTION` (it strips version pins, e.g.
-  `rstan (>= 2.18.1)` → `rstan`) — **revert that DESCRIPTION change**; the
-  re-sync should only touch `R/import-standalone-backends.R`.
+  but note that call also rewrites `DESCRIPTION` — it strips version pins, e.g.
+  `rstan (>= 2.18.1)` → `rstan`
+  ([usethis#2198](https://github.com/r-lib/usethis/issues/2198)) — so you must
+  **revert that DESCRIPTION change** by hand; the re-sync should only touch
+  `R/import-standalone-backends.R`. The recipe does that revert for you.
+- The vendored header's `# repo: ACCIDDA/flexstanr` line parses as R, so
+  `commented_code_linter` is disabled globally in `.lintr` (rather than excluding
+  the file); the vendored file is otherwise linted like any other.
 - `use_standalone` is a one-shot copy, so the vendored file can fall behind
-  upstream. The **`backends-sync`** workflow (weekly, read-only) fails when the
-  vendored copy has drifted from flexstanr — a failing scheduled run is your cue
-  to re-sync.
+  upstream. The **`backends-sync`** workflow (weekly) discovers every vendored
+  standalone file, reads each one's source from its `# Source:` header, compares
+  against upstream, and — if anything has drifted — opens a pull request with the
+  refreshed copies. Review and merge that PR to re-sync.
 
 ## Dependencies: cmdstanr, `Remotes`, and the pak gotcha
 
