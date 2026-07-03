@@ -1,0 +1,121 @@
+name: backends-sync
+
+# Keep vendored standalone files in step with their upstream sources.
+#
+# usethis::use_standalone() is a one-shot copy: it does not track upstream, so a
+# vendored R/import-standalone-*.R file can silently fall behind the repo it came
+# from. This job is generic -- it discovers every vendored standalone file (by
+# the import-standalone-*.R name or the "# Standalone file" marker usethis
+# writes), reads each file's own source repo and path from its "# Source:"
+# header, fetches the canonical copy, and compares. If anything has drifted it
+# regenerates the affected file(s) and opens (or updates) a pull request with the
+# refreshed copies, rather than just failing red.
+#
+# It touches only the vendored file bodies, never DESCRIPTION. use_standalone()
+# also mutates DESCRIPTION (it strips version pins and can add imports); if an
+# upstream change needs a new dependency, add it when you review the PR (or
+# re-run `just update-standalones` locally).
+#
+# Sources may be private (flexstanr currently is). Reading a private source, and
+# opening a PR whose checks actually run, both need a token with the right scope:
+# set a FLEXSTANR_TOKEN secret (a PAT with read on the source repo and, for CI to
+# trigger on the PR, write on this one). Without it the job falls back to the
+# default GITHUB_TOKEN, which can read public sources and open a PR, but PRs it
+# opens do not themselves trigger the pull_request workflows.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Refresh vendored standalone files from their sources
+        env:
+          GH_TOKEN: ${{ secrets.FLEXSTANR_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Discover vendored standalone files: the import-standalone-*.R naming
+          # pattern, plus any file carrying the marker usethis writes at the top
+          # of every generated standalone (catches non-conforming names too).
+          mapfile -t files < <(
+            {
+              ls R/import-standalone-*.R 2>/dev/null || true
+              grep -rl '^# Standalone file: do not edit by hand' R 2>/dev/null || true
+            } | sort -u
+          )
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No vendored standalone files found."
+            exit 0
+          fi
+
+          for vendored in "${files[@]}"; do
+            echo "== $vendored =="
+
+            # Parse the source repo + path from the generated header line:
+            #   # Source: https://github.com/<owner>/<repo>/blob/<ref>/<path>
+            source_line=$(grep -m1 '^# Source: ' "$vendored" || true)
+            if [ -z "$source_line" ]; then
+              echo "  no '# Source:' header; skipping (not a use_standalone file)."
+              continue
+            fi
+            slug=${source_line#'# Source: https://github.com/'}
+            repo=$(printf '%s' "$slug" | cut -d/ -f1-2)
+            path=$(printf '%s' "$slug" | sed -E 's#^[^/]+/[^/]+/blob/[^/]+/##')
+            echo "  source: $repo :: $path"
+
+            if ! gh api "repos/$repo/contents/$path" --jq '.content' 2>/tmp/gh_err \
+                 | base64 -d > /tmp/canonical.R; then
+              echo "::error::Could not read $repo/$path. Make the source public, or"
+              echo "::error::set a FLEXSTANR_TOKEN secret with read access."
+              cat /tmp/gh_err || true
+              exit 1
+            fi
+
+            # The vendored file is [generated header] + the source file verbatim.
+            # The header ends just before the source's yaml open ('# ---'). Keep
+            # this file's header, swap in the fresh body, and compare.
+            start=$(grep -n '^# ---$' "$vendored" | head -1 | cut -d: -f1 || true)
+            if [ -z "${start:-}" ]; then
+              echo "::error::Could not locate the standalone yaml header in $vendored."
+              exit 1
+            fi
+            head -n "$((start - 1))" "$vendored" > /tmp/rebuilt.R
+            cat /tmp/canonical.R >> /tmp/rebuilt.R
+
+            if cmp -s /tmp/rebuilt.R "$vendored"; then
+              echo "  in sync."
+            else
+              echo "  drifted -- refreshing."
+              cp /tmp/rebuilt.R "$vendored"
+            fi
+          done
+
+      - name: Open or update a PR with any refreshed files
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.FLEXSTANR_TOKEN || secrets.GITHUB_TOKEN }}
+          branch: backends-sync/refresh
+          delete-branch: true
+          commit-message: Sync vendored standalone files with upstream
+          title: Sync vendored standalone files with upstream
+          body: |
+            One or more vendored `R/import-standalone-*.R` files had drifted from
+            their upstream sources; the `backends-sync` workflow refreshed them to
+            match. Each file's source repo and path come from its own `# Source:`
+            header.
+
+            This PR changes only the vendored file bodies. If an upstream change
+            introduced a new dependency, add it to `DESCRIPTION` before merging
+            (or re-run `just update-standalones` locally to pick up the
+            `use_standalone()` DESCRIPTION side-effects). Review the diff before
+            merging.
