@@ -78,6 +78,19 @@ install: renv-install
 remove:
 	R CMD REMOVE {{ PKG }}
 
+[doc('Re-vendor standalone files from their sources, reverting the DESCRIPTION churn use_standalone introduces (usethis#2198)')]
+update-standalones:
+	#!/usr/bin/env Rscript
+	if (!require(usethis)) stop("missing 'usethis'")
+	# use_standalone() also rewrites DESCRIPTION (it strips version pins and
+	# adds imports). That churn is unwanted here (usethis#2198), so snapshot
+	# DESCRIPTION and restore it afterwards -- the vendored
+	# R/import-standalone-*.R file is the only change we keep. Add one
+	# use_standalone() call per source below.
+	desc <- readLines("DESCRIPTION")
+	usethis::use_standalone("ACCIDDA/flexstanr", "backends")
+	writeLines(desc, "DESCRIPTION")
+
 [group('data')]
 [doc('Regenerate all package data (inputs + fitted artifacts; inputs need nc_measles)')]
 data: data-inputs data-fit
