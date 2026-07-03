@@ -93,6 +93,25 @@
 </ul></div>
 </div>
 <div class="section level2">
+<h2 id="the-stan-backend-is-vendored-from-flexstanr">The Stan backend is vendored from flexstanr<a class="anchor" aria-label="anchor" href="#the-stan-backend-is-vendored-from-flexstanr"></a></h2>
+<p><code>R/import-standalone-backends.R</code> is <strong>not edited here</strong>. It is a standalone file vendored from <a href="https://github.com/ACCIDDA/flexstanr" class="external-link">ACCIDDA/flexstanr</a> — the single source of truth for the portable backend layer shared across imuGAP, hestia, and SeverityEstimate (see #112). Its header says <em>“do not edit by hand.”</em></p>
+<ul><li>
+<p>To change backend behavior, edit <strong>flexstanr</strong>, then re-sync here. The preferred way is the justfile recipe:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">just</span> update-standalones</span></code></pre></div>
+<p>It re-runs <code>use_standalone</code> for each vendored source and restores <code>DESCRIPTION</code> afterwards. The manual equivalent is:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">usethis</span><span class="fu">::</span><span class="fu">use_standalone</span><span class="op">(</span><span class="st">"ACCIDDA/flexstanr"</span>, <span class="st">"backends"</span><span class="op">)</span></span></code></pre></div>
+<p>but note that call also rewrites <code>DESCRIPTION</code> — it strips version pins, e.g. <code>rstan (&gt;= 2.18.1)</code> → <code>rstan</code> (<a href="https://github.com/r-lib/usethis/issues/2198" class="external-link">usethis#2198</a>) — so you must <strong>revert that DESCRIPTION change</strong> by hand; the re-sync should only touch <code>R/import-standalone-backends.R</code>. The recipe does that revert for you.</p>
+</li>
+<li><p>The vendored header’s <code># repo: ACCIDDA/flexstanr</code> line parses as R, so <code>commented_code_linter</code> is disabled globally in <code>.lintr</code> (rather than excluding the file); the vendored file is otherwise linted like any other.</p></li>
+<li><p><code>use_standalone</code> is a one-shot copy, so the vendored file can fall behind upstream. The <strong><code>backends-sync</code></strong> workflow (weekly) discovers every vendored standalone file, reads each one’s source from its <code># Source:</code> header, compares against upstream, and — if anything has drifted — opens a pull request with the refreshed copies. Review and merge that PR to re-sync.</p></li>
+</ul></div>
+<div class="section level2">
+<h2 id="dependencies-cmdstanr-remotes-and-the-pak-gotcha">Dependencies: cmdstanr, <code>Remotes</code>, and the pak gotcha<a class="anchor" aria-label="anchor" href="#dependencies-cmdstanr-remotes-and-the-pak-gotcha"></a></h2>
+<p>cmdstanr is an optional, non-CRAN <code>Suggests</code>. It is resolved in CI via <strong><code>Remotes: stan-dev/cmdstanr</code></strong> in <code>DESCRIPTION</code>: pak (used by <code>r-lib/actions</code>) reads <code>Remotes</code> but <strong>not</strong> <code>Additional_repositories</code> (<a href="https://github.com/r-lib/pak/issues/424" class="external-link">r-lib/pak#424</a>). The <code>Additional_repositories</code> entry is kept only for base <code>install.packages</code> and <code>R CMD check --as-cran</code>.</p>
+<p><strong>Do not</strong> add the stan-dev r-universe as a repository (e.g. an <code>extra-repositories</code> in a workflow): pak would then prefer its <strong>dev</strong> builds of the whole Stan stack (StanHeaders/rstan), which fail to compile against CRAN’s RcppEigen and break every job. <code>Remotes</code> pins <em>only</em> cmdstanr and keeps the rest of the Stan stack on CRAN. (This one has bitten us — see #101.)</p>
+</div>
+<div class="section level2">
 <h2 id="what-happens-when-you-open-a-pr">What Happens When You Open a PR<a class="anchor" aria-label="anchor" href="#what-happens-when-you-open-a-pr"></a></h2>
 <p>Every pull request triggers two GitHub Actions workflows:</p>
 <table class="table"><colgroup><col width="43%"><col width="56%"></colgroup><thead><tr><th>Workflow</th>

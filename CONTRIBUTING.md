@@ -76,6 +76,65 @@ R CMD build . && R CMD check imuGAP_*.tar.gz
   top-level `.stan` files — prefer toggling includes over duplicating
   whole model files.
 
+## The Stan backend is vendored from flexstanr
+
+`R/import-standalone-backends.R` is **not edited here**. It is a
+standalone file vendored from
+[ACCIDDA/flexstanr](https://github.com/ACCIDDA/flexstanr) — the single
+source of truth for the portable backend layer shared across imuGAP,
+hestia, and SeverityEstimate (see \#112). Its header says *“do not edit
+by hand.”*
+
+- To change backend behavior, edit **flexstanr**, then re-sync here. The
+  preferred way is the justfile recipe:
+
+  ``` sh
+  just update-standalones
+  ```
+
+  It re-runs `use_standalone` for each vendored source and restores
+  `DESCRIPTION` afterwards. The manual equivalent is:
+
+  ``` r
+
+  usethis::use_standalone("ACCIDDA/flexstanr", "backends")
+  ```
+
+  but note that call also rewrites `DESCRIPTION` — it strips version
+  pins, e.g. `rstan (>= 2.18.1)` → `rstan`
+  ([usethis#2198](https://github.com/r-lib/usethis/issues/2198)) — so
+  you must **revert that DESCRIPTION change** by hand; the re-sync
+  should only touch `R/import-standalone-backends.R`. The recipe does
+  that revert for you.
+
+- The vendored header’s `# repo: ACCIDDA/flexstanr` line parses as R, so
+  `commented_code_linter` is disabled globally in `.lintr` (rather than
+  excluding the file); the vendored file is otherwise linted like any
+  other.
+
+- `use_standalone` is a one-shot copy, so the vendored file can fall
+  behind upstream. The **`backends-sync`** workflow (weekly) discovers
+  every vendored standalone file, reads each one’s source from its
+  `# Source:` header, compares against upstream, and — if anything has
+  drifted — opens a pull request with the refreshed copies. Review and
+  merge that PR to re-sync.
+
+## Dependencies: cmdstanr, `Remotes`, and the pak gotcha
+
+cmdstanr is an optional, non-CRAN `Suggests`. It is resolved in CI via
+**`Remotes: stan-dev/cmdstanr`** in `DESCRIPTION`: pak (used by
+`r-lib/actions`) reads `Remotes` but **not** `Additional_repositories`
+([r-lib/pak#424](https://github.com/r-lib/pak/issues/424)). The
+`Additional_repositories` entry is kept only for base `install.packages`
+and `R CMD check --as-cran`.
+
+**Do not** add the stan-dev r-universe as a repository (e.g. an
+`extra-repositories` in a workflow): pak would then prefer its **dev**
+builds of the whole Stan stack (StanHeaders/rstan), which fail to
+compile against CRAN’s RcppEigen and break every job. `Remotes` pins
+*only* cmdstanr and keeps the rest of the Stan stack on CRAN. (This one
+has bitten us — see \#101.)
+
 ## What Happens When You Open a PR
 
 Every pull request triggers two GitHub Actions workflows:
