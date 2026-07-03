@@ -5,9 +5,13 @@ linters: linters_with_defaults(
       styles = c("snake_case", "symbols"),
       regexes = "^imuGAP$"
     ),
+    # The vendored standalone header (R/import-standalone-backends.R) carries a
+    # `# repo: ACCIDDA/flexstanr` line that parses as R, so commented_code_linter
+    # false-positives on it. Disable it globally rather than excluding the file.
+    commented_code_linter = NULL,
     return_linter(
       return_style = "implicit"
     )
   )
 encoding: "UTF-8"
-exclusions: list("R/stanmodels.R", "R/import-standalone-backends.R", "inst/analysis", "inst/scripts")
+exclusions: list("R/stanmodels.R", "inst/analysis", "inst/scripts")
