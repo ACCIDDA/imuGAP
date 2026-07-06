@@ -38,7 +38,10 @@ NULL
 #' @format A `[data.table()]` with 28 rows and 2 columns:
 #'  - `loc_id`, a string, the location
 #'  - `parent_id`, a string, the location parents
-"locations_sim"
+#' @name locations_sim
+#' @docType data
+#' @keywords datasets
+NULL
 
 #' @title Example Population Data
 #'
@@ -51,7 +54,10 @@ NULL
 #'  - `age`, a number, the age of cohort at time of observation
 #'  - `dose`, a number, which dose the observation concerns
 #'  - `weight`, a number (0-1), fraction of the observation this row represents
-"populations_sim"
+#' @name populations_sim
+#' @docType data
+#' @keywords datasets
+NULL
 
 #' @title Example Observation Data
 #'
@@ -64,7 +70,10 @@ NULL
 #'  - `censored`, a number, 1 if `positive` is right censored and
 #'                `NA` if uncensored
 #'  - ... assorted other columns that are irrelevant to use as observations arg
-"observations_sim"
+#' @name observations_sim
+#' @docType data
+#' @keywords datasets
+NULL
 
 #' @title Example Stan Fit
 #'
@@ -93,7 +102,10 @@ NULL
 #' via `data-raw/fit_data.R`.
 #'
 #' @format A `stanfit` object as returned by [rstan::sampling()].
-"fit_sim"
+#' @name fit_sim
+#' @docType data
+#' @keywords datasets
+NULL
 
 #' @title Example Latent Parameter Values
 #'
@@ -114,7 +126,10 @@ NULL
 #'    multiplier applied to censored observations (0.95).
 #'  - `coverage`, a numeric vector of the true/background coverage for each row
 #'    of `target_sim`, computed from the latent parameters above.
-"latent_params_sim"
+#' @name latent_params_sim
+#' @docType data
+#' @keywords datasets
+NULL
 
 #' @title Example Prediction Target Populations
 #'
@@ -134,7 +149,10 @@ NULL
 #'  - `dose`, a number, the vaccine dose (1 or 2)
 #'  - `weight`, a number, the weight of the prediction component (always 1)
 #'  - `loc_c_id`, a number, the compiled location ID
-"target_sim"
+#' @name target_sim
+#' @docType data
+#' @keywords datasets
+NULL
 
 #' @title Example Coverage Predictions
 #'
@@ -145,4 +163,7 @@ NULL
 #' @format An object of class `imugap_predict` wrapping:
 #'  - `draws`, a 3D array of predicted draws with dimensions `[iteration, chain, variable]`
 #'  - `target`, a `[data.table()]` containing target population parameters matching the variables
-"predict_sim"
+#' @name predict_sim
+#' @docType data
+#' @keywords datasets
+NULL
