@@ -40,7 +40,9 @@ You can also open a blank issue if neither template fits.
 # Full rebuild + install (required after editing any .stan file)
 R CMD INSTALL --preclean .
 
-# Regenerate documentation from roxygen comments
+# Regenerate documentation from roxygen comments. This writes man/*.Rd,
+# NAMESPACE, and R/globals.R -- all roxygen2/roxyglobals output, none tracked in
+# git (#53, #115). CI regenerates them on every build, so never hand-edit them.
 Rscript -e 'devtools::document()'
 
 # Regenerate the fitted data artifacts (NOT tracked in git, like man/*.Rd).
@@ -65,7 +67,10 @@ R CMD build . && R CMD check imuGAP_*.tar.gz
   because they are generated or standalone scripts, respectively.
 - Do not hand-edit generated files: `R/stanmodels.R`,
   `src/stanExports_*.{cc,h}`, `configure`, and `configure.win` are all
-  produced by `rstantools::rstan_config()`.
+  produced by `rstantools::rstan_config()`; `NAMESPACE`, `R/globals.R`, and
+  `man/*.Rd` are produced by `roxygen2::roxygenise()` (via roxygen tags and
+  the roxyglobals roclet) and are untracked -- regenerate with
+  `devtools::document()`.
 - Stan model variants are composed via `#include` toggling in the
   top-level `.stan` files — prefer toggling includes over duplicating
   whole model files.
