@@ -11,7 +11,7 @@ clean:
 	rm -rf ..Rcheck/
 	rm -rf .Rproj.user/
 
-[doc('Build man pages using roxygen')]
+[doc('Regenerate roxygen output: man/*.Rd, NAMESPACE, and R/globals.R (all untracked)')]
 docs:
 	#!/usr/bin/env Rscript
 	if (require(roxygen2)) roxygen2::roxygenize() else stop("missing 'roxygen2'")
