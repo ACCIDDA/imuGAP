@@ -71,6 +71,14 @@ R CMD build . && R CMD check imuGAP_*.tar.gz
   `man/*.Rd` are produced by `roxygen2::roxygenise()` (via roxygen tags and
   the roxyglobals roclet) and are untracked -- regenerate with
   `devtools::document()`.
+- Because `NAMESPACE` is untracked but is needed to install/load the package,
+  CI regenerates it from source (`roxygen2::roxygenise(roclets = "namespace",
+  load_code = "source")`) in a "Bootstrap NAMESPACE" step before the package is
+  installed (#115). Source-mode roxygen cannot evaluate package objects, so
+  **document exported datasets with the `@name` / `@docType data` idiom, not the
+  bare-string form** (`#' "my_data"`): the string form makes roxygen `get()` the
+  object, which fails in source mode and breaks the bootstrap. See the data
+  blocks in `R/imuGAP-package.R` for the pattern.
 - Stan model variants are composed via `#include` toggling in the
   top-level `.stan` files — prefer toggling includes over duplicating
   whole model files.

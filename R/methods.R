@@ -201,6 +201,7 @@ predict.imugap_fit <- function(
 #' # Summarize with custom quantiles
 #' summary(predict_sim, probs = c(0.1, 0.5, 0.9))
 #'
+#' @method summary imugap_predict
 #' @export
 #' @importFrom stats quantile
 summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
