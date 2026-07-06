@@ -1,9 +1,14 @@
-# Part A of the package-data pipeline: simulate the *_sim inputs.
+# Part A of the package-data pipeline: simulate the *_sim inputs and the static
+# latent-parameter fixture.
 #
-# The resulting *_sim inputs are tracked in git. It also writes
-# data-raw/sim_internals.rds, consumed by Part B (data-raw/fit_data.R) to build
-# the fitted artifacts (fit_sim/target_sim/predict_sim/latent_params_sim) from
-# the tracked inputs without re-running this simulation. Run with `just data` (or
+# This step depends on the private nc_measles dataset (read below) and so cannot
+# run in CI; the resulting *_sim inputs and latent_params_sim are tracked in git.
+# It also writes data-raw/sim_internals.rds, consumed by Part B
+# (data-raw/fit_data.R) to build the genuinely fit-derived artifacts
+# (fit_sim/target_sim/predict_sim) without re-running this simulation.
+# latent_params_sim used to live in Part B, but its parameters and its
+# (analytic, fit-free) coverage are simulation properties, not fit outputs, so
+# it moved here as tracked static data (#105). Run with `just data` (or
 # `just data-inputs` for this step alone).
 
 # Load only the packages this script actually uses. If you attach e.g. the
@@ -356,3 +361,59 @@ sim_internals <- list(
   cnty_ids = cnty_ids
 )
 saveRDS(sim_internals, "data-raw/sim_internals.rds")
+
+# Latent parameters + true coverage (tracked static data, #105).
+#
+# latent_params_sim bundles the simulation's latent parameters together with
+# `coverage`: the true/background coverage for each row of the prediction target
+# grid. Neither depends on the Stan fit -- the parameters are the internals
+# above, and coverage is derived analytically from them -- so now that
+# create_target() builds the target grid without a fit (#110), this is computed
+# here as tracked static data rather than regenerated on every build. Part B
+# (data-raw/fit_data.R) rebuilds target_sim from the same create_target() grid
+# spec and asserts the row counts still line up.
+target_grid <- create_target(
+  location = unique(locations_sim$loc_id),
+  age = 1:18,
+  cohort = max(populations_sim$cohort) - 18,
+  dose = c(1, 2),
+  mode = "snapshot"
+)
+target_grid <- data.table::as.data.table(target_grid)
+
+coverage <- numeric(nrow(target_grid))
+for (i in seq_len(nrow(target_grid))) {
+  loc <- target_grid$loc_id[i]
+  cohort_val <- target_grid$cohort[i]
+  age_val <- target_grid$age[i]
+  dose_val <- target_grid$dose[i]
+
+  if (loc == "State") {
+    offset <- 0
+  } else if (loc %in% sim_internals$county_names) {
+    c_idx <- match(loc, sim_internals$county_names)
+    offset <- sim_internals$off_cnty[c_idx]
+  } else {
+    s_idx <- match(loc, sim_internals$school_names)
+    offset <- sim_internals$off_sch[s_idx] +
+      sim_internals$off_cnty[sim_internals$cnty_ids[s_idx]]
+  }
+
+  coverage[i] <- stats::plogis(
+    stats::qlogis(sim_internals$phi_st[cohort_val]) + offset
+  ) *
+    sim_internals$uptake[age_val, dose_val]
+}
+
+latent_params_sim <- list(
+  phi_state = sim_internals$phi_st,
+  lambda = sim_internals$lambda,
+  sigma_sch = sim_internals$sigma_sch,
+  sigma_cnty = sim_internals$sigma_cnty,
+  off_sch = sim_internals$off_sch,
+  off_cnty = sim_internals$off_cnty,
+  censor_reduction = sim_internals$censor_reduction,
+  uptake = sim_internals$uptake,
+  coverage = coverage
+)
+usethis::use_data(latent_params_sim, overwrite = TRUE)
