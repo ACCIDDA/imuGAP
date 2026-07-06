@@ -1,12 +1,12 @@
-# Part B of the package-data pipeline: build the fitted-data artifacts.
+# Part B of the package-data pipeline: build the fit-derived artifacts.
 #
-# Produces fit_sim, target_sim, latent_params_sim, and predict_sim from the
-# tracked *_sim inputs plus the simulation internals saved by Part A
-# (data-raw/DATASET.R -> data-raw/sim_internals.rds). This step needs a Stan
-# toolchain (it compiles and fits the model) but NOT the private nc_measles
-# dataset, so it runs in CI as well as locally.
+# Produces fit_sim, target_sim, and predict_sim from the tracked *_sim inputs.
+# This step needs a Stan toolchain (it compiles and fits the model) but NOT the
+# private nc_measles dataset, so it runs in CI as well as locally.
+# (latent_params_sim is fit-free and now built as tracked static data by Part A,
+# data-raw/DATASET.R -- see #105.)
 #
-# These four artifacts are NOT tracked in git (see .gitignore); they are
+# These three artifacts are NOT tracked in git (see .gitignore); they are
 # regenerated on build. Run locally with `just data` (full pipeline) or
 # `just data-fit` (this step alone), or directly:
 #
@@ -19,8 +19,6 @@
 # stale binary coupled to an old toolchain.
 
 pkgload::load_all(quiet = TRUE)
-
-internals <- readRDS("data-raw/sim_internals.rds")
 
 # --- Fit -------------------------------------------------------------------
 # Run the chains in parallel where it is safe to: the draws are seed-determined,
@@ -66,46 +64,10 @@ target_sim <- canonicalize_target(
 )
 save(target_sim, file = "data/target_sim.rda")
 
-# --- Latent parameters + true coverage for target_sim ----------------------
-# Background ("true") coverage for each target_sim row, reconstructed from the
-# simulation internals (offsets, coverage curves) saved by Part A.
-target_sim_dt <- data.table::as.data.table(target_sim)
-p_true <- numeric(nrow(target_sim_dt))
-for (i in seq_len(nrow(target_sim_dt))) {
-  loc <- target_sim_dt$loc_id[i]
-  cohort_val <- target_sim_dt$cohort[i]
-  age_val <- target_sim_dt$age[i]
-  dose_val <- target_sim_dt$dose[i]
-
-  if (loc == "State") {
-    offset <- 0
-  } else if (loc %in% internals$county_names) {
-    c_idx <- match(loc, internals$county_names)
-    offset <- internals$off_cnty[c_idx]
-  } else {
-    s_idx <- match(loc, internals$school_names)
-    offset <- internals$off_sch[s_idx] +
-      internals$off_cnty[internals$cnty_ids[s_idx]]
-  }
-
-  p_true[i] <- stats::plogis(
-    stats::qlogis(internals$phi_st[cohort_val]) + offset
-  ) *
-    internals$uptake[age_val, dose_val]
-}
-
-latent_params_sim <- list(
-  phi_state = internals$phi_st,
-  lambda = internals$lambda,
-  sigma_sch = internals$sigma_sch,
-  sigma_cnty = internals$sigma_cnty,
-  off_sch = internals$off_sch,
-  off_cnty = internals$off_cnty,
-  censor_reduction = internals$censor_reduction,
-  uptake = internals$uptake,
-  coverage = p_true
-)
-save(latent_params_sim, file = "data/latent_params_sim.rda")
+# latent_params_sim$coverage is the true coverage for each target_sim row,
+# built in Part A over the same create_target() grid spec (#105). The two must
+# stay row-aligned; fail loudly here if the grid specs have drifted apart.
+stopifnot(length(latent_params_sim$coverage) == nrow(target_sim))
 
 # --- Prediction ------------------------------------------------------------
 # Keep a small posterior sub-sample (100 draws) so the bundled fixture stays

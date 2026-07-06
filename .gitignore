@@ -25,12 +25,16 @@ man/*.Rd
 R/globals.R
 .bin/
 
-# Fitted-data artifacts regenerated on build by data-raw/fit_data.R (#64). The
-# *_sim inputs (locations/observations/populations_sim) stay tracked; these
-# four are derived from them and are large/version-fragile, so they are not.
+# Fit-derived artifacts regenerated on build by data-raw/fit_data.R (#64). The
+# *_sim inputs (locations/observations/populations_sim) and latent_params_sim
+# (#105) stay tracked; these three are fit-derived and large/version-fragile, so
+# they are not.
 data/fit_sim.rda
 data/target_sim.rda
 data/predict_sim.rda
+<<<<<<< HEAD
 data/latent_params_sim.rda
 /doc/
 /Meta/
+=======
+>>>>>>> ddd225a (Move latent_params_sim into tracked static data (#105))
