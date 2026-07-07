@@ -18,7 +18,6 @@ docs/
 # bootstraps a missing NAMESPACE). man/figures/ stays tracked because the
 # package logo and other curated assets aren't roxygen output.
 man/*.Rd
-NAMESPACE
 R/globals.R
 .bin/
 
