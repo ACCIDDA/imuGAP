@@ -5,8 +5,8 @@
   // Equivalent 1:n_cohort, for time trends
   vector[n_cohort] cohort_shift_counter = linspaced_vector(n_cohort, 1, n_cohort);
 
-  int<lower=1> phi_lookup[n_weights];
-  int<lower=1> cdf_lookup[n_weights];
+  array[n_weights] int<lower=1> phi_lookup;
+  array[n_weights] int<lower=1> cdf_lookup;
   // because integer arrays don't support broadcasting ...
   // unroll phi and cdf objects to support vectorization
   for (weight_i in 1:n_weights) {
