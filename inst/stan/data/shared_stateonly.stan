@@ -11,17 +11,17 @@
   // DATA DEFINITIONS
 
   int<lower=1> n_obs;
-  int<lower=0> y_obs[n_obs];
-  int<lower=0> y_smp[n_obs];
+  array[n_obs] int<lower=0> y_obs;
+  array[n_obs] int<lower=0> y_smp;
   // have school id ranges for observations & for doses; school id 0 == statewide?
-  // int obs_sch_id_bounds[n_obs];
+  // array[n_obs] int obs_sch_id_bounds;
 
   int<lower=n_obs> n_weights;
   array[n_obs] int<lower=1, upper=n_weights> obs_to_weights_bounds; // each entry is the start of the range
 
-  int<lower=1,upper=n_cohort> weights_cohort[n_weights];
-  int<lower=1,upper=n_yr> weights_life_year[n_weights];
-  int<lower=1,upper=n_doses> weights_dose[n_weights];
+  array[n_weights] int<lower=1,upper=n_cohort> weights_cohort;
+  array[n_weights] int<lower=1,upper=n_yr> weights_life_year;
+  array[n_weights] int<lower=1,upper=n_doses> weights_dose;
 
   vector<lower=0,upper=1>[n_weights] weights; // contribution of this (school, cohort, year, dose) to an observation
 
