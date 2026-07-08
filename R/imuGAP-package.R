@@ -167,3 +167,5 @@ NULL
 #' @docType data
 #' @keywords datasets
 NULL
+
+.datatable.aware <- TRUE
