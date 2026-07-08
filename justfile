@@ -119,3 +119,7 @@ build: bootstrap-namespace
 [doc('Check the built tar.gz artifact')]
 check: build
 	R CMD check {{ TARBALL }} --no-manual --no-tests
+
+[doc('Check the built tar.gz artifact using CRAN settings')]
+check-cran: build
+	R CMD check {{ TARBALL }} --as-cran
