@@ -6,7 +6,10 @@
 # mocking requireNamespace, so it runs regardless of the environment.
 
 test_that("assert_backend_vocab rejects the other backend's vocabulary", {
-  expect_error(assert_backend_vocab("parallel_chains", "rstan"), "parallel_chains")
+  expect_error(
+    assert_backend_vocab("parallel_chains", "rstan"),
+    "parallel_chains"
+  )
   expect_error(assert_backend_vocab("iter_warmup", "rstan"), "iter_warmup")
   expect_error(assert_backend_vocab("cores", "cmdstanr"), "cores")
   expect_error(assert_backend_vocab("control", "cmdstanr"), "control")
@@ -14,7 +17,10 @@ test_that("assert_backend_vocab rejects the other backend's vocabulary", {
 })
 
 test_that("assert_backend_vocab passes clean argument sets and returns them", {
-  expect_identical(assert_backend_vocab(c("iter", "cores"), "rstan"), c("iter", "cores"))
+  expect_identical(
+    assert_backend_vocab(c("iter", "cores"), "rstan"),
+    c("iter", "cores")
+  )
   expect_silent(
     assert_backend_vocab(c("iter_warmup", "parallel_chains"), "cmdstanr")
   )
@@ -32,7 +38,8 @@ test_that("stan_options() defaults to and records the rstan backend", {
 
 test_that("rstan backend rejects cmdstanr vocabulary via stan_options", {
   expect_error(
-    stan_options(backend = "rstan", parallel_chains = 4), "parallel_chains"
+    stan_options(backend = "rstan", parallel_chains = 4),
+    "parallel_chains"
   )
 })
 
@@ -75,7 +82,10 @@ test_that("fit_model errors on an unknown backend", {
   expect_error(
     fit_model(
       "DUMMYMODEL",
-      list(), NULL, list(backend = "nonsense"), NULL
+      list(),
+      NULL,
+      list(backend = "nonsense"),
+      NULL
     ),
     "should be one of"
   )
@@ -111,7 +121,10 @@ test_that("fit_model dispatches to the cmdstanr backend", {
     {
       res <- fit_model(
         "DUMMYMODEL",
-        list(), NULL, stan_options(backend = "cmdstanr"), NULL
+        list(),
+        NULL,
+        stan_options(backend = "cmdstanr"),
+        NULL
       )
       expect_identical(res, "cmdstanr_fit")
     },
@@ -165,7 +178,10 @@ test_that("check_threaded reads threads_per_chain for the cmdstanr backend", {
     {
       expect_false(check_threaded(stan_options(backend = "cmdstanr")))
       expect_false(
-        check_threaded(stan_options(backend = "cmdstanr", threads_per_chain = 1))
+        check_threaded(stan_options(
+          backend = "cmdstanr",
+          threads_per_chain = 1
+        ))
       )
       opts <- stan_options(backend = "cmdstanr", threads_per_chain = 4)
       # threads_per_chain is validated/coerced like the other count arguments.
@@ -214,7 +230,8 @@ test_that("backend_has_draws flags a degenerate rstan fit, passes mocks through"
 test_that("fit_backend identifies the backend and rejects unknown fits", {
   expect_identical(fit_backend(structure(list(), class = "stanfit")), "rstan")
   expect_identical(
-    fit_backend(structure(list(), class = "CmdStanMCMC")), "cmdstanr"
+    fit_backend(structure(list(), class = "CmdStanMCMC")),
+    "cmdstanr"
   )
   expect_error(fit_backend(list()), "unrecognized fit object")
 })

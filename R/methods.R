@@ -89,7 +89,9 @@ predict.imugap_fit <- function(
       warning(
         sprintf(
           "`posterior_size` (%d) is not a multiple of the %d chains; using %d draws instead.",
-          posterior_size, n_chains, rounded
+          posterior_size,
+          n_chains,
+          rounded
         ),
         call. = FALSE
       )
@@ -99,7 +101,8 @@ predict.imugap_fit <- function(
       stop(
         sprintf(
           "`posterior_size` (%d) exceeds the %d posterior draws in the fit.",
-          posterior_size, n_avail
+          posterior_size,
+          n_avail
         ),
         call. = FALSE
       )
@@ -164,7 +167,10 @@ predict.imugap_fit <- function(
   # Predicted coverage via the backend's generated-quantities run, reshaped to
   # iterations x chains x targets so the per-chain structure is preserved.
   p_obs_mat <- backend_generate_quantities(
-    raw_fit, dat_stan, draws_mat, "p_obs"
+    raw_fit,
+    dat_stan,
+    draws_mat,
+    "p_obs"
   )
   p_obs_draws <- array(p_obs_mat, dim = c(n_keep, n_chains, ncol(p_obs_mat)))
 
