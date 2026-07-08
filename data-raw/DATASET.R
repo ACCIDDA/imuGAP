@@ -11,7 +11,14 @@
 # fitted model's `@.MISC` environment and baked into data/fit_sim.rda, tripping
 # R CMD check's "namespace references in data files".
 library(data.table)
-devtools::load_all()
+
+# use pkgload::load_code() to simulate having the contemporary version of imuGAP
+# available for data generation
+if (requireNamespace("pkgload", quietly = TRUE)) {
+  pkgload::load_code()
+} else {
+  stop("pkgload not found")
+}
 
 library(dplyr)
 
@@ -303,7 +310,7 @@ observations_sim <- setDT(observations_sim)
 obs_for_pop <- copy(observations_sim)
 obs_for_pop[, cohort := cohort_min]
 
-populations_sim <- create_observation_populations(
+populations_sim <- imuGAP:::create_observation_populations(
   obs_for_pop,
   mode = "snapshot"
 )
