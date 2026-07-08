@@ -278,3 +278,31 @@ test_that("predict() rejects a cmdstanr (non-stanfit) fit", {
   )
   expect_error(predict(fake_fit, target = data.frame()), "rstan backend")
 })
+
+test_that("predict S3 methods validate input classes and arguments", {
+  data("predict_sim", package = "imuGAP")
+
+  # 1. predict.imugap_fit class check
+  expect_error(
+    predict.imugap_fit("not_a_fit", target = data.frame()),
+    "fit must be an object of class 'imugap_fit'"
+  )
+
+  # 2. subset.imugap_predict class check
+  expect_error(
+    subset.imugap_predict("not_a_predict", dose == 2),
+    "x must be of class 'imugap_predict'"
+  )
+
+  # 3. subset.imugap_predict logical expression check
+  expect_error(
+    subset(predict_sim, subset = 123),
+    "'subset' must be logical"
+  )
+
+  # 4. as.data.frame.imugap_predict class check
+  expect_error(
+    as.data.frame.imugap_predict("not_a_predict"),
+    "x must be of class 'imugap_predict'"
+  )
+})

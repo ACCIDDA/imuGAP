@@ -122,26 +122,13 @@ predict.imugap_fit <- function(
   }
 
   target <- canonicalize_target(target, fit)
-  if (!"obs_id" %in% names(target)) {
-    target[, obs_id := obs_c_id]
-  }
-
-  # Generate dummy observations
-  obs <- canonicalize_observations(
-    target[, .(
-      obs_id = obs_c_id,
-      positive = 0L,
-      sample_n = 1L,
-      censored = NA_real_
-    )]
-  )
 
   # Update the data object for prediction mode
   dat_stan <- fit$data
-  dat_stan$n_uncensored_obs <- obs[is.na(censored), .N]
-  dat_stan$n_obs <- nrow(obs)
-  dat_stan$y_obs <- obs$positive
-  dat_stan$y_smp <- obs$sample_n
+  dat_stan$n_uncensored_obs <- nrow(target)
+  dat_stan$n_obs <- nrow(target)
+  dat_stan$y_obs <- rep(0L, nrow(target))
+  dat_stan$y_smp <- rep(1L, nrow(target))
   dat_stan$n_weights <- nrow(target)
   dat_stan$obs_to_weights_bounds <- seq_len(nrow(target))
   dat_stan$weights_school <- target$loc_c_id

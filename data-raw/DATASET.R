@@ -14,7 +14,6 @@ library(data.table)
 devtools::load_all()
 
 library(dplyr)
-library(splines)
 
 ################################################################################
 # A.1 Setup Structural & Latent Features #######################################
@@ -126,16 +125,16 @@ stopifnot(
   "School names length != school count" = length(school_names) == tot_sch
 )
 
+sigma_sch <- 0.8
+sigma_cnty <- 0.4
+
+other_vax_reduction <- 0.95
+
 ################################################################################
 # A.2 Sample Latent Features ###################################################
 ################################################################################
 
 set.seed(93254)
-
-sigma_sch <- 0.8
-sigma_cnty <- 0.4
-
-other_vax_reduction <- 0.95
 
 cnty_offset <- rnorm(length(county_names), 0, sigma_cnty)
 names(cnty_offset) <- county_names

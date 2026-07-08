@@ -53,6 +53,11 @@ test-fast: bootstrap-namespace
 	library(devtools)
 	devtools::test(stop_on_failure=TRUE)
 
+[doc('Check test coverage using covr')]
+coverage: bootstrap-namespace
+	#!/usr/bin/env Rscript
+	if (require(covr)) print(covr::package_coverage()) else stop("missing 'covr'")
+
 [group('renv')]
 [doc('Install package dependencies using renv')]
 renv-install:
