@@ -314,80 +314,67 @@ estimation will work, and take on the unit meaning you used for input.</p>
 <span class="r-in"><span><span class="co"># --- canonicalize_observations ---</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"observations_sim"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">observations_sim</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                    loc_id parent_id  year enc_unit_id unit_id positive sample_n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                    &lt;char&gt;    &lt;char&gt; &lt;num&gt;       &lt;num&gt;   &lt;num&gt;    &lt;num&gt;    &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1: Chickadee Elementary   Scruggs  2001           2       5       16       19</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2: Chickadee Elementary   Scruggs  2002           2       5       14       20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3: Chickadee Elementary   Scruggs  2003           2       5       14       16</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   4: Chickadee Elementary   Scruggs  2004           2       5       10       13</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   5: Chickadee Elementary   Scruggs  2005           2       5        8       13</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                                           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 694:                State      &lt;NA&gt;  2021          NA       1      204      230</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 695:                State      &lt;NA&gt;  2022          NA       1      198      215</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 696:                State      &lt;NA&gt;  2023          NA       1      305      340</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 697:                State      &lt;NA&gt;  2024          NA       1      327      345</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 698:                State      &lt;NA&gt;  2025          NA       1      284      310</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      ly_min ly_max  dose weight vaxview_type    age censored cohort_min</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;num&gt;  &lt;num&gt; &lt;num&gt;  &lt;num&gt;       &lt;char&gt; &lt;char&gt;    &lt;num&gt;      &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1:      5      5     2    1.0         &lt;NA&gt;   &lt;NA&gt;       NA          4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2:      5      5     2    1.0         &lt;NA&gt;   &lt;NA&gt;       NA          5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3:      5      5     2    1.0         &lt;NA&gt;   &lt;NA&gt;       NA          6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   4:      5      5     2    1.0         &lt;NA&gt;   &lt;NA&gt;       NA          7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   5:      5      5     2    1.0         &lt;NA&gt;   &lt;NA&gt;       NA          8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 694:     14     18     2    0.2         teen   &lt;NA&gt;       NA         11</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 695:     14     18     2    0.2         teen   &lt;NA&gt;       NA         12</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 696:     14     18     2    0.2         teen   &lt;NA&gt;       NA         13</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 697:     14     18     2    0.2         teen   &lt;NA&gt;       NA         14</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 698:     14     18     2    0.2         teen   &lt;NA&gt;       NA         15</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      cohort_max obs_id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;num&gt;  &lt;int&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1:          4      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2:          5      2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3:          6      3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   4:          7      4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   5:          8      5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ---                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 694:         15    694</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 695:         16    695</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 696:         17    696</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 697:         18    697</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 698:         19    698</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       year parent_id               loc_id positive sample_n age_min  dose</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      &lt;num&gt;    &lt;char&gt;               &lt;char&gt;    &lt;num&gt;    &lt;num&gt;   &lt;num&gt; &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1:  2001   Scruggs Chickadee Elementary       42       52       5     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2:  2002   Scruggs Chickadee Elementary       41       51       5     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3:  2003   Scruggs Chickadee Elementary       46       50       5     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4:  2004   Scruggs Chickadee Elementary       41       48       5     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5:  2005   Scruggs Chickadee Elementary       44       53       5     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                                     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 694:  2021      &lt;NA&gt;                State      254      281      14     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 695:  2022      &lt;NA&gt;                State      252      274      14     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 696:  2023      &lt;NA&gt;                State      230      251      14     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 697:  2024      &lt;NA&gt;                State      272      296      14     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 698:  2025      &lt;NA&gt;                State      210      230      14     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      censored age_max cohort_min obs_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;num&gt;   &lt;int&gt;      &lt;num&gt;  &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1:       NA      NA          4      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2:       NA      NA          5      2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3:       NA      NA          6      3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4:       NA      NA          7      4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5:       NA      NA          8      5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 694:       NA      19         11    694</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 695:       NA      19         12    695</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 696:       NA      19         13    696</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 697:       NA      19         14    697</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 698:       NA      19         15    698</span>
 <span class="r-in"><span><span class="fu">canonicalize_observations</span><span class="op">(</span><span class="va">observations_sim</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;censored, obs_id&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      obs_c_id positive sample_n censored obs_id</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;int&gt;    &lt;int&gt;    &lt;int&gt;    &lt;num&gt;  &lt;int&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1:        1       16       19       NA      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2:        2       14       20       NA      2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3:        3       14       16       NA      3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   4:        4       10       13       NA      4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   5:        5        8       13       NA      5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1:        1       42       52       NA      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2:        2       41       51       NA      2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3:        3       46       50       NA      3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4:        4       41       48       NA      4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5:        5       44       53       NA      5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 694:      694      340      385        1    656</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 695:      695      268      292        1    657</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 696:      696      289      325        1    658</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 697:      697      330      374        1    659</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 698:      698      250      301        1    660</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 694:      694      242      276        1    656</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 695:      695      247      297        1    657</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 696:      696      220      276        1    658</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 697:      697      267      328        1    659</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 698:      698      315      374        1    660</span>
 <span class="r-in"><span><span class="co"># --- canonicalize_populations ---</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"populations_sim"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"locations_sim"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"observations_sim"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">populations_sim</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      obs_id               loc_id cohort   age  dose weight</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;num&gt;               &lt;char&gt;  &lt;num&gt; &lt;num&gt; &lt;num&gt;  &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1:      1 Chickadee Elementary      4     5     2    1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2:      2 Chickadee Elementary      5     5     2    1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3:      3 Chickadee Elementary      6     5     2    1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   4:      4 Chickadee Elementary      7     5     2    1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   5:      5 Chickadee Elementary      8     5     2    1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;int&gt;               &lt;char&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;  &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1:      1 Chickadee Elementary      4     5     2      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2:      2 Chickadee Elementary      5     5     2      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3:      3 Chickadee Elementary      6     5     2      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4:      4 Chickadee Elementary      7     5     2      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5:      5 Chickadee Elementary      8     5     2      1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 746:    698                State     19    14     2    0.2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 747:    698                State     18    15     2    0.2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 748:    698                State     17    16     2    0.2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 749:    698                State     16    17     2    0.2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 750:    698                State     15    18     2    0.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 746:    656                State     26     3     1      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 747:    657                State     27     3     1      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 748:    658                State     28     3     1      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 749:    659                State     29     3     1      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 750:    660                State     30     3     1      1</span>
 <span class="r-in"><span><span class="fu">canonicalize_populations</span><span class="op">(</span><span class="va">populations_sim</span>, <span class="va">observations_sim</span>, <span class="va">locations_sim</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;obs_c_id, loc_c_id, cohort, age, dose&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      obs_id               loc_id cohort   age  dose weight obs_c_id loc_c_id</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;num&gt;               &lt;char&gt;  &lt;int&gt; &lt;int&gt; &lt;num&gt;  &lt;num&gt;    &lt;int&gt;    &lt;int&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;int&gt;               &lt;char&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;  &lt;num&gt;    &lt;int&gt;    &lt;int&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1:      1 Chickadee Elementary      4     5     2      1        1        8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   2:      2 Chickadee Elementary      5     5     2      1        2        8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3:      3 Chickadee Elementary      6     5     2      1        3        8</span>

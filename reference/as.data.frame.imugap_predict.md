@@ -44,20 +44,12 @@ data("predict_sim", package = "imuGAP")
 # Convert predictions to a data.frame/data.table
 df <- as.data.frame(predict_sim)
 head(df)
-#>    iteration chain obs_c_id loc_id   age cohort  dose weight loc_c_id obs_id
-#>        <int> <int>    <int> <char> <int>  <num> <num>  <num>    <int>  <int>
-#> 1:         1     1        1  State     1     30     1      1        1      1
-#> 2:         2     1        1  State     1     30     1      1        1      1
-#> 3:         3     1        1  State     1     30     1      1        1      1
-#> 4:         4     1        1  State     1     30     1      1        1      1
-#> 5:         5     1        1  State     1     30     1      1        1      1
-#> 6:         6     1        1  State     1     30     1      1        1      1
-#>    coverage
-#>       <num>
-#> 1:        0
-#> 2:        0
-#> 3:        0
-#> 4:        0
-#> 5:        0
-#> 6:        0
+#>    iteration chain obs_c_id loc_id   age cohort  dose weight loc_c_id coverage
+#>        <int> <int>    <int> <char> <int>  <num> <num>  <num>    <int>    <num>
+#> 1:         1     1        1  State     1     30     1      1        1        0
+#> 2:         2     1        1  State     1     30     1      1        1        0
+#> 3:         3     1        1  State     1     30     1      1        1        0
+#> 4:         4     1        1  State     1     30     1      1        1        0
+#> 5:         5     1        1  State     1     30     1      1        1        0
+#> 6:         6     1        1  State     1     30     1      1        1        0
 ```

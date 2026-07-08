@@ -301,80 +301,67 @@ canonicalize_locations(weird_locations)
 # --- canonicalize_observations ---
 data("observations_sim")
 observations_sim
-#>                    loc_id parent_id  year enc_unit_id unit_id positive sample_n
-#>                    <char>    <char> <num>       <num>   <num>    <num>    <num>
-#>   1: Chickadee Elementary   Scruggs  2001           2       5       16       19
-#>   2: Chickadee Elementary   Scruggs  2002           2       5       14       20
-#>   3: Chickadee Elementary   Scruggs  2003           2       5       14       16
-#>   4: Chickadee Elementary   Scruggs  2004           2       5       10       13
-#>   5: Chickadee Elementary   Scruggs  2005           2       5        8       13
-#>  ---                                                                           
-#> 694:                State      <NA>  2021          NA       1      204      230
-#> 695:                State      <NA>  2022          NA       1      198      215
-#> 696:                State      <NA>  2023          NA       1      305      340
-#> 697:                State      <NA>  2024          NA       1      327      345
-#> 698:                State      <NA>  2025          NA       1      284      310
-#>      ly_min ly_max  dose weight vaxview_type    age censored cohort_min
-#>       <num>  <num> <num>  <num>       <char> <char>    <num>      <num>
-#>   1:      5      5     2    1.0         <NA>   <NA>       NA          4
-#>   2:      5      5     2    1.0         <NA>   <NA>       NA          5
-#>   3:      5      5     2    1.0         <NA>   <NA>       NA          6
-#>   4:      5      5     2    1.0         <NA>   <NA>       NA          7
-#>   5:      5      5     2    1.0         <NA>   <NA>       NA          8
-#>  ---                                                                   
-#> 694:     14     18     2    0.2         teen   <NA>       NA         11
-#> 695:     14     18     2    0.2         teen   <NA>       NA         12
-#> 696:     14     18     2    0.2         teen   <NA>       NA         13
-#> 697:     14     18     2    0.2         teen   <NA>       NA         14
-#> 698:     14     18     2    0.2         teen   <NA>       NA         15
-#>      cohort_max obs_id
-#>           <num>  <int>
-#>   1:          4      1
-#>   2:          5      2
-#>   3:          6      3
-#>   4:          7      4
-#>   5:          8      5
-#>  ---                  
-#> 694:         15    694
-#> 695:         16    695
-#> 696:         17    696
-#> 697:         18    697
-#> 698:         19    698
+#>       year parent_id               loc_id positive sample_n age_min  dose
+#>      <num>    <char>               <char>    <num>    <num>   <num> <int>
+#>   1:  2001   Scruggs Chickadee Elementary       42       52       5     2
+#>   2:  2002   Scruggs Chickadee Elementary       41       51       5     2
+#>   3:  2003   Scruggs Chickadee Elementary       46       50       5     2
+#>   4:  2004   Scruggs Chickadee Elementary       41       48       5     2
+#>   5:  2005   Scruggs Chickadee Elementary       44       53       5     2
+#>  ---                                                                     
+#> 694:  2021      <NA>                State      254      281      14     2
+#> 695:  2022      <NA>                State      252      274      14     2
+#> 696:  2023      <NA>                State      230      251      14     2
+#> 697:  2024      <NA>                State      272      296      14     2
+#> 698:  2025      <NA>                State      210      230      14     2
+#>      censored age_max cohort_min obs_id
+#>         <num>   <int>      <num>  <int>
+#>   1:       NA      NA          4      1
+#>   2:       NA      NA          5      2
+#>   3:       NA      NA          6      3
+#>   4:       NA      NA          7      4
+#>   5:       NA      NA          8      5
+#>  ---                                   
+#> 694:       NA      19         11    694
+#> 695:       NA      19         12    695
+#> 696:       NA      19         13    696
+#> 697:       NA      19         14    697
+#> 698:       NA      19         15    698
 canonicalize_observations(observations_sim)
 #> Key: <censored, obs_id>
 #>      obs_c_id positive sample_n censored obs_id
 #>         <int>    <int>    <int>    <num>  <int>
-#>   1:        1       16       19       NA      1
-#>   2:        2       14       20       NA      2
-#>   3:        3       14       16       NA      3
-#>   4:        4       10       13       NA      4
-#>   5:        5        8       13       NA      5
+#>   1:        1       42       52       NA      1
+#>   2:        2       41       51       NA      2
+#>   3:        3       46       50       NA      3
+#>   4:        4       41       48       NA      4
+#>   5:        5       44       53       NA      5
 #>  ---                                           
-#> 694:      694      340      385        1    656
-#> 695:      695      268      292        1    657
-#> 696:      696      289      325        1    658
-#> 697:      697      330      374        1    659
-#> 698:      698      250      301        1    660
+#> 694:      694      242      276        1    656
+#> 695:      695      247      297        1    657
+#> 696:      696      220      276        1    658
+#> 697:      697      267      328        1    659
+#> 698:      698      315      374        1    660
 # --- canonicalize_populations ---
 data("populations_sim"); data("locations_sim"); data("observations_sim")
 populations_sim
 #>      obs_id               loc_id cohort   age  dose weight
-#>       <num>               <char>  <num> <num> <num>  <num>
-#>   1:      1 Chickadee Elementary      4     5     2    1.0
-#>   2:      2 Chickadee Elementary      5     5     2    1.0
-#>   3:      3 Chickadee Elementary      6     5     2    1.0
-#>   4:      4 Chickadee Elementary      7     5     2    1.0
-#>   5:      5 Chickadee Elementary      8     5     2    1.0
+#>       <int>               <char>  <int> <int> <int>  <num>
+#>   1:      1 Chickadee Elementary      4     5     2      1
+#>   2:      2 Chickadee Elementary      5     5     2      1
+#>   3:      3 Chickadee Elementary      6     5     2      1
+#>   4:      4 Chickadee Elementary      7     5     2      1
+#>   5:      5 Chickadee Elementary      8     5     2      1
 #>  ---                                                      
-#> 746:    698                State     19    14     2    0.2
-#> 747:    698                State     18    15     2    0.2
-#> 748:    698                State     17    16     2    0.2
-#> 749:    698                State     16    17     2    0.2
-#> 750:    698                State     15    18     2    0.2
+#> 746:    656                State     26     3     1      1
+#> 747:    657                State     27     3     1      1
+#> 748:    658                State     28     3     1      1
+#> 749:    659                State     29     3     1      1
+#> 750:    660                State     30     3     1      1
 canonicalize_populations(populations_sim, observations_sim, locations_sim)
 #> Key: <obs_c_id, loc_c_id, cohort, age, dose>
 #>      obs_id               loc_id cohort   age  dose weight obs_c_id loc_c_id
-#>       <num>               <char>  <int> <int> <num>  <num>    <int>    <int>
+#>       <int>               <char>  <int> <int> <int>  <num>    <int>    <int>
 #>   1:      1 Chickadee Elementary      4     5     2      1        1        8
 #>   2:      2 Chickadee Elementary      5     5     2      1        2        8
 #>   3:      3 Chickadee Elementary      6     5     2      1        3        8

@@ -13,6 +13,9 @@
 - [`canonicalize_target()`](https://accidda.github.io/imuGAP/reference/canonicalize_target.md)
   : Canonicalize a target grid against a fit
 
+- [`create_observation_populations()`](https://accidda.github.io/imuGAP/reference/create_observation_populations.md)
+  : Create observation populations
+
 - [`create_target()`](https://accidda.github.io/imuGAP/reference/create_target.md)
   : Construct a target grid for prediction
 

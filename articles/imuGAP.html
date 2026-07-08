@@ -196,12 +196,12 @@ canonicalize it using <code><a href="../reference/canonicalize.html">canonicaliz
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">observations_sim</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">obs_id</span>, <span class="va">loc_id</span>, <span class="va">positive</span>, <span class="va">sample_n</span>, <span class="va">censored</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    obs_id               loc_id positive sample_n censored</span></span>
 <span><span class="co">#&gt;     &lt;int&gt;               &lt;char&gt;    &lt;num&gt;    &lt;num&gt;    &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:      1 Chickadee Elementary       16       19       NA</span></span>
-<span><span class="co">#&gt; 2:      2 Chickadee Elementary       14       20       NA</span></span>
-<span><span class="co">#&gt; 3:      3 Chickadee Elementary       14       16       NA</span></span>
-<span><span class="co">#&gt; 4:      4 Chickadee Elementary       10       13       NA</span></span>
-<span><span class="co">#&gt; 5:      5 Chickadee Elementary        8       13       NA</span></span>
-<span><span class="co">#&gt; 6:      6 Chickadee Elementary        7        8       NA</span></span>
+<span><span class="co">#&gt; 1:      1 Chickadee Elementary       42       52       NA</span></span>
+<span><span class="co">#&gt; 2:      2 Chickadee Elementary       41       51       NA</span></span>
+<span><span class="co">#&gt; 3:      3 Chickadee Elementary       46       50       NA</span></span>
+<span><span class="co">#&gt; 4:      4 Chickadee Elementary       41       48       NA</span></span>
+<span><span class="co">#&gt; 5:      5 Chickadee Elementary       44       53       NA</span></span>
+<span><span class="co">#&gt; 6:      6 Chickadee Elementary       47       54       NA</span></span>
 <span></span>
 <span><span class="co"># Canonicalize and validate</span></span>
 <span><span class="va">canonical_observations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/canonicalize.html">canonicalize_observations</a></span><span class="op">(</span><span class="va">observations_sim</span><span class="op">)</span></span>
@@ -209,12 +209,12 @@ canonicalize it using <code><a href="../reference/canonicalize.html">canonicaliz
 <span><span class="co">#&gt; Key: &lt;censored, obs_id&gt;</span></span>
 <span><span class="co">#&gt;    obs_c_id positive sample_n censored obs_id</span></span>
 <span><span class="co">#&gt;       &lt;int&gt;    &lt;int&gt;    &lt;int&gt;    &lt;num&gt;  &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:        1       16       19       NA      1</span></span>
-<span><span class="co">#&gt; 2:        2       14       20       NA      2</span></span>
-<span><span class="co">#&gt; 3:        3       14       16       NA      3</span></span>
-<span><span class="co">#&gt; 4:        4       10       13       NA      4</span></span>
-<span><span class="co">#&gt; 5:        5        8       13       NA      5</span></span>
-<span><span class="co">#&gt; 6:        6        7        8       NA      6</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:        1       42       52       NA      1</span></span>
+<span><span class="co">#&gt; 2:        2       41       51       NA      2</span></span>
+<span><span class="co">#&gt; 3:        3       46       50       NA      3</span></span>
+<span><span class="co">#&gt; 4:        4       41       48       NA      4</span></span>
+<span><span class="co">#&gt; 5:        5       44       53       NA      5</span></span>
+<span><span class="co">#&gt; 6:        6       47       54       NA      6</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="observation-metadata-populations_sim">Observation Metadata (<code>populations_sim</code>)<a class="anchor" aria-label="anchor" href="#observation-metadata-populations_sim"></a>
@@ -228,7 +228,7 @@ We validate and canonicalize it using
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"populations_sim"</span>, package <span class="op">=</span> <span class="st">"imuGAP"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">populations_sim</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    obs_id               loc_id cohort   age  dose weight</span></span>
-<span><span class="co">#&gt;     &lt;num&gt;               &lt;char&gt;  &lt;num&gt; &lt;num&gt; &lt;num&gt;  &lt;num&gt;</span></span>
+<span><span class="co">#&gt;     &lt;int&gt;               &lt;char&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;  &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1:      1 Chickadee Elementary      4     5     2      1</span></span>
 <span><span class="co">#&gt; 2:      2 Chickadee Elementary      5     5     2      1</span></span>
 <span><span class="co">#&gt; 3:      3 Chickadee Elementary      6     5     2      1</span></span>
@@ -243,7 +243,7 @@ We validate and canonicalize it using
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">canonical_populations</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Key: &lt;obs_c_id, loc_c_id, cohort, age, dose&gt;</span></span>
 <span><span class="co">#&gt;    obs_id               loc_id cohort   age  dose weight obs_c_id loc_c_id</span></span>
-<span><span class="co">#&gt;     &lt;num&gt;               &lt;char&gt;  &lt;int&gt; &lt;int&gt; &lt;num&gt;  &lt;num&gt;    &lt;int&gt;    &lt;int&gt;</span></span>
+<span><span class="co">#&gt;     &lt;int&gt;               &lt;char&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;  &lt;num&gt;    &lt;int&gt;    &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1:      1 Chickadee Elementary      4     5     2      1        1        8</span></span>
 <span><span class="co">#&gt; 2:      2 Chickadee Elementary      5     5     2      1        2        8</span></span>
 <span><span class="co">#&gt; 3:      3 Chickadee Elementary      6     5     2      1        3        8</span></span>
@@ -327,7 +327,7 @@ uptake baseline:</p>
 <code class="sourceCode R"><span><span class="va">beta_draws</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_imugap.html">extract_imugap</a></span><span class="op">(</span><span class="va">fit_sim</span>, pars <span class="op">=</span> <span class="st">"beta_bs"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">beta_draws</span><span class="op">)</span></span>
 <span><span class="co">#&gt; List of 1</span></span>
-<span><span class="co">#&gt;  $ beta_bs: num [1:2000, 1:5] -1.93 -2 -1.86 -1.84 -1.72 ...</span></span>
+<span><span class="co">#&gt;  $ beta_bs: num [1:2000, 1:5] -1.63 -1.21 -1.73 -1.55 -1.9 ...</span></span>
 <span><span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span></span>
 <span><span class="co">#&gt;   .. ..$ iterations: NULL</span></span>
 <span><span class="co">#&gt;   .. ..$           : NULL</span></span></code></pre></div>
@@ -401,22 +401,22 @@ requested:</p>
 <code class="sourceCode R"><span><span class="co"># Calculate the posterior mean coverage probability for each location and dose at age 5</span></span>
 <span><span class="va">summary_predict</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">predict_sim</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">summary_predict</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    obs_c_id               loc_id   age cohort  dose weight loc_c_id obs_id</span></span>
-<span><span class="co">#&gt;       &lt;int&gt;               &lt;char&gt; &lt;int&gt;  &lt;num&gt; &lt;num&gt;  &lt;num&gt;    &lt;int&gt;  &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:        1                State     1     30     1      1        1      1</span></span>
-<span><span class="co">#&gt; 2:        2              Scruggs     1     30     1      1        2      2</span></span>
-<span><span class="co">#&gt; 3:        3               Simone     1     30     1      1        3      3</span></span>
-<span><span class="co">#&gt; 4:        4               Watson     1     30     1      1        4      4</span></span>
-<span><span class="co">#&gt; 5:        5 Chickadee Elementary     1     30     1      1        8      5</span></span>
-<span><span class="co">#&gt; 6:        6     Nuthatch Academy     1     30     1      1       11      6</span></span>
-<span><span class="co">#&gt;     mean  q2_5   q50 q97_5</span></span>
-<span><span class="co">#&gt;    &lt;num&gt; &lt;num&gt; &lt;num&gt; &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:     0     0     0     0</span></span>
-<span><span class="co">#&gt; 2:     0     0     0     0</span></span>
-<span><span class="co">#&gt; 3:     0     0     0     0</span></span>
-<span><span class="co">#&gt; 4:     0     0     0     0</span></span>
-<span><span class="co">#&gt; 5:     0     0     0     0</span></span>
-<span><span class="co">#&gt; 6:     0     0     0     0</span></span></code></pre></div>
+<span><span class="co">#&gt;    obs_c_id               loc_id   age cohort  dose weight loc_c_id  mean  q2_5</span></span>
+<span><span class="co">#&gt;       &lt;int&gt;               &lt;char&gt; &lt;int&gt;  &lt;num&gt; &lt;num&gt;  &lt;num&gt;    &lt;int&gt; &lt;num&gt; &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:        1                State     1     30     1      1        1     0     0</span></span>
+<span><span class="co">#&gt; 2:        2              Scruggs     1     30     1      1        2     0     0</span></span>
+<span><span class="co">#&gt; 3:        3               Simone     1     30     1      1        3     0     0</span></span>
+<span><span class="co">#&gt; 4:        4               Watson     1     30     1      1        4     0     0</span></span>
+<span><span class="co">#&gt; 5:        5 Chickadee Elementary     1     30     1      1        8     0     0</span></span>
+<span><span class="co">#&gt; 6:        6     Nuthatch Academy     1     30     1      1       11     0     0</span></span>
+<span><span class="co">#&gt;      q50 q97_5</span></span>
+<span><span class="co">#&gt;    &lt;num&gt; &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:     0     0</span></span>
+<span><span class="co">#&gt; 2:     0     0</span></span>
+<span><span class="co">#&gt; 3:     0     0</span></span>
+<span><span class="co">#&gt; 4:     0     0</span></span>
+<span><span class="co">#&gt; 5:     0     0</span></span>
+<span><span class="co">#&gt; 6:     0     0</span></span></code></pre></div>
 <p>Now let’s visualize the results. First we will take a look at overall
 state coverage by cohort. Note that the lower coverage among 5 year olds
 is due to them only having been eligible for their second dose for one
@@ -515,7 +515,9 @@ simulation process.</p>
 <span>  <span class="fu">scale_color_discrete</span><span class="op">(</span><span class="cn">NULL</span>, aesthetics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"color"</span>, <span class="st">"fill"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">scale_x_continuous</span><span class="op">(</span>breaks <span class="op">=</span> <span class="fl">5</span><span class="op">:</span><span class="fl">18</span>, minor_breaks <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">theme</span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">labs</span><span class="op">(</span>color <span class="op">=</span> <span class="st">"School"</span>, x <span class="op">=</span> <span class="st">"Age"</span>, y <span class="op">=</span> <span class="st">"Coverage"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu">labs</span><span class="op">(</span>color <span class="op">=</span> <span class="st">"School"</span>, x <span class="op">=</span> <span class="st">"Age"</span>, y <span class="op">=</span> <span class="st">"Coverage"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Removed 42 rows containing missing values or values outside the scale range</span></span>
+<span><span class="co">#&gt; (`geom_point()`).</span></span></code></pre></div>
 <p><img src="imuGAP_files/figure-html/unnamed-chunk-2-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 </div>

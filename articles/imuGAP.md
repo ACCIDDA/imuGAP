@@ -112,12 +112,12 @@ data("observations_sim", package = "imuGAP")
 head(observations_sim[, .(obs_id, loc_id, positive, sample_n, censored)])
 #>    obs_id               loc_id positive sample_n censored
 #>     <int>               <char>    <num>    <num>    <num>
-#> 1:      1 Chickadee Elementary       16       19       NA
-#> 2:      2 Chickadee Elementary       14       20       NA
-#> 3:      3 Chickadee Elementary       14       16       NA
-#> 4:      4 Chickadee Elementary       10       13       NA
-#> 5:      5 Chickadee Elementary        8       13       NA
-#> 6:      6 Chickadee Elementary        7        8       NA
+#> 1:      1 Chickadee Elementary       42       52       NA
+#> 2:      2 Chickadee Elementary       41       51       NA
+#> 3:      3 Chickadee Elementary       46       50       NA
+#> 4:      4 Chickadee Elementary       41       48       NA
+#> 5:      5 Chickadee Elementary       44       53       NA
+#> 6:      6 Chickadee Elementary       47       54       NA
 
 # Canonicalize and validate
 canonical_observations <- canonicalize_observations(observations_sim)
@@ -125,12 +125,12 @@ head(canonical_observations)
 #> Key: <censored, obs_id>
 #>    obs_c_id positive sample_n censored obs_id
 #>       <int>    <int>    <int>    <num>  <int>
-#> 1:        1       16       19       NA      1
-#> 2:        2       14       20       NA      2
-#> 3:        3       14       16       NA      3
-#> 4:        4       10       13       NA      4
-#> 5:        5        8       13       NA      5
-#> 6:        6        7        8       NA      6
+#> 1:        1       42       52       NA      1
+#> 2:        2       41       51       NA      2
+#> 3:        3       46       50       NA      3
+#> 4:        4       41       48       NA      4
+#> 5:        5       44       53       NA      5
+#> 6:        6       47       54       NA      6
 ```
 
 #### Observation Metadata (`populations_sim`)
@@ -146,7 +146,7 @@ and canonicalize it using
 data("populations_sim", package = "imuGAP")
 head(populations_sim)
 #>    obs_id               loc_id cohort   age  dose weight
-#>     <num>               <char>  <num> <num> <num>  <num>
+#>     <int>               <char>  <int> <int> <int>  <num>
 #> 1:      1 Chickadee Elementary      4     5     2      1
 #> 2:      2 Chickadee Elementary      5     5     2      1
 #> 3:      3 Chickadee Elementary      6     5     2      1
@@ -161,7 +161,7 @@ canonical_populations <- canonicalize_populations(
 head(canonical_populations)
 #> Key: <obs_c_id, loc_c_id, cohort, age, dose>
 #>    obs_id               loc_id cohort   age  dose weight obs_c_id loc_c_id
-#>     <num>               <char>  <int> <int> <num>  <num>    <int>    <int>
+#>     <int>               <char>  <int> <int> <int>  <num>    <int>    <int>
 #> 1:      1 Chickadee Elementary      4     5     2      1        1        8
 #> 2:      2 Chickadee Elementary      5     5     2      1        2        8
 #> 3:      3 Chickadee Elementary      6     5     2      1        3        8
@@ -264,7 +264,7 @@ state-level vaccine uptake baseline:
 beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 #> List of 1
-#>  $ beta_bs: num [1:2000, 1:5] -1.93 -2 -1.86 -1.84 -1.72 ...
+#>  $ beta_bs: num [1:2000, 1:5] -1.63 -1.21 -1.73 -1.55 -1.9 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ iterations: NULL
 #>   .. ..$           : NULL
@@ -357,22 +357,22 @@ credible intervals across the target location, age, and doses requested:
 # Calculate the posterior mean coverage probability for each location and dose at age 5
 summary_predict <- summary(predict_sim)
 head(summary_predict)
-#>    obs_c_id               loc_id   age cohort  dose weight loc_c_id obs_id
-#>       <int>               <char> <int>  <num> <num>  <num>    <int>  <int>
-#> 1:        1                State     1     30     1      1        1      1
-#> 2:        2              Scruggs     1     30     1      1        2      2
-#> 3:        3               Simone     1     30     1      1        3      3
-#> 4:        4               Watson     1     30     1      1        4      4
-#> 5:        5 Chickadee Elementary     1     30     1      1        8      5
-#> 6:        6     Nuthatch Academy     1     30     1      1       11      6
-#>     mean  q2_5   q50 q97_5
-#>    <num> <num> <num> <num>
-#> 1:     0     0     0     0
-#> 2:     0     0     0     0
-#> 3:     0     0     0     0
-#> 4:     0     0     0     0
-#> 5:     0     0     0     0
-#> 6:     0     0     0     0
+#>    obs_c_id               loc_id   age cohort  dose weight loc_c_id  mean  q2_5
+#>       <int>               <char> <int>  <num> <num>  <num>    <int> <num> <num>
+#> 1:        1                State     1     30     1      1        1     0     0
+#> 2:        2              Scruggs     1     30     1      1        2     0     0
+#> 3:        3               Simone     1     30     1      1        3     0     0
+#> 4:        4               Watson     1     30     1      1        4     0     0
+#> 5:        5 Chickadee Elementary     1     30     1      1        8     0     0
+#> 6:        6     Nuthatch Academy     1     30     1      1       11     0     0
+#>      q50 q97_5
+#>    <num> <num>
+#> 1:     0     0
+#> 2:     0     0
+#> 3:     0     0
+#> 4:     0     0
+#> 5:     0     0
+#> 6:     0     0
 ```
 
 Now let’s visualize the results. First we will take a look at overall
@@ -491,6 +491,8 @@ ggplot() +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
   theme(legend.position = "bottom") +
   labs(color = "School", x = "Age", y = "Coverage")
+#> Warning: Removed 42 rows containing missing values or values outside the scale range
+#> (`geom_point()`).
 ```
 
 ![](imuGAP_files/figure-html/unnamed-chunk-2-1.png)
