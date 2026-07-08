@@ -161,3 +161,33 @@ test_that("assert_dt_able returns data.table via as.data.table when copy = TRUE"
   expect_s3_class(df, "data.frame")
   expect_false(data.table::is.data.table(df))
 })
+
+test_that("assert_positive_numeric validates numeric type, NA presence, and bounds", {
+  ref_dt <- data.table(
+    a = c(1.5, 2.3, 3.1),
+    b = c(1.5, NA_real_, 3.1),
+    c = c(1.5, -0.5, 3.1),
+    d = c("x", "y", "z")
+  )
+
+  # Valid calls
+  expect_silent(assert_positive_numeric(ref_dt, "a"))
+
+  # NA error check
+  expect_error(
+    assert_positive_numeric(ref_dt, "b"),
+    "cannot have NA values"
+  )
+
+  # Non-positive check
+  expect_error(
+    assert_positive_numeric(ref_dt, "c"),
+    "must all be > 0"
+  )
+
+  # Non-numeric check
+  expect_error(
+    assert_positive_numeric(ref_dt, "d"),
+    "must be numeric"
+  )
+})

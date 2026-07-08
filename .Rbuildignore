@@ -6,7 +6,7 @@
 ^pkgdown$
 ^\.github$
 ^\.lintr$
-^\.covignore$
+^\.covrignore$
 ^air\.toml$
 ^justfile$
 ^[.]?air[.]toml$
