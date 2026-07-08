@@ -68,27 +68,30 @@
 <div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Full rebuild + install (required after editing any .stan file)</span></span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">R</span> CMD INSTALL <span class="at">--preclean</span> .</span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co"># Regenerate documentation from roxygen comments</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'devtools::document()'</span></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co"># Regenerate the fitted data artifacts (NOT tracked in git, like man/*.Rd).</span></span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co"># fit_sim/target_sim/predict_sim/latent_params_sim must exist before `R CMD</span></span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co"># build`/`check`, the vignette, or the examples will run. Needs a Stan toolchain.</span></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="ex">just</span> data-fit   <span class="co"># or: Rscript data-raw/fit_data.R</span></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co"># Run the test suite</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'devtools::test()'</span></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="co"># Lint the package (config in .lintr)</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'lintr::lint_package()'</span></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="co"># Build and check</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="ex">R</span> CMD build . <span class="kw">&amp;&amp;</span> <span class="ex">R</span> CMD check imuGAP_<span class="pp">*</span>.tar.gz</span></code></pre></div>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co"># Regenerate documentation from roxygen comments. This writes man/*.Rd,</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co"># NAMESPACE, and R/globals.R -- all roxygen2/roxyglobals output, none tracked in</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co"># git (#53, #115). CI regenerates them on every build, so never hand-edit them.</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'devtools::document()'</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co"># Regenerate the fitted data artifacts (NOT tracked in git, like man/*.Rd).</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co"># fit_sim/target_sim/predict_sim/latent_params_sim must exist before `R CMD</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co"># build`/`check`, the vignette, or the examples will run. Needs a Stan toolchain.</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="ex">just</span> data-fit   <span class="co"># or: Rscript data-raw/fit_data.R</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co"># Run the test suite</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'devtools::test()'</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="co"># Lint the package (config in .lintr)</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'lintr::lint_package()'</span></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="co"># Build and check</span></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="ex">R</span> CMD build . <span class="kw">&amp;&amp;</span> <span class="ex">R</span> CMD check imuGAP_<span class="pp">*</span>.tar.gz</span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="style">Style<a class="anchor" aria-label="anchor" href="#style"></a></h3>
 <ul><li>R code is linted with <code>lintr</code> (configuration in <code>.lintr</code>). <code>R/stanmodels.R</code> and <code>inst/analysis/</code> are excluded from linting because they are generated or standalone scripts, respectively.</li>
-<li>Do not hand-edit generated files: <code>R/stanmodels.R</code>, <code>src/stanExports_*.{cc,h}</code>, <code>configure</code>, and <code>configure.win</code> are all produced by <code><a href="https://mc-stan.org/rstantools/reference/rstan_config.html" class="external-link">rstantools::rstan_config()</a></code>.</li>
+<li>Do not hand-edit generated files: <code>R/stanmodels.R</code>, <code>src/stanExports_*.{cc,h}</code>, <code>configure</code>, and <code>configure.win</code> are all produced by <code><a href="https://mc-stan.org/rstantools/reference/rstan_config.html" class="external-link">rstantools::rstan_config()</a></code>; <code>NAMESPACE</code>, <code>R/globals.R</code>, and <code>man/*.Rd</code> are produced by <code><a href="https://roxygen2.r-lib.org/reference/roxygenize.html" class="external-link">roxygen2::roxygenise()</a></code> (via roxygen tags and the roxyglobals roclet) and are untracked – regenerate with <code>devtools::document()</code>.</li>
+<li>Because <code>NAMESPACE</code> is untracked but is needed to install/load the package, CI regenerates it from source (<code>roxygen2::roxygenise(roclets = "namespace", load_code = "source")</code>) in a “Bootstrap NAMESPACE” step before the package is installed (#115). Source-mode roxygen cannot evaluate package objects, so <strong>document exported datasets with the <code>@name</code> / <code>@docType data</code> idiom, not the bare-string form</strong> (<code>#' "my_data"</code>): the string form makes roxygen <code><a href="https://rdrr.io/r/base/get.html" class="external-link">get()</a></code> the object, which fails in source mode and breaks the bootstrap. See the data blocks in <code>R/imuGAP-package.R</code> for the pattern.</li>
 <li>Stan model variants are composed via <code>#include</code> toggling in the top-level <code>.stan</code> files — prefer toggling includes over duplicating whole model files.</li>
 </ul></div>
 </div>
@@ -137,7 +140,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0. <a href="https://accidda.org/" class="external-link accidda-footer-link" aria-label="Part of the ACCIDDA project"><img src="https://raw.githubusercontent.com/ACCIDDA/ACCIDDA-Images/refs/heads/main/accidda/accidda-logo-small.png" alt="ACCIDDA" class="accidda-footer-logo accidda-footer-logo-light" height="32"><img src="https://raw.githubusercontent.com/ACCIDDA/ACCIDDA-Images/refs/heads/main/accidda/accidda-white.png" alt="ACCIDDA" class="accidda-footer-logo accidda-footer-logo-dark" height="32"></a><span class="accidda-footer-text"> Part of the <a href="https://accidda.org/" class="external-link">ACCIDDA</a> project.</span></p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1. <a href="https://accidda.org/" class="external-link accidda-footer-link" aria-label="Part of the ACCIDDA project"><img src="https://raw.githubusercontent.com/ACCIDDA/ACCIDDA-Images/refs/heads/main/accidda/accidda-logo-small.png" alt="ACCIDDA" class="accidda-footer-logo accidda-footer-logo-light" height="32"><img src="https://raw.githubusercontent.com/ACCIDDA/ACCIDDA-Images/refs/heads/main/accidda/accidda-white.png" alt="ACCIDDA" class="accidda-footer-logo accidda-footer-logo-dark" height="32"></a><span class="accidda-footer-text"> Part of the <a href="https://accidda.org/" class="external-link">ACCIDDA</a> project.</span></p>
 </div>
 
     </footer></div>

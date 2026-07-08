@@ -7,12 +7,6 @@ on the bundled `locations_sim`, `populations_sim`, and
 examples, tests, and downstream tooling that needs a real fit without
 paying the cost of recompiling or re-running the Stan model.
 
-## Usage
-
-``` r
-fit_sim
-```
-
 ## Format
 
 A `stanfit` object as returned by

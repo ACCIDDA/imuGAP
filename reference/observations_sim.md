@@ -2,12 +2,6 @@
 
 A dataset containing vaccine coverage observations.
 
-## Usage
-
-``` r
-observations_sim
-```
-
 ## Format
 
 A `[data.table()]` with 698 rows and 4+ columns:

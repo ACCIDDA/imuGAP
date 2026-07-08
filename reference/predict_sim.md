@@ -4,12 +4,6 @@ A dataset containing predicted vaccine coverage probabilities generated
 by calling [`predict()`](https://rdrr.io/r/stats/predict.html) on
 `fit_sim` with `target_sim` as the target.
 
-## Usage
-
-``` r
-predict_sim
-```
-
 ## Format
 
 An object of class `imugap_predict` wrapping:

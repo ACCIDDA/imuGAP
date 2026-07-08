@@ -4,12 +4,6 @@ A list containing the true/latent parameter values used to simulate the
 example datasets (`locations_sim`, `populations_sim`,
 `observations_sim`).
 
-## Usage
-
-``` r
-latent_params_sim
-```
-
 ## Format
 
 A list with 8 components:

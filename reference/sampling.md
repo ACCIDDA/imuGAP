@@ -97,8 +97,8 @@ sampling(
 #> 
 #> SAMPLING FOR MODEL 'impute_school_coverage_process_v6' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000211 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.11 seconds.
+#> Chain 1: Gradient evaluation took 0.000218 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.18 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -115,15 +115,15 @@ sampling(
 #> Chain 1: Iteration: 450 / 500 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 500 / 500 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 10.688 seconds (Warm-up)
-#> Chain 1:                4.771 seconds (Sampling)
-#> Chain 1:                15.459 seconds (Total)
+#> Chain 1:  Elapsed Time: 10.218 seconds (Warm-up)
+#> Chain 1:                4.578 seconds (Sampling)
+#> Chain 1:                14.796 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'impute_school_coverage_process_v6' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000213 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.13 seconds.
+#> Chain 2: Gradient evaluation took 0.000191 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.91 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -140,9 +140,9 @@ sampling(
 #> Chain 2: Iteration: 450 / 500 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 500 / 500 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 10.457 seconds (Warm-up)
-#> Chain 2:                5.749 seconds (Sampling)
-#> Chain 2:                16.206 seconds (Total)
+#> Chain 2:  Elapsed Time: 9.994 seconds (Warm-up)
+#> Chain 2:                5.498 seconds (Sampling)
+#> Chain 2:                15.492 seconds (Total)
 #> Chain 2: 
 #> Warning: There were 6 divergent transitions after warmup. See
 #> https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
@@ -236,7 +236,7 @@ sampling(
 #> lambda_raw[2]     1.11   214 1.00
 #> lp__          -1576.30   112 1.00
 #> 
-#> Samples were drawn using NUTS(diag_e) at Fri Jul  3 19:07:19 2026.
+#> Samples were drawn using NUTS(diag_e) at Wed Jul  8 15:59:26 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
@@ -349,16 +349,16 @@ sampling(
 #>   matrix<lower=0, upper=1>[n_yr, n_doses] dose_sched;
 #>   // DATA DEFINITIONS
 #>   int<lower=1> n_obs;
-#>   int<lower=0> y_obs[n_obs];
-#>   int<lower=0> y_smp[n_obs];
+#>   array[n_obs] int<lower=0> y_obs;
+#>   array[n_obs] int<lower=0> y_smp;
 #>   // have school id ranges for observations & for doses; school id 0 == statewide?
-#>   // int obs_sch_id_bounds[n_obs];
+#>   // array[n_obs] int obs_sch_id_bounds;
 #>   int<lower=n_obs> n_weights;
 #>   array[n_obs] int<lower=1, upper=n_weights> obs_to_weights_bounds; // each entry is the start of the range
-#>   int<lower=1,upper=n_sch + n_cnty + 1> weights_school[n_weights];
-#>   int<lower=1,upper=n_cohort> weights_cohort[n_weights];
-#>   int<lower=1,upper=n_yr> weights_life_year[n_weights];
-#>   int<lower=1,upper=n_doses> weights_dose[n_weights];
+#>   array[n_weights] int<lower=1,upper=n_sch + n_cnty + 1> weights_school;
+#>   array[n_weights] int<lower=1,upper=n_cohort> weights_cohort;
+#>   array[n_weights] int<lower=1,upper=n_yr> weights_life_year;
+#>   array[n_weights] int<lower=1,upper=n_doses> weights_dose;
 #>   vector<lower=0,upper=1>[n_weights] weights; // contribution of this (school, cohort, year, dose) to an observation
 #>   // run mode: 0 = estimation, 1 = prediction
 #>   int<lower=0, upper=1> predict_mode;
@@ -367,10 +367,10 @@ sampling(
 #>   // state-level basis spline
 #>   int k_bs; // number of bspline basis functions
 #>   matrix[n_cohort, k_bs] bs; // basis functions
-#> # observations may be right-censored
-#> # observation data is assumed ordered uncensored, then right censored
-#> # so n_uncensored_obs == n_obs, all observations are uncensored
-#> # number of uncensored observations
+#> // observations may be right-censored
+#> // observation data is assumed ordered uncensored, then right censored
+#> // so n_uncensored_obs == n_obs, all observations are uncensored
+#> // number of uncensored observations
 #> int<lower = 0, upper = n_obs> n_uncensored_obs;
 #> }
 #> transformed data {
@@ -384,8 +384,8 @@ sampling(
 #> 
 #>   // Equivalent 1:n_cohort, for time trends
 #>   vector[n_cohort] cohort_shift_counter = linspaced_vector(n_cohort, 1, n_cohort);
-#>   int<lower=1> phi_lookup[n_weights];
-#>   int<lower=1> cdf_lookup[n_weights];
+#>   array[n_weights] int<lower=1> phi_lookup;
+#>   array[n_weights] int<lower=1> cdf_lookup;
 #>   // because integer arrays don't support broadcasting ...
 #>   // unroll phi and cdf objects to support vectorization
 #>   for (weight_i in 1:n_weights) {
@@ -394,7 +394,7 @@ sampling(
 #>     // ordered by dose then life year
 #>     cdf_lookup[weight_i] = weights_life_year[weight_i] + (weights_dose[weight_i] - 1) * n_yr;
 #>   }
-#> int<lower=-1> y_obs_trans[n_obs];
+#> array[n_obs] int<lower=-1> y_obs_trans;
 #> for(i in 1:n_obs) {
 #>   y_obs_trans[i] = y_obs[i] - 1;
 #> }
@@ -444,15 +444,15 @@ sampling(
 #> for (obs_i in 1:n_obs) {
 #>   p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
 #> }
-#> if (n_uncensored_obs < n_obs) { # at least some censored observations
-#>     # p_s => 1 - p_s = p_f :: probability of at least this many successes =>
-#>     #                         probability of less than this many failures
-#>     if (n_uncensored_obs > 0) { # at least some uncensored observations
+#> if (n_uncensored_obs < n_obs) { // at least some censored observations
+#>     // p_s => 1 - p_s = p_f :: probability of at least this many successes =>
+#>     //                         probability of less than this many failures
+#>     if (n_uncensored_obs > 0) { // at least some uncensored observations
 #>         target += binomial_lpmf(y_obs[:n_uncensored_obs] | y_smp[:n_uncensored_obs], p_obs[:n_uncensored_obs]);
 #>     }
 #>     target += binomial_lcdf(y_obs[(n_uncensored_obs+1):] | y_smp[(n_uncensored_obs+1):], 1 - p_obs[(n_uncensored_obs+1):]);
-#> } else { # all uncensored observations
-#>     y_obs ~ binomial(y_smp, p_obs); # vectorized
+#> } else { // all uncensored observations
+#>     y_obs ~ binomial(y_smp, p_obs); // vectorized
 #> }
 #>   }
 #> }

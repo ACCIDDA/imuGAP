@@ -9,12 +9,6 @@ for the chosen locations, cohorts, and ages to target. Includes
 locations which were not present in the original simulated observations,
 namely the State and County levels.
 
-## Usage
-
-``` r
-target_sim
-```
-
 ## Format
 
 A `[data.table()]` with 1008 rows and 7 columns:

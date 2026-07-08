@@ -137,16 +137,16 @@ imugap_options()
 #>   matrix<lower=0, upper=1>[n_yr, n_doses] dose_sched;
 #>   // DATA DEFINITIONS
 #>   int<lower=1> n_obs;
-#>   int<lower=0> y_obs[n_obs];
-#>   int<lower=0> y_smp[n_obs];
+#>   array[n_obs] int<lower=0> y_obs;
+#>   array[n_obs] int<lower=0> y_smp;
 #>   // have school id ranges for observations & for doses; school id 0 == statewide?
-#>   // int obs_sch_id_bounds[n_obs];
+#>   // array[n_obs] int obs_sch_id_bounds;
 #>   int<lower=n_obs> n_weights;
 #>   array[n_obs] int<lower=1, upper=n_weights> obs_to_weights_bounds; // each entry is the start of the range
-#>   int<lower=1,upper=n_sch + n_cnty + 1> weights_school[n_weights];
-#>   int<lower=1,upper=n_cohort> weights_cohort[n_weights];
-#>   int<lower=1,upper=n_yr> weights_life_year[n_weights];
-#>   int<lower=1,upper=n_doses> weights_dose[n_weights];
+#>   array[n_weights] int<lower=1,upper=n_sch + n_cnty + 1> weights_school;
+#>   array[n_weights] int<lower=1,upper=n_cohort> weights_cohort;
+#>   array[n_weights] int<lower=1,upper=n_yr> weights_life_year;
+#>   array[n_weights] int<lower=1,upper=n_doses> weights_dose;
 #>   vector<lower=0,upper=1>[n_weights] weights; // contribution of this (school, cohort, year, dose) to an observation
 #>   // run mode: 0 = estimation, 1 = prediction
 #>   int<lower=0, upper=1> predict_mode;
@@ -155,10 +155,10 @@ imugap_options()
 #>   // state-level basis spline
 #>   int k_bs; // number of bspline basis functions
 #>   matrix[n_cohort, k_bs] bs; // basis functions
-#> # observations may be right-censored
-#> # observation data is assumed ordered uncensored, then right censored
-#> # so n_uncensored_obs == n_obs, all observations are uncensored
-#> # number of uncensored observations
+#> // observations may be right-censored
+#> // observation data is assumed ordered uncensored, then right censored
+#> // so n_uncensored_obs == n_obs, all observations are uncensored
+#> // number of uncensored observations
 #> int<lower = 0, upper = n_obs> n_uncensored_obs;
 #> }
 #> transformed data {
@@ -172,8 +172,8 @@ imugap_options()
 #> 
 #>   // Equivalent 1:n_cohort, for time trends
 #>   vector[n_cohort] cohort_shift_counter = linspaced_vector(n_cohort, 1, n_cohort);
-#>   int<lower=1> phi_lookup[n_weights];
-#>   int<lower=1> cdf_lookup[n_weights];
+#>   array[n_weights] int<lower=1> phi_lookup;
+#>   array[n_weights] int<lower=1> cdf_lookup;
 #>   // because integer arrays don't support broadcasting ...
 #>   // unroll phi and cdf objects to support vectorization
 #>   for (weight_i in 1:n_weights) {
@@ -182,7 +182,7 @@ imugap_options()
 #>     // ordered by dose then life year
 #>     cdf_lookup[weight_i] = weights_life_year[weight_i] + (weights_dose[weight_i] - 1) * n_yr;
 #>   }
-#> int<lower=-1> y_obs_trans[n_obs];
+#> array[n_obs] int<lower=-1> y_obs_trans;
 #> for(i in 1:n_obs) {
 #>   y_obs_trans[i] = y_obs[i] - 1;
 #> }
@@ -232,15 +232,15 @@ imugap_options()
 #> for (obs_i in 1:n_obs) {
 #>   p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
 #> }
-#> if (n_uncensored_obs < n_obs) { # at least some censored observations
-#>     # p_s => 1 - p_s = p_f :: probability of at least this many successes =>
-#>     #                         probability of less than this many failures
-#>     if (n_uncensored_obs > 0) { # at least some uncensored observations
+#> if (n_uncensored_obs < n_obs) { // at least some censored observations
+#>     // p_s => 1 - p_s = p_f :: probability of at least this many successes =>
+#>     //                         probability of less than this many failures
+#>     if (n_uncensored_obs > 0) { // at least some uncensored observations
 #>         target += binomial_lpmf(y_obs[:n_uncensored_obs] | y_smp[:n_uncensored_obs], p_obs[:n_uncensored_obs]);
 #>     }
 #>     target += binomial_lcdf(y_obs[(n_uncensored_obs+1):] | y_smp[(n_uncensored_obs+1):], 1 - p_obs[(n_uncensored_obs+1):]);
-#> } else { # all uncensored observations
-#>     y_obs ~ binomial(y_smp, p_obs); # vectorized
+#> } else { // all uncensored observations
+#>     y_obs ~ binomial(y_smp, p_obs); // vectorized
 #> }
 #>   }
 #> }
@@ -430,16 +430,16 @@ imugap_options(dose_schedule = c(1, 3))
 #>   matrix<lower=0, upper=1>[n_yr, n_doses] dose_sched;
 #>   // DATA DEFINITIONS
 #>   int<lower=1> n_obs;
-#>   int<lower=0> y_obs[n_obs];
-#>   int<lower=0> y_smp[n_obs];
+#>   array[n_obs] int<lower=0> y_obs;
+#>   array[n_obs] int<lower=0> y_smp;
 #>   // have school id ranges for observations & for doses; school id 0 == statewide?
-#>   // int obs_sch_id_bounds[n_obs];
+#>   // array[n_obs] int obs_sch_id_bounds;
 #>   int<lower=n_obs> n_weights;
 #>   array[n_obs] int<lower=1, upper=n_weights> obs_to_weights_bounds; // each entry is the start of the range
-#>   int<lower=1,upper=n_sch + n_cnty + 1> weights_school[n_weights];
-#>   int<lower=1,upper=n_cohort> weights_cohort[n_weights];
-#>   int<lower=1,upper=n_yr> weights_life_year[n_weights];
-#>   int<lower=1,upper=n_doses> weights_dose[n_weights];
+#>   array[n_weights] int<lower=1,upper=n_sch + n_cnty + 1> weights_school;
+#>   array[n_weights] int<lower=1,upper=n_cohort> weights_cohort;
+#>   array[n_weights] int<lower=1,upper=n_yr> weights_life_year;
+#>   array[n_weights] int<lower=1,upper=n_doses> weights_dose;
 #>   vector<lower=0,upper=1>[n_weights] weights; // contribution of this (school, cohort, year, dose) to an observation
 #>   // run mode: 0 = estimation, 1 = prediction
 #>   int<lower=0, upper=1> predict_mode;
@@ -448,10 +448,10 @@ imugap_options(dose_schedule = c(1, 3))
 #>   // state-level basis spline
 #>   int k_bs; // number of bspline basis functions
 #>   matrix[n_cohort, k_bs] bs; // basis functions
-#> # observations may be right-censored
-#> # observation data is assumed ordered uncensored, then right censored
-#> # so n_uncensored_obs == n_obs, all observations are uncensored
-#> # number of uncensored observations
+#> // observations may be right-censored
+#> // observation data is assumed ordered uncensored, then right censored
+#> // so n_uncensored_obs == n_obs, all observations are uncensored
+#> // number of uncensored observations
 #> int<lower = 0, upper = n_obs> n_uncensored_obs;
 #> }
 #> transformed data {
@@ -465,8 +465,8 @@ imugap_options(dose_schedule = c(1, 3))
 #> 
 #>   // Equivalent 1:n_cohort, for time trends
 #>   vector[n_cohort] cohort_shift_counter = linspaced_vector(n_cohort, 1, n_cohort);
-#>   int<lower=1> phi_lookup[n_weights];
-#>   int<lower=1> cdf_lookup[n_weights];
+#>   array[n_weights] int<lower=1> phi_lookup;
+#>   array[n_weights] int<lower=1> cdf_lookup;
 #>   // because integer arrays don't support broadcasting ...
 #>   // unroll phi and cdf objects to support vectorization
 #>   for (weight_i in 1:n_weights) {
@@ -475,7 +475,7 @@ imugap_options(dose_schedule = c(1, 3))
 #>     // ordered by dose then life year
 #>     cdf_lookup[weight_i] = weights_life_year[weight_i] + (weights_dose[weight_i] - 1) * n_yr;
 #>   }
-#> int<lower=-1> y_obs_trans[n_obs];
+#> array[n_obs] int<lower=-1> y_obs_trans;
 #> for(i in 1:n_obs) {
 #>   y_obs_trans[i] = y_obs[i] - 1;
 #> }
@@ -525,15 +525,15 @@ imugap_options(dose_schedule = c(1, 3))
 #> for (obs_i in 1:n_obs) {
 #>   p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
 #> }
-#> if (n_uncensored_obs < n_obs) { # at least some censored observations
-#>     # p_s => 1 - p_s = p_f :: probability of at least this many successes =>
-#>     #                         probability of less than this many failures
-#>     if (n_uncensored_obs > 0) { # at least some uncensored observations
+#> if (n_uncensored_obs < n_obs) { // at least some censored observations
+#>     // p_s => 1 - p_s = p_f :: probability of at least this many successes =>
+#>     //                         probability of less than this many failures
+#>     if (n_uncensored_obs > 0) { // at least some uncensored observations
 #>         target += binomial_lpmf(y_obs[:n_uncensored_obs] | y_smp[:n_uncensored_obs], p_obs[:n_uncensored_obs]);
 #>     }
 #>     target += binomial_lcdf(y_obs[(n_uncensored_obs+1):] | y_smp[(n_uncensored_obs+1):], 1 - p_obs[(n_uncensored_obs+1):]);
-#> } else { # all uncensored observations
-#>     y_obs ~ binomial(y_smp, p_obs); # vectorized
+#> } else { // all uncensored observations
+#>     y_obs ~ binomial(y_smp, p_obs); // vectorized
 #> }
 #>   }
 #> }
