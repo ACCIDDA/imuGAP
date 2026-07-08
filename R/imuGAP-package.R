@@ -168,4 +168,4 @@ NULL
 #' @keywords datasets
 NULL
 
-.datatable.aware <- TRUE
+.datatable.aware <- TRUE # nolint: object_name_linter.
