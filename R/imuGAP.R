@@ -114,7 +114,11 @@ sampling <- function(
   # the backend uses its own default.
   model_name <- "impute_school_coverage_process_v6"
   raw_fit <- fit_model(
-    model_name, dat_stan, init = NULL, stan_opts, drop_pars = NULL
+    model_name,
+    dat_stan,
+    init = NULL,
+    stan_opts,
+    drop_pars = NULL
   )
 
   # fit_model() dispatches to the active backend, so the fit may be an rstan

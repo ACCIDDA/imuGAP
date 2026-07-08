@@ -460,7 +460,8 @@ canonicalize_target <- function(target, fit) {
 
   # obs_id: if supplied, must be unique and not NA.
   if (
-    "obs_id" %in% names(target) &&
+    "obs_id" %in%
+      names(target) &&
       (anyDuplicated(target$obs_id) > 0L || anyNA(target$obs_id))
   ) {
     stop("if supplied, obs_id must be unique and not NA", call. = FALSE)
@@ -507,7 +508,9 @@ canonicalize_target <- function(target, fit) {
     )
   }
 
-  invalid_cohort_rows <- target[, which(!between(cohort, 1L, fit$data$n_cohort))]
+  invalid_cohort_rows <- target[, which(
+    !between(cohort, 1L, fit$data$n_cohort)
+  )]
   if (length(invalid_cohort_rows) > 0) {
     stop(
       sprintf(

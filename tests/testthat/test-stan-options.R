@@ -19,7 +19,10 @@ test_that("stan_options passes named arguments through", {
 test_that("stan_options preserves argument names and values verbatim", {
   sopts <- stan_options(seed = 42L, cores = 4L, refresh = 0)
   # chains is defaulted in alongside the args supplied verbatim.
-  expect_setequal(names(sopts), c("seed", "cores", "refresh", "chains", "backend"))
+  expect_setequal(
+    names(sopts),
+    c("seed", "cores", "refresh", "chains", "backend")
+  )
   expect_equal(sopts$seed, 42L)
   expect_equal(sopts$cores, 4L)
   expect_equal(sopts$refresh, 0)
@@ -29,7 +32,8 @@ test_that("stan_options defaults chains to 4 but honours an explicit value", {
   expect_identical(stan_options()$chains, 4L)
   expect_identical(stan_options(chains = 2)$chains, 2L)
   expect_identical(
-    stan_options(backend = "rstan", chains = 1L)$chains, 1L
+    stan_options(backend = "rstan", chains = 1L)$chains,
+    1L
   )
 })
 

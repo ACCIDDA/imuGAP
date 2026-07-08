@@ -34,17 +34,17 @@ Imports:
     methods,
     Rcpp (>= 1.1.2),
     RcppParallel (>= 5.1.11.2),
-    rstan (>= 2.36),
+    rstan (>= 2.32),
     rstantools (>= 2.6.0),
     tools,
     utils
 LinkingTo: 
-    BH (>= 1.90.0),
+    BH (>= 1.90),
     Rcpp (>= 1.1.2),
-    RcppEigen (>= 0.3.4.0.2),
-    RcppParallel (>= 5.1.11.2),
-    rstan (>= 2.36),
-    StanHeaders (>= 2.36)
+    RcppEigen (>= 0.3.4),
+    RcppParallel (>= 5.1.11),
+    rstan (>= 2.32),
+    StanHeaders (>= 2.32)
 SystemRequirements: GNU make
 Additional_repositories:
     https://stan-dev.r-universe.dev
