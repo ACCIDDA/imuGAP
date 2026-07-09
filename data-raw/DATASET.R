@@ -372,7 +372,7 @@ saveRDS(sim_internals, "data-raw/sim_internals.rds")
 # here as tracked static data rather than regenerated on every build. Part B
 # (data-raw/fit_data.R) rebuilds target_sim from the same create_target() grid
 # spec and asserts the row counts still line up.
-target_grid <- create_target(
+target_grid <- imuGAP:::create_target(
   location = unique(locations_sim$loc_id),
   age = 1:18,
   cohort = max(populations_sim$cohort) - 18,
