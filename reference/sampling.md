@@ -97,8 +97,8 @@ sampling(
 #> 
 #> SAMPLING FOR MODEL 'impute_school_coverage_process_v6' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000204 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.04 seconds.
+#> Chain 1: Gradient evaluation took 0.000224 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.24 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -115,15 +115,15 @@ sampling(
 #> Chain 1: Iteration: 450 / 500 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 500 / 500 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 7.444 seconds (Warm-up)
-#> Chain 1:                3.853 seconds (Sampling)
-#> Chain 1:                11.297 seconds (Total)
+#> Chain 1:  Elapsed Time: 7.445 seconds (Warm-up)
+#> Chain 1:                3.843 seconds (Sampling)
+#> Chain 1:                11.288 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'impute_school_coverage_process_v6' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000188 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.88 seconds.
+#> Chain 2: Gradient evaluation took 0.000187 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.87 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -140,9 +140,9 @@ sampling(
 #> Chain 2: Iteration: 450 / 500 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 500 / 500 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 8.117 seconds (Warm-up)
-#> Chain 2:                6.742 seconds (Sampling)
-#> Chain 2:                14.859 seconds (Total)
+#> Chain 2:  Elapsed Time: 8.101 seconds (Warm-up)
+#> Chain 2:                6.751 seconds (Sampling)
+#> Chain 2:                14.852 seconds (Total)
 #> Chain 2: 
 #> Warning: There were 5 divergent transitions after warmup. See
 #> https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
@@ -236,7 +236,7 @@ sampling(
 #> lambda_raw[2]     1.28   188 1.01
 #> lp__          -1547.85    89 1.02
 #> 
-#> Samples were drawn using NUTS(diag_e) at Wed Jul  8 23:41:50 2026.
+#> Samples were drawn using NUTS(diag_e) at Thu Jul  9 01:15:50 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
