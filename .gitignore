@@ -32,9 +32,3 @@ R/globals.R
 data/fit_sim.rda
 data/target_sim.rda
 data/predict_sim.rda
-<<<<<<< HEAD
-data/latent_params_sim.rda
-/doc/
-/Meta/
-=======
->>>>>>> ddd225a (Move latent_params_sim into tracked static data (#105))
