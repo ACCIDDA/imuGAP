@@ -6,7 +6,50 @@ on:
   pull_request:
 
 jobs:
+  # Generate the gitignored, platform-independent build artifacts ONCE, then
+  # share them with every matrix leg. fit_data.R (the fitted datasets) and
+  # roxygenise (man/, NAMESPACE, R/globals.R) are the same regardless of the
+  # check platform, but each of the 9 legs was regenerating them -- fit_data.R
+  # alone is ~2 min on Linux and ~5.5 min on Windows per leg. Running it once
+  # on Linux and downloading the result removes that redundant work.
+  #
+  # Sharing the Linux-built fitted data to the macOS/Windows legs is safe: the
+  # CRAN submission tarball is built on Linux with exactly these .rda files and
+  # is checked by CRAN across all platforms, so their cross-platform loading is
+  # already validated.
+  prep:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup imuGAP CI environment
+        uses: ./.github/actions/setup-imugap
+        with:
+          extra-packages: any::roxygen2, any::roxyglobals, any::pkgload
+          needs: check
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prep-build-artifacts
+          if-no-files-found: error
+          retention-days: 1
+          path: |
+            data/fit_sim.rda
+            data/target_sim.rda
+            data/predict_sim.rda
+            man
+            NAMESPACE
+            R/globals.R
+
   R-CMD-check:
+    needs: prep
     runs-on: ${{ matrix.config.os }}
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
@@ -35,12 +78,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      # Restore the fitted data + man/ + NAMESPACE + R/globals.R produced by the
+      # prep job, so this leg does not regenerate them.
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: prep-build-artifacts
+          path: .
+
+      # Build steps are toggled off: the artifacts above already provide the
+      # NAMESPACE, docs, and fitted data, so this leg only needs R + the check
+      # dependencies before running R CMD check (which builds/compiles the
+      # tarball itself, independently of the fitted-data step).
       - name: Setup imuGAP CI environment
         uses: ./.github/actions/setup-imugap
         with:
           r-version: ${{ matrix.config.r }}
           extra-packages: any::rcmdcheck, any::roxygen2, any::roxyglobals, any::pkgload
           needs: check
+          bootstrap-namespace: 'false'
+          cache-stan: 'false'
+          generate-data: 'false'
+          generate-docs: 'false'
 
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
