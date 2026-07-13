@@ -109,12 +109,23 @@ jobs:
 
   check-result:
     if: always()
-    needs: [R-CMD-check]
+    needs: [prep, R-CMD-check]
     runs-on: ubuntu-latest
     steps:
-      - name: Verify all required checks passed
+      - name: Verify prep and all required checks passed
         run: |
-          if [ "${{ needs.R-CMD-check.result }}" = "failure" ]; then
-            echo "One or more required checks failed"
+          # Fail on anything that is not a clean success (failure, skipped,
+          # cancelled). In particular, if `prep` fails the matrix legs are
+          # SKIPPED rather than failed, so checking only for "failure" would let
+          # a prep failure slip through as a green required check.
+          # (devel legs are continue-on-error, so a devel failure is reported as
+          # success in the matrix result and is tolerated as before.)
+          if [ "${{ needs.prep.result }}" != "success" ]; then
+            echo "prep job did not succeed (result: ${{ needs.prep.result }})"
             exit 1
           fi
+          if [ "${{ needs.R-CMD-check.result }}" != "success" ]; then
+            echo "R-CMD-check did not succeed (result: ${{ needs.R-CMD-check.result }})"
+            exit 1
+          fi
+          echo "prep and R-CMD-check both succeeded."
