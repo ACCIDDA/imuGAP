@@ -17,28 +17,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Setup R
-        uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: 'release'
-          use-public-rspm: true
-
-      # cmdstanr (a non-CRAN Suggests) is fetched from GitHub via DESCRIPTION's
-      # Remotes field, which pak reads. Do NOT add the stan-dev r-universe to the
-      # repo pool: pak would then pull its DEV StanHeaders/rstan, which fail to
-      # compile against CRAN's RcppEigen. cmdstanr is pure R (no Stan headers of
-      # its own), so Remotes pins only cmdstanr and the Stan stack stays on CRAN.
-      #
-      # local::. is intentionally NOT installed: NAMESPACE is untracked (#115),
-      # so imuGAP can't be installed until roxygen2 regenerates it. lint_package()
-      # is static -- it needs the sources and deps, not an installed imuGAP or a
-      # NAMESPACE -- so this job skips the "Bootstrap NAMESPACE" step the
-      # build/check jobs use.
-      - name: Install dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
+      # lint_package() is static: it needs the sources and deps, not an installed
+      # imuGAP or a regenerated NAMESPACE, so every build step in the composite
+      # action is toggled off here (bootstrap/cache/data/docs).
+      - name: Setup imuGAP CI environment
+        uses: ./.github/actions/setup-imugap
         with:
           extra-packages: any::lintr
           needs: lint
+          bootstrap-namespace: 'false'
+          cache-stan: 'false'
+          generate-data: 'false'
+          generate-docs: 'false'
 
       - name: Lint
         run: lintr::lint_package()
