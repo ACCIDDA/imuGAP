@@ -10,7 +10,8 @@
 # public API (re-exported below). fit_model() and the backend_* accessors are
 # imported for internal use only.
 
-#' @importFrom flexstanr fit_model backend_draws_array backend_extract backend_generate_quantities backend_has_draws
+#' @importFrom flexstanr fit_model backend_draws_array backend_extract
+#' @importFrom flexstanr backend_generate_quantities backend_has_draws
 NULL
 
 #' Stan sampler options
