@@ -50,7 +50,6 @@ SystemRequirements: GNU make
 Additional_repositories:
     https://stan-dev.r-universe.dev
 Remotes:
-    ACCIDDA/flexstanr,
     stan-dev/cmdstanr
 Suggests:
     cmdstanr,
