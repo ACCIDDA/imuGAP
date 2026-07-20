@@ -1,3 +1,26 @@
+# Validate that a value is a vector of positive integers, coercing to integer.
+# Small generic helper used by imugap_options() and the print methods; it was
+# previously provided by the vendored flexstanr backend file, but flexstanr does
+# not export it, so imuGAP keeps its own copy after the flexstanr migration (#122).
+assert_positive_int <- function(val, name) {
+  if (!is.numeric(val)) {
+    stop(sprintf("'%s' must be numeric", name), call. = FALSE)
+  }
+  if (length(val) < 1L) {
+    stop(sprintf("length('%s') must be >= 1", name), call. = FALSE)
+  }
+  if (any(is.na(val))) {
+    stop(sprintf("'%s' may not contain NAs", name), call. = FALSE)
+  }
+  if (any(val != as.integer(val))) {
+    stop(sprintf("'%s' must be integers", name), call. = FALSE)
+  }
+  if (any(val < 1L)) {
+    stop(sprintf("'%s' must be positive", name), call. = FALSE)
+  }
+  as.integer(val)
+}
+
 #' @title imuGAP Model Options
 #'
 #' @description
