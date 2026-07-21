@@ -98,7 +98,7 @@ assert_dt_able <- function(dt, copy = FALSE) {
 }
 
 #' @keywords internal
-assert_cols <- function(dt, cols, warn_extra = FALSE) {
+assert_cols <- function(dt, cols, warn_extra = FALSE, allowed_extra = character(0)) {
   missing_cols <- setdiff(cols, names(dt))
   if (length(missing_cols) > 0) {
     stop(
@@ -109,7 +109,7 @@ assert_cols <- function(dt, cols, warn_extra = FALSE) {
     )
   }
   if (warn_extra) {
-    extra_cols <- setdiff(names(dt), cols)
+    extra_cols <- setdiff(names(dt), c(cols, allowed_extra))
     if (length(extra_cols) > 0) {
       warning(
         "'",

@@ -98,3 +98,24 @@ test_that("canonical input short-circuits and returns unchanged", {
   again <- canonicalize_locations(canon)
   expect_identical(canon, again)
 })
+
+test_that("validates population hierarchy when population column is present", {
+  # Valid population sum (State=100, County A=60, County B=40, School A1=40, School A2=20, School B1=40)
+  valid_locs <- data.frame(
+    loc_id = c("State", "A", "B", "A1", "A2", "B1"),
+    parent_id = c(NA, "State", "State", "A", "A", "B"),
+    population = c(100, 60, 40, 40, 20, 40)
+  )
+  expect_silent(canonicalize_locations(valid_locs))
+
+  # Mismatched population sum (A1=40, A2=30 sum to 70 != A=60)
+  invalid_locs <- data.frame(
+    loc_id = c("State", "A", "B", "A1", "A2", "B1"),
+    parent_id = c(NA, "State", "State", "A", "A", "B"),
+    population = c(100, 60, 40, 40, 30, 40)
+  )
+  expect_error(
+    canonicalize_locations(invalid_locs),
+    "Child location populations for parent 'A' sum to 70"
+  )
+})

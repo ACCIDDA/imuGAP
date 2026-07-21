@@ -1,40 +1,51 @@
-# Part A of the package-data pipeline: simulate the *_sim inputs and the static
-# latent-parameter fixture.
+# Create the latent processes for the example data.
 #
-# This step depends on the private nc_measles dataset (read below) and so cannot
-# run in CI; the resulting *_sim inputs and latent_params_sim are tracked in git.
-# It also writes data-raw/sim_internals.rds, consumed by Part B
-# (data-raw/fit_data.R) to build the genuinely fit-derived artifacts
-# (fit_sim/target_sim/predict_sim) without re-running this simulation.
-# latent_params_sim used to live in Part B, but its parameters and its
-# (analytic, fit-free) coverage are simulation properties, not fit outputs, so
-# it moved here as tracked static data (#105). Run with `just data` (or
-# `just data-inputs` for this step alone).
-
-# Load only the packages this script actually uses. If you attach e.g. the
-# full tidyverse, you'll pull in lubridate; lubridate then gets captured in the
-# fitted model's `@.MISC` environment and baked into data/fit_sim.rda, tripping
-# R CMD check's "namespace references in data files".
+# Simulates time-varying state-level trends in vaccine propensity, with county-
+# and school-level random effects.
+#
+# All elements are sampled as if odds-ratio factors against an indifferent
+# baseline odds of 1.0.
 library(data.table)
 
-# use pkgload::load_code() to simulate having the contemporary version of imuGAP
-# available for data generation
+# uses pkgload::load_code() to load the contemporary version of imuGAP for data
+# generation steps
 if (requireNamespace("pkgload", quietly = TRUE)) {
-  pkgload::load_code()
+  pkgload::load_code() # n.b., if pkgload <= 1.5.3, may fail due a load_code bug
 } else {
   stop("pkgload not found")
 }
-
-library(dplyr)
 
 ################################################################################
 # A.1 Setup Structural & Latent Features #######################################
 ################################################################################
 
-n_yr <- 33
-n_cohort <- 30
-ref_year <- 1995
-phi_st <- c(
+# going simulate out to age 33 for 30 birth cohorts
+n_yr <- 33L
+n_cohort <- 30L
+
+# The final cohort corresponds to the youngest birth
+# cohort observed in this year, which is ChildVaxView 3yo data in our example
+# will use cohort := year - XYZ_offset + 1L to determine the cohort
+cvv_max_age <- 3L
+# final cohort + age must be a constant
+# TeenVaxView goes out to 18 yo; so senior cohort + 18L == n_cohort + 3L
+tvv_max_age <- 18L
+tvv_min_age <- 14L
+tvv_max_cohort <- n_cohort + cvv_max_age - tvv_max_age
+
+tvv_cohorts <- seq_len(tvv_max_cohort)
+study_ages <- tvv_max_age:tvv_min_age
+
+# School Observations are for 5 yo; so K cohort + 5L == n_cohort + 3L
+sch_start <- 5L
+skv_max_cohort <- n_cohort + cvv_max_age - sch_start
+skv_cohorts <- seq_len(skv_max_cohort)
+
+# need to routinely switch back and forth betweens odds vs probs space
+p_to_odds <- function(p) p / (1 - p)
+odds_to_p <- function(odds) odds / (1 + odds)
+
+phi_st_OR <- c(
   0.8401733,
   0.8458791,
   0.8515769,
@@ -65,17 +76,18 @@ phi_st <- c(
   0.9314054,
   0.9277256,
   0.9298663
-)
+) |>
+  p_to_odds()
 
 stopifnot(
-  "phi_st must have same length as # of cohorts" = length(phi_st) == n_cohort
+  "phi_st must have same length as # of cohorts" = length(phi_st_OR) == n_cohort
 )
 
-# Setup a 2-dose vaccine, like MMR
+# Setup a 2-dose vaccine, like MMR; lambda is the per-time constant hazard
 lambda <- c(2.8, 3.0)
 n_doses <- length(lambda)
 
-# Setup the dose schedule
+# Setup the dose schedule, dose 1 eligibility at age 1, 2 at age 4
 dose_schedule <- c(1, 4)
 doses <- matrix(0, ncol = length(dose_schedule), nrow = n_yr)
 for (i in seq_along(dose_schedule)) {
@@ -130,7 +142,14 @@ school_names <- c(
   "Cormorant Elementary"
 )
 
-sch_per_cnty <- data.frame(parent_id = county_names, n_sch = c(10L, 7L, 7L))
+sch_per_cnty <- data.table(
+  parent_id = county_names,
+  n_sch = c(10L, 7L, 7L)
+)[,
+  ul := cumsum(n_sch)
+][,
+  ll := c(0L, head(ul, -1L)) + 1L
+]
 tot_sch <- sum(sch_per_cnty$n_sch)
 
 stopifnot(
@@ -148,9 +167,66 @@ other_vax_reduction <- 0.95
 
 set.seed(93254)
 
-cnty_offset <- rnorm(length(county_names), 0, sigma_cnty)
-names(cnty_offset) <- county_names
-sch_offset <- rnorm(tot_sch, 0, sigma_sch)
+# Simulate detailed school-level enrollment
+nsch_base <- rlnorm(tot_sch, log(75), log(2.5))
+# potentially resample to get a truncated lognormal
+badindices <- which(!between(nsch_base, 10, 450))
+while (length(badindices)) {
+  nsch_base[badindices] <- rlnorm(length(badindices), log(75), log(2.5))
+  badindices <- which(!between(nsch_base, 10, 450))
+}
+nsch_base <- as.integer(round(nsch_base))
+ncty_base <- sch_per_cnty[, mapply(function(l, u) sum(nsch_base[l:u]), ll, ul)]
+
+# now sample the underlying offsets; constructed such that log odds ratios
+# have a sampled mean of zero at each level. N.B. this implies that the OR
+# effects balance to the enclosing effect, but *NOT* that probabilities average
+
+draw_constrained_normal <- function(w, sigma) {
+  n <- length(w)
+  qr_decomp <- qr(matrix(w, ncol = 1))
+  P <- qr.Q(qr_decomp, complete = TRUE)[, -1, drop = FALSE]
+  z <- rnorm(n - 1)
+  as.numeric((P %*% z) * sigma)
+}
+
+ncty_share <- ncty_base / sum(ncty_base)
+
+sch_per_cnty[,
+  cnty_OR := draw_constrained_normal(ncty_share, sigma_cnty) |> exp()
+]
+sch_overall <- sch_per_cnty[,
+  {
+    nsch_cnty <- nsch_base[ll:ul]
+    nsch_cnty_share <- nsch_cnty / sum(nsch_cnty)
+    .(
+      cnty_OR,
+      schl_OR = draw_constrained_normal(nsch_cnty_share, sigma_sch) |> exp()
+    )
+  },
+  by = parent_id
+]
+
+# row == time, col = school
+schl_prob_matrix <- outer(
+  phi_st_OR,
+  sch_overall[, cnty_OR * schl_OR],
+  "*"
+) |>
+  odds_to_p()
+
+cnty_prob_matrix <- sch_per_cnty[,
+  {
+    schl_prob_matrix[, ll:ul, drop = FALSE] %*%
+      nsch_base[ll:ul] /
+      sum(nsch_base[ll:ul])
+  },
+  by = parent_id
+]$V1 |>
+  matrix(ncol = length(county_names))
+
+phi_st <- cnty_prob_matrix %*% ncty_share
+
 
 ################################################################################
 # A.3 ChildVaxView #############################################################
@@ -158,6 +234,11 @@ sch_offset <- rnorm(tot_sch, 0, sigma_sch)
 
 # ChildVaxView occurs at the State level. For example purposes, we're treating
 # the observations as if they are censored (i.e. minimum) levels of vaccination
+# The observations are linked: when the cohort turns 3, we get an observation
+# at 36 months (now) and of 24 months (now - 1 year, so delayed).
+#
+# The last ChildVaxView Sample should correspond to the last observed cohort
+
 n_cvv <- round(runif(n_cohort, 250, 450))
 vax_inc <- cov[3, 1] - cov[2, 1]
 at_24 <- rbinom(n_cohort, n_cvv, phi_st * cov[2, 1] * other_vax_reduction)
@@ -169,46 +250,41 @@ at_36 <- at_24 +
   )
 
 sim_child <- rbind(
-  data.frame(
+  data.table(
     loc_id = "State",
     parent_id = NA_character_,
-    year = seq_len(n_cohort) + ref_year,
+    cohort = seq_len(n_cohort),
     age_min = 2,
     positive = at_24,
-    sample_n = n_cvv,
-    dose = 1L
+    sample_n = n_cvv
   ),
-  data.frame(
+  data.table(
     loc_id = "State",
     parent_id = NA_character_,
-    year = seq_len(n_cohort) + ref_year,
+    cohort = seq_len(n_cohort),
     age_min = 3,
     positive = at_36,
-    sample_n = n_cvv,
-    dose = 1L
+    sample_n = n_cvv
   )
-)
-
-sim_child$censored <- 1
+)[, dose := 1L][, censored := 1.0]
 
 # TeenVaxView occurs at the State level; we simulate an independent set of
 # participants every year.
-teen_yrs <- 18:30
-study_ages <- 18:14
 
-sim_teen <- data.frame(
+sim_teen <- data.table(
   loc_id = "State",
   parent_id = NA_character_,
-  year = teen_yrs + ref_year,
-  positive = numeric(length(teen_yrs)),
-  sample_n = numeric(length(teen_yrs)),
+  cohort = tvv_cohorts,
+  positive = numeric(length(tvv_cohorts)),
+  sample_n = numeric(length(tvv_cohorts)),
   age_min = min(study_ages),
   age_max = max(study_ages) + 1L
 )
 
 for (i in seq_len(nrow(sim_teen))) {
   samp_size <- as.integer(runif(length(study_ages), 40, 70))
-  phi_slice <- teen_yrs[i] - study_ages + 1
+  # constant cohort + age => ref cohort (tvv_cohorts[i]) + max(study_ages)
+  phi_slice <- tvv_cohorts[i] + max(study_ages) - study_ages
   sim_teen$sample_n[i] <- sum(samp_size)
   sim_teen$positive[i] <- sum(
     rbinom(
@@ -221,37 +297,27 @@ for (i in seq_len(nrow(sim_teen))) {
 
 sim_teen$dose <- 2L
 
-# Simulate detailed school-level data
-sch_start <- 5L
-sch_yrs <- (sch_start + 1L):30
-nsch_base <- rlnorm(tot_sch, log(75), log(2.5))
-# potentially resample to get a truncated lognormal
-badindices <- which(!between(nsch_base, 10, 450))
-while (length(badindices)) {
-  nsch_base[badindices] <- rlnorm(length(badindices), log(75), log(2.5))
-  badindices <- which(!between(nsch_base, 10, 450))
-}
-nsch_base <- as.integer(round(nsch_base))
+################################################################################
+# A.4 School-level data for K entry ############################################
+################################################################################
 
 kg_sim_full <- list()
 cnty_ids <- with(sch_per_cnty, rep(parent_id, times = n_sch))
 for (s in seq_len(tot_sch)) {
-  nsch <- integer(length(sch_yrs))
+  nsch <- integer(length(skv_cohorts))
   nsch[1] <- nsch_base[s]
-  for (y in 2:length(sch_yrs)) {
+  for (y in 2:length(skv_cohorts)) {
     nsch[y] <- nsch[y - 1] + as.integer(round(5 * runif(1, min = -1, max = 1)))
     if (nsch[y] < 4) {
       nsch[y] <- 4L
     }
   }
-  offset <- sch_offset[s] + cnty_offset[cnty_ids[s]]
-  cov_temp <- plogis(qlogis(phi_st[sch_yrs - sch_start]) + offset) *
-    cov[sch_start, 2]
+  cov_temp <- schl_prob_matrix[skv_cohorts, s] * cov[sch_start, 2]
   kg_sim_full[[s]] <- data.frame(
-    year = sch_yrs + ref_year,
+    cohort = skv_cohorts,
     parent_id = cnty_ids[s],
     loc_id = school_names[s],
-    positive = rbinom(length(sch_yrs), nsch, cov_temp),
+    positive = rbinom(length(skv_cohorts), nsch, cov_temp),
     sample_n = nsch
   )
 }
@@ -266,7 +332,7 @@ sim_school <- kg_sim[,
       tot_non = sum(sample_n) - tot_vax
     )
   },
-  by = year
+  by = cohort
 ][, {
   npos <- rbinom(.N, tot_vax, 0.9)
   .(
@@ -274,7 +340,7 @@ sim_school <- kg_sim[,
     parent_id = NA_character_,
     sample_n = npos + rbinom(.N, tot_non, 0.9),
     positive = npos,
-    year,
+    cohort,
     age_min = sch_start,
     dose = 2L
   )
@@ -298,29 +364,25 @@ observations_sim <- rbindlist(
   fill = TRUE
 )
 
-# Calculate normalized cohorts (using age_min and age_max)
-observations_sim <- observations_sim |>
-  mutate(
-    age_max_val = ifelse(is.na(age_max), age_min + 1, age_max),
-    by_min = year - age_max_val + 1,
-    cohort_min = by_min - min(by_min) + 1
-  ) |>
-  dplyr::select(-by_min, -age_max_val)
-
 # Assign sequential obs_id
 observations_sim$obs_id <- seq_len(nrow(observations_sim))
-observations_sim <- setDT(observations_sim)
 
-# Create populations
+# Calculate normalized cohorts (using age_min and age_max)
 obs_for_pop <- copy(observations_sim)
-obs_for_pop[, cohort := cohort_min]
+# the youngest age
+# obs_for_pop[, cohort := year - min(year) + 1L]
 
 populations_sim <- imuGAP:::create_observation_populations(
   obs_for_pop,
   mode = "snapshot"
 )
 
-# Create locations mapping
+# Create locations mapping with population count per entity
+school_pops <- data.table(loc_id = school_names, population = as.numeric(nsch_base))
+county_pops <- data.table(loc_id = county_names, population = as.numeric(ncty_base))
+state_pop <- data.table(loc_id = "State", population = as.numeric(sum(ncty_base)))
+pop_dt <- rbind(state_pop, county_pops, school_pops)
+
 locations_sim <- rbindlist(
   list(
     data.frame(loc_id = "State", parent_id = NA_character_),
@@ -331,7 +393,7 @@ locations_sim <- rbindlist(
   fill = TRUE
 )
 
-locations_sim <- setDT(locations_sim)
+locations_sim <- pop_dt[setDT(locations_sim), on = "loc_id"]
 
 # Create imugap input package data objects
 usethis::use_data(observations_sim, overwrite = TRUE)
@@ -352,8 +414,8 @@ sim_internals <- list(
   lambda = lambda,
   sigma_sch = sigma_sch,
   sigma_cnty = sigma_cnty,
-  off_sch = sch_offset,
-  off_cnty = cnty_offset,
+  schl_OR = sch_overall$schl_OR,
+  cnty_OR = sch_per_cnty$cnty_OR,
   censor_reduction = other_vax_reduction,
   uptake = cov,
   county_names = county_names,
@@ -362,16 +424,7 @@ sim_internals <- list(
 )
 saveRDS(sim_internals, "data-raw/sim_internals.rds")
 
-# Latent parameters + true coverage (tracked static data, #105).
-#
-# latent_params_sim bundles the simulation's latent parameters together with
-# `coverage`: the true/background coverage for each row of the prediction target
-# grid. Neither depends on the Stan fit -- the parameters are the internals
-# above, and coverage is derived analytically from them -- so now that
-# create_target() builds the target grid without a fit (#110), this is computed
-# here as tracked static data rather than regenerated on every build. Part B
-# (data-raw/fit_data.R) rebuilds target_sim from the same create_target() grid
-# spec and asserts the row counts still line up.
+# --- Target population for prediction --------------------------------------
 target_grid <- imuGAP:::create_target(
   location = unique(locations_sim$loc_id),
   age = 1:18,
@@ -379,39 +432,27 @@ target_grid <- imuGAP:::create_target(
   dose = c(1, 2),
   mode = "snapshot"
 )
-target_grid <- data.table::as.data.table(target_grid)
+saveRDS(target_grid, file = "data-raw/target_sim.rds")
 
-coverage <- numeric(nrow(target_grid))
-for (i in seq_len(nrow(target_grid))) {
-  loc <- target_grid$loc_id[i]
-  cohort_val <- target_grid$cohort[i]
-  age_val <- target_grid$age[i]
-  dose_val <- target_grid$dose[i]
-
-  if (loc == "State") {
-    offset <- 0
-  } else if (loc %in% sim_internals$county_names) {
-    c_idx <- match(loc, sim_internals$county_names)
-    offset <- sim_internals$off_cnty[c_idx]
-  } else {
-    s_idx <- match(loc, sim_internals$school_names)
-    offset <- sim_internals$off_sch[s_idx] +
-      sim_internals$off_cnty[sim_internals$cnty_ids[s_idx]]
-  }
-
-  coverage[i] <- stats::plogis(
-    stats::qlogis(sim_internals$phi_st[cohort_val]) + offset
+coverage <- target_grid[,
+  fcase(
+    loc_id == "State"                                                          ,
+    sim_internals$phi_st[cohort]                                               ,
+    loc_id %in% sim_internals$county_names                                     ,
+    cnty_prob_matrix[cbind(cohort, match(loc_id, sim_internals$county_names))] ,
+    loc_id %in% sim_internals$school_names                                     ,
+    schl_prob_matrix[cbind(cohort, match(loc_id, sim_internals$school_names))]
   ) *
-    sim_internals$uptake[age_val, dose_val]
-}
+    sim_internals$uptake[cbind(age, dose)]
+]
 
 latent_params_sim <- list(
   phi_state = sim_internals$phi_st,
   lambda = sim_internals$lambda,
   sigma_sch = sim_internals$sigma_sch,
   sigma_cnty = sim_internals$sigma_cnty,
-  off_sch = sim_internals$off_sch,
-  off_cnty = sim_internals$off_cnty,
+  schl_OR = sim_internals$schl_OR,
+  cnty_OR = sim_internals$cnty_OR,
   censor_reduction = sim_internals$censor_reduction,
   uptake = sim_internals$uptake,
   coverage = coverage

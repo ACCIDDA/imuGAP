@@ -110,13 +110,13 @@ To ensure data integrity, the `canonicalize_*` functions enforce strict rules on
 
 ```{r validation-failure-obs}
 # Create a copy with an invalid observation (positive > sample_n)
-invalid_obs <- copy(observations_sim[, .(obs_id, loc_id, positive, sample_n, censored)])
-invalid_obs[1, positive := sample_n + 10]
+invalid_obs <- copy(observations_sim)
+invalid_obs[sample(nrow(observations_sim), 5), positive := sample_n + 10]
 
 # This will fail validation and throw an error:
 tryCatch(
   canonicalize_observations(invalid_obs),
-  error = function(e) message("Caught expected error: ", e$message)
+  error = function(e) message("Caught expected error:\n\t", e$message)
 )
 ```
 
@@ -126,13 +126,14 @@ Similarly, if the locations data contains duplicate location IDs, `canonicalize_
 # Create a copy with a duplicate location ID
 invalid_locs <- rbind(
   locations_sim,
-  data.frame(loc_id = "Scruggs", parent_id = "State")
+  data.frame(loc_id = "Scruggs", parent_id = "State"),
+  fill = TRUE
 )
 
 # This will fail validation:
 tryCatch(
   canonicalize_locations(invalid_locs),
-  error = function(e) message("Caught expected error: ", e$message)
+  error = function(e) message("Caught expected error:\n\t", e$message)
 )
 ```
 
@@ -149,6 +150,7 @@ Because compiling the Stan model and running the MCMC chain can take some time, 
 ```{r sampling-code, eval = FALSE}
 fit_sim <- sampling(
   observations_sim, populations_sim, locations_sim,
+  imugap_opts = imugap_options(model_name = "impute_school_coverage_process_odds_rollup"),
   stan_opts = stan_options(
     iter = 2000, chains = 4, refresh = 0, seed = 1L
   )
@@ -170,11 +172,29 @@ str(beta_draws)
 
 We can also look at trace plots for selected parameters to ensure convergence has been reached.
 
-```{r trace-plot}
+```{r trace-plot-betas}
 bayesplot::mcmc_trace(fit_sim$stanfit,
   pars = c(
     "beta_bs[1]", "beta_bs[2]", "beta_bs[3]",
     "beta_bs[4]", "beta_bs[5]"
+  )
+) + theme_bw() +
+  theme(legend.position = c(.9, .1), legend.justification = c(1, 0))
+```
+
+```{r trace-plot-lambdas}
+bayesplot::mcmc_trace(fit_sim$stanfit,
+  pars = c(
+    "lambda_raw[1]", "lambda_raw[2]"
+  )
+) + theme_bw() +
+  theme(legend.position = c(.9, .1), legend.justification = c(1, 0))
+```
+
+```{r trace-plot-sigmas}
+bayesplot::mcmc_trace(fit_sim$stanfit,
+  pars = c(
+    "sigma_cnty", "sigma_sch"
   )
 ) + theme_bw() +
   theme(legend.position = c(.9, .1), legend.justification = c(1, 0))
@@ -217,9 +237,9 @@ data("predict_sim", package = "imuGAP")
 We can summarize these predictions to get the posterior mean and credible intervals across the target location, age, and doses requested:
 
 ```{r summarize-predictions}
-# Calculate the posterior mean coverage probability for each location and dose at age 5
+# Calculate the posterior mean coverage probability for each observation
 summary_predict <- summary(predict_sim)
-head(summary_predict)
+summary_predict[age %in% 2:6 & loc_id == "State"]
 ```
 
 Now let's visualize the results. First we will take a look at overall state coverage by cohort. Note that the lower coverage among 5 year olds is due to them only having been eligible for their second dose for one year.   
@@ -243,8 +263,9 @@ summary_predict |>
   subset(loc_id %in% c("Scruggs", "Simone", "Watson") & dose == 2 & age > 4) |>
   ggplot() +
   aes(x = age) +
-  geom_line(aes(y = q50, color = loc_id)) +
-  geom_ribbon(aes(ymin = q2_5, ymax = q97_5, fill = loc_id), alpha = 0.2) +
+  geom_line(aes(y = q50, color = loc_id, linetype = "median")) +
+  geom_line(aes(y = q2_5, color = loc_id, linetype = "lower")) +
+  geom_line(aes(y = q97_5, color = loc_id, linetype = "upper")) +
   theme_bw() +
   theme(
     legend.position = "inside", legend.position.inside = c(.2, 0.05),
@@ -252,6 +273,10 @@ summary_predict |>
   ) +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
   scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
+  scale_linetype_manual(
+    NULL,
+    values = c("median" = "solid", "lower" = "dashed", "upper" = "dotted")
+  ) +
   labs(
     x = "Age", y = "Coverage", title = "County-level two dose coverage"
   )
@@ -261,15 +286,19 @@ Next, we can look at the distribution of school-level coverage estimates by age 
 
 ```{r grade-viz}
 scruggs_schools <- locations_sim[parent_id == "Scruggs", loc_id]
-summary_predict |>
-  subset(
-    loc_id %in% scruggs_schools & dose == 2 & age > 4
-  ) |>
-  ggplot() +
-  geom_boxplot(aes(x = factor(age), y = q50)) +
+focal_view <- summary_predict |> subset(
+  loc_id %in% scruggs_schools & dose == 2 & age > 4
+)
+school_order <- focal_view[age == 5][order(q50), loc_id]
+ggplot(focal_view) +
+  geom_point(aes(x = age, y = q50, color = loc_id)) +
   theme_bw() +
+  scale_color_discrete(breaks = rev(school_order)) +
+  theme(
+    legend.position = "inside", legend.position.inside = c(0.5, 0.5)
+  ) +
   labs(
-    x = "Age", y = "Coverage",
+    x = "Age", y = "Coverage", color = "School",
     title = "Distribution of School-Level Coverage For Scruggs County"
   )
 ```
@@ -289,7 +318,7 @@ predict_sub <- predict_sim |>
 
 # Get the pre-computed background coverage matching the subsetted target
 latent_ref <- copy(predict_sub$target)
-latent_ref$coverage <- latent_params_sim$coverage[predict_sub$target$obs_id]
+latent_ref$coverage <- latent_params_sim$coverage[predict_sub$target$obs_c_id]
 
 
 # Convert predictions to a long-format data.frame
@@ -298,13 +327,9 @@ draws_df <- as.data.frame(predict_sub)
 # Now plot it all
 ggplot() +
   aes(age, coverage, color = loc_id) +
-  geom_point(
+  geom_boxplot(
     data = draws_df,
-    alpha = 1 / 256, shape = 16,
-    position = position_jitterdodge(
-      dodge.width = 0.5,
-      jitter.width = 0.15
-    )
+    mapping = aes(group = interaction(age, loc_id))
   ) +
   geom_point(
     data = latent_ref,

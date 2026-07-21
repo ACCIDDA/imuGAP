@@ -1,0 +1,5 @@
+# ignore any diagnostic figures
+^*.png$
+
+# ignore diagnostic-related scripts
+^diagnostic_*.R*
