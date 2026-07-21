@@ -20,11 +20,26 @@ if (requireNamespace("pkgload", quietly = TRUE)) {
 ################################################################################
 
 # going simulate out to age 33 for 30 birth cohorts
-n_yr <- 33
-n_cohort <- 30
+n_yr <- 33L
+n_cohort <- 30L
 
-# for data realism, also providing a reference "real" year
-ref_year <- 1995
+# The final cohort corresponds to the youngest birth
+# cohort observed in this year, which is ChildVaxView 3yo data in our example
+# will use cohort := year - XYZ_offset + 1L to determine the cohort
+cvv_max_age <- 3L
+# final cohort + age must be a constant
+# TeenVaxView goes out to 18 yo; so senior cohort + 18L == n_cohort + 3L
+tvv_max_age <- 18L
+tvv_min_age <- 14L
+tvv_max_cohort <- n_cohort + cvv_max_age - tvv_max_age
+
+tvv_cohorts <- seq_len(tvv_max_cohort)
+study_ages <- tvv_max_age:tvv_min_age
+
+# School Observations are for 5 yo; so K cohort + 5L == n_cohort + 3L
+sch_start <- 5L
+skv_max_cohort <- n_cohort + cvv_max_age - sch_start
+skv_cohorts <- seq_len(skv_max_cohort)
 
 # need to routinely switch back and forth betweens odds vs probs space
 p_to_odds <- function(p) p / (1 - p)
@@ -178,7 +193,7 @@ draw_constrained_normal <- function(w, sigma) {
 ncty_share <- ncty_base / sum(ncty_base)
 
 sch_per_cnty[,
-  cnty_OR := draw_constrained_normal(ncty_share, sigma_cnty)
+  cnty_OR := draw_constrained_normal(ncty_share, sigma_cnty) |> exp()
 ]
 sch_overall <- sch_per_cnty[,
   {
@@ -219,6 +234,11 @@ phi_st <- cnty_prob_matrix %*% ncty_share
 
 # ChildVaxView occurs at the State level. For example purposes, we're treating
 # the observations as if they are censored (i.e. minimum) levels of vaccination
+# The observations are linked: when the cohort turns 3, we get an observation
+# at 36 months (now) and of 24 months (now - 1 year, so delayed).
+#
+# The last ChildVaxView Sample should correspond to the last observed cohort
+
 n_cvv <- round(runif(n_cohort, 250, 450))
 vax_inc <- cov[3, 1] - cov[2, 1]
 at_24 <- rbinom(n_cohort, n_cvv, phi_st * cov[2, 1] * other_vax_reduction)
@@ -230,46 +250,41 @@ at_36 <- at_24 +
   )
 
 sim_child <- rbind(
-  data.frame(
+  data.table(
     loc_id = "State",
     parent_id = NA_character_,
-    year = seq_len(n_cohort) + ref_year,
+    cohort = seq_len(n_cohort),
     age_min = 2,
     positive = at_24,
-    sample_n = n_cvv,
-    dose = 1L
+    sample_n = n_cvv
   ),
-  data.frame(
+  data.table(
     loc_id = "State",
     parent_id = NA_character_,
-    year = seq_len(n_cohort) + ref_year,
+    cohort = seq_len(n_cohort),
     age_min = 3,
     positive = at_36,
-    sample_n = n_cvv,
-    dose = 1L
+    sample_n = n_cvv
   )
-)
-
-sim_child$censored <- 1
+)[, dose := 1L][, censored := 1.0]
 
 # TeenVaxView occurs at the State level; we simulate an independent set of
 # participants every year.
-teen_yrs <- 18:30
-study_ages <- 18:14
 
-sim_teen <- data.frame(
+sim_teen <- data.table(
   loc_id = "State",
   parent_id = NA_character_,
-  year = teen_yrs + ref_year,
-  positive = numeric(length(teen_yrs)),
-  sample_n = numeric(length(teen_yrs)),
+  cohort = tvv_cohorts,
+  positive = numeric(length(tvv_cohorts)),
+  sample_n = numeric(length(tvv_cohorts)),
   age_min = min(study_ages),
   age_max = max(study_ages) + 1L
 )
 
 for (i in seq_len(nrow(sim_teen))) {
   samp_size <- as.integer(runif(length(study_ages), 40, 70))
-  phi_slice <- teen_yrs[i] - study_ages + 1
+  # constant cohort + age => ref cohort (tvv_cohorts[i]) + max(study_ages)
+  phi_slice <- tvv_cohorts[i] + max(study_ages) - study_ages
   sim_teen$sample_n[i] <- sum(samp_size)
   sim_teen$positive[i] <- sum(
     rbinom(
@@ -286,25 +301,23 @@ sim_teen$dose <- 2L
 # A.4 School-level data for K entry ############################################
 ################################################################################
 
-sch_start <- 5L
-sch_yrs <- (sch_start + 1L):30
 kg_sim_full <- list()
 cnty_ids <- with(sch_per_cnty, rep(parent_id, times = n_sch))
 for (s in seq_len(tot_sch)) {
-  nsch <- integer(length(sch_yrs))
+  nsch <- integer(length(skv_cohorts))
   nsch[1] <- nsch_base[s]
-  for (y in 2:length(sch_yrs)) {
+  for (y in 2:length(skv_cohorts)) {
     nsch[y] <- nsch[y - 1] + as.integer(round(5 * runif(1, min = -1, max = 1)))
     if (nsch[y] < 4) {
       nsch[y] <- 4L
     }
   }
-  cov_temp <- schl_prob_matrix[sch_yrs - sch_start, s] * cov[sch_start, 2]
+  cov_temp <- schl_prob_matrix[skv_cohorts, s] * cov[sch_start, 2]
   kg_sim_full[[s]] <- data.frame(
-    year = sch_yrs + ref_year,
+    cohort = skv_cohorts,
     parent_id = cnty_ids[s],
     loc_id = school_names[s],
-    positive = rbinom(length(sch_yrs), nsch, cov_temp),
+    positive = rbinom(length(skv_cohorts), nsch, cov_temp),
     sample_n = nsch
   )
 }
@@ -319,7 +332,7 @@ sim_school <- kg_sim[,
       tot_non = sum(sample_n) - tot_vax
     )
   },
-  by = year
+  by = cohort
 ][, {
   npos <- rbinom(.N, tot_vax, 0.9)
   .(
@@ -327,7 +340,7 @@ sim_school <- kg_sim[,
     parent_id = NA_character_,
     sample_n = npos + rbinom(.N, tot_non, 0.9),
     positive = npos,
-    year,
+    cohort,
     age_min = sch_start,
     dose = 2L
   )
@@ -356,7 +369,8 @@ observations_sim$obs_id <- seq_len(nrow(observations_sim))
 
 # Calculate normalized cohorts (using age_min and age_max)
 obs_for_pop <- copy(observations_sim)
-obs_for_pop[, cohort := year - min(year) + 1L]
+# the youngest age
+# obs_for_pop[, cohort := year - min(year) + 1L]
 
 populations_sim <- imuGAP:::create_observation_populations(
   obs_for_pop,
@@ -405,16 +419,7 @@ sim_internals <- list(
 )
 saveRDS(sim_internals, "data-raw/sim_internals.rds")
 
-# Latent parameters + true coverage (tracked static data, #105).
-#
-# latent_params_sim bundles the simulation's latent parameters together with
-# `coverage`: the true/background coverage for each row of the prediction target
-# grid. Neither depends on the Stan fit -- the parameters are the internals
-# above, and coverage is derived analytically from them -- so now that
-# create_target() builds the target grid without a fit (#110), this is computed
-# here as tracked static data rather than regenerated on every build. Part B
-# (data-raw/fit_data.R) rebuilds target_sim from the same create_target() grid
-# spec and asserts the row counts still line up.
+# --- Target population for prediction --------------------------------------
 target_grid <- imuGAP:::create_target(
   location = unique(locations_sim$loc_id),
   age = 1:18,
@@ -422,28 +427,19 @@ target_grid <- imuGAP:::create_target(
   dose = c(1, 2),
   mode = "snapshot"
 )
-target_grid <- data.table::as.data.table(target_grid)
+saveRDS(target_grid, file = "data-raw/target_sim.rds")
 
-coverage <- numeric(nrow(target_grid))
-for (i in seq_len(nrow(target_grid))) {
-  loc <- target_grid$loc_id[i]
-  cohort_val <- target_grid$cohort[i]
-  age_val <- target_grid$age[i]
-  dose_val <- target_grid$dose[i]
-
-  if (loc == "State") {
-    coverage[i] <- sim_internals$phi_st[cohort_val] *
-      sim_internals$uptake[age_val, dose_val]
-  } else if (loc %in% sim_internals$county_names) {
-    c_idx <- match(loc, sim_internals$county_names)
-    coverage[i] <- cnty_prob_matrix[cohort_val, c_idx] *
-      sim_internals$uptake[age_val, dose_val]
-  } else {
-    s_idx <- match(loc, sim_internals$school_names)
-    coverage[i] <- schl_prob_matrix[cohort_val, s_idx] *
-      sim_internals$uptake[age_val, dose_val]
-  }
-}
+coverage <- target_grid[,
+  fcase(
+    loc_id == "State"                                                          ,
+    sim_internals$phi_st[cohort]                                               ,
+    loc_id %in% sim_internals$county_names                                     ,
+    cnty_prob_matrix[cbind(cohort, match(loc_id, sim_internals$county_names))] ,
+    loc_id %in% sim_internals$school_names                                     ,
+    schl_prob_matrix[cbind(cohort, match(loc_id, sim_internals$school_names))]
+  ) *
+    sim_internals$uptake[cbind(age, dose)]
+]
 
 latent_params_sim <- list(
   phi_state = sim_internals$phi_st,

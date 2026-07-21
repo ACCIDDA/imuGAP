@@ -53,13 +53,7 @@ save(fit_sim, file = "data/fit_sim.rda", compress = "xz")
 
 # --- Target population for prediction --------------------------------------
 target_sim <- canonicalize_target(
-  create_target(
-    location = unique(locations_sim$loc_id),
-    age = 1:18,
-    cohort = max(populations_sim$cohort) - 18,
-    dose = c(1, 2),
-    mode = "snapshot"
-  ),
+  readRDS("data-raw/target_sim.rds"),
   fit_sim
 )
 save(target_sim, file = "data/target_sim.rda")
