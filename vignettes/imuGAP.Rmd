@@ -325,13 +325,9 @@ draws_df <- as.data.frame(predict_sub)
 # Now plot it all
 ggplot() +
   aes(age, coverage, color = loc_id) +
-  geom_point(
+  geom_boxplot(
     data = draws_df,
-    alpha = .1, shape = 16,
-    position = position_jitterdodge(
-      dodge.width = 0.5,
-      jitter.width = 0.15
-    )
+    mapping = aes(group = interaction(age, loc_id))
   ) +
   geom_point(
     data = latent_ref,
