@@ -32,6 +32,7 @@ fit_sim <- suppressWarnings(sampling(
   observations_sim,
   populations_sim,
   locations_sim,
+  imugap_opts = imugap_options(model_name = "impute_school_coverage_process_odds_rollup"),
   stan_opts = stan_options(
     iter = 1000,
     chains = 4,

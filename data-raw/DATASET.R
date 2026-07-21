@@ -377,7 +377,12 @@ populations_sim <- imuGAP:::create_observation_populations(
   mode = "snapshot"
 )
 
-# Create locations mapping
+# Create locations mapping with population count per entity
+school_pops <- data.table(loc_id = school_names, population = as.numeric(nsch_base))
+county_pops <- data.table(loc_id = county_names, population = as.numeric(ncty_base))
+state_pop <- data.table(loc_id = "State", population = as.numeric(sum(ncty_base)))
+pop_dt <- rbind(state_pop, county_pops, school_pops)
+
 locations_sim <- rbindlist(
   list(
     data.frame(loc_id = "State", parent_id = NA_character_),
@@ -388,7 +393,7 @@ locations_sim <- rbindlist(
   fill = TRUE
 )
 
-locations_sim <- setDT(locations_sim)
+locations_sim <- pop_dt[setDT(locations_sim), on = "loc_id"]
 
 # Create imugap input package data objects
 usethis::use_data(observations_sim, overwrite = TRUE)

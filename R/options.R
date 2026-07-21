@@ -18,7 +18,8 @@
 imugap_options <- function(
   df = 5L,
   dose_schedule = c(1, 4),
-  object = c("default")
+  model_name = c("impute_school_coverage_process_v6", "impute_school_coverage_process_odds_rollup"),
+  object = NULL
 ) {
   if (length(df) != 1L) {
     stop("'df' must be a single positive integer", call. = FALSE)
@@ -33,10 +34,13 @@ imugap_options <- function(
     )
   }
 
-  object <- switch(
-    object,
-    "default" = stanmodels$impute_school_coverage_process_v6,
+  model_name <- match.arg(model_name)
+  if (is.null(object)) {
+    object <- stanmodels[[model_name]]
+  } else if (identical(object, "default")) {
+    object <- stanmodels$impute_school_coverage_process_v6
+  } else if (!inherits(object, "stanmodel")) {
     stop("Unknown model object: ", object)
-  )
+  }
   as.list(environment())
 }

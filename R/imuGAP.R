@@ -77,6 +77,24 @@ sampling <- function(
     doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
   }
 
+  model_name <- imugap_opts$model_name
+  if (is.null(model_name)) {
+    stop("`imugap_opts` must be created by imugap_options().", call. = FALSE)
+  }
+
+  if (model_name == "impute_school_coverage_process_odds_rollup") {
+    if (!"population" %in% names(loc_info)) {
+      stop(
+        "The 'population' column in 'locations' is required when using the ",
+        "'impute_school_coverage_process_odds_rollup' model.",
+        call. = FALSE
+      )
+    }
+    school_enrollment <- as.numeric(loc_info[layer == 3, population])
+  } else {
+    school_enrollment <- numeric(0)
+  }
+
   # prepare dat_stan
   dat_stan <- list(
     n_uncensored_obs = obs[is.na(censored), .N],
@@ -102,6 +120,10 @@ sampling <- function(
     predict_mode = 0
   )
 
+  if (model_name == "impute_school_coverage_process_odds_rollup") {
+    dat_stan$school_enrollment <- school_enrollment
+  }
+
   # The `backend` element is the marker that stan_opts came from stan_options();
   # its absence means a hand-built list. Whatever backend it names wins.
   backend <- stan_opts$backend
@@ -109,10 +131,6 @@ sampling <- function(
     stop("`stan_opts` must be created by stan_options().", call. = FALSE)
   }
 
-  # imuGAP has a single model; fit_model() looks it up in `stanmodels` (rstan)
-  # and locates inst/stan/<model_name>.stan (cmdstanr). No init is supplied, so
-  # the backend uses its own default.
-  model_name <- "impute_school_coverage_process_v6"
   raw_fit <- fit_model(
     model_name,
     dat_stan,

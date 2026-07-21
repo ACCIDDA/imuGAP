@@ -126,7 +126,8 @@ Similarly, if the locations data contains duplicate location IDs, `canonicalize_
 # Create a copy with a duplicate location ID
 invalid_locs <- rbind(
   locations_sim,
-  data.frame(loc_id = "Scruggs", parent_id = "State")
+  data.frame(loc_id = "Scruggs", parent_id = "State"),
+  fill = TRUE
 )
 
 # This will fail validation:
@@ -149,6 +150,7 @@ Because compiling the Stan model and running the MCMC chain can take some time, 
 ```{r sampling-code, eval = FALSE}
 fit_sim <- sampling(
   observations_sim, populations_sim, locations_sim,
+  imugap_opts = imugap_options(model_name = "impute_school_coverage_process_odds_rollup"),
   stan_opts = stan_options(
     iter = 2000, chains = 4, refresh = 0, seed = 1L
   )
