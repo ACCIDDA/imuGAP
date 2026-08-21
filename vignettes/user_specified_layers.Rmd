@@ -1,8 +1,8 @@
 ---
-title: "User-Specified Location Layers in imuGAP"
+title: "Flexible Location Layers in imuGAP"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{User-Specified Location Layers in imuGAP}
+  %\VignetteIndexEntry{Flexible Location Layers in imuGAP}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,9 +18,9 @@ knitr::opts_chunk$set(
 
 ## Overview
 
-The `imuGAP` package models vaccine coverage across geographic and administrative location hierarchies over time. A key strength of `imuGAP` is its support for **user-specified location layers**: the model dynamically adapts to arbitrary hierarchy depths ($1, 2, 3, \dots, K$ layers) based on user input.
+The `imuGAP` package models vaccine coverage across geographic and administrative location hierarchies over time. A key strength of `imuGAP` is its support for **flexible location layers**: the layer depth and structure of the model are dynamically driven by the location hierarchy submitted in the input data ($1, 2, 3, \dots, K$ layers).
 
-Whether your input data contains:
+Whether your submitted location data contains:
 - **1 layer** (State-level aggregate observations only),
 - **2 layers** (State $\rightarrow$ Counties),
 - **3 layers** (State $\rightarrow$ Counties $\rightarrow$ Schools), or
@@ -29,7 +29,7 @@ Whether your input data contains:
 `imuGAP` canonicalizes the location tree, maps parent-child relationships across layers, and estimates location-specific propensity offsets at each resolution level.
 
 This vignette demonstrates:
-1. Constructing and canonicalizing location hierarchies for 1, 2, and 3 layers.
+1. Constructing and canonicalizing location hierarchies for 1, 2, and 3 layers based on submitted location inputs.
 2. Fitting the `imuGAP` model under each hierarchy configuration.
 3. Loading pre-computed package fit objects (`fit_sim_1layer`, `fit_sim_2layer`, `fit_sim`).
 4. Comparing estimated coverage probabilities against the **known true coverage probabilities** from the simulation dataset.
@@ -63,7 +63,7 @@ table(canon_3layer$layer)
 
 ### 2-Layer Hierarchy (State $\rightarrow$ County)
 
-Filtering to State and County locations creates a 2-layer hierarchy:
+Filtering the submitted location data to State and County locations creates a 2-layer hierarchy:
 
 ```{r locs-2layer}
 locs_2layer <- locs_3layer[is.na(parent_id) | parent_id == "State"]
@@ -73,7 +73,7 @@ table(canon_2layer$layer)
 
 ### 1-Layer Hierarchy (State Only)
 
-Filtering to only the root State location creates a 1-layer hierarchy:
+Filtering the submitted location data to only the root State location creates a 1-layer hierarchy:
 
 ```{r locs-1layer}
 locs_1layer <- locs_3layer[is.na(parent_id)]
@@ -154,7 +154,7 @@ true_state_df <- data.table(
 )
 ```
 
-```{r state-plot, fig.cap = "State-level coverage comparison: estimated vs. known true coverage across layer depths."}
+```{r state-plot, fig.cap = "State-level coverage comparison: estimated vs. known true coverage across flexible layer configurations."}
 ggplot() +
   geom_ribbon(data = state_3layer_pred, aes(x = age, ymin = q2_5, ymax = q97_5, fill = "3-Layer (State/County/School)"), alpha = 0.2) +
   geom_line(data = state_3layer_pred, aes(x = age, y = q50, color = "3-Layer (State/County/School)"), linewidth = 1) +
@@ -162,12 +162,12 @@ ggplot() +
   geom_line(data = state_1layer_pred, aes(x = age, y = q50, color = "1-Layer (State Only)"), linetype = "dotted", linewidth = 1) +
   geom_point(data = true_state_df, aes(x = age, y = coverage, shape = "True Coverage"), size = 2.5) +
   scale_shape_manual(name = "", values = c("True Coverage" = 17)) +
-  scale_color_manual(name = "Model Input", values = c(
+  scale_color_manual(name = "Submitted Locations", values = c(
     "3-Layer (State/County/School)" = "#1b9e77",
     "2-Layer (State/County)" = "#d95f02",
     "1-Layer (State Only)" = "#7570b3"
   )) +
-  scale_fill_manual(name = "Model Input", values = c(
+  scale_fill_manual(name = "Submitted Locations", values = c(
     "3-Layer (State/County/School)" = "#1b9e77"
   )) +
   theme_bw() +
@@ -215,6 +215,6 @@ ggplot() +
 
 ## Conclusion
 
-The `imuGAP` package's location layer architecture allows users to fit models using whatever administrative resolution is available in their input data ($1, 2, 3, \dots, K$ layers). 
+The `imuGAP` package's **flexible location layer** architecture allows users to fit models using whatever administrative resolution is provided in their submitted location data ($1, 2, 3, \dots, K$ layers). 
 - Macro state-level trends are reliably estimated even under a **1-layer** input.
 - Sub-national variation at county (**2-layer**) and school (**3-layer**) resolutions is captured accurately by building hierarchical random offsets down the location tree.
