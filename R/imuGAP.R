@@ -52,11 +52,28 @@ sampling <- function(
 ) {
   # check location argument
   loc_info <- canonicalize_locations(locations)
-  layer_sizes <- loc_info[, .N, keyby = layer][, c(N)]
-  stop_fmt_if(length(layer_sizes) != 3, ERR_IMUGAP_LAYER_COUNT, length(layer_sizes))
+  n_locs <- nrow(loc_info)
+  n_layers <- max(loc_info$layer)
+  layer_sizes <- as.integer(loc_info[, .N, keyby = layer]$N)
+  layer_bounds <- matrix(
+    c(
+      loc_info[, min(loc_c_id), by = layer]$V1,
+      loc_info[, max(loc_c_id), by = layer]$V1
+    ),
+    nrow = 2,
+    byrow = TRUE
+  )
 
-  n_cnty <- layer_sizes[2]
-  n_schl <- layer_sizes[3]
+  parent_id_map <- integer(n_locs)
+  for (i in seq_len(n_locs)) {
+    pid <- loc_info$parent_id[i]
+    if (is.na(pid) || !pid %in% loc_info$loc_id) {
+      parent_id_map[i] <- 0L
+    } else {
+      parent_id_map[i] <- loc_info[loc_id == pid, loc_c_id]
+    }
+  }
+  layer_id_map <- as.integer(loc_info$layer)
 
   # check observations argument
   obs <- canonicalize_observations(observations)
@@ -86,7 +103,12 @@ sampling <- function(
     n_uncensored_obs = obs[is.na(censored), .N],
     n_yr = max(wts$age),
     n_cohort = max(wts$cohort),
-    n_sch = n_schl,
+    n_locs = n_locs,
+    n_layers = n_layers,
+    layer_sizes = layer_sizes,
+    layer_bounds = layer_bounds,
+    parent_id_map = parent_id_map,
+    layer_id_map = layer_id_map,
     n_doses = length(dose_schedule),
     dose_sched = doses,
     k_bs = ncol(bsp),
@@ -96,13 +118,11 @@ sampling <- function(
     y_smp = obs$sample_n,
     n_weights = nrow(wts),
     obs_to_weights_bounds = unique(wts$range_start),
-    weights_school = wts$loc_c_id,
+    weights_location = wts$loc_c_id,
     weights_cohort = wts$cohort,
     weights_life_year = wts$age,
     weights_dose = wts$dose,
     weights = wts$weight,
-    n_cnty = n_cnty,
-    cnty_bounds = loc_info[layer == 3, unique(layer_bound)],
     predict_mode = 0
   )
 
