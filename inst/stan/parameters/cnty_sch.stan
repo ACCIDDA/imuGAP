@@ -1,7 +1,4 @@
 
-  // offsets
-  real<lower=0> sigma_cnty;
-  row_vector<multiplier=sigma_cnty>[n_cnty] off_cnty;
-
-  real<lower=0> sigma_sch;
-  row_vector<multiplier=sigma_sch>[n_sch] off_sch;
+  // Offsets for non-root locations (size n_locs - 1) and layer standard deviations
+  vector<lower=0>[max(1, n_layers - 1)] sigma_layer;
+  vector[n_locs - 1] off_layer;
