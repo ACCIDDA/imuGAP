@@ -1,0 +1,2 @@
+ - [ ] prior inits? particularly lambda => enable shifting meaning w/ shifting interpretation of time; also strength of shrinkage for hierarchical params
+ - [ ] automatically assessed layers for hierarchy

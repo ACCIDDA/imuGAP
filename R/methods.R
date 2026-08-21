@@ -206,7 +206,7 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
   target <- data.table::copy(object$target)
 
   # Compute mean for each target observation over iteration and chain dimensions
-  mean_vals <- colMeans(draws, dims = 2)
+  mean_vals <- apply(draws, 3, mean)
 
   # Compute quantiles over iteration and chain dimensions for each variable slice
   quantiles <- t(apply(draws, 3, stats::quantile, probs = probs, na.rm = TRUE))

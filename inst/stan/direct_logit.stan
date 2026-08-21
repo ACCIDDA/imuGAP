@@ -1,4 +1,4 @@
-#include imugap_functions.stan
+#include functions/collection.stan
 
 // need meta info:
 //  which cohorts, which places, which years of life
@@ -6,54 +6,49 @@
 
 data {
 
-#include stan/data/shared.stan
-#include stan/data/bspline.stan
+#include data/shared.stan
+#include data/bspline.stan
+#include data/censoring.stan
 
 }
 
-#include stan/data/transformed.stan
+transformed data {
+  #include transformed_data/observation_map.stan
+  #include transformed_data/layer_offsets_unconstrained.stan
+}
 
 parameters {
-
-  #include stan/parameters/bspline.stan
-  // #include stan/parameters/constant_phi.stan
-
-  // #include stan/parameters/cnty_sch_linear.stan
-  #include stan/parameters/cnty_sch.stan
-  
-  #include stan/parameters/static_lambda.stan
-
-}
-
-transformed parameters {
-  // state-level phi by year, constructed from beta spline
-  // Construct state-level trend from basis functions
-  
-  #include stan/transformed_parameters/bspline.stan // yields logit_phi_st
-  // #include stan/transformed_parameters/constant_phi.stan
-
-  #include stan/transformed_parameters/static_lambda.stan // yields unrolled dose cdf
-
-  #include stan/transformed_parameters/p_obs.stan // yields p_obs
-
+  #include parameters/bspline.stan
+  #include parameters/layer_offsets.stan
+  #include parameters/static_lambda.stan
 }
 
 model {
 
   if (!predict_mode) {
+    // setup this models parameters
+    #include model/bspline.stan
+    #include model/static_lambda.stan
+    #include model/cnty_sch.stan
 
-    // #include stan/model/cnty_sch_linear.stan
-    #include stan/model/cnty_sch.stan
-    #include stan/model/bspline.stan
-    // #include stan/model/constant_phi.stan
-    #include stan/model/static_lambda.stan
-    #include stan/model/shared.stan
+    // do this models calculations
+    #include model/v6_shared.stan
 
+    // create the probabilities for this model
+    #include model/p_obs.stan
+
+    // evaluate likelihoods
+    #include model/censored.stan
   }
-
 }
 
-#include stan/generated_quantities/shared.stan
+generated quantities {
+  vector[predict_mode ? n_obs : 0] p_obs;
+
+  if (predict_mode) {
+    #include model/v6_shared.stan
+  }
+}
 
 // This model represents vaccination as a discrete step, fixed hazard process
 // therefore X(t) => X(t + deltaT) = X(t)*exp(-hazard*deltaT)

@@ -262,3 +262,15 @@ test_that("sampling errors when stan_opts was not built by stan_options()", {
     "stan_options"
   )
 })
+
+test_that("sampling errors when imugap_opts was not built by imugap_options()", {
+  expect_error(
+    suppressWarnings(imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs(),
+      imugap_opts = list(df = 5)
+    )),
+    "imugap_options"
+  )
+})

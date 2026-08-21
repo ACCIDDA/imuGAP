@@ -12,9 +12,19 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 
+RcppExport SEXP _rcpp_module_boot_stan_fit4impute_school_coverage_process_logit_balanced_offset_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4impute_school_coverage_process_logit_unbalanced_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4impute_school_coverage_process_odds_rollup_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4impute_school_coverage_process_or_balanced_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4impute_school_coverage_process_or_unbalanced_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4impute_school_coverage_process_v6_mod();
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_rcpp_module_boot_stan_fit4impute_school_coverage_process_logit_balanced_offset_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4impute_school_coverage_process_logit_balanced_offset_mod, 0},
+    {"_rcpp_module_boot_stan_fit4impute_school_coverage_process_logit_unbalanced_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4impute_school_coverage_process_logit_unbalanced_mod, 0},
+    {"_rcpp_module_boot_stan_fit4impute_school_coverage_process_odds_rollup_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4impute_school_coverage_process_odds_rollup_mod, 0},
+    {"_rcpp_module_boot_stan_fit4impute_school_coverage_process_or_balanced_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4impute_school_coverage_process_or_balanced_mod, 0},
+    {"_rcpp_module_boot_stan_fit4impute_school_coverage_process_or_unbalanced_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4impute_school_coverage_process_or_unbalanced_mod, 0},
     {"_rcpp_module_boot_stan_fit4impute_school_coverage_process_v6_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4impute_school_coverage_process_v6_mod, 0},
     {NULL, NULL, 0}
 };
