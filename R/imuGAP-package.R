@@ -168,4 +168,46 @@ NULL
 #' @keywords datasets
 NULL
 
+#' @title Example Stan Fit (2 Layers)
+#' @description A reference `imugap_fit` object from fitting a 2-layer model (State -> County).
+#' @name fit_sim_2layer
+#' @docType data
+#' @keywords datasets
+NULL
+
+#' @title Example Prediction Target Populations (2 Layers)
+#' @description Prediction target grid for 2-layer model.
+#' @name target_sim_2layer
+#' @docType data
+#' @keywords datasets
+NULL
+
+#' @title Example Coverage Predictions (2 Layers)
+#' @description Predicted coverage probabilities for 2-layer model.
+#' @name predict_sim_2layer
+#' @docType data
+#' @keywords datasets
+NULL
+
+#' @title Example Stan Fit (1 Layer)
+#' @description A reference `imugap_fit` object from fitting a 1-layer model (State only).
+#' @name fit_sim_1layer
+#' @docType data
+#' @keywords datasets
+NULL
+
+#' @title Example Prediction Target Populations (1 Layer)
+#' @description Prediction target grid for 1-layer model.
+#' @name target_sim_1layer
+#' @docType data
+#' @keywords datasets
+NULL
+
+#' @title Example Coverage Predictions (1 Layer)
+#' @description Predicted coverage probabilities for 1-layer model.
+#' @name predict_sim_1layer
+#' @docType data
+#' @keywords datasets
+NULL
+
 .datatable.aware <- TRUE # nolint: object_name_linter.

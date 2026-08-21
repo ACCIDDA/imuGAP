@@ -18,28 +18,29 @@ knitr::opts_chunk$set(
 
 ## Overview
 
-The `imuGAP` package models vaccine coverage across geographic and administrative location hierarchies over time. A key feature of `imuGAP` is its support for **user-specified location layers**: the model automatically adapts to arbitrary hierarchy depths ($1, 2, 3, \dots, K$ layers) based on the user's input location data.
+The `imuGAP` package models vaccine coverage across geographic and administrative location hierarchies over time. A key strength of `imuGAP` is its support for **user-specified location layers**: the model dynamically adapts to arbitrary hierarchy depths ($1, 2, 3, \dots, K$ layers) based on user input.
 
-Whether your data contains:
+Whether your input data contains:
 - **1 layer** (State-level aggregate observations only),
 - **2 layers** (State $\rightarrow$ Counties),
 - **3 layers** (State $\rightarrow$ Counties $\rightarrow$ Schools), or
 - **$K$ layers** (Country $\rightarrow$ Region $\rightarrow$ District $\rightarrow$ Facility),
 
-`imuGAP` canonicalizes the location tree, identifies parent-child relationships across layers, and estimates location-specific propensity offsets at each level of resolution.
+`imuGAP` canonicalizes the location tree, maps parent-child relationships across layers, and estimates location-specific propensity offsets at each resolution level.
 
-In this vignette, we demonstrate how to:
-1. Construct and canonicalize location hierarchies for 1, 2, and 3 layers.
-2. Fit the `imuGAP` model under each hierarchy depth.
-3. Compare estimated coverage probabilities against the **known true probabilities** from the package simulation dataset.
+This vignette demonstrates:
+1. Constructing and canonicalizing location hierarchies for 1, 2, and 3 layers.
+2. Fitting the `imuGAP` model under each hierarchy configuration.
+3. Loading pre-computed package fit objects (`fit_sim_1layer`, `fit_sim_2layer`, `fit_sim`).
+4. Comparing estimated coverage probabilities against the **known true coverage probabilities** from the simulation dataset.
 
 ---
 
-## 1. Preparing Package Data and Location Hierarchies
+## 1. Input Datasets & Location Hierarchy Canonicalization
 
-We begin by loading the simulation datasets provided with `imuGAP`:
+We load the package simulation datasets:
 
-```{r load-data}
+```{r load-packages}
 library(imuGAP)
 library(data.table)
 library(ggplot2)
@@ -52,7 +53,7 @@ data("latent_params_sim", package = "imuGAP")
 
 ### 3-Layer Hierarchy (State $\rightarrow$ County $\rightarrow$ School)
 
-The default `locations_sim` dataset contains 3 layers: the root State, 3 Counties, and 24 Schools.
+The default `locations_sim` dataset contains a 3-layer tree: State (root), 3 Counties, and 24 Schools.
 
 ```{r locs-3layer}
 locs_3layer <- copy(locations_sim)
@@ -62,151 +63,151 @@ table(canon_3layer$layer)
 
 ### 2-Layer Hierarchy (State $\rightarrow$ County)
 
-We can create a 2-layer location hierarchy by retaining only the State and County rows:
+Filtering to State and County locations creates a 2-layer hierarchy:
 
 ```{r locs-2layer}
 locs_2layer <- locs_3layer[is.na(parent_id) | parent_id == "State"]
 canon_2layer <- canonicalize_locations(locs_2layer)
 table(canon_2layer$layer)
-
-# Subset populations and observations to match the 2-layer locations
-pops_2layer <- populations_sim[loc_id %in% locs_2layer$loc_id]
-obs_2layer <- observations_sim[obs_id %in% pops_2layer$obs_id]
 ```
 
 ### 1-Layer Hierarchy (State Only)
 
-We can also create a 1-layer hierarchy with only the root State location:
+Filtering to only the root State location creates a 1-layer hierarchy:
 
 ```{r locs-1layer}
 locs_1layer <- locs_3layer[is.na(parent_id)]
 canon_1layer <- canonicalize_locations(locs_1layer)
 table(canon_1layer$layer)
-
-# Aggregate population weights to the State level
-pops_1layer <- copy(populations_sim)
-pops_1layer[, loc_id := "State"]
-pops_1layer <- pops_1layer[
-  , .(weight = sum(weight)),
-  by = .(obs_id, loc_id, cohort, age, dose)
-]
-obs_1layer <- copy(observations_sim)
 ```
 
 ---
 
-## 2. Fitting Models across Hierarchy Depths
+## 2. Fitting the Model
 
-Now we fit the Bayesian process model using `sampling()` for each hierarchy input.
+Fitting models for 1-layer, 2-layer, and 3-layer location inputs uses `sampling()` with standard Stan options:
 
-```{r fit-models, eval = FALSE}
-# Set sampler settings (e.g. 1000 warmup + 1000 sampling iterations)
-st_opts <- stan_options(iter = 2000, chains = 4, seed = 42L)
+```{r fit-code, eval = FALSE}
+st_opts <- stan_options(iter = 1000, chains = 4, seed = 1L)
 
-# Fit 3-layer model
-fit_3layer <- sampling(
-  observations = observations_sim,
-  populations = populations_sim,
-  locations = locs_3layer,
-  stan_opts = st_opts
-)
+# 3-Layer Fit
+fit_3layer <- sampling(observations_sim, populations_sim, locs_3layer, stan_opts = st_opts)
 
-# Fit 2-layer model
-fit_2layer <- sampling(
-  observations = obs_2layer,
-  populations = pops_2layer,
-  locations = locs_2layer,
-  stan_opts = st_opts
-)
+# 2-Layer Fit
+pops_2layer <- populations_sim[loc_id %in% locs_2layer$loc_id]
+obs_2layer <- observations_sim[obs_id %in% pops_2layer$obs_id]
+fit_2layer <- sampling(obs_2layer, pops_2layer, locs_2layer, stan_opts = st_opts)
 
-# Fit 1-layer model
-fit_1layer <- sampling(
-  observations = obs_1layer,
-  populations = pops_1layer,
-  locations = locs_1layer,
-  stan_opts = st_opts
-)
+# 1-Layer Fit
+pops_1layer <- copy(populations_sim)[, loc_id := "State"]
+pops_1layer <- pops_1layer[, .(weight = sum(weight)), by = .(obs_id, loc_id, cohort, age, dose)]
+fit_1layer <- sampling(observations_sim, pops_1layer, locs_1layer, stan_opts = st_opts)
 ```
 
-*(For vignette rendering speed, pre-computed fits can be loaded or run with concise chains.)*
+For vignettes and local analysis, pre-computed fit artifacts are bundled with `imuGAP` package data:
 
----
-
-## 3. Predictions and Known Probability Comparison
-
-To evaluate performance across layer inputs, we generate coverage predictions for target locations and compare them with the **known ground-truth coverage probabilities** (`latent_params_sim$coverage`).
-
-### Defining Prediction Targets
-
-We construct target grids for State, County, and School locations across ages 5 to 18 for Dose 2:
-
-```{r targets}
-target_state <- create_target(
-  location = "State",
-  age = 5:18,
-  cohort = max(populations_sim$cohort) - 18,
-  dose = 2,
-  mode = "snapshot"
-)
-
-target_county <- create_target(
-  location = c("Scruggs", "Simone", "Watson"),
-  age = 5:18,
-  cohort = max(populations_sim$cohort) - 18,
-  dose = 2,
-  mode = "snapshot"
-)
-
-target_school <- create_target(
-  location = c("Chickadee Elementary", "Nuthatch Academy", "Tufted Titmouse School"),
-  age = 5:18,
-  cohort = max(populations_sim$cohort) - 18,
-  dose = 2,
-  mode = "snapshot"
-)
+```{r load-fits}
+data("fit_sim", package = "imuGAP")
+data("fit_sim_2layer", package = "imuGAP")
+data("fit_sim_1layer", package = "imuGAP")
 ```
 
 ---
 
-## 4. Visualization: Known vs. Estimated Coverage
+## 3. Pre-Computed Predictions & Known True Coverage
 
-### State-Level Coverage Comparison (1, 2, and 3 Layers)
+We load the pre-computed predictions for 1-layer, 2-layer, and 3-layer fits (`predict_sim_1layer`, `predict_sim_2layer`, `predict_sim`):
 
-Here we compare state-level coverage estimates from 1-layer, 2-layer, and 3-layer model inputs against the true simulated state coverage.
+```{r load-predictions}
+data("predict_sim", package = "imuGAP")
+data("predict_sim_2layer", package = "imuGAP")
+data("predict_sim_1layer", package = "imuGAP")
+```
 
-```{r state-comparison, eval = FALSE}
-# Plot comparing 1-layer, 2-layer, and 3-layer state predictions to ground truth
+We summarize the predictions using `summary()` to obtain posterior median (`q50`) and 95% credible intervals (`q2_5`, `q97_5`):
+
+```{r summarize}
+summary_3layer <- summary(predict_sim)
+summary_2layer <- summary(predict_sim_2layer)
+summary_1layer <- summary(predict_sim_1layer)
+```
+
+---
+
+## 4. Comparing Known vs. Estimated Coverage Probabilities
+
+### State-Level Coverage (1, 2, and 3 Layers)
+
+We compare estimated state-level Dose 2 coverage from the 1-layer, 2-layer, and 3-layer model fits against the **known true coverage** stored in `latent_params_sim$coverage`.
+
+```{r state-prep}
+# Extract true coverage matching target
+state_3layer_pred <- summary_3layer[loc_id == "State" & dose == 2 & age > 4]
+state_2layer_pred <- summary_2layer[loc_id == "State" & dose == 2 & age > 4]
+state_1layer_pred <- summary_1layer[loc_id == "State" & dose == 2 & age > 4]
+
+# True ground-truth coverage from latent_params_sim
+target_state_rows <- predict_sim$target[loc_id == "State" & dose == 2 & age > 4]
+true_state_df <- data.table(
+  age = target_state_rows$age,
+  coverage = latent_params_sim$coverage[target_state_rows$obs_c_id]
+)
+```
+
+```{r state-plot, fig.cap = "State-level coverage comparison: estimated vs. known true coverage across layer depths."}
 ggplot() +
-  geom_line(data = pred_state_3layer, aes(x = age, y = q50, color = "3-Layer Fit"), linewidth = 1) +
-  geom_line(data = pred_state_2layer, aes(x = age, y = q50, color = "2-Layer Fit"), linetype = "dashed", linewidth = 1) +
-  geom_line(data = pred_state_1layer, aes(x = age, y = q50, color = "1-Layer Fit"), linetype = "dotted", linewidth = 1) +
-  geom_point(data = true_state_coverage, aes(x = age, y = true_coverage, shape = "True Coverage"), size = 3) +
+  geom_ribbon(data = state_3layer_pred, aes(x = age, ymin = q2_5, ymax = q97_5, fill = "3-Layer (State/County/School)"), alpha = 0.2) +
+  geom_line(data = state_3layer_pred, aes(x = age, y = q50, color = "3-Layer (State/County/School)"), linewidth = 1) +
+  geom_line(data = state_2layer_pred, aes(x = age, y = q50, color = "2-Layer (State/County)"), linetype = "dashed", linewidth = 1) +
+  geom_line(data = state_1layer_pred, aes(x = age, y = q50, color = "1-Layer (State Only)"), linetype = "dotted", linewidth = 1) +
+  geom_point(data = true_state_df, aes(x = age, y = coverage, shape = "True Coverage"), size = 2.5) +
+  scale_shape_manual(name = "", values = c("True Coverage" = 17)) +
+  scale_color_manual(name = "Model Input", values = c(
+    "3-Layer (State/County/School)" = "#1b9e77",
+    "2-Layer (State/County)" = "#d95f02",
+    "1-Layer (State Only)" = "#7570b3"
+  )) +
+  scale_fill_manual(name = "Model Input", values = c(
+    "3-Layer (State/County/School)" = "#1b9e77"
+  )) +
   theme_bw() +
+  scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
   labs(
-    title = "State-Level Coverage: Known vs. Estimated across Layer Depths",
+    title = "State-Level Coverage: Known vs. Estimated",
+    subtitle = "Comparing estimates from 1-layer, 2-layer, and 3-layer location inputs",
     x = "Age",
-    y = "Coverage Probability",
-    color = "Model Input",
-    shape = ""
+    y = "Coverage Probability"
   )
 ```
 
-### County-Level Coverage Comparison (2 vs. 3 Layers)
+### County-Level Coverage (2 vs. 3 Layers)
 
-Comparing county-level coverage estimates from 2-layer and 3-layer models against the true county probabilities demonstrates that both multi-layer models accurately capture county-specific trends.
+Next, we compare county-level coverage estimates between the 2-layer and 3-layer fits for Counties ("Scruggs", "Simone", "Watson"):
 
-```{r county-comparison, eval = FALSE}
+```{r county-plot, fig.cap = "County-level coverage comparison: 2-layer vs. 3-layer estimates against true values."}
+county_3layer_pred <- summary_3layer[loc_id %in% c("Scruggs", "Simone", "Watson") & dose == 2 & age > 4]
+county_2layer_pred <- summary_2layer[loc_id %in% c("Scruggs", "Simone", "Watson") & dose == 2 & age > 4]
+
+target_county_rows <- predict_sim$target[loc_id %in% c("Scruggs", "Simone", "Watson") & dose == 2 & age > 4]
+true_county_df <- data.table(
+  loc_id = target_county_rows$loc_id,
+  age = target_county_rows$age,
+  coverage = latent_params_sim$coverage[target_county_rows$obs_c_id]
+)
+
 ggplot() +
-  geom_line(data = pred_county_3layer, aes(x = age, y = q50, color = loc_id, linetype = "3-Layer")) +
-  geom_line(data = pred_county_2layer, aes(x = age, y = q50, color = loc_id, linetype = "2-Layer")) +
-  geom_point(data = true_county_coverage, aes(x = age, y = true_coverage, color = loc_id), shape = 18, size = 3) +
+  geom_line(data = county_3layer_pred, aes(x = age, y = q50, color = loc_id, linetype = "3-Layer"), linewidth = 0.9) +
+  geom_line(data = county_2layer_pred, aes(x = age, y = q50, color = loc_id, linetype = "2-Layer"), linewidth = 0.9) +
+  geom_point(data = true_county_df, aes(x = age, y = coverage, color = loc_id, shape = "True Coverage"), size = 2.5) +
+  scale_shape_manual(name = "", values = c("True Coverage" = 18)) +
+  scale_linetype_manual(name = "Model Hierarchy", values = c("3-Layer" = "solid", "2-Layer" = "dashed")) +
   theme_bw() +
+  scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
   labs(
     title = "County-Level Coverage: 2-Layer vs. 3-Layer Estimates",
     x = "Age",
     y = "Coverage Probability",
-    color = "County",
-    linetype = "Model Input"
+    color = "County"
   )
 ```
 
@@ -214,6 +215,6 @@ ggplot() +
 
 ## Conclusion
 
-`imuGAP`'s dynamic layer architecture enables flexible modeling regardless of administrative depth:
-- **1-Layer Models** accurately estimate macro state trends when fine-grained locations are unavailable.
-- **2-Layer and 3-Layer Models** leverage parent-child tree dependencies to resolve sub-national variation at county and school resolutions without compromising aggregate estimation accuracy.
+The `imuGAP` package's location layer architecture allows users to fit models using whatever administrative resolution is available in their input data ($1, 2, 3, \dots, K$ layers). 
+- Macro state-level trends are reliably estimated even under a **1-layer** input.
+- Sub-national variation at county (**2-layer**) and school (**3-layer**) resolutions is captured accurately by building hierarchical random offsets down the location tree.

@@ -130,7 +130,7 @@ predict.imugap_fit <- function(
   dat_stan$y_smp <- rep(1L, nrow(target))
   dat_stan$n_weights <- nrow(target)
   dat_stan$obs_to_weights_bounds <- seq_len(nrow(target))
-  dat_stan$weights_school <- target$loc_c_id
+  dat_stan$weights_location <- target$loc_c_id
   dat_stan$weights_cohort <- target$cohort
   dat_stan$weights_life_year <- target$age
   dat_stan$weights_dose <- target$dose
@@ -206,11 +206,16 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
   draws <- object$draws
   target <- data.table::copy(object$target)
 
-  # Compute mean for each target observation over iteration and chain dimensions
-  mean_vals <- colMeans(draws, dims = 2)
-
-  # Compute quantiles over iteration and chain dimensions for each variable slice
-  quantiles <- t(apply(draws, 3, stats::quantile, probs = probs, na.rm = TRUE))
+  if (length(dim(draws)) == 3L) {
+    mean_vals <- colMeans(draws, dims = 2L)
+    quantiles <- t(apply(draws, 3L, stats::quantile, probs = probs, na.rm = TRUE))
+  } else if (length(dim(draws)) == 2L) {
+    mean_vals <- colMeans(draws)
+    quantiles <- t(apply(draws, 2L, stats::quantile, probs = probs, na.rm = TRUE))
+  } else {
+    mean_vals <- mean(draws, na.rm = TRUE)
+    quantiles <- matrix(stats::quantile(draws, probs = probs, na.rm = TRUE), nrow = 1)
+  }
 
   # Format column names for the quantiles
   quantile_names <- sprintf("q%g", probs * 100)

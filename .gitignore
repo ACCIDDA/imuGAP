@@ -29,6 +29,6 @@ R/globals.R
 # *_sim inputs (locations/observations/populations_sim) and latent_params_sim
 # (#105) stay tracked; these three are fit-derived and large/version-fragile, so
 # they are not.
-data/fit_sim.rda
-data/target_sim.rda
-data/predict_sim.rda
+data/fit_sim*.rda
+data/target_sim*.rda
+data/predict_sim*.rda
