@@ -75,6 +75,23 @@ sampling <- function(
   }
   layer_id_map <- as.integer(loc_info$layer)
 
+  # Parent locations metadata (locations having children)
+  parent_loc_info <- loc_info[
+    loc_id %in% loc_info$parent_id[!is.na(parent_id)],
+    .(parent_loc_c_id = loc_c_id, loc_id)
+  ]
+  data.table::setkeyv(parent_loc_info, "parent_loc_c_id")
+  n_parent_locs <- nrow(parent_loc_info)
+
+  parent_child_bounds <- matrix(0L, nrow = 2, ncol = n_parent_locs)
+  for (p in seq_len(n_parent_locs)) {
+    pid <- parent_loc_info$loc_id[p]
+    child_c_ids <- loc_info[parent_id == pid, loc_c_id]
+    parent_child_bounds[1, p] <- min(child_c_ids)
+    parent_child_bounds[2, p] <- max(child_c_ids)
+  }
+  parent_loc_id <- parent_loc_info$parent_loc_c_id
+
   # check observations argument
   obs <- canonicalize_observations(observations)
 
@@ -98,6 +115,8 @@ sampling <- function(
     doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
   }
 
+  model_name <- "impute_school_coverage_process_v6"
+
   # prepare dat_stan
   dat_stan <- list(
     n_uncensored_obs = obs[is.na(censored), .N],
@@ -109,6 +128,9 @@ sampling <- function(
     layer_bounds = layer_bounds,
     parent_id_map = parent_id_map,
     layer_id_map = layer_id_map,
+    n_parent_locs = n_parent_locs,
+    parent_loc_id = parent_loc_id,
+    parent_child_bounds = parent_child_bounds,
     n_doses = length(dose_schedule),
     dose_sched = doses,
     k_bs = ncol(bsp),
