@@ -18,7 +18,14 @@
 imugap_options <- function(
   df = 5L,
   dose_schedule = c(1, 4),
-  model_name = c("impute_school_coverage_process_v6", "impute_school_coverage_process_odds_rollup"),
+  model_name = c(
+    "impute_school_coverage_process_or_balanced",
+    "impute_school_coverage_process_or_unbalanced",
+    "impute_school_coverage_process_logit_unbalanced",
+    "impute_school_coverage_process_logit_balanced_offset",
+    "impute_school_coverage_process_v6",
+    "impute_school_coverage_process_odds_rollup"
+  ),
   object = NULL
 ) {
   if (length(df) != 1L) {

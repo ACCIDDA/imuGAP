@@ -146,7 +146,12 @@ canonicalize_locations <- function(locations) {
   locations <- data.table::as.data.table(locations)
 
   # Check that locations has required structure
-  assert_cols(locations, c("loc_id", "parent_id"), warn_extra = TRUE, allowed_extra = "population")
+  assert_cols(
+    locations,
+    c("loc_id", "parent_id"),
+    warn_extra = TRUE,
+    allowed_extra = "population"
+  )
 
   # check for duplicate ids
   if (length(dupes <- locations[, which(duplicated(loc_id))])) {
@@ -213,7 +218,10 @@ canonicalize_locations <- function(locations) {
   # Validate population hierarchy if population column is present
   if ("population" %in% names(locations)) {
     if (is.na(locations[loc_id == potential_root, population])) {
-      child_sum <- locations[parent_id == potential_root, sum(population, na.rm = TRUE)]
+      child_sum <- locations[
+        parent_id == potential_root,
+        sum(population, na.rm = TRUE)
+      ]
       locations[loc_id == potential_root, population := child_sum]
     }
     max_layer <- max(locations$layer)
@@ -224,8 +232,13 @@ canonicalize_locations <- function(locations) {
         child_sum <- locations[parent_id == pid, sum(population)]
         if (!is.na(parent_pop) && abs(child_sum - parent_pop) > 1e-6) {
           stop(
-            "Child location populations for parent '", pid, "' sum to ",
-            child_sum, ", which does not equal parent population ", parent_pop, "."
+            "Child location populations for parent '",
+            pid,
+            "' sum to ",
+            child_sum,
+            ", which does not equal parent population ",
+            parent_pop,
+            "."
           )
         }
       }

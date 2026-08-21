@@ -6,11 +6,13 @@ test_that("imugap_options returns expected structure with defaults", {
   expect_setequal(names(opts), c("df", "dose_schedule", "model_name", "object"))
   expect_equal(opts$df, 5L)
   expect_equal(opts$dose_schedule, c(1, 4))
-  expect_equal(opts$model_name, "impute_school_coverage_process_v6")
+  expect_equal(opts$model_name, "impute_school_coverage_process_or_balanced")
 })
 
 test_that("imugap_options supports model_name parameter", {
-  opts <- imugap_options(model_name = "impute_school_coverage_process_odds_rollup")
+  opts <- imugap_options(
+    model_name = "impute_school_coverage_process_odds_rollup"
+  )
   expect_equal(opts$model_name, "impute_school_coverage_process_odds_rollup")
 })
 
@@ -41,7 +43,7 @@ test_that("imugap_options errors on unknown object", {
 test_that("imugap_options accepts default keyword explicitly", {
   opts <- imugap_options(object = "default")
   expect_s4_class(opts$object, "stanmodel")
-  expect_equal(opts$object@model_name, "impute_school_coverage_process_v6")
+  expect_equal(opts$object@model_name, "impute_school_coverage_process_or_balanced")
 })
 
 test_that("imugap_options accepts numeric whole-number df", {

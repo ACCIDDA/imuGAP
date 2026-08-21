@@ -130,9 +130,62 @@ update-standalones:
 data: data-inputs data-fit
 
 [group('data')]
-[doc('Regenerate the *_sim inputs from the simulation (requires the private nc_measles dataset)')]
-data-inputs:
+[doc('Regenerate the reference data sets for all 4 approaches')]
+reference-data:
 	Rscript data-raw/DATASET.R
+
+mod validation 'data-raw/validation/justfile'
+
+[group('data')]
+[doc('Create state trajectories validation plot')]
+validation-plot-state: reference-data
+	just validation state
+
+[group('data')]
+[doc('Create county trajectories validation plot')]
+validation-plot-county: reference-data validation-plot-county-fast
+
+[group('data')]
+[doc('Create county trajectories validation plot without regenerating reference data')]
+validation-plot-county-fast:
+	just validation county
+
+[group('data')]
+[doc('Create aggregation error validation plot')]
+validation-plot-aggregation: reference-data
+	just validation aggregation
+
+[group('data')]
+[doc('Create school trajectories validation plot')]
+validation-plot-school: reference-data
+	just validation school
+
+[group('data')]
+[doc('Create school trajectories validation plot for Simone county and Logit Offset Balanced model')]
+validation-plot-school-simone-logit:
+	just validation simone-logit
+
+[group('data')]
+[doc('Create simulated observations validation plot')]
+validation-plot-obs: reference-data
+	just validation obs
+
+[group('data')]
+[doc('Create enrollment demographics validation plot')]
+validation-plot-demographics: reference-data
+	just validation demographics
+
+[group('data')]
+[doc('Create all validation plots comparing the 4 reference data set approaches')]
+validation-plots: validation-plot-state validation-plot-county validation-plot-aggregation validation-plot-school validation-plot-obs validation-plot-demographics
+
+[group('data')]
+[doc('Regenerate reference data sets and validation plots')]
+data-raw: reference-data validation-plots
+
+[group('data')]
+[doc('Regenerate the *_sim inputs from the simulation (requires the private nc_measles dataset)')]
+data-inputs: reference-data
 
 [group('data')]
 [doc('Regenerate the fitted-data artifacts (fit_sim/target_sim/predict_sim/latent_params_sim) from tracked inputs; needs a Stan toolchain')]

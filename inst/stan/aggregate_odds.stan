@@ -1,38 +1,37 @@
-functions {
-  #include functions/convenience.stan
-  #include functions/unrolled_dose_static_lambda.stan
-}
+#include functions/collection.stan
 
 data {
   #include data/shared.stan
-  #include data/shared_odds_weights.stan
+  #include data/size_balance.stan
   #include data/bspline.stan
   #include data/censoring.stan
 }
 
 transformed data {
-  #include transformed_data/epsilon.stan
-  #include transformed_data/cnty_schl.stan
-  #include transformed_data/sum_to_zero_qr.stan
-  #include transformed_data/cnty_schl_rollup_weights.stan
-  #include transformed_data/censoring.stan
+  #include transformed_data/observation_map.stan
+  #include transformed_data/layer_offsets_constrained.stan
 }
 
 parameters {
   #include parameters/bspline.stan
-  #include parameters/cnty_sch_sum_to_zero.stan
+  #include parameters/layer_offsets.stan
   #include parameters/static_lambda.stan
 }
 
 model {
   if (!predict_mode) {
+    // setup this models parameters
     #include model/bspline.stan
     #include model/static_lambda.stan
-    #include model/cnty_sch_sum_to_zero.stan
+    #include model/cnty_sch.stan
 
-    vector[n_obs] p_obs;
+    // do this models calculations
     #include model/odds_shared.stan
 
+    // create the probabilities for this model
+    #include model/p_obs.stan
+
+    // evaluate likelihoods
     #include model/censored.stan
   }
 }

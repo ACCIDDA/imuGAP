@@ -6,8 +6,8 @@
   // because integer arrays don't support broadcasting ...
   // unroll phi and cdf objects to support vectorization
   for (weight_i in 1:n_weights) {
-    // phi ordered by school then cohort
+    // phi ordered by location then cohort
     phi_lookup[weight_i] = weights_cohort[weight_i];
     // ordered by dose then life year
-    cdf_lookup[weight_i] = weights_life_year[weight_i] + (weights_dose[weight_i] - 1) * n_yr;
+    cdf_lookup[weight_i] = weights_obs_time[weight_i] + (weights_dose[weight_i] - 1) * n_yr;
   }

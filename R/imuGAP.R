@@ -82,11 +82,19 @@ sampling <- function(
     stop("`imugap_opts` must be created by imugap_options().", call. = FALSE)
   }
 
-  if (model_name == "impute_school_coverage_process_odds_rollup") {
+  models_requiring_enrollment <- c(
+    "impute_school_coverage_process_odds_rollup",
+    "impute_school_coverage_process_or_balanced",
+    "impute_school_coverage_process_logit_balanced_offset"
+  )
+
+  if (model_name %in% models_requiring_enrollment) {
     if (!"population" %in% names(loc_info)) {
       stop(
-        "The 'population' column in 'locations' is required when using the ",
-        "'impute_school_coverage_process_odds_rollup' model.",
+        sprintf(
+          "The 'population' column in 'locations' is required when using the '%s' model.",
+          model_name
+        ),
         call. = FALSE
       )
     }
@@ -120,7 +128,7 @@ sampling <- function(
     predict_mode = 0
   )
 
-  if (model_name == "impute_school_coverage_process_odds_rollup") {
+  if (model_name %in% models_requiring_enrollment) {
     dat_stan$school_enrollment <- school_enrollment
   }
 

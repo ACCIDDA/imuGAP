@@ -329,11 +329,13 @@ ggplot() +
   aes(age, coverage, color = loc_id) +
   geom_boxplot(
     data = draws_df,
-    mapping = aes(group = interaction(age, loc_id))
+    mapping = aes(group = interaction(age, loc_id)),
+    position = position_dodge(width = 0.75)
   ) +
   geom_point(
     data = latent_ref,
     mapping = aes(shape = "True value"),
+    position = position_dodge(width = 0.75),
     fill = NA
   ) +
   theme_bw() +

@@ -98,7 +98,12 @@ assert_dt_able <- function(dt, copy = FALSE) {
 }
 
 #' @keywords internal
-assert_cols <- function(dt, cols, warn_extra = FALSE, allowed_extra = character(0)) {
+assert_cols <- function(
+  dt,
+  cols,
+  warn_extra = FALSE,
+  allowed_extra = character(0)
+) {
   missing_cols <- setdiff(cols, names(dt))
   if (length(missing_cols) > 0) {
     stop(
