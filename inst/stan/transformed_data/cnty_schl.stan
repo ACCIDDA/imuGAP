@@ -17,7 +17,7 @@
   // Indexing scheme for unconstrained layer offsets:
   // Maps parameter draws (size n_locs - 1) to layer index k (1 .. n_layers - 1)
   array[n_locs - 1] int<lower=1, upper=max(1, n_layers - 1)> draw_layer_map;
-  array[2, max(1, n_layers - 1)] int layer_draw_map;
+  array[2, max(0, n_layers - 1)] int layer_draw_map;
 
   {
     int pos = 1;
