@@ -278,21 +278,23 @@ canonicalize_locations <- function(locations) {
       locations[loc_id == potential_root, population := child_sum]
     }
     max_layer <- max(locations$layer)
-    for (lyr in seq(max_layer, 2L, by = -1L)) {
-      parents_at_layer <- locations[layer == lyr, unique(parent_id)]
-      for (pid in parents_at_layer) {
-        parent_pop <- locations[loc_id == pid, population]
-        child_sum <- locations[parent_id == pid, sum(population)]
-        if (!is.na(parent_pop) && abs(child_sum - parent_pop) > 1e-6) {
-          stop(
-            "Child location populations for parent '",
-            pid,
-            "' sum to ",
-            child_sum,
-            ", which does not equal parent population ",
-            parent_pop,
-            "."
-          )
+    if (max_layer >= 2L) {
+      for (lyr in seq(max_layer, 2L, by = -1L)) {
+        parents_at_layer <- locations[layer == lyr, unique(parent_id)]
+        for (pid in parents_at_layer) {
+          parent_pop <- locations[loc_id == pid, population]
+          child_sum <- locations[parent_id == pid, sum(population)]
+          if (!is.na(parent_pop) && abs(child_sum - parent_pop) > 1e-6) {
+            stop(
+              "Child location populations for parent '",
+              pid,
+              "' sum to ",
+              child_sum,
+              ", which does not equal parent population ",
+              parent_pop,
+              "."
+            )
+          }
         }
       }
     }
