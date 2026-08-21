@@ -2,8 +2,10 @@ vector[n_cohort] logit_phi_st = bs * beta_bs;
 
 vector[n_locs] logit_phi_loc;
 logit_phi_loc[1] = 0.0;
-for (l in 2:n_locs) {
-  logit_phi_loc[l] = logit_phi_loc[parent_id_map[l]] + off_layer[l - 1];
+for (p in 1:n_parent_locs) {
+  int st = parent_child_bounds[1, p];
+  int en = parent_child_bounds[2, p];
+  logit_phi_loc[st:en] = logit_phi_loc[parent_loc_id[p]] + off_layer[(st - 1):(en - 1)];
 }
 
 matrix[n_cohort, n_locs] logit_phi_mat = rep_matrix(logit_phi_st, n_locs) + rep_matrix(to_row_vector(logit_phi_loc), n_cohort);
