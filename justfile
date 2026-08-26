@@ -128,3 +128,17 @@ check: build
 [doc('Check the built tar.gz artifact using CRAN settings')]
 check-cran: build
 	R CMD check {{ TARBALL }} --as-cran
+
+[doc('Render vignettes to PDF and HTML locally')]
+render: bootstrap-namespace
+	#!/usr/bin/env Rscript
+	if (!require(rmarkdown)) stop("missing 'rmarkdown'")
+	if (require(devtools)) devtools::load_all(quiet = TRUE)
+	files <- list.files("vignettes", pattern = "\\.Rmd$", full.names = TRUE)
+	for (f in files) {
+	  message("Rendering ", f, " to HTML...")
+	  rmarkdown::render(f, output_format = "html_document", quiet = TRUE)
+	  message("Rendering ", f, " to PDF...")
+	  rmarkdown::render(f, output_format = "pdf_document", quiet = TRUE)
+	}
+

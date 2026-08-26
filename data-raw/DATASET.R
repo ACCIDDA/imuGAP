@@ -280,9 +280,31 @@ sim_school <- kg_sim[,
   )
 }]
 
+# County-level survey for 6th grade entry (censored vaccine coverage)
+grade6_start <- 11L
+grade6_yrs <- (grade6_start + 1L):30
+sim_county_full <- list()
+for (c in seq_along(county_names)) {
+  ncnty <- as.integer(round(runif(length(grade6_yrs), 120, 250)))
+  offset <- cnty_offset[county_names[c]]
+  cov_temp <- plogis(qlogis(phi_st[grade6_yrs - grade6_start]) + offset) *
+    cov[grade6_start, 2] * other_vax_reduction
+  sim_county_full[[c]] <- data.frame(
+    loc_id = county_names[c],
+    parent_id = "State",
+    year = grade6_yrs + ref_year,
+    age_min = grade6_start,
+    positive = rbinom(length(grade6_yrs), ncnty, cov_temp),
+    sample_n = ncnty,
+    dose = 2L,
+    censored = 1
+  )
+}
+sim_county <- rbindlist(sim_county_full)
+
 # Bind vax view simulation together
 vv_sim <- rbindlist(
-  list(sim_child, sim_school, sim_teen),
+  list(sim_child, sim_school, sim_teen, sim_county),
   use.names = TRUE,
   fill = TRUE
 )
@@ -321,7 +343,7 @@ populations_sim <- imuGAP:::create_observation_populations(
 )
 
 # Create locations mapping
-locations_sim <- rbindlist(
+locations_sim <- unique(rbindlist(
   list(
     data.frame(loc_id = "State", parent_id = NA_character_),
     data.frame(loc_id = county_names, parent_id = "State"),
@@ -329,7 +351,7 @@ locations_sim <- rbindlist(
   ),
   use.names = TRUE,
   fill = TRUE
-)
+))
 
 locations_sim <- setDT(locations_sim)
 
