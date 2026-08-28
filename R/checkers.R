@@ -11,6 +11,12 @@ ERR_MISSING_COLS      <- "`%s` is missing required column(s): %s"
 ERR_MUST_BE_NUMERIC   <- "`%s` column '%s' must contain numeric values"
 MSG_EXTRA_COLS        <- "`%s` contains unexpected extra column(s): %s"
 
+ERR_ARG_MUST_BE_NUMERIC <- "'%s' must be numeric"
+ERR_ARG_MIN_LENGTH      <- "length('%s') must be >= 1"
+ERR_ARG_CANNOT_HAVE_NA  <- "'%s' may not contain NAs"
+ERR_ARG_MUST_BE_INTEGER <- "'%s' must be integers"
+ERR_ARG_MUST_BE_GT_ZERO <- "'%s' must be positive"
+
 #' Signal an error if a condition is met with formatted message
 #'
 #' @param cond Logical expression to evaluate.
@@ -199,21 +205,16 @@ assert_positive_numeric <- function(dt, x, n = 1L) {
 }
 
 #' @keywords internal
-assert_positive_int <- function(val, name) {
-  if (!is.numeric(val)) {
-    stop(sprintf("'%s' must be numeric", name), call. = FALSE)
-  }
-  if (length(val) < 1L) {
-    stop(sprintf("length('%s') must be >= 1", name), call. = FALSE)
-  }
-  if (any(is.na(val))) {
-    stop(sprintf("'%s' may not contain NAs", name), call. = FALSE)
-  }
-  if (any(val != as.integer(val))) {
-    stop(sprintf("'%s' must be integers", name), call. = FALSE)
-  }
-  if (any(val < 1L)) {
-    stop(sprintf("'%s' must be positive", name), call. = FALSE)
-  }
+assert_positive_int <- function(val, name, n = 1L) {
+  stop_fmt_if(!is.numeric(val), ERR_ARG_MUST_BE_NUMERIC, name, n = n + 1L)
+  stop_fmt_if(length(val) < 1L, ERR_ARG_MIN_LENGTH, name, n = n + 1L)
+  stop_fmt_if(any(is.na(val)), ERR_ARG_CANNOT_HAVE_NA, name, n = n + 1L)
+  stop_fmt_if(
+    any(val != as.integer(val)),
+    ERR_ARG_MUST_BE_INTEGER,
+    name,
+    n = n + 1L
+  )
+  stop_fmt_if(any(val < 1L), ERR_ARG_MUST_BE_GT_ZERO, name, n = n + 1L)
   as.integer(val)
 }
