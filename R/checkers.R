@@ -1,29 +1,47 @@
 # Internal error message format strings for checkers.R
-ERR_MUST_BE_INTEGER   <- "'%s' column '%s' must be integer"
-ERR_CANNOT_HAVE_NA    <- "'%s' column '%s' cannot have NA values"
-ERR_MUST_BE_GT_ZERO   <- "'%s' column '%s' must all be > 0"
-ERR_MUST_BE_GTE_ZERO  <- "'%s' column '%s' must all be >= 0"
-ERR_MUST_BE_LTE_MAX   <- "'%s' column '%s' must all be <= %i"
-ERR_SET_EQUIV_MISSING <- "'%s' column '%s' must contain all values in set"
-ERR_SET_EQUIV_EXTRA   <- "'%s' column '%s' may not contain values outside of set"
-ERR_SUBSET_MISSING    <- "'%s' column '%s' must be contained in parent set: missing %s"
-ERR_MISSING_COLS      <- "'%s' is missing the following required column(s): %s"
-ERR_MUST_BE_NUMERIC   <- "'%s' column '%s' must be numeric"
-MSG_EXTRA_COLS        <- "'%s' has the following extra columns: %s"
+ERR_MUST_BE_INTEGER   <- "`%s` column '%s' must contain integers"
+ERR_CANNOT_HAVE_NA    <- "`%s` column '%s' cannot contain NA values"
+ERR_MUST_BE_GT_ZERO   <- "`%s` column '%s' must contain values > 0"
+ERR_MUST_BE_GTE_ZERO  <- "`%s` column '%s' must contain values >= 0"
+ERR_MUST_BE_LTE_MAX   <- "`%s` column '%s' must contain values <= %d"
+ERR_SET_EQUIV_MISSING <- "`%s` column '%s' is missing required set values"
+ERR_SET_EQUIV_EXTRA   <- "`%s` column '%s' contains values outside permitted set"
+ERR_SUBSET_MISSING    <- "`%s` column '%s' contains values not in parent set: missing %s"
+ERR_MISSING_COLS      <- "`%s` is missing required column(s): %s"
+ERR_MUST_BE_NUMERIC   <- "`%s` column '%s' must contain numeric values"
+MSG_EXTRA_COLS        <- "`%s` contains unexpected extra column(s): %s"
 
+#' Signal an error if a condition is met with formatted message
+#'
+#' @param cond Logical expression to evaluate.
+#' @param fmt Character format string for [sprintf()].
+#' @param ... Additional arguments passed to [sprintf()].
+#' @param n Frame offset integer specifying call stack depth for call attribution
+#'   (default `1L`). If `n <= 0L`, call attribution is suppressed (`NULL`).
+#'
 #' @keywords internal
 stop_fmt_if <- function(cond, fmt, ..., n = 1L) {
   if (isTRUE(cond)) {
-    call_obj <- if (is.numeric(n) && n > 0L) sys.call(-n) else NULL
+    call_obj <- if (n > 0L) sys.call(-n) else NULL
     stop(simpleError(sprintf(fmt, ...), call = call_obj))
   }
 }
 
+#' Signal a warning if a condition is met with formatted message
+#'
+#' @param cond Logical expression to evaluate.
+#' @param fmt Character format string for [sprintf()].
+#' @param ... Additional arguments passed to [sprintf()].
+#' @param n Frame offset integer specifying call stack depth for call attribution
+#'   (default `1L`). If `n <= 0L`, call attribution is suppressed (`NULL`).
+#'
+#' @return Logical scalar indicating whether `cond` evaluated to `TRUE`.
+#'
 #' @keywords internal
 warn_fmt_if <- function(cond, fmt, ..., n = 1L) {
   cond_val <- isTRUE(cond)
   if (cond_val) {
-    call_obj <- if (is.numeric(n) && n > 0L) sys.call(-n) else NULL
+    call_obj <- if (n > 0L) sys.call(-n) else NULL
     warning(simpleWarning(sprintf(fmt, ...), call = call_obj))
   }
   cond_val

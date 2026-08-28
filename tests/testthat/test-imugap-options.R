@@ -30,11 +30,11 @@ test_that("imugap_options dose_schedule can be overridden", {
 test_that("imugap_options errors on unknown object", {
   expect_error(
     imugap_options(object = "unknown_model"),
-    "Unknown model object"
+    "unknown model object"
   )
   expect_error(
     imugap_options(object = "stateonly"),
-    "Unknown model object"
+    "unknown model object"
   )
 })
 

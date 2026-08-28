@@ -14,7 +14,7 @@ test_that("create_observation_populations errors on missing required columns", {
   # missing loc_id, cohort, age_min, age_max, dose
   expect_error(
     create_observation_populations(obs, mode = "snapshot"),
-    "requires the following column"
+    "requires column"
   )
 })
 
@@ -89,7 +89,7 @@ test_that("create_observation_populations errors on zero span (age_min == age_ma
       age_max = 3.75,
       dose = 1L
     ),
-    "age_min must be strictly less than age_max"
+    "age_min.*strictly less than.*age_max"
   )
 
   # integer boundary
@@ -103,7 +103,7 @@ test_that("create_observation_populations errors on zero span (age_min == age_ma
       age_max = 3.0,
       dose = 1L
     ),
-    "age_min must be strictly less than age_max"
+    "age_min.*strictly less than.*age_max"
   )
 })
 

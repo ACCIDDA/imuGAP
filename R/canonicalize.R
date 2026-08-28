@@ -116,49 +116,61 @@ is_canonical <- function(dt, target_class) {
 }
 
 ## Internal error message format strings for canonicalize
-ERR_LOCATIONS_UNIQUE_IDS <- "locations$loc_id must be unique; found %d duplicates: %s"
-ERR_LOCATIONS_SINGLE_ROOT <- "locations must have exactly one root, but found %d%s"
+ERR_LOCATIONS_UNIQUE_IDS <- paste0(
+  "`locations` column 'loc_id' must contain unique values; ",
+  "found %d duplicate(s): %s"
+)
+ERR_LOCATIONS_SINGLE_ROOT <- "`locations` must have exactly one root location; found %d%s"
 ERR_LOCATIONS_ROOT_DETAILS <- ": %s"
 ERR_LOCATIONS_NO_CYCLES <- paste0(
-  "locations may not contain cycles; found %d ids in cycle(s). ",
-  "Offending locations: %s"
+  "`locations` hierarchy cannot contain cycles; found %d location(s) ",
+  "in cycle(s): %s"
 )
 
-ERR_OBS_NA_ID <- "obs_id column may not contain NA; found %d NA values at rows: %s"
-ERR_OBS_DUP_ID <- "observations$obs_id must be unique; found %d duplicates: %s"
+ERR_OBS_NA_ID <- paste0(
+  "`observations` column 'obs_id' cannot contain NA values; ",
+  "found %d NA value(s) at row(s): %s"
+)
+ERR_OBS_DUP_ID <- paste0(
+  "`observations` column 'obs_id' must contain unique values; ",
+  "found %d duplicate(s): %s"
+)
 ERR_OBS_POS_GT_SAMPLE <- paste0(
-  "positive must be <= sample_n; found %d invalid observations ",
-  "with offending ids: %s"
+  "`observations` column 'positive' must be <= 'sample_n'; ",
+  "found %d invalid row(s) with obs_id: %s"
 )
-ERR_OBS_CENSORED_NUMERIC <- "if provided, 'censored' column must be numeric"
+ERR_OBS_CENSORED_NUMERIC <- "`observations` column 'censored' must contain numeric values"
 ERR_OBS_CENSORED_VALUES <- paste0(
-  "if provided, 'censored' column must be NA (uncensored) or 1 ",
-  "(right-censored)"
+  "`observations` column 'censored' must contain NA (uncensored) ",
+  "or 1 (right-censored)"
 )
 
-ERR_POP_MISSING_WEIGHT_COL <- "'populations' is missing the following required column(s): weight"
-ERR_POP_WEIGHT_NUMERIC <- "'populations$weight' must be a positive numeric"
-ERR_POP_WEIGHT_SUM <- "populations$weight must sum to 1 by obs_id"
+ERR_POP_MISSING_WEIGHT_COL <- "`populations` is missing required column(s): 'weight'"
+ERR_POP_WEIGHT_NUMERIC <- "`populations` column 'weight' must contain positive numeric values"
+ERR_POP_WEIGHT_SUM <- "`populations` column 'weight' must sum to 1 by 'obs_id'"
 
 ERR_TARGET_NON_UNIQUE_WEIGHTS <- paste0(
-  "non-unique observation ids with weights are not yet supported ",
-  "(see https://github.com/ACCIDDA/imuGAP/issues/79)"
+  "`target` non-unique observation IDs with weights are not yet ",
+  "supported (see https://github.com/ACCIDDA/imuGAP/issues/79)"
 )
-ERR_TARGET_INVALID_OBS_C_ID <- "if supplied, obs_c_id must be 1:nrow(target)"
-ERR_TARGET_INVALID_OBS_ID <- "if supplied, obs_id must be unique and not NA"
-ERR_TARGET_INVALID_WEIGHT <- "if supplied, weight must be 1"
-ERR_TARGET_INVALID_LOCS <- "all locations must be within fit$locations. Invalid locations: %s"
+ERR_TARGET_INVALID_OBS_C_ID <- "`target` column 'obs_c_id' must equal 1:nrow(target)"
+ERR_TARGET_INVALID_OBS_ID <- "`target` column 'obs_id' must contain unique non-NA values"
+ERR_TARGET_INVALID_WEIGHT <- "`target` column 'weight' must equal 1"
+ERR_TARGET_INVALID_LOCS <- paste0(
+  "`target` column 'loc_id' must all exist in `fit$locations`; ",
+  "invalid location(s): %s"
+)
 ERR_TARGET_INVALID_DOSE <- paste0(
-  "dose values must be within 1 and fit$data$n_doses (%i). ",
-  "Invalid dose in rows: %s"
+  "`target` column 'dose' must contain values between 1 and ",
+  "fit$data$n_doses (%d); invalid row(s): %s"
 )
 ERR_TARGET_INVALID_AGE <- paste0(
-  "age values must be within 1 and fit$data$n_yr (%i). ",
-  "Invalid age in rows: %s"
+  "`target` column 'age' must contain values between 1 and ",
+  "fit$data$n_yr (%d); invalid row(s): %s"
 )
 ERR_TARGET_INVALID_COHORT <- paste0(
-  "cohort values must be within 1 and fit$data$n_cohort (%i). ",
-  "Invalid cohort in rows: %s"
+  "`target` column 'cohort' must contain values between 1 and ",
+  "fit$data$n_cohort (%d); invalid row(s): %s"
 )
 
 #' @rdname canonicalize

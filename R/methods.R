@@ -1,22 +1,24 @@
 # Internal error message format strings for methods.R
-ERR_NOT_IMUGAP_FIT <- "fit must be an object of class 'imugap_fit'"
+ERR_NOT_IMUGAP_FIT <- "`fit` must be an object of class 'imugap_fit'"
 ERR_NOT_RSTAN_BACKEND <- paste0(
-  "predict() currently supports only the rstan backend. Refit with ",
-  "stan_options(backend = 'rstan'); cmdstanr generated-quantities support ",
-  "is not yet implemented."
+  "predict() currently supports only the 'rstan' backend; refit with ",
+  "stan_options(backend = 'rstan')"
 )
-ERR_POSTERIOR_SIZE_SINGLE <- "`posterior_size` must be a single value."
-ERR_POSTERIOR_SIZE_EXCEEDS <- "`posterior_size` (%d) exceeds the %d posterior draws in the fit."
-ERR_NOT_IMUGAP_PREDICT <- "%s must be of class 'imugap_predict'"
-ERR_SUBSET_NOT_LOGICAL <- "'subset' must be logical"
+ERR_POSTERIOR_SIZE_SINGLE <- "`posterior_size` must be a single value"
+ERR_POSTERIOR_SIZE_EXCEEDS <- paste0(
+  "`posterior_size` (%d) exceeds the %d available posterior ",
+  "draws in `fit`"
+)
+ERR_NOT_IMUGAP_PREDICT <- "`%s` must be an object of class 'imugap_predict'"
+ERR_SUBSET_NOT_LOGICAL <- "`subset` must be a logical vector"
 MSG_POSTERIOR_SIZE_ROUNDED <- paste0(
   "`posterior_size` (%d) is not a multiple of the %d chains; ",
-  "using %d draws instead."
+  "using %d draws instead"
 )
 MSG_POSTERIOR_SUBSAMPLE_WARN <- paste0(
   "predict() is using a sub-sample of %d posterior draws and does ",
   "not check whether it is adequate (chain mixing, effective sample ",
-  "size); verify the sufficiency statistics yourself."
+  "size); verify sufficiency statistics yourself"
 )
 
 #' @title Predict coverage probabilities

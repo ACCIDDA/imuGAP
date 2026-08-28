@@ -72,7 +72,7 @@ test_that("summary errors on a non-imugap_predict object", {
       draws = matrix(0),
       target = data.table::data.table()
     )),
-    "must be of class 'imugap_predict'"
+    "`object` must be an object of class 'imugap_predict'"
   )
 })
 

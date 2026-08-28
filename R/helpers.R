@@ -1,18 +1,21 @@
 # Internal error message format strings for helpers.R
 ERR_HELP_MODE_MISSING_COLS <- paste0(
-  "The %s requires the following column(s): %s; but the following ",
-  "are missing from the combination of 'observations' and '...': %s"
+  "mode '%s' requires column(s): %s; missing from combination of ",
+  "`observations` and '...': %s"
 )
 ERR_HELP_MODE_DUP_COLS <- paste0(
-  "The following column(s) are specified in both 'observations' ",
+  "the following column(s) are specified in both `observations` ",
   "and '...': %s"
 )
-ERR_HELP_AGE_MIN_MAX <- "age_min must be strictly less than age_max"
-ERR_HELP_VEC_INPUTS_MISSING <- "age, cohort, and dose must be supplied when location is a vector"
-ERR_HELP_VEC_INPUTS_NA <- "No arguments may have NA values; the following do: %s"
-ERR_HELP_VEC_INPUTS_ZERO_LEN <- "No arguments may have length zero; the following do: %s"
-ERR_HELP_ERROR_MODE_LEN <- "All arguments must have the same length in 'error' mode"
-ERR_HELP_SNAP_COHORT_SINGLE <- "cohort must be a single reference value in 'snapshot' mode"
+ERR_HELP_AGE_MIN_MAX <- "`age_min` must be strictly less than `age_max`"
+ERR_HELP_VEC_INPUTS_MISSING <- paste0(
+  "`age`, `cohort`, and `dose` must be supplied when ",
+  "`location` is a vector"
+)
+ERR_HELP_VEC_INPUTS_NA <- "arguments cannot contain NA values; the following do: %s"
+ERR_HELP_VEC_INPUTS_ZERO_LEN <- "arguments cannot have length zero; the following do: %s"
+ERR_HELP_ERROR_MODE_LEN <- "all arguments must have the same length in 'error' mode"
+ERR_HELP_SNAP_COHORT_SINGLE <- "`cohort` must be a single reference value in 'snapshot' mode"
 
 #' @title Create observation populations
 #'
