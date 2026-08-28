@@ -159,7 +159,7 @@ test_that("canonicalize_populations errors on age > max_age", {
   )
 })
 
-test_that("canonicalize_populations errors on non-positive weight", {
+test_that("canonicalize_populations errors on non-positive or NA weight", {
   bad <- make_test_pops()
   bad$weight <- c(1.0, 0.0)
   expect_error(
@@ -177,6 +177,18 @@ test_that("canonicalize_populations errors on non-positive weight", {
   expect_error(
     canonicalize_populations(
       bad2,
+      make_test_obs(),
+      make_test_locs(),
+      max_cohort = 5L,
+      max_age = 10L
+    ),
+    "weight"
+  )
+  bad_na <- make_test_pops()
+  bad_na$weight <- c(1.0, NA_real_)
+  expect_error(
+    canonicalize_populations(
+      bad_na,
       make_test_obs(),
       make_test_locs(),
       max_cohort = 5L,
