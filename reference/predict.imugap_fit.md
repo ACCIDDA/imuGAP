@@ -70,6 +70,6 @@ data("target_sim", package = "imuGAP")
 
 # Generate predictions over 100 posterior draws
 preds <- predict(fit_sim, target = target_sim, posterior_size = 100)
-#> Warning: predict() is using a sub-sample of 100 posterior draws and does not check whether it is adequate (chain mixing, effective sample size); verify the sufficiency statistics yourself.
+#> Warning: predict() is using a sub-sample of 100 posterior draws and does not check whether it is adequate (chain mixing, effective sample size); verify sufficiency statistics yourself
 # }
 ```

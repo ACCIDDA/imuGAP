@@ -197,7 +197,7 @@ tryCatch(
   canonicalize_observations(invalid_obs),
   error = function(e) message("Caught expected error: ", e$message)
 )
-#> Caught expected error: positive must be <= sample_n; found 1 invalid observations with offending ids: 1
+#> Caught expected error: `observations` column 'positive' must be <= 'sample_n'; found 1 invalid row(s) with obs_id: 1
 ```
 
 Similarly, if the locations data contains duplicate location IDs,
@@ -217,7 +217,7 @@ tryCatch(
   canonicalize_locations(invalid_locs),
   error = function(e) message("Caught expected error: ", e$message)
 )
-#> Caught expected error: locations$loc_id must be unique; found 1 duplicates: 29
+#> Caught expected error: `locations` column 'loc_id' must contain unique values; found 1 duplicate(s): 29
 ```
 
 See the `canonicalize_*` function documentation for more complete
@@ -264,7 +264,7 @@ state-level vaccine uptake baseline:
 beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 #> List of 1
-#>  $ beta_bs: num [1:2000, 1:5] -1.79 -1.57 -1.84 -1.46 -1.72 ...
+#>  $ beta_bs: num [1:2000, 1:5] -1.5 -1.45 -1.7 -1.61 -1.76 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ iterations: NULL
 #>   .. ..$           : NULL
