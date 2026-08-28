@@ -146,7 +146,6 @@ ERR_OBS_CENSORED_VALUES <- paste0(
 )
 
 ERR_POP_MISSING_WEIGHT_COL <- "`populations` is missing required column(s): 'weight'"
-ERR_POP_WEIGHT_NUMERIC <- "`populations` column 'weight' must contain positive numeric values"
 ERR_POP_WEIGHT_SUM <- "`populations` column 'weight' must sum to 1 by 'obs_id'"
 
 ERR_TARGET_NON_UNIQUE_WEIGHTS <- paste0(
@@ -419,10 +418,7 @@ canonicalize_populations <- function(
   assert_maxed_pos_integer(populations, "age", max_age)
 
   # check that weight is a positive numeric; > 1 weights caught in next block
-  stop_fmt_if(
-    populations[, any(!is.numeric(weight) | weight <= 0)],
-    ERR_POP_WEIGHT_NUMERIC
-  )
+  assert_positive_numeric(populations, "weight")
 
   # check that weights sum to 1 by obs_id
   wt_check <- populations[,
@@ -518,7 +514,11 @@ canonicalize_target <- function(target, fit) {
   if (!"weight" %in% names(target)) {
     target[, weight := 1.0]
   } else {
-    stop_fmt_if(!all(target$weight == 1.0), ERR_TARGET_INVALID_WEIGHT, n = 0L)
+    stop_fmt_if(
+      anyNA(target$weight) || !all(target$weight == 1.0),
+      ERR_TARGET_INVALID_WEIGHT,
+      n = 0L
+    )
   }
 
   # --- validate against the fit ---

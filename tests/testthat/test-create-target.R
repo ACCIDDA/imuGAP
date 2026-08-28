@@ -207,6 +207,13 @@ test_that("canonicalize_target validates custom obs_c_id, weight, and obs_id col
     "`target` column 'weight' must equal 1"
   )
 
+  df_na_wt <- df_custom
+  df_na_wt$weight <- c(1, NA_real_)
+  expect_error(
+    canonicalize_target(df_na_wt, fit),
+    "`target` column 'weight' must equal 1"
+  )
+
   # Non-unique obs_id with a weight column: not yet supported (see #79).
   df_dup_obs_weighted <- df_custom
   df_dup_obs_weighted$obs_id <- c("o1", "o1")
