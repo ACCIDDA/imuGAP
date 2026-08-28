@@ -28,7 +28,7 @@ First public release. Initial feature set:
 - [`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md):
   configures model-side settings (B-spline degrees of freedom, dose
   schedule, model object).
-- [`stan_options()`](https://accidda.github.io/imuGAP/reference/stan_options.md):
+- [`stan_options()`](https://accidda.github.io/flexstanr/reference/stan_options.html):
   configures Stan sampler settings (`iter`, `chains`, `seed`, etc.) with
   input validation.
 - Bundled Stan models:

@@ -81,8 +81,7 @@ rstan backend, a mode-2 `stanfit` with an empty `@sim`), `sampling()`
 raises an error of class `imugap_no_draws` rather than returning an
 empty fit, so the failure can be handled with
 [`tryCatch()`](https://rdrr.io/r/base/conditions.html). The check is
-backend-agnostic (see
-[`backend_has_draws()`](https://accidda.github.io/imuGAP/reference/backend_has_draws.md)).
+backend-agnostic (see `backend_has_draws()`).
 
 ## Examples
 
@@ -97,8 +96,8 @@ sampling(
 #> 
 #> SAMPLING FOR MODEL 'impute_school_coverage_process_v6' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000232 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.32 seconds.
+#> Chain 1: Gradient evaluation took 0.000209 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.09 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -115,15 +114,15 @@ sampling(
 #> Chain 1: Iteration: 450 / 500 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 500 / 500 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 7.485 seconds (Warm-up)
-#> Chain 1:                3.864 seconds (Sampling)
-#> Chain 1:                11.349 seconds (Total)
+#> Chain 1:  Elapsed Time: 7.166 seconds (Warm-up)
+#> Chain 1:                3.706 seconds (Sampling)
+#> Chain 1:                10.872 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'impute_school_coverage_process_v6' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000216 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.16 seconds.
+#> Chain 2: Gradient evaluation took 0.000187 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.87 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -140,9 +139,9 @@ sampling(
 #> Chain 2: Iteration: 450 / 500 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 500 / 500 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 8.168 seconds (Warm-up)
-#> Chain 2:                6.788 seconds (Sampling)
-#> Chain 2:                14.956 seconds (Total)
+#> Chain 2:  Elapsed Time: 7.817 seconds (Warm-up)
+#> Chain 2:                6.514 seconds (Sampling)
+#> Chain 2:                14.331 seconds (Total)
 #> Chain 2: 
 #> Warning: There were 5 divergent transitions after warmup. See
 #> https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
@@ -236,7 +235,7 @@ sampling(
 #> lambda_raw[2]     1.28   188 1.01
 #> lp__          -1547.85    89 1.02
 #> 
-#> Samples were drawn using NUTS(diag_e) at Fri Aug 28 18:25:18 2026.
+#> Samples were drawn using NUTS(diag_e) at Fri Aug 28 20:14:01 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).

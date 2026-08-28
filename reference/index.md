@@ -55,9 +55,6 @@
 
   Immunity: Geographic & Age-based Projection, `imuGAP`
 
-- [`stan_options()`](https://accidda.github.io/imuGAP/reference/stan_options.md)
-  : Stan Sampler Options
-
 - [`subset(`*`<imugap_predict>`*`)`](https://accidda.github.io/imuGAP/reference/subset.imugap_predict.md)
   : Subset coverage predictions
 

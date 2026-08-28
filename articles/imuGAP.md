@@ -230,7 +230,7 @@ validation requirements.
 Using the prepared input datasets, we can fit the Bayesian model using
 [`sampling()`](https://accidda.github.io/imuGAP/reference/sampling.md).
 The options for the sampler can be configured using
-[`stan_options()`](https://accidda.github.io/imuGAP/reference/stan_options.md).
+[`stan_options()`](https://accidda.github.io/flexstanr/reference/stan_options.html).
 
 Because compiling the Stan model and running the MCMC chain can take
 some time, we show the code below without executing it.
@@ -264,7 +264,7 @@ state-level vaccine uptake baseline:
 beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 #> List of 1
-#>  $ beta_bs: num [1:2000, 1:5] -1.5 -1.45 -1.7 -1.61 -1.76 ...
+#>  $ beta_bs: num [1:2000, 1:5] -1.79 -1.68 -1.68 -1.49 -1.54 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ iterations: NULL
 #>   .. ..$           : NULL
