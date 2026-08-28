@@ -1,3 +1,19 @@
+# Internal error message format strings for helpers.R
+ERR_HELP_MODE_MISSING_COLS <- paste0(
+  "The %s requires the following column(s): %s; but the following ",
+  "are missing from the combination of 'observations' and '...': %s"
+)
+ERR_HELP_MODE_DUP_COLS <- paste0(
+  "The following column(s) are specified in both 'observations' ",
+  "and '...': %s"
+)
+ERR_HELP_AGE_MIN_MAX <- "age_min must be strictly less than age_max"
+ERR_HELP_VEC_INPUTS_MISSING <- "age, cohort, and dose must be supplied when location is a vector"
+ERR_HELP_VEC_INPUTS_NA <- "No arguments may have NA values; the following do: %s"
+ERR_HELP_VEC_INPUTS_ZERO_LEN <- "No arguments may have length zero; the following do: %s"
+ERR_HELP_ERROR_MODE_LEN <- "All arguments must have the same length in 'error' mode"
+ERR_HELP_SNAP_COHORT_SINGLE <- "cohort must be a single reference value in 'snapshot' mode"
+
 #' @title Create observation populations
 #'
 #' @description
@@ -64,18 +80,13 @@ create_observation_populations <- function(
     required_cols,
     c(names(observations), names(dot_args))
   )
-  if (length(missing_cols) > 0) {
-    stop(
-      "The ",
-      mode,
-      " requires the following column(s): ",
-      toString(required_cols),
-      "; but the following are missing from the combination of ",
-      "'observations' and '...': ",
-      toString(missing_cols),
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(
+    length(missing_cols) > 0,
+    ERR_HELP_MODE_MISSING_COLS,
+    mode,
+    toString(required_cols),
+    toString(missing_cols)
+  )
 
   optional_cols <- c("age_max")
 
@@ -83,13 +94,7 @@ create_observation_populations <- function(
     c(required_cols, optional_cols),
     intersect(names(observations), names(dot_args))
   )
-  if (length(dup_cols) > 0) {
-    stop(
-      "The following column(s) are specified in both 'observations' and '...': ",
-      toString(dup_cols),
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(length(dup_cols) > 0, ERR_HELP_MODE_DUP_COLS, toString(dup_cols))
 
   # merge required columns into obs_dt
   if (length(dot_args) > 0) {
@@ -110,9 +115,7 @@ create_observation_populations <- function(
     obs_dt[is.na(age_max), age_max := age_min + 1L]
     assert_positive_numeric(obs_dt, "age_max")
 
-    if (obs_dt[, !all(age_min < age_max)]) {
-      stop("age_min must be strictly less than age_max", call. = FALSE)
-    }
+    stop_fmt_if(obs_dt[, !all(age_min < age_max)], ERR_HELP_AGE_MIN_MAX)
 
     pop_dt <- obs_dt[,
       {
@@ -171,12 +174,7 @@ compute_recycled_target_len <- function(lens) {
 
 #' @keywords internal
 validate_vec_inputs <- function(location, age, cohort, dose) {
-  if (missing(age) || missing(cohort) || missing(dose)) {
-    stop(
-      "age, cohort, and dose must be supplied when location is a vector",
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(missing(age) || missing(cohort) || missing(dose), ERR_HELP_VEC_INPUTS_MISSING, n = 2L)
 
   na_args <- c("location", "age", "cohort", "dose")[which(
     c(
@@ -187,13 +185,7 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
     )
   )]
 
-  if (length(na_args) > 0) {
-    stop(
-      "No arguments may have NA values; the following do: ",
-      toString(na_args),
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(length(na_args) > 0, ERR_HELP_VEC_INPUTS_NA, toString(na_args), n = 2L)
 
   n_loc <- length(location)
   n_age <- length(age)
@@ -204,13 +196,7 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
     c(n_loc, n_age, n_coh, n_dos) == 0L
   )]
 
-  if (length(zero_lens) > 0) {
-    stop(
-      "No arguments may have length zero; the following do: ",
-      toString(zero_lens),
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(length(zero_lens) > 0, ERR_HELP_VEC_INPUTS_ZERO_LEN, toString(zero_lens), n = 2L)
   c(n_loc = n_loc, n_age = n_age, n_coh = n_coh, n_dos = n_dos)
 }
 
@@ -282,12 +268,7 @@ create_target <- function(
   lens <- validate_vec_inputs(location, age, cohort, dose)
 
   if (mode == "error") {
-    if (length(unique(lens)) > 1L) {
-      stop(
-        "All arguments must have the same length in 'error' mode",
-        call. = FALSE
-      )
-    }
+    stop_fmt_if(length(unique(lens)) > 1L, ERR_HELP_ERROR_MODE_LEN)
     target <- data.table::data.table(
       loc_id = location,
       age = age,
@@ -296,12 +277,7 @@ create_target <- function(
       weight = 1.0
     )
   } else if (mode %in% c("enumerate", "snapshot")) {
-    if (mode == "snapshot" && length(cohort) != 1L) {
-      stop(
-        "cohort must be a single reference value in 'snapshot' mode",
-        call. = FALSE
-      )
-    }
+    stop_fmt_if(mode == "snapshot" && length(cohort) != 1L, ERR_HELP_SNAP_COHORT_SINGLE)
     target <- data.table::as.data.table(expand.grid(
       loc_id = location,
       age = age,

@@ -1,3 +1,8 @@
+# Internal error message format strings for options.R
+ERR_OPT_DF_SINGLE <- "'df' must be a single positive integer"
+ERR_OPT_DOSE_SCHEDULE <- "'dose_schedule' must be an ascending vector of positive integers"
+ERR_OPT_UNKNOWN_MODEL <- "Unknown model object: %s"
+
 #' @title imuGAP Model Options
 #'
 #' @description
@@ -20,23 +25,19 @@ imugap_options <- function(
   dose_schedule = c(1, 4),
   object = c("default")
 ) {
-  if (length(df) != 1L) {
-    stop("'df' must be a single positive integer", call. = FALSE)
-  }
+  stop_fmt_if(length(df) != 1L, ERR_OPT_DF_SINGLE)
   df <- assert_positive_int(df, "df")
 
   dose_schedule <- assert_positive_int(dose_schedule, "dose_schedule")
-  if (is.unsorted(dose_schedule, strictly = TRUE)) {
-    stop(
-      "'dose_schedule' must be an ascending vector of positive integers",
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(
+    is.unsorted(dose_schedule, strictly = TRUE),
+    ERR_OPT_DOSE_SCHEDULE
+  )
 
   object <- switch(
     object,
     "default" = stanmodels$impute_school_coverage_process_v6,
-    stop("Unknown model object: ", object)
+    stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, object)
   )
   as.list(environment())
 }

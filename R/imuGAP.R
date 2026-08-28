@@ -1,3 +1,14 @@
+# Internal error message format strings for imuGAP.R
+ERR_IMUGAP_LAYER_COUNT <- paste0(
+  "imuGAP currently only supports 3-layer models (e.g. single state => ",
+  "counties => schools); offered %d layers."
+)
+ERR_STAN_OPTS_CLASS <- "`stan_opts` must be created by stan_options()."
+ERR_EXTRACT_RSTAN_ONLY <- paste0(
+  "extract_imugap() currently supports only the rstan backend. ",
+  "Refit with stan_options(backend = 'rstan')."
+)
+
 #' @title Immunity: Geographic & Age-based Projection, `imuGAP`
 #'
 #' @description
@@ -42,14 +53,7 @@ sampling <- function(
   # check location argument
   loc_info <- canonicalize_locations(locations)
   layer_sizes <- loc_info[, .N, keyby = layer][, c(N)]
-  if (length(layer_sizes) != 3) {
-    stop(
-      "imuGAP currently only supports 3-layer models ",
-      "(e.g. single state => counties => schools); offered ",
-      length(layer_sizes),
-      " layers."
-    )
-  }
+  stop_fmt_if(length(layer_sizes) != 3, ERR_IMUGAP_LAYER_COUNT, length(layer_sizes))
 
   n_cnty <- layer_sizes[2]
   n_schl <- layer_sizes[3]
@@ -105,9 +109,7 @@ sampling <- function(
   # The `backend` element is the marker that stan_opts came from stan_options();
   # its absence means a hand-built list. Whatever backend it names wins.
   backend <- stan_opts$backend
-  if (is.null(backend)) {
-    stop("`stan_opts` must be created by stan_options().", call. = FALSE)
-  }
+  stop_fmt_if(is.null(backend), ERR_STAN_OPTS_CLASS)
 
   # imuGAP has a single model; fit_model() looks it up in `stanmodels` (rstan)
   # and locates inst/stan/<model_name>.stan (cmdstanr). No init is supplied, so
@@ -170,18 +172,10 @@ sampling <- function(
 #'
 #' @export
 extract_imugap <- function(fit, pars = c("beta_bs"), ...) {
-  if (!inherits(fit, "imugap_fit")) {
-    stop("fit must be an object of class 'imugap_fit'", call. = FALSE)
-  }
+  stop_fmt_if(!inherits(fit, "imugap_fit"), ERR_NOT_IMUGAP_FIT)
   # Extraction goes through the backend accessor, which only implements the
   # rstan path today; cmdstanr fits expose draws differently, so fail clearly
   # here rather than deep inside the accessor.
-  if (!inherits(fit$stanfit, "stanfit")) {
-    stop(
-      "extract_imugap() currently supports only the rstan backend. Refit with ",
-      "stan_options(backend = 'rstan').",
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(!inherits(fit$stanfit, "stanfit"), ERR_EXTRACT_RSTAN_ONLY)
   backend_extract(fit$stanfit, pars = pars, ...)
 }

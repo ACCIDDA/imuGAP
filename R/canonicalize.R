@@ -115,11 +115,51 @@ is_canonical <- function(dt, target_class) {
   !is.null(canonical) && (canonical == target_class)
 }
 
-# Internal error message format strings for canonicalize_locations
-MSG_LOCATIONS_UNIQUE_IDS <- "locations$loc_id must be unique; found %d duplicates: %s"
-MSG_LOCATIONS_SINGLE_ROOT <- "locations must have exactly one root, but found %d%s"
-MSG_LOCATIONS_ROOT_DETAILS <- ": %s"
-MSG_LOCATIONS_NO_CYCLES <- "locations may not contain cycles; found %d ids in cycle(s). Offending locations: %s"
+## Internal error message format strings for canonicalize
+ERR_LOCATIONS_UNIQUE_IDS <- "locations$loc_id must be unique; found %d duplicates: %s"
+ERR_LOCATIONS_SINGLE_ROOT <- "locations must have exactly one root, but found %d%s"
+ERR_LOCATIONS_ROOT_DETAILS <- ": %s"
+ERR_LOCATIONS_NO_CYCLES <- paste0(
+  "locations may not contain cycles; found %d ids in cycle(s). ",
+  "Offending locations: %s"
+)
+
+ERR_OBS_NA_ID <- "obs_id column may not contain NA; found %d NA values at rows: %s"
+ERR_OBS_DUP_ID <- "observations$obs_id must be unique; found %d duplicates: %s"
+ERR_OBS_POS_GT_SAMPLE <- paste0(
+  "positive must be <= sample_n; found %d invalid observations ",
+  "with offending ids: %s"
+)
+ERR_OBS_CENSORED_NUMERIC <- "if provided, 'censored' column must be numeric"
+ERR_OBS_CENSORED_VALUES <- paste0(
+  "if provided, 'censored' column must be NA (uncensored) or 1 ",
+  "(right-censored)"
+)
+
+ERR_POP_MISSING_WEIGHT_COL <- "'populations' is missing the following required column(s): weight"
+ERR_POP_WEIGHT_NUMERIC <- "'populations$weight' must be a positive numeric"
+ERR_POP_WEIGHT_SUM <- "populations$weight must sum to 1 by obs_id"
+
+ERR_TARGET_NON_UNIQUE_WEIGHTS <- paste0(
+  "non-unique observation ids with weights are not yet supported ",
+  "(see https://github.com/ACCIDDA/imuGAP/issues/79)"
+)
+ERR_TARGET_INVALID_OBS_C_ID <- "if supplied, obs_c_id must be 1:nrow(target)"
+ERR_TARGET_INVALID_OBS_ID <- "if supplied, obs_id must be unique and not NA"
+ERR_TARGET_INVALID_WEIGHT <- "if supplied, weight must be 1"
+ERR_TARGET_INVALID_LOCS <- "all locations must be within fit$locations. Invalid locations: %s"
+ERR_TARGET_INVALID_DOSE <- paste0(
+  "dose values must be within 1 and fit$data$n_doses (%i). ",
+  "Invalid dose in rows: %s"
+)
+ERR_TARGET_INVALID_AGE <- paste0(
+  "age values must be within 1 and fit$data$n_yr (%i). ",
+  "Invalid age in rows: %s"
+)
+ERR_TARGET_INVALID_COHORT <- paste0(
+  "cohort values must be within 1 and fit$data$n_cohort (%i). ",
+  "Invalid cohort in rows: %s"
+)
 
 #' @rdname canonicalize
 #' @return `canonicalize_locations` returns a `data.table`, with:
@@ -155,9 +195,13 @@ canonicalize_locations <- function(locations) {
   assert_cols(locations, c("loc_id", "parent_id"), warn_extra = TRUE)
 
   # check for duplicate ids
-  if (length(dupes <- locations[, which(duplicated(loc_id))])) {
-    stop_fmt(MSG_LOCATIONS_UNIQUE_IDS, length(dupes), toString(dupes, width = 80))
-  }
+  dupes <- locations[, which(duplicated(loc_id))]
+  stop_fmt_if(
+    length(dupes) > 0,
+    ERR_LOCATIONS_UNIQUE_IDS,
+    length(dupes),
+    toString(dupes, width = 80)
+  )
 
   # Find candidate unique root
   potential_root <- locations[is.na(parent_id), loc_id] |> unique()
@@ -165,12 +209,19 @@ canonicalize_locations <- function(locations) {
     # if no explicit root, find implicit root
     potential_root <- setdiff(locations$parent_id, locations$loc_id) |> unique()
   }
+  len_p_root <- length(potential_root)
 
   # Error if not exactly one root
-  if (length(potential_root) != 1L) {
-    details <- if (length(potential_root)) sprintf(MSG_LOCATIONS_ROOT_DETAILS, toString(potential_root, width = 80)) else ""
-    stop_fmt(MSG_LOCATIONS_SINGLE_ROOT, length(potential_root), details)
-  }
+  stop_fmt_if(
+    len_p_root != 1L,
+    ERR_LOCATIONS_SINGLE_ROOT,
+    len_p_root,
+    if (len_p_root) {
+      sprintf(ERR_LOCATIONS_ROOT_DETAILS, toString(potential_root, width = 80))
+    } else {
+      ""
+    }
+  )
 
   # if root is implicit, add it to the data
   if (!locations[loc_id == potential_root, .N]) {
@@ -193,13 +244,12 @@ canonicalize_locations <- function(locations) {
     layer_members <- locations[layer == on_layer, loc_id]
     # check for cycles - if we have not assigned any new layer members,
     # but still have unassigned locations, then we have a cycle
-    if (length(layer_members) == 0L && locations[, any(is.na(layer))]) {
-      stop_fmt(
-        MSG_LOCATIONS_NO_CYCLES,
-        locations[is.na(layer), .N],
-        toString(locations[is.na(layer), loc_id], width = 80)
-      )
-    }
+    stop_fmt_if(
+      length(layer_members) == 0L && locations[, any(is.na(layer))],
+      ERR_LOCATIONS_NO_CYCLES,
+      locations[is.na(layer), .N],
+      toString(locations[is.na(layer), loc_id], width = 80)
+    )
   }
 
   # canonicalize ids, by layer, then parent position, then natural order
@@ -245,49 +295,39 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
   assert_cols(observations, c("obs_id", "positive", "sample_n"))
 
   # check id column validity
-  if (observations[, any(is.na(obs_id))]) {
-    stop(
-      "obs_id column may not contain NA; found ",
-      observations[is.na(obs_id), .N],
-      " NA values at rows: ",
-      toString(observations[, which(is.na(obs_id))]),
-      width = 80
-    )
-  }
+  stop_fmt_if(
+    observations[, any(is.na(obs_id))],
+    ERR_OBS_NA_ID,
+    observations[is.na(obs_id), .N],
+    toString(observations[, which(is.na(obs_id))], width = 80)
+  )
 
-  if (length(dupes <- observations[, which(duplicated(obs_id))])) {
-    stop(
-      "observations$obs_id must be unique; found ",
-      length(dupes),
-      " duplicates: ",
-      toString(dupes, width = 80)
-    )
-  }
+  dupes <- observations[, which(duplicated(obs_id))]
+  stop_fmt_if(
+    length(dupes) > 0,
+    ERR_OBS_DUP_ID,
+    length(dupes),
+    toString(dupes, width = 80)
+  )
 
   # check scientific data validity
   assert_nonneg_integer(observations, "positive")
   assert_positive_integer(observations, "sample_n")
 
-  if (observations[, any(positive > sample_n)]) {
-    stop(
-      "positive must be <= sample_n; found ",
-      observations[positive > sample_n, .N],
-      " invalid observations with offending ids: ",
-      toString(observations[positive > sample_n, obs_id], width = 80)
-    )
-  }
+  stop_fmt_if(
+    observations[, any(positive > sample_n)],
+    ERR_OBS_POS_GT_SAMPLE,
+    observations[positive > sample_n, .N],
+    toString(observations[positive > sample_n, obs_id], width = 80)
+  )
 
   if ("censored" %in% names(observations)) {
     # confirmed censored is numeric, and only contains NA or 1
-    if (!is.numeric(observations$censored)) {
-      stop("if provided, 'censored' column must be numeric")
-    }
-    if (observations[, any(!is.na(censored) & censored != 1)]) {
-      stop(
-        "if provided, 'censored' column must be NA (uncensored)",
-        " or 1 (right-censored)"
-      )
-    }
+    stop_fmt_if(!is.numeric(observations$censored), ERR_OBS_CENSORED_NUMERIC)
+    stop_fmt_if(
+      observations[, any(!is.na(censored) & censored != 1)],
+      ERR_OBS_CENSORED_VALUES
+    )
   } else {
     observations[, censored := NA_real_]
   }
@@ -347,11 +387,7 @@ canonicalize_populations <- function(
   )
 
   if (!"weight" %in% names(populations)) {
-    if (any(duplicated(populations$obs_id))) {
-      stop(
-        "'populations' is missing the following required column(s): weight"
-      )
-    }
+    stop_fmt_if(any(duplicated(populations$obs_id)), ERR_POP_MISSING_WEIGHT_COL)
     populations[, weight := 1.0]
   }
 
@@ -371,18 +407,17 @@ canonicalize_populations <- function(
   assert_maxed_pos_integer(populations, "age", max_age)
 
   # check that weight is a positive numeric; > 1 weights caught in next block
-  if (populations[, any(!is.numeric(weight) | weight <= 0)]) {
-    stop("'populations$weight' must be a positive numeric")
-  }
+  stop_fmt_if(
+    populations[, any(!is.numeric(weight) | weight <= 0)],
+    ERR_POP_WEIGHT_NUMERIC
+  )
 
   # check that weights sum to 1 by obs_id
   wt_check <- populations[,
     .(err = abs(sum(weight) - 1.0) >= 1e-8),
     by = obs_id
   ]
-  if (any(wt_check$err)) {
-    stop("populations$weight must sum to 1 by obs_id")
-  }
+  stop_fmt_if(any(wt_check$err), ERR_POP_WEIGHT_SUM)
 
   # introduce canonical id
   populations[observations, on = .(obs_id), obs_c_id := obs_c_id]
@@ -441,84 +476,76 @@ canonicalize_target <- function(target, fit) {
     "obs_id" %in% names(target) && anyDuplicated(target$obs_id) > 0L
   dup_obs_c_id <-
     "obs_c_id" %in% names(target) && anyDuplicated(target$obs_c_id) > 0L
-  if ((dup_obs_id || dup_obs_c_id) && "weight" %in% names(target)) {
-    stop(
-      "non-unique observation ids with weights are not yet supported ",
-      "(see https://github.com/ACCIDDA/imuGAP/issues/79)",
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(
+    (dup_obs_id || dup_obs_c_id) && "weight" %in% names(target),
+    ERR_TARGET_NON_UNIQUE_WEIGHTS,
+    n = 0L
+  )
 
   # obs_c_id: fill sequentially when absent, else require it to be 1:nrow.
   if (!"obs_c_id" %in% names(target)) {
     target[, obs_c_id := seq_len(.N)]
-  } else if (!all(target$obs_c_id == seq_len(nrow(target)))) {
-    stop("if supplied, obs_c_id must be 1:nrow(target)", call. = FALSE)
+  } else {
+    stop_fmt_if(
+      !all(target$obs_c_id == seq_len(nrow(target))),
+      ERR_TARGET_INVALID_OBS_C_ID,
+      n = 0L
+    )
   }
 
   # obs_id: if supplied, must be unique and not NA.
-  if (
+  stop_fmt_if(
     "obs_id" %in%
       names(target) &&
-      (anyDuplicated(target$obs_id) > 0L || anyNA(target$obs_id))
-  ) {
-    stop("if supplied, obs_id must be unique and not NA", call. = FALSE)
-  }
+      (anyDuplicated(target$obs_id) > 0L || anyNA(target$obs_id)),
+    ERR_TARGET_INVALID_OBS_ID,
+    n = 0L
+  )
 
   # weight: default to 1, else require all 1.
   if (!"weight" %in% names(target)) {
     target[, weight := 1.0]
-  } else if (!all(target$weight == 1.0)) {
-    stop("if supplied, weight must be 1", call. = FALSE)
+  } else {
+    stop_fmt_if(!all(target$weight == 1.0), ERR_TARGET_INVALID_WEIGHT, n = 0L)
   }
 
   # --- validate against the fit ---
   invalid_locs <- setdiff(target$loc_id, fit$locations$loc_id)
-  if (length(invalid_locs) > 0) {
-    stop(
-      "all locations must be within fit$locations. Invalid locations: ",
-      toString(invalid_locs, width = 60),
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(
+    length(invalid_locs) > 0,
+    ERR_TARGET_INVALID_LOCS,
+    toString(invalid_locs, width = 60),
+    n = 0L
+  )
 
   invalid_dose_rows <- target[, which(!between(dose, 1L, fit$data$n_doses))]
-  if (length(invalid_dose_rows) > 0) {
-    stop(
-      sprintf(
-        "dose values must be within 1 and fit$data$n_doses (%i). Invalid dose in rows: ",
-        fit$data$n_doses
-      ),
-      toString(invalid_dose_rows, width = 60),
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(
+    length(invalid_dose_rows) > 0,
+    ERR_TARGET_INVALID_DOSE,
+    fit$data$n_doses,
+    toString(invalid_dose_rows, width = 60),
+    n = 0L
+  )
 
   invalid_age_rows <- target[, which(!between(age, 1L, fit$data$n_yr))]
-  if (length(invalid_age_rows) > 0) {
-    stop(
-      sprintf(
-        "age values must be within 1 and fit$data$n_yr (%i). Invalid age in rows: ",
-        fit$data$n_yr
-      ),
-      toString(invalid_age_rows, width = 60),
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(
+    length(invalid_age_rows) > 0,
+    ERR_TARGET_INVALID_AGE,
+    fit$data$n_yr,
+    toString(invalid_age_rows, width = 60),
+    n = 0L
+  )
 
   invalid_cohort_rows <- target[, which(
     !between(cohort, 1L, fit$data$n_cohort)
   )]
-  if (length(invalid_cohort_rows) > 0) {
-    stop(
-      sprintf(
-        "cohort values must be within 1 and fit$data$n_cohort (%i). Invalid cohort in rows: ",
-        fit$data$n_cohort
-      ),
-      toString(invalid_cohort_rows, width = 60),
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(
+    length(invalid_cohort_rows) > 0,
+    ERR_TARGET_INVALID_COHORT,
+    fit$data$n_cohort,
+    toString(invalid_cohort_rows, width = 60),
+    n = 0L
+  )
 
   # keep the canonical columns in order, then add loc_c_id from the fit.
   cols <- c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")

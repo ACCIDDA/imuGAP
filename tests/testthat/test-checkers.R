@@ -1,5 +1,70 @@
 library(data.table)
 
+test_that("stop_fmt_if correctly attributes call context", {
+  inner_func <- function() {
+    stop_fmt_if(TRUE, "test error value %d", 42, n = 1L)
+  }
+  outer_func <- function() {
+    inner_func()
+  }
+  inner_func_n2 <- function() {
+    stop_fmt_if(TRUE, "test error value %d", 42, n = 2L)
+  }
+  outer_func_n2 <- function() {
+    inner_func_n2()
+  }
+  no_call_func <- function() {
+    stop_fmt_if(TRUE, "test error value %d", 42, n = 0L)
+  }
+
+  err1 <- tryCatch(outer_func(), error = identity)
+  expect_s3_class(err1, "error")
+  expect_equal(deparse(err1$call), "inner_func()")
+  expect_equal(err1$message, "test error value 42")
+
+  err2 <- tryCatch(outer_func_n2(), error = identity)
+  expect_s3_class(err2, "error")
+  expect_equal(deparse(err2$call), "outer_func_n2()")
+
+  err0 <- tryCatch(no_call_func(), error = identity)
+  expect_s3_class(err0, "error")
+  expect_null(err0$call)
+})
+
+test_that("stop_fmt_if conditionally stops with call context", {
+  test_func <- function(x) {
+    stop_fmt_if(x > 10, "value %d is too large", x)
+    x * 2
+  }
+
+  expect_equal(test_func(5), 10)
+
+  err <- tryCatch(test_func(15), error = identity)
+  expect_s3_class(err, "error")
+  expect_equal(deparse(err$call), "test_func(15)")
+  expect_equal(err$message, "value 15 is too large")
+})
+
+test_that("warn_fmt_if conditionally warns with call context and returns boolean", {
+  test_func <- function(x) {
+    warn_fmt_if(x > 10, "value %d is large", x, n = 1L)
+    x * 2
+  }
+
+  expect_silent(test_func(5))
+
+  warn1 <- tryCatch(test_func(15), warning = identity)
+  expect_s3_class(warn1, "warning")
+  expect_equal(deparse(warn1$call), "test_func(15)")
+  expect_equal(warn1$message, "value 15 is large")
+
+  no_call_func <- function() {
+    warn_fmt_if(TRUE, "no call warning", n = 0L)
+  }
+  warn0 <- tryCatch(no_call_func(), warning = identity)
+  expect_null(warn0$call)
+})
+
 test_that("assert_as_integer works", {
   ref <- c(1.0, 2.0, 3.0)
   ref_dt <- data.table(

@@ -3,7 +3,7 @@ linters: linters_with_defaults(
     object_usage_linter = NULL,
     object_name_linter = object_name_linter(
       styles = c("snake_case", "symbols"),
-      regexes = "^imuGAP$"
+      regexes = c("^imuGAP$", "^ERR_", "^MSG_")
     ),
     # The vendored standalone header (R/import-standalone-backends.R) carries a
     # `# repo: ACCIDDA/flexstanr` line that parses as R, so commented_code_linter
