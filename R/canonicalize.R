@@ -115,6 +115,12 @@ is_canonical <- function(dt, target_class) {
   !is.null(canonical) && (canonical == target_class)
 }
 
+# Internal error message format strings for canonicalize_locations
+MSG_LOCATIONS_UNIQUE_IDS <- "locations$loc_id must be unique; found %d duplicates: %s"
+MSG_LOCATIONS_SINGLE_ROOT <- "locations must have exactly one root, but found %d%s"
+MSG_LOCATIONS_ROOT_DETAILS <- ": %s"
+MSG_LOCATIONS_NO_CYCLES <- "locations may not contain cycles; found %d ids in cycle(s). Offending locations: %s"
+
 #' @rdname canonicalize
 #' @return `canonicalize_locations` returns a `data.table`, with:
 #'  - `loc_id`, `parent_id` columns as originally supplied, possibly reordered
@@ -150,12 +156,7 @@ canonicalize_locations <- function(locations) {
 
   # check for duplicate ids
   if (length(dupes <- locations[, which(duplicated(loc_id))])) {
-    stop(
-      "locations$loc_id must be unique; found ",
-      length(dupes),
-      " duplicates: ",
-      toString(dupes, width = 80)
-    )
+    stop_fmt(MSG_LOCATIONS_UNIQUE_IDS, length(dupes), toString(dupes, width = 80))
   }
 
   # Find candidate unique root
@@ -167,16 +168,8 @@ canonicalize_locations <- function(locations) {
 
   # Error if not exactly one root
   if (length(potential_root) != 1L) {
-    stop(
-      "locations must have exactly one root, but found ",
-      length(potential_root),
-      if (length(potential_root) > 0) {
-        paste0(
-          ": ",
-          toString(potential_root, width = 80)
-        )
-      }
-    )
+    details <- if (length(potential_root)) sprintf(MSG_LOCATIONS_ROOT_DETAILS, toString(potential_root, width = 80)) else ""
+    stop_fmt(MSG_LOCATIONS_SINGLE_ROOT, length(potential_root), details)
   }
 
   # if root is implicit, add it to the data
@@ -201,10 +194,9 @@ canonicalize_locations <- function(locations) {
     # check for cycles - if we have not assigned any new layer members,
     # but still have unassigned locations, then we have a cycle
     if (length(layer_members) == 0L && locations[, any(is.na(layer))]) {
-      stop(
-        "locations may not contain cycles; found ",
+      stop_fmt(
+        MSG_LOCATIONS_NO_CYCLES,
         locations[is.na(layer), .N],
-        " ids in cycle(s). Offending locations: ",
         toString(locations[is.na(layer), loc_id], width = 80)
       )
     }

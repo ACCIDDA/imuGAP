@@ -1,4 +1,9 @@
 #' @keywords internal
+stop_fmt <- function(fmt, ..., call. = TRUE) {
+  stop(sprintf(fmt, ...), call. = call.)
+}
+
+#' @keywords internal
 stopper <- function(dt, x, fmt, ...) {
   msg <- sprintf(fmt, dt, x, ...)
   stop(msg, call. = FALSE)
