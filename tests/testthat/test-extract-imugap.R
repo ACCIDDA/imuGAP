@@ -63,5 +63,5 @@ test_that("extract_imugap() rejects a cmdstanr (non-stanfit) fit", {
     list(stanfit = structure(list(), class = "CmdStanMCMC")),
     class = "imugap_fit"
   )
-  expect_error(extract_imugap(fake_fit), "rstan backend")
+  expect_error(extract_imugap(fake_fit), "'rstan' backend")
 })

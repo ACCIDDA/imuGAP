@@ -43,7 +43,7 @@ test_that("create_target builds a grid with mode='error'", {
       dose = c(1L, 2L),
       mode = "error"
     ),
-    "All arguments must have the same length"
+    "all arguments must have the same length"
   )
 
   # Zero length cases
@@ -55,7 +55,7 @@ test_that("create_target builds a grid with mode='error'", {
       dose = c(1L),
       mode = "error"
     ),
-    "No arguments may have length zero; the following do: location"
+    "arguments cannot have length zero; the following do: location"
   )
 
   expect_error(
@@ -66,7 +66,7 @@ test_that("create_target builds a grid with mode='error'", {
       dose = c(1L),
       mode = "error"
     ),
-    "No arguments may have length zero; the following do: location, age"
+    "arguments cannot have length zero; the following do: location, age"
   )
 
   # Missing arguments case
@@ -75,7 +75,7 @@ test_that("create_target builds a grid with mode='error'", {
       location = c("schlA", "schlB"),
       mode = "error"
     ),
-    "age, cohort, and dose must be supplied"
+    "`age`, `cohort`, and `dose` must be supplied"
   )
 
   # NA cases
@@ -87,7 +87,7 @@ test_that("create_target builds a grid with mode='error'", {
       dose = c(1L),
       mode = "error"
     ),
-    "No arguments may have NA values; the following do: location"
+    "arguments cannot contain NA values; the following do: location"
   )
 
   expect_error(
@@ -98,7 +98,7 @@ test_that("create_target builds a grid with mode='error'", {
       dose = c(1L),
       mode = "error"
     ),
-    "No arguments may have NA values; the following do: age, cohort"
+    "arguments cannot contain NA values; the following do: age, cohort"
   )
 })
 
@@ -173,7 +173,7 @@ test_that("canonicalize_target normalizes a plain data.frame target", {
   bad_df <- df_loc[, c("loc_id", "age")]
   expect_error(
     canonicalize_target(bad_df, fit),
-    "missing the following required column"
+    "missing required column"
   )
 })
 
@@ -196,7 +196,7 @@ test_that("canonicalize_target validates custom obs_c_id, weight, and obs_id col
   df_bad_id$obs_c_id <- c(1, 3)
   expect_error(
     canonicalize_target(df_bad_id, fit),
-    "if supplied, obs_c_id must be 1:nrow"
+    "obs_c_id.*must equal 1:nrow"
   )
 
   # Invalid weight
@@ -204,7 +204,7 @@ test_that("canonicalize_target validates custom obs_c_id, weight, and obs_id col
   df_bad_wt$weight <- c(1, -2)
   expect_error(
     canonicalize_target(df_bad_wt, fit),
-    "if supplied, weight must be"
+    "`target` column 'weight' must equal 1"
   )
 
   # Non-unique obs_id with a weight column: not yet supported (see #79).
@@ -221,7 +221,7 @@ test_that("canonicalize_target validates custom obs_c_id, weight, and obs_id col
   df_dup_obs$weight <- NULL
   expect_error(
     canonicalize_target(df_dup_obs, fit),
-    "if supplied, obs_id must be unique"
+    "`target` column 'obs_id' must contain unique non-NA values"
   )
 })
 
@@ -276,7 +276,7 @@ test_that("canonicalize_target performs correct bounds checking against fit obje
       ),
       fit
     ),
-    "all locations must be within fit\\$locations. Invalid locations: unknown_loc"
+    "loc_id.*must all exist in `fit\\$locations`"
   )
 
   # Dose bounds mismatch
@@ -290,7 +290,7 @@ test_that("canonicalize_target performs correct bounds checking against fit obje
       ),
       fit
     ),
-    "dose values must be within 1 and fit\\$data\\$n_doses \\(2\\)\\. Invalid dose in rows: 1"
+    "dose.*must contain values between 1 and"
   )
 
   # Age bounds mismatch
@@ -304,7 +304,7 @@ test_that("canonicalize_target performs correct bounds checking against fit obje
       ),
       fit
     ),
-    "age values must be within 1 and fit\\$data\\$n_yr \\(5\\)\\. Invalid age in rows: 1"
+    "age.*must contain values between 1 and"
   )
 
   # Cohort bounds mismatch
@@ -318,7 +318,7 @@ test_that("canonicalize_target performs correct bounds checking against fit obje
       ),
       fit
     ),
-    "cohort values must be within 1 and fit\\$data\\$n_cohort \\(10\\)\\. Invalid cohort in rows: 1"
+    "cohort.*must contain values between 1 and"
   )
 })
 
@@ -358,7 +358,7 @@ test_that("create_target builds a grid with mode='snapshot'", {
       dose = c(1L, 2L),
       mode = "snapshot"
     ),
-    "cohort must be a single reference value in 'snapshot' mode"
+    "`cohort` must be a single reference value in 'snapshot' mode"
   )
 })
 
@@ -396,6 +396,6 @@ test_that("create_target works with mode='snapshot' and validates output", {
       ),
       fit
     ),
-    "cohort values must be within 1 and fit\\$data\\$n_cohort \\(10\\)\\. Invalid cohort in rows: 1"
+    "cohort.*must contain values between 1 and"
   )
 })

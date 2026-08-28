@@ -47,16 +47,44 @@ test_that("stop_fmt_if conditionally stops with call context", {
 
 test_that("warn_fmt_if conditionally warns with call context and returns boolean", {
   test_func <- function(x) {
-    warn_fmt_if(x > 10, "value %d is large", x, n = 1L)
-    x * 2
+    warned <- warn_fmt_if(x > 10, "value %d is large", x, n = 1L)
+    list(result = x * 2, warned = warned)
   }
 
-  expect_silent(test_func(5))
+  # Return FALSE and no warning when condition is FALSE
+  res_false <- expect_silent(test_func(5))
+  expect_equal(res_false$result, 10)
+  expect_identical(res_false$warned, FALSE)
 
+  # Return TRUE and emit warning when condition is TRUE
   warn1 <- tryCatch(test_func(15), warning = identity)
   expect_s3_class(warn1, "warning")
   expect_equal(deparse(warn1$call), "test_func(15)")
   expect_equal(warn1$message, "value 15 is large")
+
+  # Direct return value evaluation with expect_warning
+  expect_warning(res_true <- warn_fmt_if(TRUE, "msg"), "msg")
+  expect_identical(res_true, TRUE)
+  expect_identical(expect_silent(warn_fmt_if(FALSE, "msg")), FALSE)
+  expect_identical(expect_silent(warn_fmt_if(NA, "msg")), FALSE)
+  expect_identical(expect_silent(warn_fmt_if(NULL, "msg")), FALSE)
+
+  # Control flow guard pattern: if (warn_fmt_if(...))
+  branched <- FALSE
+  expect_warning({
+    if (warn_fmt_if(TRUE, "branch warning")) {
+      branched <- TRUE
+    }
+  }, "branch warning")
+  expect_true(branched)
+
+  branched <- FALSE
+  expect_silent({
+    if (warn_fmt_if(FALSE, "branch warning")) {
+      branched <- TRUE
+    }
+  })
+  expect_false(branched)
 
   no_call_func <- function() {
     warn_fmt_if(TRUE, "no call warning", n = 0L)
@@ -81,7 +109,7 @@ test_that("assert_as_integer works", {
 
   expect_error(
     assert_as_integer(ref_dt, "c"),
-    "'ref_dt'.*'c'"
+    "ref_dt.*'c'"
   )
 
   somefun <- function(some_dt, col) {
@@ -92,7 +120,7 @@ test_that("assert_as_integer works", {
   expect_silent(somefun(ref_dt, "b"))
   expect_error(
     somefun(ref_dt, "c"),
-    "'ref_dt'.*'c'"
+    "ref_dt.*'c'"
   )
 })
 
@@ -109,7 +137,7 @@ test_that("assert_positive_integer works", {
 
   expect_error(
     assert_positive_integer(ref_dt, "b"),
-    "'ref_dt'.*'b'"
+    "ref_dt.*'b'"
   )
 
   somefun <- function(some_dt, col) {
@@ -132,7 +160,7 @@ test_that("assert_maxed_pos_integer works", {
 
   expect_error(
     assert_maxed_pos_integer(ref_dt, "b", 5),
-    "'ref_dt'.*'b'"
+    "ref_dt.*'b'"
   )
 
   expect_silent(assert_maxed_pos_integer(ref_dt, "b"))
@@ -157,11 +185,11 @@ test_that("assert_set_equivalence works", {
   expect_silent(assert_set_equivalence(ref_dt, "a", refset))
   expect_error(
     assert_set_equivalence(ref_dt, "b", refset),
-    "'ref_dt'.*'b'"
+    "ref_dt.*'b'"
   )
   expect_error(
     assert_set_equivalence(ref_dt, "d", refset),
-    "'ref_dt'.*'d'"
+    "ref_dt.*'d'"
   )
 })
 
@@ -174,7 +202,7 @@ test_that("assert_set_equivalence flags values outside the set", {
   )
   expect_error(
     assert_set_equivalence(ref_dt, "c", refset),
-    "outside of set"
+    "outside permitted set"
   )
 })
 
@@ -182,7 +210,7 @@ test_that("assert_as_integer errors on NA when na_allowed = FALSE", {
   ref_dt <- data.table(a = c(1L, NA_integer_, 3L))
   expect_error(
     assert_as_integer(ref_dt, "a"),
-    "cannot have NA"
+    "cannot contain NA"
   )
 })
 
@@ -241,18 +269,18 @@ test_that("assert_positive_numeric validates numeric type, NA presence, and boun
   # NA error check
   expect_error(
     assert_positive_numeric(ref_dt, "b"),
-    "cannot have NA values"
+    "cannot contain NA values"
   )
 
   # Non-positive check
   expect_error(
     assert_positive_numeric(ref_dt, "c"),
-    "must all be > 0"
+    "must contain values > 0"
   )
 
   # Non-numeric check
   expect_error(
     assert_positive_numeric(ref_dt, "d"),
-    "must be numeric"
+    "must contain numeric values"
   )
 })

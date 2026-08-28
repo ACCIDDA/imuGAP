@@ -1,12 +1,12 @@
 # Internal error message format strings for imuGAP.R
 ERR_IMUGAP_LAYER_COUNT <- paste0(
-  "imuGAP currently only supports 3-layer models (e.g. single state => ",
-  "counties => schools); offered %d layers."
+  "imuGAP currently supports only 3-layer models (e.g., state -> county -> ",
+  "school); supplied %d layers"
 )
-ERR_STAN_OPTS_CLASS <- "`stan_opts` must be created by stan_options()."
+ERR_STAN_OPTS_CLASS <- "`stan_opts` must be created by stan_options()"
 ERR_EXTRACT_RSTAN_ONLY <- paste0(
-  "extract_imugap() currently supports only the rstan backend. ",
-  "Refit with stan_options(backend = 'rstan')."
+  "extract_imugap() currently supports only the 'rstan' backend; ",
+  "refit with stan_options(backend = 'rstan')"
 )
 
 #' @title Immunity: Geographic & Age-based Projection, `imuGAP`

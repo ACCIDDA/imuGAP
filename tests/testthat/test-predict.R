@@ -98,7 +98,7 @@ test_that("predict throws informative compatibility errors", {
   bad_loc_pops$loc_id[1] <- "unknown_loc"
   expect_error(
     predict(fit, bad_loc_pops),
-    "all locations must be within fit\\$locations"
+    "loc_id.*must all exist in `fit\\$locations`"
   )
 
   # Test dose bounds mismatch
@@ -106,7 +106,7 @@ test_that("predict throws informative compatibility errors", {
   bad_dose_pops$dose[1] <- 99L
   expect_error(
     predict(fit, bad_dose_pops),
-    "dose values must be within 1 and fit\\$data\\$n_doses"
+    "dose.*must contain values between 1 and"
   )
 
   # Test age bounds mismatch
@@ -114,7 +114,7 @@ test_that("predict throws informative compatibility errors", {
   bad_age_pops$age[1] <- 99L
   expect_error(
     predict(fit, bad_age_pops),
-    "age values must be within 1 and fit\\$data\\$n_yr"
+    "age.*must contain values between 1 and"
   )
 
   # Test cohort bounds mismatch
@@ -122,7 +122,7 @@ test_that("predict throws informative compatibility errors", {
   bad_cohort_pops$cohort[1] <- 99L
   expect_error(
     predict(fit, bad_cohort_pops),
-    "cohort values must be within 1 and fit\\$data\\$n_cohort"
+    "cohort.*must contain values between 1 and"
   )
 })
 
@@ -276,7 +276,7 @@ test_that("predict() rejects a cmdstanr (non-stanfit) fit", {
     ),
     class = "imugap_fit"
   )
-  expect_error(predict(fake_fit, target = data.frame()), "rstan backend")
+  expect_error(predict(fake_fit, target = data.frame()), "'rstan' backend")
 })
 
 test_that("predict S3 methods validate input classes and arguments", {
@@ -285,24 +285,24 @@ test_that("predict S3 methods validate input classes and arguments", {
   # 1. predict.imugap_fit class check
   expect_error(
     predict.imugap_fit("not_a_fit", target = data.frame()),
-    "fit must be an object of class 'imugap_fit'"
+    "`fit` must be an object of class 'imugap_fit'"
   )
 
   # 2. subset.imugap_predict class check
   expect_error(
     subset.imugap_predict("not_a_predict", dose == 2),
-    "x must be of class 'imugap_predict'"
+    "`x` must be an object of class 'imugap_predict'"
   )
 
   # 3. subset.imugap_predict logical expression check
   expect_error(
     subset(predict_sim, subset = 123),
-    "'subset' must be logical"
+    "`subset` must be a logical vector"
   )
 
   # 4. as.data.frame.imugap_predict class check
   expect_error(
     as.data.frame.imugap_predict("not_a_predict"),
-    "x must be of class 'imugap_predict'"
+    "`x` must be an object of class 'imugap_predict'"
   )
 })
