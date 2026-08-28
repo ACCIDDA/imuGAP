@@ -181,7 +181,39 @@ assert_positive_numeric <- function(dt, x, n = 1L) {
     x,
     n = n + 1L
   )
-  stop_fmt_if(dt[, any(is.na(get(x)))], ERR_CANNOT_HAVE_NA, deparse(substitute(dt)), x, n = n + 1L)
-  stop_fmt_if(dt[, any(get(x) <= 0)], ERR_MUST_BE_GT_ZERO, deparse(substitute(dt)), x, n = n + 1L)
+  stop_fmt_if(
+    dt[, any(is.na(get(x)))],
+    ERR_CANNOT_HAVE_NA,
+    deparse(substitute(dt)),
+    x,
+    n = n + 1L
+  )
+  stop_fmt_if(
+    dt[, any(get(x) <= 0)],
+    ERR_MUST_BE_GT_ZERO,
+    deparse(substitute(dt)),
+    x,
+    n = n + 1L
+  )
   dt[]
+}
+
+#' @keywords internal
+assert_positive_int <- function(val, name) {
+  if (!is.numeric(val)) {
+    stop(sprintf("'%s' must be numeric", name), call. = FALSE)
+  }
+  if (length(val) < 1L) {
+    stop(sprintf("length('%s') must be >= 1", name), call. = FALSE)
+  }
+  if (any(is.na(val))) {
+    stop(sprintf("'%s' may not contain NAs", name), call. = FALSE)
+  }
+  if (any(val != as.integer(val))) {
+    stop(sprintf("'%s' must be integers", name), call. = FALSE)
+  }
+  if (any(val < 1L)) {
+    stop(sprintf("'%s' must be positive", name), call. = FALSE)
+  }
+  as.integer(val)
 }
