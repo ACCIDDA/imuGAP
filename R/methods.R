@@ -1,3 +1,24 @@
+# Internal error message format strings for methods.R
+ERR_NOT_IMUGAP_FIT <- "fit must be an object of class 'imugap_fit'"
+ERR_NOT_RSTAN_BACKEND <- paste0(
+  "predict() currently supports only the rstan backend. Refit with ",
+  "stan_options(backend = 'rstan'); cmdstanr generated-quantities support ",
+  "is not yet implemented."
+)
+ERR_POSTERIOR_SIZE_SINGLE <- "`posterior_size` must be a single value."
+ERR_POSTERIOR_SIZE_EXCEEDS <- "`posterior_size` (%d) exceeds the %d posterior draws in the fit."
+ERR_NOT_IMUGAP_PREDICT <- "%s must be of class 'imugap_predict'"
+ERR_SUBSET_NOT_LOGICAL <- "'subset' must be logical"
+MSG_POSTERIOR_SIZE_ROUNDED <- paste0(
+  "`posterior_size` (%d) is not a multiple of the %d chains; ",
+  "using %d draws instead."
+)
+MSG_POSTERIOR_SUBSAMPLE_WARN <- paste0(
+  "predict() is using a sub-sample of %d posterior draws and does ",
+  "not check whether it is adequate (chain mixing, effective sample ",
+  "size); verify the sufficiency statistics yourself."
+)
+
 #' @title Predict coverage probabilities
 #'
 #' @description
@@ -53,23 +74,14 @@ predict.imugap_fit <- function(
   ...
 ) {
   fit <- object
-  if (!inherits(fit, "imugap_fit")) {
-    stop("fit must be an object of class 'imugap_fit'", call. = FALSE)
-  }
+  stop_fmt_if(!inherits(fit, "imugap_fit"), ERR_NOT_IMUGAP_FIT)
 
   raw_fit <- fit$stanfit
   # predict() runs generated quantities through the backend accessors, which
   # only implement the rstan path today. cmdstanr fits return a CmdStanMCMC;
   # their generated-quantities support is a separate piece of work, so fail
   # clearly here rather than deep inside the accessor.
-  if (!inherits(raw_fit, "stanfit")) {
-    stop(
-      "predict() currently supports only the rstan backend. Refit with ",
-      "stan_options(backend = 'rstan'); cmdstanr generated-quantities support ",
-      "is not yet implemented.",
-      call. = FALSE
-    )
-  }
+  stop_fmt_if(!inherits(raw_fit, "stanfit"), ERR_NOT_RSTAN_BACKEND)
 
   # Posterior draws as a 3D array: iterations x chains x parameters.
   draws_array <- backend_draws_array(raw_fit)
@@ -79,45 +91,30 @@ predict.imugap_fit <- function(
 
   if (!is.null(posterior_size)) {
     posterior_size <- assert_positive_int(posterior_size, "posterior_size")
-    if (length(posterior_size) != 1L) {
-      stop("`posterior_size` must be a single value.", call. = FALSE)
-    }
+    stop_fmt_if(length(posterior_size) != 1L, ERR_POSTERIOR_SIZE_SINGLE)
     # The slice keeps an equal number of draws from the end of each chain, so
     # the size must be a multiple of the chain count; round up if it isn't.
-    if (posterior_size %% n_chains != 0L) {
-      rounded <- as.integer(ceiling(posterior_size / n_chains) * n_chains)
-      warning(
-        sprintf(
-          "`posterior_size` (%d) is not a multiple of the %d chains; using %d draws instead.",
-          posterior_size,
-          n_chains,
-          rounded
-        ),
-        call. = FALSE
-      )
-      posterior_size <- rounded
-    }
-    if (posterior_size > n_avail) {
-      stop(
-        sprintf(
-          "`posterior_size` (%d) exceeds the %d posterior draws in the fit.",
-          posterior_size,
-          n_avail
-        ),
-        call. = FALSE
-      )
-    }
+    rounded <- as.integer(ceiling(posterior_size / n_chains) * n_chains)
+    warn_fmt_if(
+      posterior_size != rounded,
+      MSG_POSTERIOR_SIZE_ROUNDED,
+      posterior_size,
+      n_chains,
+      rounded
+    )
+    posterior_size <- rounded
+
+    stop_fmt_if(
+      posterior_size > n_avail,
+      ERR_POSTERIOR_SIZE_EXCEEDS,
+      posterior_size,
+      n_avail
+    )
     # No adequacy check (mixing, ESS); warn only when a sub-sample is taken.
-    warning(
-      sprintf(
-        paste0(
-          "predict() is using a sub-sample of %d posterior draws and does ",
-          "not check whether it is adequate (chain mixing, effective sample ",
-          "size); verify the sufficiency statistics yourself."
-        ),
-        posterior_size
-      ),
-      call. = FALSE
+    warn_fmt_if(
+      TRUE,
+      MSG_POSTERIOR_SUBSAMPLE_WARN,
+      posterior_size
     )
   }
 
@@ -198,9 +195,11 @@ predict.imugap_fit <- function(
 #' @export
 #' @importFrom stats quantile
 summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
-  if (!inherits(object, "imugap_predict")) {
-    stop("object must be of class 'imugap_predict'", call. = FALSE)
-  }
+  stop_fmt_if(
+    !inherits(object, "imugap_predict"),
+    ERR_NOT_IMUGAP_PREDICT,
+    "object"
+  )
 
   draws <- object$draws
   target <- data.table::copy(object$target)
@@ -253,9 +252,7 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
 #'
 #' @export
 subset.imugap_predict <- function(x, subset, iteration, chain, ...) {
-  if (!inherits(x, "imugap_predict")) {
-    stop("x must be of class 'imugap_predict'", call. = FALSE)
-  }
+  stop_fmt_if(!inherits(x, "imugap_predict"), ERR_NOT_IMUGAP_PREDICT, "x")
 
   # Subset variables (columns/third dimension) using the metadata
   r <- if (missing(subset)) {
@@ -263,9 +260,7 @@ subset.imugap_predict <- function(x, subset, iteration, chain, ...) {
   } else {
     e <- substitute(subset)
     r <- eval(e, x$target, parent.frame())
-    if (!is.logical(r)) {
-      stop("'subset' must be logical", call. = FALSE)
-    }
+    stop_fmt_if(!is.logical(r), ERR_SUBSET_NOT_LOGICAL)
     r & !is.na(r)
   }
 
@@ -317,9 +312,7 @@ as.data.frame.imugap_predict <- function(
   optional = FALSE,
   ...
 ) {
-  if (!inherits(x, "imugap_predict")) {
-    stop("x must be of class 'imugap_predict'", call. = FALSE)
-  }
+  stop_fmt_if(!inherits(x, "imugap_predict"), ERR_NOT_IMUGAP_PREDICT, "x")
 
   dims <- dim(x$draws)
   dim_i <- dims[1]
