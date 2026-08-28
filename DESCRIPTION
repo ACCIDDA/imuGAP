@@ -31,7 +31,7 @@ Depends:
     R (>= 4.1.0)
 Imports:
     data.table,
-    flexstanr,
+    flexstanr (>= 0.2.0),
     methods,
     Rcpp (>= 1.1.2),
     RcppParallel (>= 5.1.11.2),
