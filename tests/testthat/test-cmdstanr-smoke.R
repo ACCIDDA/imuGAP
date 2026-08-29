@@ -10,6 +10,15 @@ test_that("imuGAP::sampling() fits via the cmdstanr backend", {
     inherits(try(cmdstanr::cmdstan_version(), silent = TRUE), "try-error"),
     "CmdStan toolchain not available"
   )
+  skip_if(
+    system.file(
+      "stan",
+      "impute_school_coverage_process_v6.stan",
+      package = "imuGAP"
+    ) ==
+      "",
+    "Stan source files not found in package installation"
+  )
 
   locs <- canonicalize_locations(locations_sim)
   obs <- canonicalize_observations(observations_sim)

@@ -126,6 +126,10 @@ ERR_LOCATIONS_NO_CYCLES <- paste0(
   "`locations` hierarchy cannot contain cycles; found %d location(s) ",
   "in cycle(s): %s"
 )
+ERR_LOCATIONS_LAYER_MIN_SIZE <- paste0(
+  "`locations` layers below root (layer >= 2) must contain more than 1 location; ",
+  "layer %d has %d location(s)"
+)
 
 ERR_OBS_NA_ID <- paste0(
   "`observations` column 'obs_id' cannot contain NA values; ",
@@ -147,6 +151,7 @@ ERR_OBS_CENSORED_VALUES <- paste0(
 
 ERR_POP_MISSING_WEIGHT_COL <- "`populations` is missing required column(s): 'weight'"
 ERR_POP_WEIGHT_SUM <- "`populations` column 'weight' must sum to 1 by 'obs_id'"
+ERR_POP_MAX_LAYER_OBS <- "`populations` must contain at least one observation at the maximum location layer depth (%d)"
 
 ERR_TARGET_NON_UNIQUE_WEIGHTS <- paste0(
   "`target` non-unique observation IDs with weights are not yet ",
@@ -267,6 +272,16 @@ canonicalize_locations <- function(locations) {
       toString(locations[is.na(layer), loc_id], width = 80)
     )
   }
+
+  # check that each non-root layer has > 1 member
+  layer_counts <- locations[, .N, by = layer]
+  small_layers <- layer_counts[layer > 1L & N <= 1L]
+  stop_fmt_if(
+    nrow(small_layers) > 0L,
+    ERR_LOCATIONS_LAYER_MIN_SIZE,
+    small_layers$layer[1],
+    small_layers$N[1]
+  )
 
   # Validate population hierarchy if population column is present
   if ("population" %in% names(locations)) {
@@ -449,6 +464,15 @@ canonicalize_populations <- function(
 
   # check that populations locations are all *within* locations ids;
   assert_subset(populations, "loc_id", locations$loc_id)
+
+  # check that maximum layer depth has at least some associated observations
+  max_layer <- max(locations$layer)
+  max_layer_locs <- locations[layer == max_layer, loc_id]
+  stop_fmt_if(
+    !any(populations$loc_id %in% max_layer_locs),
+    ERR_POP_MAX_LAYER_OBS,
+    max_layer
+  )
 
   # check cohort and age if max values provided
   assert_maxed_pos_integer(populations, "cohort", max_cohort)

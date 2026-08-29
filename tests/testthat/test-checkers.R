@@ -71,11 +71,14 @@ test_that("warn_fmt_if conditionally warns with call context and returns boolean
 
   # Control flow guard pattern: if (warn_fmt_if(...))
   branched <- FALSE
-  expect_warning({
-    if (warn_fmt_if(TRUE, "branch warning")) {
-      branched <- TRUE
-    }
-  }, "branch warning")
+  expect_warning(
+    {
+      if (warn_fmt_if(TRUE, "branch warning")) {
+        branched <- TRUE
+      }
+    },
+    "branch warning"
+  )
   expect_true(branched)
 
   branched <- FALSE

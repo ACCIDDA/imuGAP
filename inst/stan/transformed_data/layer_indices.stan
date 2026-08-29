@@ -14,20 +14,8 @@
     cdf_lookup[weight_i] = weights_life_year[weight_i] + (weights_dose[weight_i] - 1) * n_yr;
   }
 
-  // Indexing scheme for unconstrained layer offsets:
-  // Maps parameter draws (size n_locs - 1) to layer index k (1 .. n_layers - 1)
-  array[n_locs - 1] int<lower=1, upper=max(1, n_layers - 1)> draw_layer_map;
-  array[2, max(0, n_layers - 1)] int layer_draw_map;
-
-  {
-    int pos = 1;
-    for (k in 1:(n_layers - 1)) {
-      int layer_len = layer_sizes[k + 1];
-      layer_draw_map[1, k] = pos;
-      layer_draw_map[2, k] = pos + layer_len - 1;
-      for (j in 1:layer_len) {
-        draw_layer_map[pos] = k;
-        pos += 1;
-      }
-    }
+  // Direct mapping from each non-root offset index (1 .. n_locs - 1) to its layer index (1 .. n_layers - 1)
+  array[n_locs - 1] int<lower=1, upper=n_layers - 1> loc_layer_idx;
+  for (k in 1:(n_layers - 1)) {
+    loc_layer_idx[(layer_bounds[1, k + 1] - 1):(layer_bounds[2, k + 1] - 1)] = rep_array(k, layer_sizes[k + 1]);
   }

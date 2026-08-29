@@ -52,45 +52,7 @@ sampling <- function(
 ) {
   # check location argument
   loc_info <- canonicalize_locations(locations)
-  n_locs <- nrow(loc_info)
-  n_layers <- max(loc_info$layer)
-  layer_sizes <- as.integer(loc_info[, .N, keyby = layer]$N)
-  layer_bounds <- matrix(
-    c(
-      loc_info[, min(loc_c_id), by = layer]$V1,
-      loc_info[, max(loc_c_id), by = layer]$V1
-    ),
-    nrow = 2,
-    byrow = TRUE
-  )
-
-  parent_id_map <- integer(n_locs)
-  for (i in seq_len(n_locs)) {
-    pid <- loc_info$parent_id[i]
-    if (is.na(pid) || !pid %in% loc_info$loc_id) {
-      parent_id_map[i] <- 0L
-    } else {
-      parent_id_map[i] <- loc_info[loc_id == pid, loc_c_id]
-    }
-  }
-  layer_id_map <- as.integer(loc_info$layer)
-
-  # Parent locations metadata (locations having children)
-  parent_loc_info <- loc_info[
-    loc_id %in% loc_info$parent_id[!is.na(parent_id)],
-    .(parent_loc_c_id = loc_c_id, loc_id)
-  ]
-  data.table::setkeyv(parent_loc_info, "parent_loc_c_id")
-  n_parent_locs <- nrow(parent_loc_info)
-
-  parent_child_bounds <- matrix(0L, nrow = 2, ncol = n_parent_locs)
-  for (p in seq_len(n_parent_locs)) {
-    pid <- parent_loc_info$loc_id[p]
-    child_c_ids <- loc_info[parent_id == pid, loc_c_id]
-    parent_child_bounds[1, p] <- min(child_c_ids)
-    parent_child_bounds[2, p] <- max(child_c_ids)
-  }
-  parent_loc_id <- parent_loc_info$parent_loc_c_id
+  layer_data <- assemble_layer_data(loc_info)
 
   # check observations argument
   obs <- canonicalize_observations(observations)
@@ -115,37 +77,31 @@ sampling <- function(
     doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
   }
 
-  model_name <- "impute_school_coverage_process_v6"
-
   # prepare dat_stan
-  dat_stan <- list(
-    n_uncensored_obs = obs[is.na(censored), .N],
-    n_yr = max(wts$age),
-    n_cohort = max(wts$cohort),
-    n_locs = n_locs,
-    n_layers = n_layers,
-    layer_sizes = as.array(as.integer(layer_sizes)),
-    layer_bounds = matrix(as.integer(layer_bounds), nrow = 2, ncol = n_layers),
-    parent_id_map = as.array(as.integer(parent_id_map)),
-    layer_id_map = as.array(as.integer(layer_id_map)),
-    n_parent_locs = n_parent_locs,
-    parent_loc_id = as.array(as.integer(parent_loc_id)),
-    parent_child_bounds = matrix(as.integer(parent_child_bounds), nrow = 2, ncol = n_parent_locs),
-    n_doses = length(dose_schedule),
-    dose_sched = doses,
-    k_bs = ncol(bsp),
-    bs = bsp,
-    n_obs = nrow(obs),
-    y_obs = obs$positive,
-    y_smp = obs$sample_n,
-    n_weights = nrow(wts),
-    obs_to_weights_bounds = unique(wts$range_start),
-    weights_location = wts$loc_c_id,
-    weights_cohort = wts$cohort,
-    weights_life_year = wts$age,
-    weights_dose = wts$dose,
-    weights = wts$weight,
-    predict_mode = 0
+  dat_stan <- c(
+    list(
+      n_uncensored_obs = obs[is.na(censored), .N],
+      n_yr = max(wts$age),
+      n_cohort = max(wts$cohort)
+    ),
+    layer_data,
+    list(
+      n_doses = length(dose_schedule),
+      dose_sched = doses,
+      k_bs = ncol(bsp),
+      bs = bsp,
+      n_obs = nrow(obs),
+      y_obs = obs$positive,
+      y_smp = obs$sample_n,
+      n_weights = nrow(wts),
+      obs_to_weights_bounds = unique(wts$range_start),
+      weights_location = wts$loc_c_id,
+      weights_cohort = wts$cohort,
+      weights_life_year = wts$age,
+      weights_dose = wts$dose,
+      weights = wts$weight,
+      predict_mode = 0
+    )
   )
 
   # The `backend` element is the marker that stan_opts came from stan_options();
@@ -153,10 +109,20 @@ sampling <- function(
   backend <- stan_opts$backend
   stop_fmt_if(is.null(backend), ERR_STAN_OPTS_CLASS)
 
-  # imuGAP has a single model; fit_model() looks it up in `stanmodels` (rstan)
-  # and locates inst/stan/<model_name>.stan (cmdstanr). No init is supplied, so
-  # the backend uses its own default.
-  model_name <- "impute_school_coverage_process_v6"
+  # Select specialized Stan model based on model and hierarchy depth:
+  # 1-layer uses the streamlined single-location model; >= 2 layers uses the full
+  # hierarchical model.
+  model <- imugap_opts$model %||% "default"
+  model_name <- if (identical(model, "default")) {
+    if (layer_data$n_layers == 1L) {
+      "impute_school_coverage_process_v6_single_layer"
+    } else {
+      "impute_school_coverage_process_v6"
+    }
+  } else {
+    stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model)
+  }
+
   raw_fit <- fit_model(
     model_name,
     dat_stan,

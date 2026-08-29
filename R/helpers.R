@@ -177,7 +177,11 @@ compute_recycled_target_len <- function(lens) {
 
 #' @keywords internal
 validate_vec_inputs <- function(location, age, cohort, dose) {
-  stop_fmt_if(missing(age) || missing(cohort) || missing(dose), ERR_HELP_VEC_INPUTS_MISSING, n = 2L)
+  stop_fmt_if(
+    missing(age) || missing(cohort) || missing(dose),
+    ERR_HELP_VEC_INPUTS_MISSING,
+    n = 2L
+  )
 
   na_args <- c("location", "age", "cohort", "dose")[which(
     c(
@@ -188,7 +192,12 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
     )
   )]
 
-  stop_fmt_if(length(na_args) > 0, ERR_HELP_VEC_INPUTS_NA, toString(na_args), n = 2L)
+  stop_fmt_if(
+    length(na_args) > 0,
+    ERR_HELP_VEC_INPUTS_NA,
+    toString(na_args),
+    n = 2L
+  )
 
   n_loc <- length(location)
   n_age <- length(age)
@@ -199,7 +208,12 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
     c(n_loc, n_age, n_coh, n_dos) == 0L
   )]
 
-  stop_fmt_if(length(zero_lens) > 0, ERR_HELP_VEC_INPUTS_ZERO_LEN, toString(zero_lens), n = 2L)
+  stop_fmt_if(
+    length(zero_lens) > 0,
+    ERR_HELP_VEC_INPUTS_ZERO_LEN,
+    toString(zero_lens),
+    n = 2L
+  )
   c(n_loc = n_loc, n_age = n_age, n_coh = n_coh, n_dos = n_dos)
 }
 
@@ -280,7 +294,10 @@ create_target <- function(
       weight = 1.0
     )
   } else if (mode %in% c("enumerate", "snapshot")) {
-    stop_fmt_if(mode == "snapshot" && length(cohort) != 1L, ERR_HELP_SNAP_COHORT_SINGLE)
+    stop_fmt_if(
+      mode == "snapshot" && length(cohort) != 1L,
+      ERR_HELP_SNAP_COHORT_SINGLE
+    )
     target <- data.table::as.data.table(expand.grid(
       loc_id = location,
       age = age,
@@ -312,4 +329,86 @@ create_target <- function(
     c("obs_c_id", "loc_id", "age", "cohort", "dose", "weight")
   )
   target[]
+}
+
+#' @title Assemble Location Hierarchy Data for Stan Model
+#'
+#' @description
+#' Extracts structural metadata and indexing maps from a canonicalized
+#' locations table for consumption by the Stan model.
+#'
+#' @param loc_info A canonicalized locations table (or raw locations table passed
+#'   to [canonicalize_locations()]).
+#'
+#' @return A named list containing:
+#'   - `n_locs`: integer total count of locations
+#'   - `n_layers`: integer maximum depth / number of layers
+#'   - `layer_sizes`: integer array of location counts per layer (length `n_layers`)
+#'   - `layer_bounds`: 2 x `n_layers` integer matrix with start/end indices for each layer
+#'   - `parent_id_map`: integer array (length `n_locs`) mapping each location to its parent `loc_c_id` (0 for root)
+#'   - `layer_id_map`: integer array (length `n_locs`) mapping each location to its layer (1..n_layers)
+#'   - `n_parent_locs`: integer count of locations that have children (0 for 1-layer)
+#'   - `parent_loc_id`: integer array (length `n_parent_locs`) of canonical IDs of parent locations
+#'   - `parent_child_bounds`: 2 x `n_parent_locs` integer matrix with start/end child indices for each parent
+#'
+#' @keywords internal
+#' @autoglobal
+assemble_layer_data <- function(loc_info) {
+  n_locs <- nrow(loc_info)
+  n_layers <- max(loc_info$layer)
+  layer_sizes <- as.integer(loc_info[, .N, keyby = layer]$N)
+  layer_bounds <- matrix(
+    c(
+      loc_info[, min(loc_c_id), by = layer]$V1,
+      loc_info[, max(loc_c_id), by = layer]$V1
+    ),
+    nrow = 2,
+    byrow = TRUE
+  )
+
+  parent_id_map <- integer(n_locs)
+  for (i in seq_len(n_locs)) {
+    pid <- loc_info$parent_id[i]
+    if (is.na(pid) || !pid %in% loc_info$loc_id) {
+      parent_id_map[i] <- 0L
+    } else {
+      parent_id_map[i] <- loc_info[loc_id == pid, loc_c_id]
+    }
+  }
+  layer_id_map <- as.integer(loc_info$layer)
+
+  # Parent locations metadata (locations having children)
+  parent_loc_info <- loc_info[
+    loc_id %in% loc_info$parent_id[!is.na(parent_id)],
+    .(parent_loc_c_id = loc_c_id, loc_id)
+  ]
+  data.table::setkeyv(parent_loc_info, "parent_loc_c_id")
+  n_parent_locs <- nrow(parent_loc_info)
+
+  parent_child_bounds <- matrix(0L, nrow = 2, ncol = n_parent_locs)
+  if (n_parent_locs > 0L) {
+    for (p in seq_len(n_parent_locs)) {
+      pid <- parent_loc_info$loc_id[p]
+      child_c_ids <- loc_info[parent_id == pid, loc_c_id]
+      parent_child_bounds[1, p] <- min(child_c_ids)
+      parent_child_bounds[2, p] <- max(child_c_ids)
+    }
+  }
+  parent_loc_id <- as.integer(parent_loc_info$parent_loc_c_id)
+
+  list(
+    n_locs = n_locs,
+    n_layers = n_layers,
+    layer_sizes = as.array(as.integer(layer_sizes)),
+    layer_bounds = matrix(as.integer(layer_bounds), nrow = 2, ncol = n_layers),
+    parent_id_map = as.array(as.integer(parent_id_map)),
+    layer_id_map = as.array(as.integer(layer_id_map)),
+    n_parent_locs = n_parent_locs,
+    parent_loc_id = as.array(as.integer(parent_loc_id)),
+    parent_child_bounds = matrix(
+      as.integer(parent_child_bounds),
+      nrow = 2,
+      ncol = n_parent_locs
+    )
+  )
 }

@@ -200,7 +200,7 @@ test_that("output of create_observation_populations can be canonicalized", {
   pops <- create_observation_populations(
     obs,
     mode = "snapshot",
-    loc_id = "schl",
+    loc_id = "schl1",
     cohort = 5L,
     age_min = 2,
     age_max = 5,

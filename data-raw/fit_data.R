@@ -56,8 +56,8 @@ locations_sim_2layer <- locations_sim[is.na(parent_id) | parent_id == "State"]
 populations_sim_2layer <- copy(populations_sim)
 loc_map_2layer <- locations_sim[!is.na(parent_id), .(loc_id, parent_id)]
 populations_sim_2layer[loc_map_2layer, on = .(loc_id), loc_id := i.parent_id]
-populations_sim_2layer <- populations_sim_2layer[
-  , .(weight = sum(weight)),
+populations_sim_2layer <- populations_sim_2layer[,
+  .(weight = sum(weight)),
   by = .(obs_id, loc_id, cohort, age, dose)
 ]
 observations_sim_2layer <- copy(observations_sim)
@@ -85,7 +85,11 @@ target_sim_2layer <- canonicalize_target(
 save(target_sim_2layer, file = "data/target_sim_2layer.rda")
 
 predict_sim_2layer <- suppressWarnings(
-  predict(object = fit_sim_2layer, target = target_sim_2layer, posterior_size = 100)
+  predict(
+    object = fit_sim_2layer,
+    target = target_sim_2layer,
+    posterior_size = 100
+  )
 )
 save(predict_sim_2layer, file = "data/predict_sim_2layer.rda", compress = "xz")
 
@@ -94,8 +98,8 @@ locations_sim_1layer <- locations_sim[is.na(parent_id)]
 
 populations_sim_1layer <- copy(populations_sim)
 populations_sim_1layer[, loc_id := "State"]
-populations_sim_1layer <- populations_sim_1layer[
-  , .(weight = sum(weight)),
+populations_sim_1layer <- populations_sim_1layer[,
+  .(weight = sum(weight)),
   by = .(obs_id, loc_id, cohort, age, dose)
 ]
 observations_sim_1layer <- copy(observations_sim)
@@ -123,6 +127,10 @@ target_sim_1layer <- canonicalize_target(
 save(target_sim_1layer, file = "data/target_sim_1layer.rda")
 
 predict_sim_1layer <- suppressWarnings(
-  predict(object = fit_sim_1layer, target = target_sim_1layer, posterior_size = 100)
+  predict(
+    object = fit_sim_1layer,
+    target = target_sim_1layer,
+    posterior_size = 100
+  )
 )
 save(predict_sim_1layer, file = "data/predict_sim_1layer.rda", compress = "xz")

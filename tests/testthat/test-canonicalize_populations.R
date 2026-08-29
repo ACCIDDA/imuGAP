@@ -203,7 +203,7 @@ test_that("canonicalize_populations errors when weights do not sum to 1 by obs_i
     make_test_pops(),
     data.frame(
       obs_id = "o1",
-      loc_id = "schl",
+      loc_id = "schl1",
       cohort = 1L,
       age = 2L,
       dose = 2L,
@@ -241,4 +241,131 @@ test_that("canonicalize_populations succeeds with bundled simulated data", {
   expect_true("obs_c_id" %in% names(res))
   expect_true("loc_c_id" %in% names(res))
   expect_true("range_start" %in% names(res))
+})
+
+test_that("canonicalize_populations coordinates across 1-layer, 2-layer, and 4-layer hierarchies", {
+  # 1-layer coordination
+  locs1 <- data.frame(loc_id = "state", parent_id = NA)
+  locs1_canon <- canonicalize_locations(locs1)
+  obs1 <- data.frame(
+    obs_id = c("o1", "o2"),
+    positive = c(5L, 10L),
+    sample_n = c(10L, 20L)
+  )
+  pops1 <- data.frame(
+    obs_id = obs1$obs_id,
+    loc_id = rep(locs1$loc_id, nrow(obs1)),
+    cohort = c(1L, 1L),
+    age = c(5L, 5L),
+    dose = c(1L, 2L),
+    weight = c(1.0, 1.0)
+  )
+  res1 <- canonicalize_populations(pops1, obs1, locs1)
+  expect_s3_class(res1, "data.table")
+  expect_equal(res1$loc_c_id, rep(locs1_canon$loc_c_id, nrow(pops1)))
+  expect_equal(res1$obs_c_id, seq_len(nrow(obs1)))
+
+  # 2-layer coordination
+  locs2 <- data.frame(
+    loc_id = c("state", "cnty1", "cnty2"),
+    parent_id = c(NA, "state", "state")
+  )
+  locs2_canon <- canonicalize_locations(locs2)
+  pops2 <- data.frame(
+    obs_id = obs1$obs_id,
+    loc_id = c("cnty1", "cnty2"),
+    cohort = c(1L, 1L),
+    age = c(5L, 5L),
+    dose = c(1L, 2L),
+    weight = c(1.0, 1.0)
+  )
+  res2 <- canonicalize_populations(pops2, obs1, locs2)
+  expect_s3_class(res2, "data.table")
+  expect_setequal(
+    res2$loc_c_id,
+    locs2_canon[loc_id %in% pops2$loc_id, loc_c_id]
+  )
+
+  # 4-layer coordination
+  locs4 <- data.frame(
+    loc_id = c("state", "cnty1", "cnty2", "dist1", "dist2", "schl1", "schl2"),
+    parent_id = c(NA, "state", "state", "cnty1", "cnty2", "dist1", "dist1")
+  )
+  locs4_canon <- canonicalize_locations(locs4)
+  pops4 <- data.frame(
+    obs_id = obs1$obs_id,
+    loc_id = c("schl1", "schl2"),
+    cohort = c(1L, 1L),
+    age = c(5L, 5L),
+    dose = c(1L, 2L),
+    weight = c(1.0, 1.0)
+  )
+  res4 <- canonicalize_populations(pops4, obs1, locs4)
+  expect_s3_class(res4, "data.table")
+  expect_setequal(
+    res4$loc_c_id,
+    locs4_canon[loc_id %in% pops4$loc_id, loc_c_id]
+  )
+})
+
+test_that("canonicalize_populations errors when maximum layer depth has no observations", {
+  # 3-layer location tree: state -> cnty1, cnty2 -> schl1, schl2
+  locs3 <- make_test_locs()
+  obs <- make_test_obs()
+
+  # populations only contains loc_id at layer 2 (cnty1, cnty2)
+  bad_pops <- data.frame(
+    obs_id = obs$obs_id,
+    loc_id = c("cnty1", "cnty2"),
+    cohort = c(1L, 1L),
+    age = c(2L, 2L),
+    dose = c(1L, 2L),
+    weight = c(1.0, 1.0)
+  )
+
+  expect_error(
+    canonicalize_populations(bad_pops, obs, locs3),
+    "maximum location layer depth \\(3\\)"
+  )
+
+  # 2-layer location tree: state -> cnty1, cnty2, populations only has state (layer 1)
+  locs2 <- data.frame(
+    loc_id = c("state", "cnty1", "cnty2"),
+    parent_id = c(NA, "state", "state")
+  )
+  bad_pops2 <- data.frame(
+    obs_id = obs$obs_id,
+    loc_id = c("state", "state"),
+    cohort = c(1L, 1L),
+    age = c(2L, 2L),
+    dose = c(1L, 2L),
+    weight = c(1.0, 1.0)
+  )
+
+  expect_error(
+    canonicalize_populations(bad_pops2, obs, locs2),
+    "maximum location layer depth \\(2\\)"
+  )
+})
+
+test_that("canonicalize_populations succeeds when observations include maximum layer depth and higher layers", {
+  locs3 <- make_test_locs()
+  obs3 <- data.frame(
+    obs_id = c("o1", "o2", "o3"),
+    positive = c(5L, 10L, 15L),
+    sample_n = c(10L, 20L, 30L)
+  )
+  # Mix of county (layer 2) and school (layer 3) observations
+  mixed_pops <- data.frame(
+    obs_id = obs3$obs_id,
+    loc_id = c("cnty1", "schl1", "schl2"),
+    cohort = c(1L, 1L, 1L),
+    age = c(2L, 2L, 2L),
+    dose = c(1L, 2L, 1L),
+    weight = c(1.0, 1.0, 1.0)
+  )
+
+  res <- canonicalize_populations(mixed_pops, obs3, locs3)
+  expect_s3_class(res, "data.table")
+  expect_equal(nrow(res), nrow(mixed_pops))
 })

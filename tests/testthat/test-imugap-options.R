@@ -1,52 +1,56 @@
 # Tests for imugap_options()
 
 test_that("imugap_options returns expected structure with defaults", {
-  opts <- imugap_options()
-  expect_type(opts, "list")
-  expect_setequal(names(opts), c("df", "dose_schedule", "object"))
-  expect_equal(opts$df, 5L)
-  expect_equal(opts$dose_schedule, c(1, 4))
-  expect_s4_class(opts$object, "stanmodel")
-})
-
-test_that("imugap_options default object is the v6 stanmodel", {
-  opts <- imugap_options()
-  expect_equal(opts$object@model_name, "impute_school_coverage_process_v6")
+  defaults <- imugap_options()
+  expect_type(defaults, "list")
+  expect_setequal(names(defaults), c("df", "dose_schedule", "model"))
+  expect_equal(defaults$df, 5L)
+  expect_equal(defaults$dose_schedule, c(1, 4))
+  expect_equal(defaults$model, "default")
 })
 
 test_that("imugap_options df can be overridden", {
-  opts <- imugap_options(df = 10L)
-  expect_equal(opts$df, 10L)
-  expect_equal(opts$dose_schedule, c(1, 4))
-  expect_s4_class(opts$object, "stanmodel")
+  defaults <- imugap_options()
+  override_df <- 10L
+  opts <- imugap_options(df = override_df)
+  expected <- defaults
+  expected$df <- override_df
+  expect_equal(opts, expected)
 })
 
 test_that("imugap_options dose_schedule can be overridden", {
-  opts <- imugap_options(dose_schedule = c(2, 5, 7))
-  expect_equal(opts$dose_schedule, c(2, 5, 7))
-  expect_equal(opts$df, 5L)
+  defaults <- imugap_options()
+  override_sched <- c(2, 5, 7)
+  opts <- imugap_options(dose_schedule = override_sched)
+  expected <- defaults
+  expected$dose_schedule <- override_sched
+  expect_equal(opts, expected)
 })
 
-test_that("imugap_options errors on unknown object", {
+test_that("imugap_options errors on unknown model", {
   expect_error(
-    imugap_options(object = "unknown_model"),
-    "unknown model object"
+    imugap_options(model = "unknown_model"),
+    "should be"
   )
   expect_error(
-    imugap_options(object = "stateonly"),
-    "unknown model object"
+    imugap_options(model = "stateonly"),
+    "should be"
   )
 })
 
 test_that("imugap_options accepts default keyword explicitly", {
-  opts <- imugap_options(object = "default")
-  expect_s4_class(opts$object, "stanmodel")
-  expect_equal(opts$object@model_name, "impute_school_coverage_process_v6")
+  defaults <- imugap_options()
+  opts <- imugap_options(model = "default")
+  expect_equal(opts, defaults)
 })
 
 test_that("imugap_options accepts numeric whole-number df", {
-  opts <- imugap_options(df = 4)
-  expect_equal(opts$df, 4L)
+  defaults <- imugap_options()
+  override_df <- 4
+  opts <- imugap_options(df = override_df)
+  expected <- defaults
+  expected$df <- as.integer(override_df)
+  expect_equal(opts, expected)
 })
 
 test_that("imugap_options rejects invalid df", {
@@ -91,7 +95,11 @@ test_that("imugap_options rejects invalid dose_schedule", {
 })
 
 test_that("imugap_options coerces dose_schedule to integer", {
-  opts <- imugap_options(dose_schedule = c(2, 5, 7))
+  defaults <- imugap_options()
+  override_sched <- c(2, 5, 7)
+  opts <- imugap_options(dose_schedule = override_sched)
+  expected <- defaults
+  expected$dose_schedule <- as.integer(override_sched)
   expect_type(opts$dose_schedule, "integer")
-  expect_equal(opts$dose_schedule, c(2L, 5L, 7L))
+  expect_equal(opts, expected)
 })
