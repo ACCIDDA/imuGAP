@@ -1,7 +1,6 @@
 # Internal error message format strings for options.R
 ERR_OPT_DF_SINGLE <- "`df` must be a single positive integer"
 ERR_OPT_DOSE_SCHEDULE <- "`dose_schedule` must be an ascending vector of positive integers"
-ERR_OPT_UNKNOWN_MODEL <- "unknown model object: %s"
 
 #' @title imuGAP Model Options
 #'
@@ -11,8 +10,7 @@ ERR_OPT_UNKNOWN_MODEL <- "unknown model object: %s"
 #' @param df degrees of freedom to use in bspline
 #' @param dose_schedule an integer vector, the ages at which dose(s) `n` are
 #'   scheduled, with vector indices and doses matching
-#' @param object which stan model object to use; currently only "default" is
-#'   supported
+#' @param model which model formulation to use; currently "default" is supported
 #'
 #' @examples
 #' imugap_options()
@@ -23,8 +21,10 @@ ERR_OPT_UNKNOWN_MODEL <- "unknown model object: %s"
 imugap_options <- function(
   df = 5L,
   dose_schedule = c(1, 4),
-  object = c("default")
+  model = c("default")
 ) {
+  model <- match.arg(model)
+
   stop_fmt_if(length(df) != 1L, ERR_OPT_DF_SINGLE)
   df <- assert_positive_int(df, "df")
 
@@ -34,10 +34,9 @@ imugap_options <- function(
     ERR_OPT_DOSE_SCHEDULE
   )
 
-  object <- switch(
-    object,
-    "default" = stanmodels$impute_school_coverage_process_v6,
-    stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, object)
+  list(
+    df = df,
+    dose_schedule = dose_schedule,
+    model = model
   )
-  as.list(environment())
 }

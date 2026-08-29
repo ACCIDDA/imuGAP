@@ -35,34 +35,6 @@ make_minimal_pops <- function() {
 
 # --- error paths -------------------------------------------------------------
 
-test_that("sampling errors when location hierarchy has fewer than 3 layers", {
-  expect_error(
-    imuGAP::sampling(
-      observations = make_minimal_obs(),
-      populations = make_minimal_pops(),
-      locations = make_2layer_locs()
-    ),
-    "3-layer"
-  )
-})
-
-test_that("sampling errors when location hierarchy has more than 3 layers", {
-  locs4 <- data.frame(
-    loc_id = c("state", "cnty", "schl", "subschl"),
-    parent_id = c(NA, "state", "cnty", "schl")
-  )
-  pops4 <- make_minimal_pops()
-  pops4$loc_id <- c("subschl", "subschl")
-  expect_error(
-    imuGAP::sampling(
-      observations = make_minimal_obs(),
-      populations = pops4,
-      locations = locs4
-    ),
-    "3-layer"
-  )
-})
-
 test_that("sampling propagates validation errors from canonicalize_observations", {
   bad_obs <- data.frame(
     obs_id = c("o1", "o2"),
@@ -148,7 +120,15 @@ test_that("sampling assembles stan_opts$data with all expected fields", {
     "n_uncensored_obs",
     "n_yr",
     "n_cohort",
-    "n_sch",
+    "n_locs",
+    "n_layers",
+    "layer_sizes",
+    "layer_bounds",
+    "parent_id_map",
+    "layer_id_map",
+    "n_parent_locs",
+    "parent_loc_id",
+    "parent_child_bounds",
     "n_doses",
     "dose_sched",
     "k_bs",
@@ -158,13 +138,11 @@ test_that("sampling assembles stan_opts$data with all expected fields", {
     "y_smp",
     "n_weights",
     "obs_to_weights_bounds",
-    "weights_school",
+    "weights_location",
     "weights_cohort",
     "weights_life_year",
     "weights_dose",
     "weights",
-    "n_cnty",
-    "cnty_bounds",
     "predict_mode"
   )
   expect_true(all(expected_fields %in% names(d)))
@@ -183,9 +161,9 @@ test_that("sampling data assembly produces sane derived values", {
   expect_equal(d$n_uncensored_obs, nrow(obs))
   expect_equal(d$n_doses, length(opts$dose_schedule))
   expect_equal(d$predict_mode, 0)
-  n_layers <- canonicalize_locations(locs)[, .N, by = layer]
-  expect_equal(d$n_cnty, n_layers[layer == 2, N])
-  expect_equal(d$n_sch, n_layers[layer == 3, N])
+  expect_equal(d$n_locs, 5L)
+  expect_equal(d$n_layers, 3L)
+  expect_equal(as.integer(d$layer_sizes), c(1L, 2L, 2L))
   expect_equal(nrow(d$dose_sched), d$n_yr)
   expect_equal(ncol(d$dose_sched), d$n_doses)
 })
@@ -204,18 +182,42 @@ test_that("sampling forwards observation positive/sample_n into stan data", {
   expect_setequal(d$y_smp, obs$sample_n)
 })
 
-test_that("sampling forwards object from imugap_opts to rstan::sampling", {
-  out <- with_captured_sampling(suppressWarnings(
+test_that("sampling translates model from imugap_opts and hierarchy depth to stan model", {
+  # Multi-layer hierarchy dispatches to multi-layer Stan model
+  out_multi <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
       observations = make_minimal_obs(),
       populations = make_minimal_pops(),
       locations = make_3layer_locs()
     )
   ))
-  expect_s4_class(out$captured$object, "stanmodel")
+  expect_s4_class(out_multi$captured$object, "stanmodel")
   expect_equal(
-    out$captured$object@model_name,
+    out_multi$captured$object@model_name,
     "impute_school_coverage_process_v6"
+  )
+
+  # 1-layer hierarchy dispatches to specialized single-layer Stan model
+  locs1 <- data.frame(loc_id = "state", parent_id = NA)
+  pops1 <- data.frame(
+    obs_id = c("o1", "o2"),
+    loc_id = c("state", "state"),
+    cohort = c(1L, 1L),
+    age = c(5L, 5L),
+    dose = c(1L, 2L),
+    weight = c(1.0, 1.0)
+  )
+  out_single <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = pops1,
+      locations = locs1
+    )
+  ))
+  expect_s4_class(out_single$captured$object, "stanmodel")
+  expect_equal(
+    out_single$captured$object@model_name,
+    "impute_school_coverage_process_v6_single_layer"
   )
 })
 

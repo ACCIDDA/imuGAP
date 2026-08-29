@@ -288,7 +288,8 @@ for (c in seq_along(county_names)) {
   ncnty <- as.integer(round(runif(length(grade6_yrs), 120, 250)))
   offset <- cnty_offset[county_names[c]]
   cov_temp <- plogis(qlogis(phi_st[grade6_yrs - grade6_start]) + offset) *
-    cov[grade6_start, 2] * other_vax_reduction
+    cov[grade6_start, 2] *
+    other_vax_reduction
   sim_county_full[[c]] <- data.frame(
     loc_id = county_names[c],
     parent_id = "State",

@@ -208,13 +208,28 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
 
   if (length(dim(draws)) == 3L) {
     mean_vals <- colMeans(draws, dims = 2L)
-    quantiles <- t(apply(draws, 3L, stats::quantile, probs = probs, na.rm = TRUE))
+    quantiles <- t(apply(
+      draws,
+      3L,
+      stats::quantile,
+      probs = probs,
+      na.rm = TRUE
+    ))
   } else if (length(dim(draws)) == 2L) {
     mean_vals <- colMeans(draws)
-    quantiles <- t(apply(draws, 2L, stats::quantile, probs = probs, na.rm = TRUE))
+    quantiles <- t(apply(
+      draws,
+      2L,
+      stats::quantile,
+      probs = probs,
+      na.rm = TRUE
+    ))
   } else {
     mean_vals <- mean(draws, na.rm = TRUE)
-    quantiles <- matrix(stats::quantile(draws, probs = probs, na.rm = TRUE), nrow = 1)
+    quantiles <- matrix(
+      stats::quantile(draws, probs = probs, na.rm = TRUE),
+      nrow = 1
+    )
   }
 
   # Format column names for the quantiles
