@@ -264,3 +264,15 @@ test_that("sampling errors when stan_opts was not built by stan_options()", {
     "stan_options"
   )
 })
+
+test_that("sampling errors when imugap_opts contains an unknown model", {
+  expect_error(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs(),
+      imugap_opts = list(model = "unsupported_model")
+    ),
+    "unknown model 'unsupported_model'"
+  )
+})
