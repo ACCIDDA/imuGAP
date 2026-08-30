@@ -1,6 +1,7 @@
 # Internal error message format strings for options.R
 ERR_OPT_DF_SINGLE <- "`df` must be a single positive integer"
 ERR_OPT_DOSE_SCHEDULE <- "`dose_schedule` must be an ascending vector of positive integers"
+ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
 
 #' @title imuGAP Model Options
 #'

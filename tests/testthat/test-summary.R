@@ -82,3 +82,42 @@ test_that("summary does not mutate the original target (copy semantics)", {
   invisible(summary(pred))
   expect_equal(pred$target, before)
 })
+
+test_that("summary handles 2D draws matrix and 1D draws vector", {
+  # 2D draws matrix (e.g. n_draws x n_obs)
+  set.seed(42)
+  draws_2d <- matrix(runif(100 * 3), nrow = 100, ncol = 3)
+  target_2d <- data.table::data.table(
+    obs_c_id = 1:3,
+    loc_id = c("a", "b", "c"),
+    age = c(5L, 5L, 5L),
+    cohort = c(1L, 1L, 1L),
+    dose = c(2L, 2L, 2L)
+  )
+  pred_2d <- structure(
+    list(draws = draws_2d, target = target_2d),
+    class = "imugap_predict"
+  )
+  s_2d <- summary(pred_2d)
+  expect_s3_class(s_2d, "data.table")
+  expect_equal(nrow(s_2d), 3L)
+  expect_equal(s_2d$mean, colMeans(draws_2d))
+
+  # 1D draws vector (single target observation)
+  draws_1d <- runif(100)
+  target_1d <- data.table::data.table(
+    obs_c_id = 1L,
+    loc_id = "a",
+    age = 5L,
+    cohort = 1L,
+    dose = 2L
+  )
+  pred_1d <- structure(
+    list(draws = draws_1d, target = target_1d),
+    class = "imugap_predict"
+  )
+  s_1d <- summary(pred_1d)
+  expect_s3_class(s_1d, "data.table")
+  expect_equal(nrow(s_1d), 1L)
+  expect_equal(s_1d$mean, mean(draws_1d))
+})

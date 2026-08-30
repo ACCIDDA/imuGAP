@@ -238,3 +238,36 @@ test_that("canonicalize_locations supports 4-layer and 5-layer hierarchies", {
     res5[loc_id == "Wake", loc_c_id]
   )
 })
+
+test_that("canonicalize_locations imputes NA root population from children sum", {
+  locs_pop <- data.frame(
+    loc_id = c("state", "cnty1", "cnty2"),
+    parent_id = c(NA, "state", "state"),
+    population = c(NA, 100, 200)
+  )
+  res <- canonicalize_locations(locs_pop)
+  expect_equal(res[loc_id == "state", population], 300)
+})
+
+test_that("canonicalize_locations validates consistent multi-layer population sums", {
+  locs_pop <- data.frame(
+    loc_id = c("state", "cnty1", "cnty2", "schl1", "schl2"),
+    parent_id = c(NA, "state", "state", "cnty1", "cnty1"),
+    population = c(300, 100, 200, 60, 40)
+  )
+  expect_silent(res <- canonicalize_locations(locs_pop))
+  expect_equal(res[loc_id == "state", population], 300)
+  expect_equal(res[loc_id == "cnty1", population], 100)
+})
+
+test_that("canonicalize_locations errors when child populations do not sum to parent", {
+  locs_bad_pop <- data.frame(
+    loc_id = c("state", "cnty1", "cnty2", "schl1", "schl2"),
+    parent_id = c(NA, "state", "state", "cnty1", "cnty1"),
+    population = c(300, 100, 200, 60, 50)
+  )
+  expect_error(
+    canonicalize_locations(locs_bad_pop),
+    "populations for parent 'cnty1' sum to 110"
+  )
+})
