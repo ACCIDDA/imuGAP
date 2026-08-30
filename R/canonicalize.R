@@ -151,7 +151,10 @@ ERR_OBS_CENSORED_VALUES <- paste0(
 
 ERR_POP_MISSING_WEIGHT_COL <- "`populations` is missing required column(s): 'weight'"
 ERR_POP_WEIGHT_SUM <- "`populations` column 'weight' must sum to 1 by 'obs_id'"
-ERR_POP_MAX_LAYER_OBS <- "`populations` must contain at least one observation at the maximum location layer depth (%d)"
+ERR_POP_MAX_LAYER_OBS <- paste0(
+  "`populations` must contain at least one observation at the ",
+  "maximum location layer depth (%d)"
+)
 
 ERR_TARGET_NON_UNIQUE_WEIGHTS <- paste0(
   "`target` non-unique observation IDs with weights are not yet ",

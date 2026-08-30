@@ -348,7 +348,7 @@ test_that("canonicalize_populations errors when maximum layer depth has no obser
   )
 })
 
-test_that("canonicalize_populations succeeds when observations include maximum layer depth and higher layers", {
+test_that("canonicalize_populations succeeds with max layer and higher layer observations", {
   locs3 <- make_test_locs()
   obs3 <- data.frame(
     obs_id = c("o1", "o2", "o3"),

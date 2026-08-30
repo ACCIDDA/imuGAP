@@ -171,7 +171,8 @@ test_that("canonicalize_locations supports 4-layer and 5-layer hierarchies", {
     res4[loc_id == "dist1", loc_c_id]
   )
 
-  # 5-layer hierarchy: country -> region -> state -> county -> school (each non-root layer has >= 2 members)
+  # 5-layer hierarchy: country -> region -> state -> county -> school
+  # (each non-root layer has >= 2 members)
   locs5 <- data.frame(
     loc_id = c(
       "USA",
