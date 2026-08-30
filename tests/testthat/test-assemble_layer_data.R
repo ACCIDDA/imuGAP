@@ -51,8 +51,8 @@ test_that("assemble_layer_data handles 2-layer hierarchy", {
 
 test_that("assemble_layer_data handles 3-layer branching hierarchy", {
   locs3 <- canonicalize_locations(data.frame(
-    loc_id = c("state", "c1", "c2", "s1", "s2", "s3"),
-    parent_id = c(NA, "state", "state", "c1", "c1", "c2")
+    loc_id = c("state", "c1", "c2", "s1", "s2", "s3", "s4"),
+    parent_id = c(NA, "state", "state", "c1", "c1", "c2", "c2")
   ))
   d3 <- assemble_layer_data(locs3)
 
@@ -79,7 +79,7 @@ test_that("assemble_layer_data handles 3-layer branching hierarchy", {
 test_that("assemble_layer_data handles 4-layer deep hierarchy", {
   locs4 <- canonicalize_locations(data.frame(
     loc_id = c("state", "c1", "c2", "d1", "d2", "s1", "s2"),
-    parent_id = c(NA, "state", "state", "c1", "c2", "d1", "d2")
+    parent_id = c(NA, "state", "state", "c1", "c1", "d1", "d1")
   ))
   d4 <- assemble_layer_data(locs4)
 

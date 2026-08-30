@@ -289,7 +289,7 @@ test_that("canonicalize_populations coordinates across 1-layer, 2-layer, and 4-l
   # 4-layer coordination
   locs4 <- data.frame(
     loc_id = c("state", "cnty1", "cnty2", "dist1", "dist2", "schl1", "schl2"),
-    parent_id = c(NA, "state", "state", "cnty1", "cnty2", "dist1", "dist1")
+    parent_id = c(NA, "state", "state", "cnty1", "cnty1", "dist1", "dist1")
   )
   locs4_canon <- canonicalize_locations(locs4)
   pops4 <- data.frame(
