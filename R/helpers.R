@@ -46,10 +46,7 @@ ERR_HELP_SNAP_COHORT_SINGLE <- "`cohort` must be a single reference value in 'sn
 #' the reference cohort corresponding to the oldest age. `age_max` may be provided,
 #' but if missing or `NA`, is assumed to be `age_min` + 1. `age_max` corresponds
 #' to the first *excluded* age - i.e.
-#'
-#' $$
-#' \textrm{age}\in\left[\textrm{age_min},\textrm{age_max}\right)
-#' $$
+#' \code{[age_min, age_max)}
 #'
 #' Taking this approach to `age_max` enables this method to naturally support partial
 #' cohorts. For example, if `age_max = 18.5` and `age_min = 17`, then age 17 population

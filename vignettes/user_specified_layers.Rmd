@@ -18,7 +18,6 @@ library(imuGAP)
 library(data.table)
 library(ggplot2)
 library(knitr)
-library(kableExtra)
 ```
 
 ## Overview
@@ -29,24 +28,25 @@ Whatever the data resolution, `imuGAP` canonicalizes the location tree, maps par
 
 This vignette demonstrates:
 
-1. Constructing and canonicalizing location hierarchies for different population structure resolutions, using examples from 1 to 3 layers.
-2. Fitting the `imuGAP` model under each hierarchy configuration, using the package example data.
-3. Comparing estimations across those different resolutions to the known probabilities from the simulation dataset.
+1. Exploring arbitrary location hierarchies and verifying layer depths.
+2. Constructing models for 1-layer (state-level only), 2-layer (state and county), and 3-layer (state, county, and school) datasets.
+3. Fitting and comparing parameter recovery and coverage trajectories across different layer resolutions.
 
-## Location Hierarchy
+---
 
-Let's examine the example location dataset; you can load it from the package or consult this table:
+## The Example Location Hierarchy
 
-```{r load-locations}
-data("locations_sim", package = "imuGAP") # if you want to examine it directly
-```
+Let's first inspect the full hierarchy available in `locations_sim`:
 
-```{r display-hierarchy-table, echo = FALSE}
+```{r hierarchy-overview, echo = FALSE}
 state_name <- locations_sim[is.na(parent_id), loc_id]
 counties <- locations_sim[parent_id == state_name, loc_id]
+schools_by_county <- split(
+  locations_sim[parent_id %in% counties, loc_id],
+  locations_sim[parent_id %in% counties, parent_id]
+)
 
-schools_by_county <- lapply(counties, function(cnt) locations_sim[parent_id == cnt, loc_id])
-max_len <- max(lengths(schools_by_county))
+max_len <- max(vapply(schools_by_county, length, integer(1)))
 pad <- function(x, n) c(x, rep("", n - length(x)))
 
 horiz_df <- as.data.frame(
@@ -55,11 +55,7 @@ horiz_df <- as.data.frame(
   check.names = FALSE
 )
 
-header_state <- setNames(length(counties), state_name)
-
-kable(horiz_df, col.names = paste(counties, "County"), booktabs = TRUE) |>
-  add_header_above(header_state) |>
-  kable_styling(latex_options = "HOLD_position", font_size = 9)
+kable(horiz_df, col.names = paste(counties, "County"))
 ```
 
 Most of our examples focus on using the higher resolution dataset (i.e. including 3 layers, or down to schools). For this demonstration, let's create some alternative `location` data corresponding to different data availability. Here, we're using the convenient layer information created by `canonicalize_locations`, but in real applications you would of course only have the locations you have. These filtered views simulate having high to low resolution data, correspond to all the locations in the table (`locs_3layer`), the state and county locations (`locs_2layer`), or just the state (`locs_1layer`).
