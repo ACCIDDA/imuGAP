@@ -41,9 +41,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
           path: |
-            data/fit_sim.rda
-            data/target_sim.rda
-            data/predict_sim.rda
+            data/*.rda
             man
             NAMESPACE
             R/globals.R

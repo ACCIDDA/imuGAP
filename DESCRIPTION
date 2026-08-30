@@ -36,9 +36,7 @@ Imports:
     Rcpp (>= 1.1.2),
     RcppParallel (>= 5.1.11.2),
     rstan (>= 2.32),
-    rstantools (>= 2.6.0),
-    tools,
-    utils
+    rstantools (>= 2.6.0)
 LinkingTo: 
     BH (>= 1.90),
     Rcpp (>= 1.1.2),
