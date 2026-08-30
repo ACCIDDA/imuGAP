@@ -128,7 +128,8 @@ sampling <- function(
     dat_stan,
     init = NULL,
     stan_opts,
-    drop_pars = NULL
+    drop_pars = NULL,
+    package = "imuGAP"
   )
 
   # fit_model() dispatches to the active backend, so the fit may be an rstan
