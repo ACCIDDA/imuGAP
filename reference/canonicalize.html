@@ -21,6 +21,10 @@ by the [sampling()] sampler and the underlying Stan models."><meta property="og:
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/imuGAP.html">Get started</a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/user_specified_layers.html">Flexible Location Layers in imuGAP</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -322,11 +326,11 @@ estimation will work, and take on the unit meaning you used for input.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   4:  2004   Scruggs Chickadee Elementary       41       48       5     2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   5:  2005   Scruggs Chickadee Elementary       44       53       5     2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                                     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 694:  2021      &lt;NA&gt;                State      254      281      14     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 695:  2022      &lt;NA&gt;                State      252      274      14     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 696:  2023      &lt;NA&gt;                State      230      251      14     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 697:  2024      &lt;NA&gt;                State      272      296      14     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 698:  2025      &lt;NA&gt;                State      210      230      14     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 751:  2021     State               Watson      203      232      11     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 752:  2022     State               Watson      163      180      11     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 753:  2023     State               Watson      170      189      11     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 754:  2024     State               Watson      210      236      11     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 755:  2025     State               Watson      153      164      11     2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      censored age_max cohort_min obs_id</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;num&gt;   &lt;int&gt;      &lt;num&gt;  &lt;int&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1:       NA      NA          4      1</span>
@@ -335,11 +339,11 @@ estimation will work, and take on the unit meaning you used for input.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   4:       NA      NA          7      4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   5:       NA      NA          8      5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 694:       NA      19         11    694</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 695:       NA      19         12    695</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 696:       NA      19         13    696</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 697:       NA      19         14    697</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 698:       NA      19         15    698</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 751:        1      NA         18    751</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 752:        1      NA         19    752</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 753:        1      NA         20    753</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 754:        1      NA         21    754</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 755:        1      NA         22    755</span>
 <span class="r-in"><span><span class="fu">canonicalize_observations</span><span class="op">(</span><span class="va">observations_sim</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;censored, obs_id&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      obs_c_id positive sample_n censored obs_id</span>
@@ -350,11 +354,11 @@ estimation will work, and take on the unit meaning you used for input.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   4:        4       41       48       NA      4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   5:        5       44       53       NA      5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 694:      694      242      276        1    656</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 695:      695      247      297        1    657</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 696:      696      220      276        1    658</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 697:      697      267      328        1    659</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 698:      698      315      374        1    660</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 751:      751      203      232        1    751</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 752:      752      163      180        1    752</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 753:      753      170      189        1    753</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 754:      754      210      236        1    754</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 755:      755      153      164        1    755</span>
 <span class="r-in"><span><span class="co"># --- canonicalize_populations ---</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"populations_sim"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"locations_sim"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"observations_sim"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">populations_sim</span></span></span>
@@ -366,11 +370,11 @@ estimation will work, and take on the unit meaning you used for input.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   4:      4 Chickadee Elementary      7     5     2      1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   5:      5 Chickadee Elementary      8     5     2      1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 746:    656                State     26     3     1      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 747:    657                State     27     3     1      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 748:    658                State     28     3     1      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 749:    659                State     29     3     1      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 750:    660                State     30     3     1      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 803:    751               Watson     18    11     2      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 804:    752               Watson     19    11     2      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 805:    753               Watson     20    11     2      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 806:    754               Watson     21    11     2      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 807:    755               Watson     22    11     2      1</span>
 <span class="r-in"><span><span class="fu">canonicalize_populations</span><span class="op">(</span><span class="va">populations_sim</span>, <span class="va">observations_sim</span>, <span class="va">locations_sim</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;obs_c_id, loc_c_id, cohort, age, dose&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      obs_id               loc_id cohort   age  dose weight obs_c_id loc_c_id</span>
@@ -381,11 +385,11 @@ estimation will work, and take on the unit meaning you used for input.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   4:      4 Chickadee Elementary      7     5     2      1        4        8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   5:      5 Chickadee Elementary      8     5     2      1        5        8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 746:    656                State     26     3     1      1      694        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 747:    657                State     27     3     1      1      695        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 748:    658                State     28     3     1      1      696        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 749:    659                State     29     3     1      1      697        1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 750:    660                State     30     3     1      1      698        1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 803:    751               Watson     18    11     2      1      751        4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 804:    752               Watson     19    11     2      1      752        4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 805:    753               Watson     20    11     2      1      753        4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 806:    754               Watson     21    11     2      1      754        4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 807:    755               Watson     22    11     2      1      755        4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      range_start</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>            &lt;int&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1:           1</span>
@@ -394,11 +398,11 @@ estimation will work, and take on the unit meaning you used for input.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   4:           4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   5:           5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ---            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 746:         746</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 747:         747</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 748:         748</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 749:         749</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 750:         750</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 803:         803</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 804:         804</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 805:         805</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 806:         806</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 807:         807</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

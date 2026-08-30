@@ -96,8 +96,8 @@ sampling(
 #> 
 #> SAMPLING FOR MODEL 'impute_school_coverage_process_v6' NOW (CHAIN 1).
 #> Chain 1: 
-#> Chain 1: Gradient evaluation took 0.000209 seconds
-#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.09 seconds.
+#> Chain 1: Gradient evaluation took 0.000223 seconds
+#> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.23 seconds.
 #> Chain 1: Adjust your expectations accordingly!
 #> Chain 1: 
 #> Chain 1: 
@@ -114,15 +114,15 @@ sampling(
 #> Chain 1: Iteration: 450 / 500 [ 90%]  (Sampling)
 #> Chain 1: Iteration: 500 / 500 [100%]  (Sampling)
 #> Chain 1: 
-#> Chain 1:  Elapsed Time: 7.166 seconds (Warm-up)
-#> Chain 1:                3.706 seconds (Sampling)
-#> Chain 1:                10.872 seconds (Total)
+#> Chain 1:  Elapsed Time: 10.327 seconds (Warm-up)
+#> Chain 1:                6.927 seconds (Sampling)
+#> Chain 1:                17.254 seconds (Total)
 #> Chain 1: 
 #> 
 #> SAMPLING FOR MODEL 'impute_school_coverage_process_v6' NOW (CHAIN 2).
 #> Chain 2: 
-#> Chain 2: Gradient evaluation took 0.000187 seconds
-#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.87 seconds.
+#> Chain 2: Gradient evaluation took 0.000202 seconds
+#> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.02 seconds.
 #> Chain 2: Adjust your expectations accordingly!
 #> Chain 2: 
 #> Chain 2: 
@@ -139,13 +139,15 @@ sampling(
 #> Chain 2: Iteration: 450 / 500 [ 90%]  (Sampling)
 #> Chain 2: Iteration: 500 / 500 [100%]  (Sampling)
 #> Chain 2: 
-#> Chain 2:  Elapsed Time: 7.817 seconds (Warm-up)
-#> Chain 2:                6.514 seconds (Sampling)
-#> Chain 2:                14.331 seconds (Total)
+#> Chain 2:  Elapsed Time: 12.786 seconds (Warm-up)
+#> Chain 2:                16.025 seconds (Sampling)
+#> Chain 2:                28.811 seconds (Total)
 #> Chain 2: 
-#> Warning: There were 5 divergent transitions after warmup. See
+#> Warning: There were 14 divergent transitions after warmup. See
 #> https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
 #> to find out why this is a problem and how to eliminate them.
+#> Warning: There were 4 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10. See
+#> https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded
 #> Warning: Examine the pairs() plot to diagnose sampling problems
 #> Warning: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
 #> Running the chains for more iterations may help. See
@@ -158,84 +160,84 @@ sampling(
 #> 2 chains, each with iter=500; warmup=250; thin=1; 
 #> post-warmup draws per chain=250, total post-warmup draws=500.
 #> 
-#>                   mean se_mean   sd     2.5%      25%      50%      75%
-#> beta_bs[1]       -1.61    0.01 0.15    -1.93    -1.71    -1.61    -1.52
-#> beta_bs[2]       -2.02    0.01 0.12    -2.26    -2.10    -2.02    -1.94
-#> beta_bs[3]       -2.05    0.01 0.16    -2.34    -2.15    -2.04    -1.94
-#> beta_bs[4]       -3.24    0.01 0.17    -3.57    -3.35    -3.23    -3.13
-#> beta_bs[5]       -2.29    0.01 0.20    -2.69    -2.42    -2.29    -2.15
-#> sigma_cnty        0.23    0.02 0.19     0.01     0.10     0.18     0.31
-#> off_cnty[1]      -0.07    0.01 0.13    -0.36    -0.14    -0.05     0.01
-#> off_cnty[2]      -0.14    0.02 0.17    -0.60    -0.24    -0.10    -0.02
-#> off_cnty[3]      -0.02    0.01 0.14    -0.34    -0.10    -0.01     0.06
-#> sigma_sch         0.57    0.01 0.11     0.40     0.49     0.57     0.64
-#> off_sch[1]       -1.07    0.02 0.25    -1.63    -1.22    -1.06    -0.90
-#> off_sch[2]       -0.06    0.02 0.15    -0.32    -0.15    -0.07     0.04
-#> off_sch[3]       -0.77    0.01 0.18    -1.13    -0.89    -0.77    -0.65
-#> off_sch[4]        0.21    0.02 0.17    -0.10     0.09     0.20     0.30
-#> off_sch[5]        0.21    0.01 0.15    -0.07     0.12     0.19     0.30
-#> off_sch[6]        0.43    0.01 0.16     0.14     0.33     0.42     0.52
-#> off_sch[7]        0.27    0.01 0.17    -0.08     0.15     0.26     0.38
-#> off_sch[8]       -0.68    0.01 0.21    -1.07    -0.83    -0.68    -0.54
-#> off_sch[9]        0.71    0.01 0.14     0.46     0.62     0.70     0.79
-#> off_sch[10]      -0.04    0.01 0.14    -0.30    -0.13    -0.05     0.04
-#> off_sch[11]       0.22    0.02 0.21    -0.16     0.10     0.22     0.34
-#> off_sch[12]      -0.71    0.02 0.23    -1.14    -0.85    -0.72    -0.58
-#> off_sch[13]       0.46    0.02 0.19     0.14     0.34     0.45     0.58
-#> off_sch[14]      -0.40    0.02 0.21    -0.77    -0.53    -0.41    -0.28
-#> off_sch[15]      -0.13    0.02 0.22    -0.51    -0.29    -0.14     0.00
-#> off_sch[16]       0.16    0.02 0.19    -0.15     0.03     0.14     0.25
-#> off_sch[17]      -1.09    0.02 0.32    -1.77    -1.27    -1.09    -0.88
-#> off_sch[18]      -0.86    0.01 0.20    -1.30    -0.99    -0.86    -0.73
-#> off_sch[19]       0.37    0.01 0.17     0.01     0.26     0.38     0.47
-#> off_sch[20]       0.11    0.01 0.17    -0.22     0.00     0.11     0.20
-#> off_sch[21]      -0.36    0.01 0.20    -0.77    -0.49    -0.35    -0.21
-#> off_sch[22]      -0.09    0.02 0.23    -0.57    -0.25    -0.06     0.06
-#> off_sch[23]       0.06    0.01 0.15    -0.25    -0.02     0.06     0.16
-#> off_sch[24]       0.55    0.01 0.17     0.20     0.46     0.55     0.65
-#> lambda_raw[1]     1.36    0.05 0.82     0.12     0.73     1.29     1.86
-#> lambda_raw[2]     1.16    0.00 0.05     1.09     1.14     1.16     1.18
-#> lp__          -1558.23    0.64 5.99 -1571.35 -1562.04 -1557.98 -1553.86
-#>                  97.5% n_eff Rhat
-#> beta_bs[1]       -1.32   292 1.01
-#> beta_bs[2]       -1.82   264 1.01
-#> beta_bs[3]       -1.75   250 1.01
-#> beta_bs[4]       -2.92   264 1.01
-#> beta_bs[5]       -1.89   302 1.00
-#> sigma_cnty        0.77    69 1.00
-#> off_cnty[1]       0.19    91 1.04
-#> off_cnty[2]       0.14    78 1.01
-#> off_cnty[3]       0.27   158 1.00
-#> sigma_sch         0.79    94 1.02
-#> off_sch[1]       -0.67   184 1.01
-#> off_sch[2]        0.26    98 1.04
-#> off_sch[3]       -0.40   154 1.03
-#> off_sch[4]        0.57   110 1.03
-#> off_sch[5]        0.52   113 1.03
-#> off_sch[6]        0.78   126 1.02
-#> off_sch[7]        0.60   151 1.02
-#> off_sch[8]       -0.25   223 1.01
-#> off_sch[9]        1.03    97 1.03
-#> off_sch[10]       0.27    94 1.04
-#> off_sch[11]       0.69   108 1.01
-#> off_sch[12]      -0.20   161 1.00
-#> off_sch[13]       0.91    92 1.01
-#> off_sch[14]       0.05   104 1.01
-#> off_sch[15]       0.31   152 1.00
-#> off_sch[16]       0.59    90 1.01
-#> off_sch[17]      -0.50   196 1.00
-#> off_sch[18]      -0.47   192 1.01
-#> off_sch[19]       0.70   202 1.00
-#> off_sch[20]       0.49   207 1.00
-#> off_sch[21]       0.01   193 1.00
-#> off_sch[22]       0.32   227 1.00
-#> off_sch[23]       0.37   194 1.00
-#> off_sch[24]       0.89   255 1.00
-#> lambda_raw[1]     3.15   240 1.00
-#> lambda_raw[2]     1.28   188 1.01
-#> lp__          -1547.85    89 1.02
+#>                    mean se_mean   sd     2.5%      25%      50%      75%
+#> beta_bs[1]        -1.62    0.01 0.14    -1.88    -1.70    -1.61    -1.53
+#> beta_bs[2]        -2.02    0.01 0.12    -2.27    -2.11    -2.03    -1.94
+#> beta_bs[3]        -2.06    0.01 0.15    -2.33    -2.16    -2.07    -1.96
+#> beta_bs[4]        -3.25    0.02 0.20    -3.64    -3.39    -3.23    -3.10
+#> beta_bs[5]        -2.31    0.01 0.19    -2.68    -2.44    -2.30    -2.18
+#> sigma_layer[1]     0.30    0.03 0.36     0.03     0.12     0.22     0.38
+#> sigma_layer[2]     0.59    0.01 0.12     0.41     0.51     0.57     0.65
+#> off_layer[1]      -0.11    0.02 0.16    -0.43    -0.19    -0.09    -0.01
+#> off_layer[2]      -0.19    0.03 0.22    -0.70    -0.30    -0.15    -0.02
+#> off_layer[3]      -0.01    0.02 0.16    -0.35    -0.10    -0.01     0.07
+#> off_layer[4]      -1.05    0.02 0.28    -1.64    -1.24    -1.03    -0.85
+#> off_layer[5]      -0.03    0.02 0.17    -0.31    -0.13    -0.03     0.07
+#> off_layer[6]      -0.74    0.02 0.20    -1.14    -0.86    -0.74    -0.62
+#> off_layer[7]       0.26    0.02 0.19    -0.08     0.13     0.23     0.37
+#> off_layer[8]       0.25    0.02 0.18    -0.06     0.14     0.24     0.35
+#> off_layer[9]       0.47    0.02 0.18     0.16     0.35     0.47     0.58
+#> off_layer[10]      0.30    0.02 0.20    -0.05     0.16     0.30     0.42
+#> off_layer[11]     -0.66    0.02 0.25    -1.14    -0.81    -0.66    -0.51
+#> off_layer[12]      0.76    0.02 0.17     0.47     0.66     0.75     0.84
+#> off_layer[13]      0.00    0.02 0.16    -0.27    -0.10    -0.01     0.09
+#> off_layer[14]      0.27    0.03 0.24    -0.16     0.12     0.26     0.41
+#> off_layer[15]     -0.67    0.03 0.30    -1.29    -0.84    -0.66    -0.49
+#> off_layer[16]      0.52    0.03 0.22     0.14     0.36     0.49     0.66
+#> off_layer[17]     -0.35    0.03 0.24    -0.79    -0.49    -0.37    -0.24
+#> off_layer[18]     -0.08    0.02 0.26    -0.63    -0.25    -0.09     0.06
+#> off_layer[19]      0.21    0.03 0.23    -0.18     0.06     0.18     0.33
+#> off_layer[20]     -1.08    0.03 0.36    -1.87    -1.29    -1.06    -0.84
+#> off_layer[21]     -0.88    0.02 0.23    -1.33    -1.03    -0.87    -0.73
+#> off_layer[22]      0.37    0.02 0.19    -0.03     0.26     0.36     0.48
+#> off_layer[23]      0.11    0.02 0.20    -0.23    -0.02     0.10     0.23
+#> off_layer[24]     -0.37    0.02 0.20    -0.75    -0.50    -0.36    -0.23
+#> off_layer[25]     -0.09    0.02 0.23    -0.55    -0.25    -0.09     0.07
+#> off_layer[26]      0.06    0.01 0.18    -0.30    -0.05     0.06     0.17
+#> off_layer[27]      0.55    0.02 0.19     0.21     0.43     0.54     0.65
+#> lambda_raw[1]      1.26    0.09 0.92    -0.15     0.59     1.18     1.85
+#> lambda_raw[2]      1.19    0.01 0.12     1.08     1.13     1.16     1.20
+#> lp__           -1540.42    0.62 5.72 -1553.05 -1543.63 -1539.59 -1536.44
+#>                   97.5% n_eff Rhat
+#> beta_bs[1]        -1.34   237 1.00
+#> beta_bs[2]        -1.78   142 1.01
+#> beta_bs[3]        -1.77   167 1.00
+#> beta_bs[4]        -2.88   152 1.01
+#> beta_bs[5]        -1.92   220 1.00
+#> sigma_layer[1]     0.94   144 1.00
+#> sigma_layer[2]     0.86   191 1.01
+#> off_layer[1]       0.14    83 1.00
+#> off_layer[2]       0.17    70 1.03
+#> off_layer[3]       0.32   113 1.01
+#> off_layer[4]      -0.57   178 1.01
+#> off_layer[5]       0.30   103 1.00
+#> off_layer[6]      -0.35   125 1.00
+#> off_layer[7]       0.65   104 1.00
+#> off_layer[8]       0.62    98 1.00
+#> off_layer[9]       0.83    92 1.00
+#> off_layer[10]      0.67   152 1.00
+#> off_layer[11]     -0.17   141 1.00
+#> off_layer[12]      1.12    84 1.00
+#> off_layer[13]      0.32    89 1.00
+#> off_layer[14]      0.79    81 1.02
+#> off_layer[15]     -0.15   108 1.02
+#> off_layer[16]      1.06    70 1.02
+#> off_layer[17]      0.18    87 1.02
+#> off_layer[18]      0.48   118 1.02
+#> off_layer[19]      0.75    81 1.01
+#> off_layer[20]     -0.44   135 1.01
+#> off_layer[21]     -0.42   168 1.00
+#> off_layer[22]      0.79   151 1.00
+#> off_layer[23]      0.53   160 1.01
+#> off_layer[24]      0.05   150 1.00
+#> off_layer[25]      0.32   178 1.00
+#> off_layer[26]      0.43   141 1.01
+#> off_layer[27]      0.95   143 1.01
+#> lambda_raw[1]      3.22   113 1.02
+#> lambda_raw[2]      1.55   221 1.01
+#> lp__           -1531.44    85 1.02
 #> 
-#> Samples were drawn using NUTS(diag_e) at Fri Aug 28 20:14:01 2026.
+#> Samples were drawn using NUTS(diag_e) at Sun Aug 30 21:33:11 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
@@ -248,291 +250,8 @@ sampling(
 #> $settings$imugap_opts$dose_schedule
 #> [1] 1 4
 #> 
-#> $settings$imugap_opts$object
-#> S4 class stanmodel 'impute_school_coverage_process_v6' coded as follows:
-#> functions {
-#>   // a function to convert lower bounds l_1, 1_2, ... 1_n
-#>   // to (lower, upper) pairs (l_1, l_2-1), (l_2, l_3-1), ...
-#>   array[,] int bounds_to_range(array[] int lowers, int ub) {
-#>     int size_bounds = size(lowers);
-#>     if (lowers[size_bounds] > ub) {
-#>         print("Upper bound, ", ub, " is less than last lower bound, ", lowers[size_bounds]);
-#>     }
-#>     array[size_bounds] int uppers;
-#>     for (i in 1:(size_bounds - 1)) {
-#>         uppers[i] = lowers[i+1] - 1;
-#>     }
-#>     uppers[size_bounds] = ub;
-#>     return { lowers, uppers };
-#>   }
-#>   // create a matrix, each column multiplied by corresponding row entry
-#>   matrix element_mult_expand(vector colv, row_vector rowv) {
-#>     int nrows = size(colv), ncols = size(rowv);
-#>     matrix[nrows, ncols] result;
-#>     for (i in 1:nrows) {
-#>         result[i,] = rowv * colv[i];
-#>     }
-#>     return result;
-#>   }
-#>   // Sequential diff
-#>   vector diff(vector obj) {
-#>     int sz = size(obj);
-#>     return obj[2:] - obj[:(sz-1)];
-#>   }
-#>   row_vector diff(row_vector obj) {
-#>     int sz = size(obj);
-#>     return obj[2:] - obj[:(sz-1)];
-#>   }
-#>   row_vector colsum(matrix obj) {
-#>     int ncols = cols(obj);
-#>     row_vector[ncols] res;
-#>     for (i in 1:ncols) {
-#>         res[i] = sum(obj[, i]);
-#>     }
-#>     return res;
-#>   }
-#>   vector rowsum(matrix obj) {
-#>     int nrows = rows(obj);
-#>     vector[nrows] res;
-#>     for (i in 1:nrows) {
-#>         res[i] = sum(obj[i, ]);
-#>     }
-#>     return res;
-#>   }
-#> vector unrolled_dose(int n_yr, int n_doses, matrix dose_sched, vector lambda_raw, real epsilon_p) {
-#>   // assert: dose_sched is n_yr x n_doses
-#>   // assert: lambda_raw is n_doses x 1 (alt: would be n_doses x n_time)
-#>   vector[n_doses] lambda = exp(lambda_raw);
-#>   // the unconditional cdfs, given FoV + whatever remains; normalization factors
-#>   matrix[n_yr, n_doses] dXcdf, dXpdf, normdXpdf;
-#>   vector[n_doses] rem;
-#>   for (dose in 1:n_doses) {
-#>     dXcdf[, dose] = 1 - exp(-cumulative_sum(dose_sched[, dose] * lambda[dose]));
-#>     rem[dose] = 1 - dXcdf[n_yr, dose];
-#>     dXpdf[1, dose] = dXcdf[1, dose];
-#>     dXpdf[2:,dose] = diff(dXcdf[, dose]);
-#>     normdXpdf[, dose] = reverse(cumulative_sum(reverse(dXpdf[, dose]))) + rem[dose];
-#>   }
-#>   matrix[n_yr, n_doses] conditional_dXpdf = rep_matrix(0, n_yr, n_doses), conditional_dXcdf;
-#>   conditional_dXpdf[, 1] = dXpdf[, 1];
-#>   conditional_dXcdf[, 1] = dXcdf[, 1];
-#>   for (dose in 2:n_doses) {
-#>     int prev_dose = dose - 1;
-#>     // conditional probability => probability got dose n-1 at some time, then probability got dose n at later times
-#>     for (ly in 1:n_yr) {
-#>       if (normdXpdf[ly, dose] < epsilon_p) break; // if the remaining weight is negligible, avoid division by zero
-#>       conditional_dXpdf[ly:, dose] += conditional_dXpdf[ly, prev_dose] * dXpdf[ly:, dose] / normdXpdf[ly, dose];
-#>     }
-#>     conditional_dXcdf[, dose] = cumulative_sum(conditional_dXpdf[, dose]);
-#>   }
-#>   // TODO check unrolling of cdfs - should be dose 1 all years, then dose 2 all years, etc
-#>   vector[n_doses * n_yr] unrolled_dose_cdf = to_vector(conditional_dXcdf);
-#>   return unrolled_dose_cdf;
-#> }
-#> }
-#> // need meta info:
-#> //  which cohorts, which places, which years of life
-#> //  => assume each measurement is independent, not progress of some matched individuals
-#> data {
-#> // #include data/shared_stateonly.stan
-#>   // STRUCTURAL DEFINITIONS
-#>   int<lower=1> n_yr; // number of years to model for each cohort - should be at least year of oldest observation
-#>   int<lower=1> n_cohort; // number of birth year cohorts
-#>   int<lower=1> n_sch; // number of schools
-#> 
-#>   // maps schools to county
-#>   int<lower=1> n_cnty;
-#>   array[n_cnty] int<lower=1, upper=n_sch> cnty_bounds; // which schools indices start each county
-#>   // dose schedules
-#>   int<lower=1> n_doses;
-#>   matrix<lower=0, upper=1>[n_yr, n_doses] dose_sched;
-#>   // DATA DEFINITIONS
-#>   int<lower=1> n_obs;
-#>   array[n_obs] int<lower=0> y_obs;
-#>   array[n_obs] int<lower=0> y_smp;
-#>   // have school id ranges for observations & for doses; school id 0 == statewide?
-#>   // array[n_obs] int obs_sch_id_bounds;
-#>   int<lower=n_obs> n_weights;
-#>   array[n_obs] int<lower=1, upper=n_weights> obs_to_weights_bounds; // each entry is the start of the range
-#>   array[n_weights] int<lower=1,upper=n_sch + n_cnty + 1> weights_school;
-#>   array[n_weights] int<lower=1,upper=n_cohort> weights_cohort;
-#>   array[n_weights] int<lower=1,upper=n_yr> weights_life_year;
-#>   array[n_weights] int<lower=1,upper=n_doses> weights_dose;
-#>   vector<lower=0,upper=1>[n_weights] weights; // contribution of this (school, cohort, year, dose) to an observation
-#>   // run mode: 0 = estimation, 1 = prediction
-#>   int<lower=0, upper=1> predict_mode;
-#>   // TODO: calculate these in stan?
-#>   // https://spinkney.github.io/helpful_stan_functions/group__splines.html
-#>   // state-level basis spline
-#>   int k_bs; // number of bspline basis functions
-#>   matrix[n_cohort, k_bs] bs; // basis functions
-#> // observations may be right-censored
-#> // observation data is assumed ordered uncensored, then right censored
-#> // so n_uncensored_obs == n_obs, all observations are uncensored
-#> // number of uncensored observations
-#> int<lower = 0, upper = n_obs> n_uncensored_obs;
-#> }
-#> transformed data {
-#>    // #include transformed_data/stateonly.stan
-#>    // #include transformed_data/fixed_raw_lambda.stan
-#>    // #include transformed_data/fixed_logit_phi.stan
-#> real epsilon_p = 1e-10;
-#>   // convert to lookup spans for convenience
-#>   array[2, n_cnty] int cnty_map = bounds_to_range(cnty_bounds, n_sch);
-#>   array[2, n_obs] int obs_map = bounds_to_range(obs_to_weights_bounds, n_weights);
-#> 
-#>   // Equivalent 1:n_cohort, for time trends
-#>   vector[n_cohort] cohort_shift_counter = linspaced_vector(n_cohort, 1, n_cohort);
-#>   array[n_weights] int<lower=1> phi_lookup;
-#>   array[n_weights] int<lower=1> cdf_lookup;
-#>   // because integer arrays don't support broadcasting ...
-#>   // unroll phi and cdf objects to support vectorization
-#>   for (weight_i in 1:n_weights) {
-#>     // phi ordered by school then cohort
-#>     phi_lookup[weight_i] = weights_cohort[weight_i] + (weights_school[weight_i] - 1) * n_cohort;
-#>     // ordered by dose then life year
-#>     cdf_lookup[weight_i] = weights_life_year[weight_i] + (weights_dose[weight_i] - 1) * n_yr;
-#>   }
-#> array[n_obs] int<lower=-1> y_obs_trans;
-#> for(i in 1:n_obs) {
-#>   y_obs_trans[i] = y_obs[i] - 1;
-#> }
-#> }
-#> parameters {
-#>   // bases spline coeficcients
-#>   vector[k_bs] beta_bs; // spline betas
-#>   // #include parameters/constant_phi.stan
-#>   // #include parameters/cnty_sch_linear.stan
-#>   // offsets
-#>   real<lower=0> sigma_cnty;
-#>   row_vector<multiplier=sigma_cnty>[n_cnty] off_cnty;
-#>   real<lower=0> sigma_sch;
-#>   row_vector<multiplier=sigma_sch>[n_sch] off_sch;
-#>   // Vaccination uptake rate
-#>   vector[n_doses] lambda_raw;
-#> }
-#> model {
-#>   if (!predict_mode) {
-#>     // PRIORS - spline coefficients
-#>     beta_bs ~ normal(0, 10);
-#>     // PRIOR - lambda; relatively strong prior belief that ~95% coverage achieved in a year
-#>     // mean of 3 => 1 - exp(-3*1) == ~ 0.95
-#>     lambda_raw ~ normal(log(3), 1);
-#>     // Offsets - non-centered parameterization to speed up
-#>     sigma_cnty ~ cauchy(0, 1);
-#>     off_cnty ~ normal(0, sigma_cnty);
-#>     sigma_sch ~ cauchy(0, 2);
-#>     off_sch ~ normal(0, sigma_sch);
-#>     vector[n_obs] p_obs;
-#> vector[n_cohort] logit_phi_st = bs * beta_bs;
-#> row_vector[n_sch] shift = off_sch;
-#> for (c in 1:n_cnty) {
-#>   shift[cnty_map[1,c]:cnty_map[2,c]] += off_cnty[c];
-#> }
-#> vector[(1+ n_cnty + n_sch) * n_cohort] phi = append_row(append_row(
-#>   inv_logit(logit_phi_st),
-#>   to_vector(inv_logit(
-#>     rep_matrix(logit_phi_st, n_cnty) + rep_matrix(off_cnty, n_cohort)
-#>   ))),
-#>   to_vector(inv_logit(
-#>     rep_matrix(logit_phi_st, n_sch) + rep_matrix(shift, n_cohort)
-#>   ))
-#> );
-#> vector[n_doses * n_yr] unrolled_dose_probs = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);
-#> vector[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
-#> for (obs_i in 1:n_obs) {
-#>   p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
-#> }
-#> if (n_uncensored_obs < n_obs) { // at least some censored observations
-#>     // p_s => 1 - p_s = p_f :: probability of at least this many successes =>
-#>     //                         probability of less than this many failures
-#>     if (n_uncensored_obs > 0) { // at least some uncensored observations
-#>         target += binomial_lpmf(y_obs[:n_uncensored_obs] | y_smp[:n_uncensored_obs], p_obs[:n_uncensored_obs]);
-#>     }
-#>     target += binomial_lcdf(y_obs[(n_uncensored_obs+1):] | y_smp[(n_uncensored_obs+1):], 1 - p_obs[(n_uncensored_obs+1):]);
-#> } else { // all uncensored observations
-#>     y_obs ~ binomial(y_smp, p_obs); // vectorized
-#> }
-#>   }
-#> }
-#> generated quantities {
-#>   vector[predict_mode ? n_obs : 0] p_obs;
-#>   if (predict_mode) {
-#> vector[n_cohort] logit_phi_st = bs * beta_bs;
-#> row_vector[n_sch] shift = off_sch;
-#> for (c in 1:n_cnty) {
-#>   shift[cnty_map[1,c]:cnty_map[2,c]] += off_cnty[c];
-#> }
-#> vector[(1+ n_cnty + n_sch) * n_cohort] phi = append_row(append_row(
-#>   inv_logit(logit_phi_st),
-#>   to_vector(inv_logit(
-#>     rep_matrix(logit_phi_st, n_cnty) + rep_matrix(off_cnty, n_cohort)
-#>   ))),
-#>   to_vector(inv_logit(
-#>     rep_matrix(logit_phi_st, n_sch) + rep_matrix(shift, n_cohort)
-#>   ))
-#> );
-#> vector[n_doses * n_yr] unrolled_dose_probs = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);
-#> vector[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
-#> for (obs_i in 1:n_obs) {
-#>   p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);
-#> }
-#>   }
-#> }
-#> // This model represents vaccination as a discrete step, fixed hazard process
-#> // therefore X(t) => X(t + deltaT) = X(t)*exp(-hazard*deltaT)
-#> // which means the X-out flow == X(t)*(1-exp(-hazard*deltaT))
-#> //
-#> // for an arbitrary number of hazards & deltaTs, we simply sum:
-#> // net outflow: X(t)*(1-exp(-sum(hazard*deltaT)))
-#> //
-#> // This model represents an overall hazard, shared across birth cohorts and
-#> // vaccine doses. Additionally, birth cohorts have a propensity to vaccinate,
-#> // which is fixed at birth and then applies throughout life.
-#> //
-#> // deltaT captures both time passage + eligibility. deltaT in the fitting is
-#> // always == 1, but note that this is unitless - the data define what time means
-#> // e.g. if birth cohorts are based on years, then deltaT is years, and a weight
-#> // of 1 means eligible for a whole year, .25 eligible for a quarter, etc
-#> //
-#> // the hazard is constant for any given discrete time step, but can vary between
-#> // time steps. the hazard time is denoted in absolute model time. however,
-#> // cohort time is relative. so:
-#> // hazard time == 1: one deltaT has passed, absolute time is 1
-#> // cohort 1, time 1: one deltaT has passed => cohort 1 is 1 deltaT old,
-#> //   absolute time is also 1 (cohort 1 is the first cohort)
-#> // cohort 2, time 2: two deltaT have passed => cohort 2 is 2 deltaT old, but
-#> //   cohort 1 is 3 deltaT old, and absolute time is 3
-#> // generally:
-#> // cohort n, time t: experienced t deltaTs; those deltaT corresponded to absolute
-#> //   times n, n+1, ..., n+t
-#> //
-#> // we assume each cohort has the same doses schedule, so the same deltaT weights
-#> //
-#> // so for cohort n, fraction of (non-phi/vaccinators) with 1+ doses at age 1:t:
-#> //   d1cdf = 1 - exp(-cumsum(weight[1:t] .* lambda[n:t]))
-#> //
-#> // and the incidence of new dose 1s is:
-#> //
-#> //   c(d1cdf[1], diff(d1cdf))
-#> //
-#> // for subsequent doses, the hazard model is the same, but now is conditional on
-#> // having received the first dose; thus the incremental hazard is still
-#> //   d2cdf = 1 - exp(-cumsum(weight2[1:t] .* lambda[n:t]))
-#> //   (note the different eligibility mask, weight2; assert weight2 strictly less than weight1)
-#> // but only the fraction having dose 1 experience it.
-#> // if we think about this in terms of newly-dose-1-in-deltaT-x:
-#> //   we can reframe in these terms:
-#> //   define d2pdf = c(d2cdf[1], diff(d2cdf)); pgtt = 1-d2cdf[t] (probably event has not occured by t)
-#> //   probability of dose 2 in year (x+1):t => d2pdf[(x+1):t]/sum(d2pdf[x+1:t] + pggt)
-#> //   we can then assign each incremental incidence of dose 1 in deltaT x to getting
-#> //   second dose in deltaT x+1:t (or not getting it by t)
-#> //
-#> // this can be built-up as a matrix once per cohort
-#> //  1. calculate d2cdf, d2pdf, pgtt as above, for t == max cohort "age"
-#> //  2. calculate remd2pdf = rev(cumsum(rev(d2pdf))) + pgtt
-#> //  3. d2contrib =
-#> //    upper_triangle_1s * colwise element multiplication of d2pdf / rowwise remd2pdf * rowwise d2incidence => column sums => proportion in d2 
+#> $settings$imugap_opts$model
+#> [1] "default"
 #> 
 #> 
 #> $settings$stan_opts
@@ -557,8 +276,36 @@ sampling(
 #> $data$n_cohort
 #> [1] 31
 #> 
-#> $data$n_sch
-#> [1] 24
+#> $data$n_locs
+#> [1] 28
+#> 
+#> $data$n_layers
+#> [1] 3
+#> 
+#> $data$layer_sizes
+#> [1]  1  3 24
+#> 
+#> $data$layer_bounds
+#>      [,1] [,2] [,3]
+#> [1,]    1    2    5
+#> [2,]    1    4   28
+#> 
+#> $data$parent_id_map
+#>  [1] 0 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 4 4 4 4 4 4 4
+#> 
+#> $data$layer_id_map
+#>  [1] 1 2 2 2 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+#> 
+#> $data$n_parent_locs
+#> [1] 4
+#> 
+#> $data$parent_loc_id
+#> [1] 1 2 3 4
+#> 
+#> $data$parent_child_bounds
+#>      [,1] [,2] [,3] [,4]
+#> [1,]    2    5   15   22
+#> [2,]    4   14   21   28
 #> 
 #> $data$n_doses
 #> [1] 2
@@ -632,7 +379,7 @@ sampling(
 #> [1] "bs"     "basis"  "matrix"
 #> 
 #> $data$n_obs
-#> [1] 698
+#> [1] 755
 #> 
 #> $data$y_obs
 #>   [1]   42   41   46   41   44   47   46   44   43   44   38   42   47   41   48
@@ -681,7 +428,11 @@ sampling(
 #> [646]  235  193  210  242  269  279  358  295  289  257  296  220  280  238  317
 #> [661]  322  355  267  238  245  214  263  311  320  309  239  231  329  233  226
 #> [676]  239  196  214  243  274  281  363  301  289  260  298  221  284  241  321
-#> [691]  325  362  268  242  247  220  267  315
+#> [691]  325  362  268  242  247  220  267  315  136  118  147  127  210  184  134
+#> [706]  114  170  150  207  138  130  191  215  119  124  162  193  212  126  115
+#> [721]  181  182  163  181  127  201  190  123  115  140  148  185  193  153  134
+#> [736]  186  200  117  181  168  141  164  139  198  206  212  111  159  213  198
+#> [751]  203  163  170  210  153
 #> 
 #> $data$y_smp
 #>   [1]   52   51   50   48   53   54   54   51   52   52   48   50   54   49   54
@@ -730,10 +481,14 @@ sampling(
 #> [646]  292  251  259  303  329  344  432  363  355  307  367  267  333  279  386
 #> [661]  396  433  318  276  297  276  328  374  415  400  311  289  436  290  296
 #> [676]  292  251  259  303  329  344  432  363  355  307  367  267  333  279  386
-#> [691]  396  433  318  276  297  276  328  374
+#> [691]  396  433  318  276  297  276  328  374  171  145  177  151  243  201  153
+#> [706]  124  183  182  234  157  146  226  235  133  138  180  208  242  137  130
+#> [721]  207  213  185  199  141  228  217  134  121  163  165  200  206  172  148
+#> [736]  205  245  137  209  191  166  191  162  225  229  245  126  186  247  221
+#> [751]  232  180  189  236  164
 #> 
 #> $data$n_weights
-#> [1] 750
+#> [1] 807
 #> 
 #> $data$obs_to_weights_bounds
 #>   [1]   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18
@@ -774,9 +529,12 @@ sampling(
 #> [631] 651 656 661 666 671 676 681 686 691 692 693 694 695 696 697 698 699 700
 #> [649] 701 702 703 704 705 706 707 708 709 710 711 712 713 714 715 716 717 718
 #> [667] 719 720 721 722 723 724 725 726 727 728 729 730 731 732 733 734 735 736
-#> [685] 737 738 739 740 741 742 743 744 745 746 747 748 749 750
+#> [685] 737 738 739 740 741 742 743 744 745 746 747 748 749 750 751 752 753 754
+#> [703] 755 756 757 758 759 760 761 762 763 764 765 766 767 768 769 770 771 772
+#> [721] 773 774 775 776 777 778 779 780 781 782 783 784 785 786 787 788 789 790
+#> [739] 791 792 793 794 795 796 797 798 799 800 801 802 803 804 805 806 807
 #> 
-#> $data$weights_school
+#> $data$weights_location
 #>   [1]  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8
 #>  [26] 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11
 #>  [51]  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5
@@ -807,6 +565,9 @@ sampling(
 #> [676]  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1
 #> [701]  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1
 #> [726]  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1
+#> [751]  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  3  3  3  3  3  3
+#> [776]  3  3  3  3  3  3  3  3  3  3  3  3  3  4  4  4  4  4  4  4  4  4  4  4  4
+#> [801]  4  4  4  4  4  4  4
 #> 
 #> $data$weights_cohort
 #>   [1]  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28
@@ -839,6 +600,9 @@ sampling(
 #> [676] 13 14 15 16 17 14 15 16 17 18 15 16 17 18 19  2  3  4  5  6  7  8  9 10 11
 #> [701] 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31  1  2  3  4  5
 #> [726]  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30
+#> [751]  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22  4  5  6  7  8  9
+#> [776] 10 11 12 13 14 15 16 17 18 19 20 21 22  4  5  6  7  8  9 10 11 12 13 14 15
+#> [801] 16 17 18 19 20 21 22
 #> 
 #> $data$weights_life_year
 #>   [1]  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5
@@ -871,6 +635,9 @@ sampling(
 #> [676] 18 17 16 15 14 18 17 16 15 14 18 17 16 15 14  2  2  2  2  2  2  2  2  2  2
 #> [701]  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  3  3  3  3  3
 #> [726]  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3
+#> [751] 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11
+#> [776] 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11
+#> [801] 11 11 11 11 11 11 11
 #> 
 #> $data$weights_dose
 #>   [1] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
@@ -893,7 +660,8 @@ sampling(
 #> [630] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
 #> [667] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1 1 1 1 1
 #> [704] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-#> [741] 1 1 1 1 1 1 1 1 1 1
+#> [741] 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+#> [778] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
 #> 
 #> $data$weights
 #>   [1] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
@@ -937,13 +705,10 @@ sampling(
 #> [685] 0.2 0.2 0.2 0.2 0.2 0.2 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
 #> [703] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
 #> [721] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
-#> [739] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
-#> 
-#> $data$n_cnty
-#> [1] 3
-#> 
-#> $data$cnty_bounds
-#> [1]  1 11 18
+#> [739] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
+#> [757] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
+#> [775] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
+#> [793] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0
 #> 
 #> $data$predict_mode
 #> [1] 0
@@ -951,6 +716,7 @@ sampling(
 #> 
 #> $locations
 #> Key: <layer, parent_id, loc_id>
+#> Indices: <loc_id>, <parent_id>
 #>                        loc_id parent_id layer loc_c_id loc_cp_id layer_bound
 #>                        <char>    <char> <int>    <int>     <int>       <int>
 #>  1:                     State      <NA>     1        1        NA           1

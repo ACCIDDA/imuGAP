@@ -51,8 +51,7 @@ Snapshots requires `obs_id`, `loc_id`, `dose`, `age_min`, and `cohort`
 the reference cohort corresponding to the oldest age. `age_max` may be
 provided, but if missing or `NA`, is assumed to be `age_min` + 1.
 `age_max` corresponds to the first *excluded* age - i.e.
-
-\$\$ age\[age_min,age_max) \$\$
+`[age_min, age_max)`
 
 Taking this approach to `age_max` enables this method to naturally
 support partial cohorts. For example, if `age_max = 18.5` and

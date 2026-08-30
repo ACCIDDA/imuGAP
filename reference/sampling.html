@@ -19,6 +19,10 @@ format to feed the immunity estimation model."><meta property="og:image" content
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/imuGAP.html">Get started</a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/user_specified_layers.html">Flexible Location Layers in imuGAP</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -126,8 +130,8 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SAMPLING FOR MODEL 'impute_school_coverage_process_v6' NOW (CHAIN 1).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Gradient evaluation took 0.000209 seconds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.09 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Gradient evaluation took 0.000223 seconds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 2.23 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Adjust your expectations accordingly!</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
@@ -144,15 +148,15 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration: 450 / 500 [ 90%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: Iteration: 500 / 500 [100%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:  Elapsed Time: 7.166 seconds (Warm-up)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                3.706 seconds (Sampling)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                10.872 seconds (Total)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:  Elapsed Time: 10.327 seconds (Warm-up)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                6.927 seconds (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1:                17.254 seconds (Total)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 1: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SAMPLING FOR MODEL 'impute_school_coverage_process_v6' NOW (CHAIN 2).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Gradient evaluation took 0.000187 seconds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 1.87 seconds.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Gradient evaluation took 0.000202 seconds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 2.02 seconds.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Adjust your expectations accordingly!</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
@@ -169,13 +173,15 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Iteration: 450 / 500 [ 90%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: Iteration: 500 / 500 [100%]  (Sampling)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:  Elapsed Time: 7.817 seconds (Warm-up)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:                6.514 seconds (Sampling)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:                14.331 seconds (Total)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:  Elapsed Time: 12.786 seconds (Warm-up)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:                16.025 seconds (Sampling)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2:                28.811 seconds (Total)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Chain 2: </span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There were 5 divergent transitions after warmup. See</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There were 14 divergent transitions after warmup. See</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> to find out why this is a problem and how to eliminate them.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There were 4 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10. See</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> https://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Examine the pairs() plot to diagnose sampling problems</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> Running the chains for more iterations may help. See</span>
@@ -188,84 +194,84 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 chains, each with iter=500; warmup=250; thin=1; </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> post-warmup draws per chain=250, total post-warmup draws=500.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   mean se_mean   sd     2.5%      25%      50%      75%</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[1]       -1.61    0.01 0.15    -1.93    -1.71    -1.61    -1.52</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[2]       -2.02    0.01 0.12    -2.26    -2.10    -2.02    -1.94</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[3]       -2.05    0.01 0.16    -2.34    -2.15    -2.04    -1.94</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[4]       -3.24    0.01 0.17    -3.57    -3.35    -3.23    -3.13</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[5]       -2.29    0.01 0.20    -2.69    -2.42    -2.29    -2.15</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_cnty        0.23    0.02 0.19     0.01     0.10     0.18     0.31</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_cnty[1]      -0.07    0.01 0.13    -0.36    -0.14    -0.05     0.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_cnty[2]      -0.14    0.02 0.17    -0.60    -0.24    -0.10    -0.02</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_cnty[3]      -0.02    0.01 0.14    -0.34    -0.10    -0.01     0.06</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_sch         0.57    0.01 0.11     0.40     0.49     0.57     0.64</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[1]       -1.07    0.02 0.25    -1.63    -1.22    -1.06    -0.90</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[2]       -0.06    0.02 0.15    -0.32    -0.15    -0.07     0.04</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[3]       -0.77    0.01 0.18    -1.13    -0.89    -0.77    -0.65</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[4]        0.21    0.02 0.17    -0.10     0.09     0.20     0.30</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[5]        0.21    0.01 0.15    -0.07     0.12     0.19     0.30</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[6]        0.43    0.01 0.16     0.14     0.33     0.42     0.52</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[7]        0.27    0.01 0.17    -0.08     0.15     0.26     0.38</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[8]       -0.68    0.01 0.21    -1.07    -0.83    -0.68    -0.54</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[9]        0.71    0.01 0.14     0.46     0.62     0.70     0.79</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[10]      -0.04    0.01 0.14    -0.30    -0.13    -0.05     0.04</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[11]       0.22    0.02 0.21    -0.16     0.10     0.22     0.34</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[12]      -0.71    0.02 0.23    -1.14    -0.85    -0.72    -0.58</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[13]       0.46    0.02 0.19     0.14     0.34     0.45     0.58</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[14]      -0.40    0.02 0.21    -0.77    -0.53    -0.41    -0.28</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[15]      -0.13    0.02 0.22    -0.51    -0.29    -0.14     0.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[16]       0.16    0.02 0.19    -0.15     0.03     0.14     0.25</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[17]      -1.09    0.02 0.32    -1.77    -1.27    -1.09    -0.88</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[18]      -0.86    0.01 0.20    -1.30    -0.99    -0.86    -0.73</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[19]       0.37    0.01 0.17     0.01     0.26     0.38     0.47</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[20]       0.11    0.01 0.17    -0.22     0.00     0.11     0.20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[21]      -0.36    0.01 0.20    -0.77    -0.49    -0.35    -0.21</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[22]      -0.09    0.02 0.23    -0.57    -0.25    -0.06     0.06</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[23]       0.06    0.01 0.15    -0.25    -0.02     0.06     0.16</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[24]       0.55    0.01 0.17     0.20     0.46     0.55     0.65</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lambda_raw[1]     1.36    0.05 0.82     0.12     0.73     1.29     1.86</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lambda_raw[2]     1.16    0.00 0.05     1.09     1.14     1.16     1.18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lp__          -1558.23    0.64 5.99 -1571.35 -1562.04 -1557.98 -1553.86</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                  97.5% n_eff Rhat</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[1]       -1.32   292 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[2]       -1.82   264 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[3]       -1.75   250 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[4]       -2.92   264 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[5]       -1.89   302 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_cnty        0.77    69 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_cnty[1]       0.19    91 1.04</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_cnty[2]       0.14    78 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_cnty[3]       0.27   158 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_sch         0.79    94 1.02</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[1]       -0.67   184 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[2]        0.26    98 1.04</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[3]       -0.40   154 1.03</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[4]        0.57   110 1.03</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[5]        0.52   113 1.03</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[6]        0.78   126 1.02</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[7]        0.60   151 1.02</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[8]       -0.25   223 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[9]        1.03    97 1.03</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[10]       0.27    94 1.04</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[11]       0.69   108 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[12]      -0.20   161 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[13]       0.91    92 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[14]       0.05   104 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[15]       0.31   152 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[16]       0.59    90 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[17]      -0.50   196 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[18]      -0.47   192 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[19]       0.70   202 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[20]       0.49   207 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[21]       0.01   193 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[22]       0.32   227 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[23]       0.37   194 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> off_sch[24]       0.89   255 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lambda_raw[1]     3.15   240 1.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lambda_raw[2]     1.28   188 1.01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lp__          -1547.85    89 1.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    mean se_mean   sd     2.5%      25%      50%      75%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[1]        -1.62    0.01 0.14    -1.88    -1.70    -1.61    -1.53</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[2]        -2.02    0.01 0.12    -2.27    -2.11    -2.03    -1.94</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[3]        -2.06    0.01 0.15    -2.33    -2.16    -2.07    -1.96</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[4]        -3.25    0.02 0.20    -3.64    -3.39    -3.23    -3.10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[5]        -2.31    0.01 0.19    -2.68    -2.44    -2.30    -2.18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_layer[1]     0.30    0.03 0.36     0.03     0.12     0.22     0.38</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_layer[2]     0.59    0.01 0.12     0.41     0.51     0.57     0.65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[1]      -0.11    0.02 0.16    -0.43    -0.19    -0.09    -0.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[2]      -0.19    0.03 0.22    -0.70    -0.30    -0.15    -0.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[3]      -0.01    0.02 0.16    -0.35    -0.10    -0.01     0.07</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[4]      -1.05    0.02 0.28    -1.64    -1.24    -1.03    -0.85</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[5]      -0.03    0.02 0.17    -0.31    -0.13    -0.03     0.07</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[6]      -0.74    0.02 0.20    -1.14    -0.86    -0.74    -0.62</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[7]       0.26    0.02 0.19    -0.08     0.13     0.23     0.37</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[8]       0.25    0.02 0.18    -0.06     0.14     0.24     0.35</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[9]       0.47    0.02 0.18     0.16     0.35     0.47     0.58</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[10]      0.30    0.02 0.20    -0.05     0.16     0.30     0.42</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[11]     -0.66    0.02 0.25    -1.14    -0.81    -0.66    -0.51</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[12]      0.76    0.02 0.17     0.47     0.66     0.75     0.84</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[13]      0.00    0.02 0.16    -0.27    -0.10    -0.01     0.09</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[14]      0.27    0.03 0.24    -0.16     0.12     0.26     0.41</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[15]     -0.67    0.03 0.30    -1.29    -0.84    -0.66    -0.49</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[16]      0.52    0.03 0.22     0.14     0.36     0.49     0.66</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[17]     -0.35    0.03 0.24    -0.79    -0.49    -0.37    -0.24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[18]     -0.08    0.02 0.26    -0.63    -0.25    -0.09     0.06</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[19]      0.21    0.03 0.23    -0.18     0.06     0.18     0.33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[20]     -1.08    0.03 0.36    -1.87    -1.29    -1.06    -0.84</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[21]     -0.88    0.02 0.23    -1.33    -1.03    -0.87    -0.73</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[22]      0.37    0.02 0.19    -0.03     0.26     0.36     0.48</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[23]      0.11    0.02 0.20    -0.23    -0.02     0.10     0.23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[24]     -0.37    0.02 0.20    -0.75    -0.50    -0.36    -0.23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[25]     -0.09    0.02 0.23    -0.55    -0.25    -0.09     0.07</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[26]      0.06    0.01 0.18    -0.30    -0.05     0.06     0.17</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[27]      0.55    0.02 0.19     0.21     0.43     0.54     0.65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> lambda_raw[1]      1.26    0.09 0.92    -0.15     0.59     1.18     1.85</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> lambda_raw[2]      1.19    0.01 0.12     1.08     1.13     1.16     1.20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> lp__           -1540.42    0.62 5.72 -1553.05 -1543.63 -1539.59 -1536.44</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   97.5% n_eff Rhat</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[1]        -1.34   237 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[2]        -1.78   142 1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[3]        -1.77   167 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[4]        -2.88   152 1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> beta_bs[5]        -1.92   220 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_layer[1]     0.94   144 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sigma_layer[2]     0.86   191 1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[1]       0.14    83 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[2]       0.17    70 1.03</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[3]       0.32   113 1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[4]      -0.57   178 1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[5]       0.30   103 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[6]      -0.35   125 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[7]       0.65   104 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[8]       0.62    98 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[9]       0.83    92 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[10]      0.67   152 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[11]     -0.17   141 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[12]      1.12    84 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[13]      0.32    89 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[14]      0.79    81 1.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[15]     -0.15   108 1.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[16]      1.06    70 1.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[17]      0.18    87 1.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[18]      0.48   118 1.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[19]      0.75    81 1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[20]     -0.44   135 1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[21]     -0.42   168 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[22]      0.79   151 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[23]      0.53   160 1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[24]      0.05   150 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[25]      0.32   178 1.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[26]      0.43   141 1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> off_layer[27]      0.95   143 1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> lambda_raw[1]      3.22   113 1.02</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> lambda_raw[2]      1.55   221 1.01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> lp__           -1531.44    85 1.02</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using NUTS(diag_e) at Fri Aug 28 20:14:01 2026.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using NUTS(diag_e) at Sun Aug 30 21:33:11 2026.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> convergence, Rhat=1).</span>
@@ -278,291 +284,8 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> $settings$imugap_opts$dose_schedule</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1 4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $settings$imugap_opts$object</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> S4 class stanmodel 'impute_school_coverage_process_v6' coded as follows:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> functions {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // a function to convert lower bounds l_1, 1_2, ... 1_n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // to (lower, upper) pairs (l_1, l_2-1), (l_2, l_3-1), ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[,] int bounds_to_range(array[] int lowers, int ub) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     int size_bounds = size(lowers);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (lowers[size_bounds] &gt; ub) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         print("Upper bound, ", ub, " is less than last lower bound, ", lowers[size_bounds]);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     array[size_bounds] int uppers;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in 1:(size_bounds - 1)) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         uppers[i] = lowers[i+1] - 1;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     uppers[size_bounds] = ub;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     return { lowers, uppers };</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // create a matrix, each column multiplied by corresponding row entry</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   matrix element_mult_expand(vector colv, row_vector rowv) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     int nrows = size(colv), ncols = size(rowv);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     matrix[nrows, ncols] result;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in 1:nrows) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         result[i,] = rowv * colv[i];</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     return result;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // Sequential diff</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   vector diff(vector obj) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     int sz = size(obj);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     return obj[2:] - obj[:(sz-1)];</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   row_vector diff(row_vector obj) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     int sz = size(obj);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     return obj[2:] - obj[:(sz-1)];</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   row_vector colsum(matrix obj) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     int ncols = cols(obj);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     row_vector[ncols] res;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in 1:ncols) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         res[i] = sum(obj[, i]);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     return res;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   vector rowsum(matrix obj) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     int nrows = rows(obj);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     vector[nrows] res;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in 1:nrows) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         res[i] = sum(obj[i, ]);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     return res;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> vector unrolled_dose(int n_yr, int n_doses, matrix dose_sched, vector lambda_raw, real epsilon_p) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // assert: dose_sched is n_yr x n_doses</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // assert: lambda_raw is n_doses x 1 (alt: would be n_doses x n_time)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[n_doses] lambda = exp(lambda_raw);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // the unconditional cdfs, given FoV + whatever remains; normalization factors</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   matrix[n_yr, n_doses] dXcdf, dXpdf, normdXpdf;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[n_doses] rem;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   for (dose in 1:n_doses) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     dXcdf[, dose] = 1 - exp(-cumulative_sum(dose_sched[, dose] * lambda[dose]));</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     rem[dose] = 1 - dXcdf[n_yr, dose];</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     dXpdf[1, dose] = dXcdf[1, dose];</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     dXpdf[2:,dose] = diff(dXcdf[, dose]);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     normdXpdf[, dose] = reverse(cumulative_sum(reverse(dXpdf[, dose]))) + rem[dose];</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   matrix[n_yr, n_doses] conditional_dXpdf = rep_matrix(0, n_yr, n_doses), conditional_dXcdf;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   conditional_dXpdf[, 1] = dXpdf[, 1];</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   conditional_dXcdf[, 1] = dXcdf[, 1];</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   for (dose in 2:n_doses) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     int prev_dose = dose - 1;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     // conditional probability =&gt; probability got dose n-1 at some time, then probability got dose n at later times</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     for (ly in 1:n_yr) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       if (normdXpdf[ly, dose] &lt; epsilon_p) break; // if the remaining weight is negligible, avoid division by zero</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       conditional_dXpdf[ly:, dose] += conditional_dXpdf[ly, prev_dose] * dXpdf[ly:, dose] / normdXpdf[ly, dose];</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     conditional_dXcdf[, dose] = cumulative_sum(conditional_dXpdf[, dose]);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // TODO check unrolling of cdfs - should be dose 1 all years, then dose 2 all years, etc</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[n_doses * n_yr] unrolled_dose_cdf = to_vector(conditional_dXcdf);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   return unrolled_dose_cdf;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // need meta info:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //  which cohorts, which places, which years of life</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //  =&gt; assume each measurement is independent, not progress of some matched individuals</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> data {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // #include data/shared_stateonly.stan</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // STRUCTURAL DEFINITIONS</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; n_yr; // number of years to model for each cohort - should be at least year of oldest observation</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; n_cohort; // number of birth year cohorts</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; n_sch; // number of schools</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // maps schools to county</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; n_cnty;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_cnty] int&lt;lower=1, upper=n_sch&gt; cnty_bounds; // which schools indices start each county</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // dose schedules</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; n_doses;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   matrix&lt;lower=0, upper=1&gt;[n_yr, n_doses] dose_sched;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // DATA DEFINITIONS</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1&gt; n_obs;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_obs] int&lt;lower=0&gt; y_obs;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_obs] int&lt;lower=0&gt; y_smp;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // have school id ranges for observations &amp; for doses; school id 0 == statewide?</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // array[n_obs] int obs_sch_id_bounds;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=n_obs&gt; n_weights;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_obs] int&lt;lower=1, upper=n_weights&gt; obs_to_weights_bounds; // each entry is the start of the range</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_weights] int&lt;lower=1,upper=n_sch + n_cnty + 1&gt; weights_school;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_weights] int&lt;lower=1,upper=n_cohort&gt; weights_cohort;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_weights] int&lt;lower=1,upper=n_yr&gt; weights_life_year;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_weights] int&lt;lower=1,upper=n_doses&gt; weights_dose;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   vector&lt;lower=0,upper=1&gt;[n_weights] weights; // contribution of this (school, cohort, year, dose) to an observation</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // run mode: 0 = estimation, 1 = prediction</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0, upper=1&gt; predict_mode;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // TODO: calculate these in stan?</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // https://spinkney.github.io/helpful_stan_functions/group__splines.html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // state-level basis spline</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   int k_bs; // number of bspline basis functions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   matrix[n_cohort, k_bs] bs; // basis functions</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // observations may be right-censored</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // observation data is assumed ordered uncensored, then right censored</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // so n_uncensored_obs == n_obs, all observations are uncensored</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // number of uncensored observations</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> int&lt;lower = 0, upper = n_obs&gt; n_uncensored_obs;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> transformed data {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    // #include transformed_data/stateonly.stan</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    // #include transformed_data/fixed_raw_lambda.stan</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    // #include transformed_data/fixed_logit_phi.stan</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> real epsilon_p = 1e-10;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // convert to lookup spans for convenience</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[2, n_cnty] int cnty_map = bounds_to_range(cnty_bounds, n_sch);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[2, n_obs] int obs_map = bounds_to_range(obs_to_weights_bounds, n_weights);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // Equivalent 1:n_cohort, for time trends</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[n_cohort] cohort_shift_counter = linspaced_vector(n_cohort, 1, n_cohort);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_weights] int&lt;lower=1&gt; phi_lookup;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_weights] int&lt;lower=1&gt; cdf_lookup;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // because integer arrays don't support broadcasting ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // unroll phi and cdf objects to support vectorization</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   for (weight_i in 1:n_weights) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     // phi ordered by school then cohort</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     phi_lookup[weight_i] = weights_cohort[weight_i] + (weights_school[weight_i] - 1) * n_cohort;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     // ordered by dose then life year</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     cdf_lookup[weight_i] = weights_life_year[weight_i] + (weights_dose[weight_i] - 1) * n_yr;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> array[n_obs] int&lt;lower=-1&gt; y_obs_trans;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> for(i in 1:n_obs) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   y_obs_trans[i] = y_obs[i] - 1;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> parameters {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // bases spline coeficcients</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[k_bs] beta_bs; // spline betas</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // #include parameters/constant_phi.stan</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // #include parameters/cnty_sch_linear.stan</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // offsets</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   real&lt;lower=0&gt; sigma_cnty;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   row_vector&lt;multiplier=sigma_cnty&gt;[n_cnty] off_cnty;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   real&lt;lower=0&gt; sigma_sch;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   row_vector&lt;multiplier=sigma_sch&gt;[n_sch] off_sch;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // Vaccination uptake rate</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[n_doses] lambda_raw;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> model {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   if (!predict_mode) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     // PRIORS - spline coefficients</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     beta_bs ~ normal(0, 10);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     // PRIOR - lambda; relatively strong prior belief that ~95% coverage achieved in a year</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     // mean of 3 =&gt; 1 - exp(-3*1) == ~ 0.95</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     lambda_raw ~ normal(log(3), 1);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     // Offsets - non-centered parameterization to speed up</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     sigma_cnty ~ cauchy(0, 1);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     off_cnty ~ normal(0, sigma_cnty);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     sigma_sch ~ cauchy(0, 2);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     off_sch ~ normal(0, sigma_sch);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     vector[n_obs] p_obs;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> vector[n_cohort] logit_phi_st = bs * beta_bs;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> row_vector[n_sch] shift = off_sch;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> for (c in 1:n_cnty) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   shift[cnty_map[1,c]:cnty_map[2,c]] += off_cnty[c];</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> vector[(1+ n_cnty + n_sch) * n_cohort] phi = append_row(append_row(</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   inv_logit(logit_phi_st),</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   to_vector(inv_logit(</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     rep_matrix(logit_phi_st, n_cnty) + rep_matrix(off_cnty, n_cohort)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ))),</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   to_vector(inv_logit(</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     rep_matrix(logit_phi_st, n_sch) + rep_matrix(shift, n_cohort)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> );</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> vector[n_doses * n_yr] unrolled_dose_probs = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> vector[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> for (obs_i in 1:n_obs) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> if (n_uncensored_obs &lt; n_obs) { // at least some censored observations</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     // p_s =&gt; 1 - p_s = p_f :: probability of at least this many successes =&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     //                         probability of less than this many failures</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (n_uncensored_obs &gt; 0) { // at least some uncensored observations</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         target += binomial_lpmf(y_obs[:n_uncensored_obs] | y_smp[:n_uncensored_obs], p_obs[:n_uncensored_obs]);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     target += binomial_lcdf(y_obs[(n_uncensored_obs+1):] | y_smp[(n_uncensored_obs+1):], 1 - p_obs[(n_uncensored_obs+1):]);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> } else { // all uncensored observations</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     y_obs ~ binomial(y_smp, p_obs); // vectorized</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> generated quantities {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[predict_mode ? n_obs : 0] p_obs;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   if (predict_mode) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> vector[n_cohort] logit_phi_st = bs * beta_bs;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> row_vector[n_sch] shift = off_sch;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> for (c in 1:n_cnty) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   shift[cnty_map[1,c]:cnty_map[2,c]] += off_cnty[c];</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> vector[(1+ n_cnty + n_sch) * n_cohort] phi = append_row(append_row(</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   inv_logit(logit_phi_st),</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   to_vector(inv_logit(</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     rep_matrix(logit_phi_st, n_cnty) + rep_matrix(off_cnty, n_cohort)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ))),</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   to_vector(inv_logit(</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     rep_matrix(logit_phi_st, n_sch) + rep_matrix(shift, n_cohort)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> );</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> vector[n_doses * n_yr] unrolled_dose_probs = unrolled_dose(n_yr, n_doses, dose_sched, lambda_raw, epsilon_p);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> vector[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> for (obs_i in 1:n_obs) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   p_obs[obs_i] = sum(weighted[obs_map[1,obs_i]:obs_map[2,obs_i]]);</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // This model represents vaccination as a discrete step, fixed hazard process</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // therefore X(t) =&gt; X(t + deltaT) = X(t)*exp(-hazard*deltaT)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // which means the X-out flow == X(t)*(1-exp(-hazard*deltaT))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // for an arbitrary number of hazards &amp; deltaTs, we simply sum:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // net outflow: X(t)*(1-exp(-sum(hazard*deltaT)))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // This model represents an overall hazard, shared across birth cohorts and</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // vaccine doses. Additionally, birth cohorts have a propensity to vaccinate,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // which is fixed at birth and then applies throughout life.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // deltaT captures both time passage + eligibility. deltaT in the fitting is</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // always == 1, but note that this is unitless - the data define what time means</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // e.g. if birth cohorts are based on years, then deltaT is years, and a weight</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // of 1 means eligible for a whole year, .25 eligible for a quarter, etc</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // the hazard is constant for any given discrete time step, but can vary between</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // time steps. the hazard time is denoted in absolute model time. however,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // cohort time is relative. so:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // hazard time == 1: one deltaT has passed, absolute time is 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // cohort 1, time 1: one deltaT has passed =&gt; cohort 1 is 1 deltaT old,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //   absolute time is also 1 (cohort 1 is the first cohort)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // cohort 2, time 2: two deltaT have passed =&gt; cohort 2 is 2 deltaT old, but</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //   cohort 1 is 3 deltaT old, and absolute time is 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // generally:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // cohort n, time t: experienced t deltaTs; those deltaT corresponded to absolute</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //   times n, n+1, ..., n+t</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // we assume each cohort has the same doses schedule, so the same deltaT weights</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // so for cohort n, fraction of (non-phi/vaccinators) with 1+ doses at age 1:t:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //   d1cdf = 1 - exp(-cumsum(weight[1:t] .* lambda[n:t]))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // and the incidence of new dose 1s is:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //   c(d1cdf[1], diff(d1cdf))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // for subsequent doses, the hazard model is the same, but now is conditional on</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // having received the first dose; thus the incremental hazard is still</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //   d2cdf = 1 - exp(-cumsum(weight2[1:t] .* lambda[n:t]))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //   (note the different eligibility mask, weight2; assert weight2 strictly less than weight1)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // but only the fraction having dose 1 experience it.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // if we think about this in terms of newly-dose-1-in-deltaT-x:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //   we can reframe in these terms:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //   define d2pdf = c(d2cdf[1], diff(d2cdf)); pgtt = 1-d2cdf[t] (probably event has not occured by t)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //   probability of dose 2 in year (x+1):t =&gt; d2pdf[(x+1):t]/sum(d2pdf[x+1:t] + pggt)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //   we can then assign each incremental incidence of dose 1 in deltaT x to getting</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //   second dose in deltaT x+1:t (or not getting it by t)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> // this can be built-up as a matrix once per cohort</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //  1. calculate d2cdf, d2pdf, pgtt as above, for t == max cohort "age"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //  2. calculate remd2pdf = rev(cumsum(rev(d2pdf))) + pgtt</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //  3. d2contrib =</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> //    upper_triangle_1s * colwise element multiplication of d2pdf / rowwise remd2pdf * rowwise d2incidence =&gt; column sums =&gt; proportion in d2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $settings$imugap_opts$model</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "default"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $settings$stan_opts</span>
@@ -587,8 +310,36 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data$n_cohort</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 31</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $data$n_sch</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $data$n_locs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 28</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $data$n_layers</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $data$layer_sizes</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  1  3 24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $data$layer_bounds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      [,1] [,2] [,3]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,]    1    2    5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,]    1    4   28</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $data$parent_id_map</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] 0 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 4 4 4 4 4 4 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $data$layer_id_map</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] 1 2 2 2 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $data$n_parent_locs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $data$parent_loc_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1 2 3 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $data$parent_child_bounds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      [,1] [,2] [,3] [,4]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,]    2    5   15   22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,]    4   14   21   28</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data$n_doses</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2</span>
@@ -662,7 +413,7 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bs"     "basis"  "matrix"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data$n_obs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 698</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 755</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data$y_obs</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1]   42   41   46   41   44   47   46   44   43   44   38   42   47   41   48</span>
@@ -711,7 +462,11 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> [646]  235  193  210  242  269  279  358  295  289  257  296  220  280  238  317</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [661]  322  355  267  238  245  214  263  311  320  309  239  231  329  233  226</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [676]  239  196  214  243  274  281  363  301  289  260  298  221  284  241  321</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [691]  325  362  268  242  247  220  267  315</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [691]  325  362  268  242  247  220  267  315  136  118  147  127  210  184  134</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [706]  114  170  150  207  138  130  191  215  119  124  162  193  212  126  115</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [721]  181  182  163  181  127  201  190  123  115  140  148  185  193  153  134</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [736]  186  200  117  181  168  141  164  139  198  206  212  111  159  213  198</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [751]  203  163  170  210  153</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data$y_smp</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1]   52   51   50   48   53   54   54   51   52   52   48   50   54   49   54</span>
@@ -760,10 +515,14 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> [646]  292  251  259  303  329  344  432  363  355  307  367  267  333  279  386</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [661]  396  433  318  276  297  276  328  374  415  400  311  289  436  290  296</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [676]  292  251  259  303  329  344  432  363  355  307  367  267  333  279  386</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [691]  396  433  318  276  297  276  328  374</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [691]  396  433  318  276  297  276  328  374  171  145  177  151  243  201  153</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [706]  124  183  182  234  157  146  226  235  133  138  180  208  242  137  130</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [721]  207  213  185  199  141  228  217  134  121  163  165  200  206  172  148</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [736]  205  245  137  209  191  166  191  162  225  229  245  126  186  247  221</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [751]  232  180  189  236  164</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data$n_weights</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 750</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 807</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data$obs_to_weights_bounds</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1]   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18</span>
@@ -804,9 +563,12 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> [631] 651 656 661 666 671 676 681 686 691 692 693 694 695 696 697 698 699 700</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [649] 701 702 703 704 705 706 707 708 709 710 711 712 713 714 715 716 717 718</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [667] 719 720 721 722 723 724 725 726 727 728 729 730 731 732 733 734 735 736</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [685] 737 738 739 740 741 742 743 744 745 746 747 748 749 750</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [685] 737 738 739 740 741 742 743 744 745 746 747 748 749 750 751 752 753 754</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [703] 755 756 757 758 759 760 761 762 763 764 765 766 767 768 769 770 771 772</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [721] 773 774 775 776 777 778 779 780 781 782 783 784 785 786 787 788 789 790</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [739] 791 792 793 794 795 796 797 798 799 800 801 802 803 804 805 806 807</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $data$weights_school</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $data$weights_location</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1]  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8  8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [26] 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [51]  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5</span>
@@ -837,6 +599,9 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> [676]  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [701]  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [726]  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [751]  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  3  3  3  3  3  3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [776]  3  3  3  3  3  3  3  3  3  3  3  3  3  4  4  4  4  4  4  4  4  4  4  4  4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [801]  4  4  4  4  4  4  4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data$weights_cohort</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1]  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28</span>
@@ -869,6 +634,9 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> [676] 13 14 15 16 17 14 15 16 17 18 15 16 17 18 19  2  3  4  5  6  7  8  9 10 11</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [701] 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31  1  2  3  4  5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [726]  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [751]  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22  4  5  6  7  8  9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [776] 10 11 12 13 14 15 16 17 18 19 20 21 22  4  5  6  7  8  9 10 11 12 13 14 15</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [801] 16 17 18 19 20 21 22</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data$weights_life_year</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1]  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5  5</span>
@@ -901,6 +669,9 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> [676] 18 17 16 15 14 18 17 16 15 14 18 17 16 15 14  2  2  2  2  2  2  2  2  2  2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [701]  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  2  3  3  3  3  3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [726]  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3  3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [751] 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [776] 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [801] 11 11 11 11 11 11 11</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data$weights_dose</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2</span>
@@ -923,7 +694,8 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> [630] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [667] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1 1 1 1 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [704] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [741] 1 1 1 1 1 1 1 1 1 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [741] 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [778] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data$weights</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0</span>
@@ -967,13 +739,10 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> [685] 0.2 0.2 0.2 0.2 0.2 0.2 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [703] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [721] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [739] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $data$n_cnty</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $data$cnty_bounds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  1 11 18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [739] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [757] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [775] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [793] 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data$predict_mode</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
@@ -981,6 +750,7 @@ failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.htm
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $locations</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;layer, parent_id, loc_id&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Indices: &lt;loc_id&gt;, &lt;parent_id&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        loc_id parent_id layer loc_c_id loc_cp_id layer_bound</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                        &lt;char&gt;    &lt;char&gt; &lt;int&gt;    &lt;int&gt;     &lt;int&gt;       &lt;int&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  1:                     State      &lt;NA&gt;     1        1        NA           1</span>

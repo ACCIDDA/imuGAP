@@ -309,11 +309,11 @@ observations_sim
 #>   4:  2004   Scruggs Chickadee Elementary       41       48       5     2
 #>   5:  2005   Scruggs Chickadee Elementary       44       53       5     2
 #>  ---                                                                     
-#> 694:  2021      <NA>                State      254      281      14     2
-#> 695:  2022      <NA>                State      252      274      14     2
-#> 696:  2023      <NA>                State      230      251      14     2
-#> 697:  2024      <NA>                State      272      296      14     2
-#> 698:  2025      <NA>                State      210      230      14     2
+#> 751:  2021     State               Watson      203      232      11     2
+#> 752:  2022     State               Watson      163      180      11     2
+#> 753:  2023     State               Watson      170      189      11     2
+#> 754:  2024     State               Watson      210      236      11     2
+#> 755:  2025     State               Watson      153      164      11     2
 #>      censored age_max cohort_min obs_id
 #>         <num>   <int>      <num>  <int>
 #>   1:       NA      NA          4      1
@@ -322,11 +322,11 @@ observations_sim
 #>   4:       NA      NA          7      4
 #>   5:       NA      NA          8      5
 #>  ---                                   
-#> 694:       NA      19         11    694
-#> 695:       NA      19         12    695
-#> 696:       NA      19         13    696
-#> 697:       NA      19         14    697
-#> 698:       NA      19         15    698
+#> 751:        1      NA         18    751
+#> 752:        1      NA         19    752
+#> 753:        1      NA         20    753
+#> 754:        1      NA         21    754
+#> 755:        1      NA         22    755
 canonicalize_observations(observations_sim)
 #> Key: <censored, obs_id>
 #>      obs_c_id positive sample_n censored obs_id
@@ -337,11 +337,11 @@ canonicalize_observations(observations_sim)
 #>   4:        4       41       48       NA      4
 #>   5:        5       44       53       NA      5
 #>  ---                                           
-#> 694:      694      242      276        1    656
-#> 695:      695      247      297        1    657
-#> 696:      696      220      276        1    658
-#> 697:      697      267      328        1    659
-#> 698:      698      315      374        1    660
+#> 751:      751      203      232        1    751
+#> 752:      752      163      180        1    752
+#> 753:      753      170      189        1    753
+#> 754:      754      210      236        1    754
+#> 755:      755      153      164        1    755
 # --- canonicalize_populations ---
 data("populations_sim"); data("locations_sim"); data("observations_sim")
 populations_sim
@@ -353,11 +353,11 @@ populations_sim
 #>   4:      4 Chickadee Elementary      7     5     2      1
 #>   5:      5 Chickadee Elementary      8     5     2      1
 #>  ---                                                      
-#> 746:    656                State     26     3     1      1
-#> 747:    657                State     27     3     1      1
-#> 748:    658                State     28     3     1      1
-#> 749:    659                State     29     3     1      1
-#> 750:    660                State     30     3     1      1
+#> 803:    751               Watson     18    11     2      1
+#> 804:    752               Watson     19    11     2      1
+#> 805:    753               Watson     20    11     2      1
+#> 806:    754               Watson     21    11     2      1
+#> 807:    755               Watson     22    11     2      1
 canonicalize_populations(populations_sim, observations_sim, locations_sim)
 #> Key: <obs_c_id, loc_c_id, cohort, age, dose>
 #>      obs_id               loc_id cohort   age  dose weight obs_c_id loc_c_id
@@ -368,11 +368,11 @@ canonicalize_populations(populations_sim, observations_sim, locations_sim)
 #>   4:      4 Chickadee Elementary      7     5     2      1        4        8
 #>   5:      5 Chickadee Elementary      8     5     2      1        5        8
 #>  ---                                                                        
-#> 746:    656                State     26     3     1      1      694        1
-#> 747:    657                State     27     3     1      1      695        1
-#> 748:    658                State     28     3     1      1      696        1
-#> 749:    659                State     29     3     1      1      697        1
-#> 750:    660                State     30     3     1      1      698        1
+#> 803:    751               Watson     18    11     2      1      751        4
+#> 804:    752               Watson     19    11     2      1      752        4
+#> 805:    753               Watson     20    11     2      1      753        4
+#> 806:    754               Watson     21    11     2      1      754        4
+#> 807:    755               Watson     22    11     2      1      755        4
 #>      range_start
 #>            <int>
 #>   1:           1
@@ -381,9 +381,9 @@ canonicalize_populations(populations_sim, observations_sim, locations_sim)
 #>   4:           4
 #>   5:           5
 #>  ---            
-#> 746:         746
-#> 747:         747
-#> 748:         748
-#> 749:         749
-#> 750:         750
+#> 803:         803
+#> 804:         804
+#> 805:         805
+#> 806:         806
+#> 807:         807
 ```

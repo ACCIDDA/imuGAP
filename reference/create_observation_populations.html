@@ -19,6 +19,10 @@ populations object for typical modes of observation."><meta property="og:image" 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/imuGAP.html">Get started</a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/user_specified_layers.html">Flexible Location Layers in imuGAP</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -89,10 +93,8 @@ and so on.</p>
 <p>Snapshots requires <code>obs_id</code>, <code>loc_id</code>, <code>dose</code>, <code>age_min</code>, and <code>cohort</code>
 the reference cohort corresponding to the oldest age. <code>age_max</code> may be provided,
 but if missing or <code>NA</code>, is assumed to be <code>age_min</code> + 1. <code>age_max</code> corresponds
-to the first <em>excluded</em> age - i.e.</p>
-<p>$$
-age[age_min,age_max)
-$$</p>
+to the first <em>excluded</em> age - i.e.
+<code>[age_min, age_max)</code></p>
 <p>Taking this approach to <code>age_max</code> enables this method to naturally support partial
 cohorts. For example, if <code>age_max = 18.5</code> and <code>age_min = 17</code>, then age 17 population
 has 2/3rds the weight and the age 18 population has 1/3rd. <code>age_min</code> works the

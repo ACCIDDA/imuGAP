@@ -5,16 +5,20 @@
 <url><loc>https://accidda.github.io/imuGAP/LICENSE.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/articles/imuGAP.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/articles/index.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/articles/user_specified_layers.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/authors.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/index.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/news/index.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/as.data.frame.imugap_predict.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/assemble_layer_data.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/canonicalize.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/canonicalize_target.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/create_observation_populations.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/create_target.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/extract_imugap.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/fit_sim.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/fit_sim_1layer.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/fit_sim_2layer.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/imuGAP-package.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/imugap_options.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/index.html</loc></url>
@@ -25,12 +29,16 @@
 <url><loc>https://accidda.github.io/imuGAP/reference/populations_sim.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/predict.imugap_fit.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/predict_sim.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/predict_sim_1layer.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/predict_sim_2layer.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/reexports.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/sampling.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/stop_fmt_if.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/subset.imugap_predict.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/summary.imugap_predict.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/target_sim.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/target_sim_1layer.html</loc></url>
+<url><loc>https://accidda.github.io/imuGAP/reference/target_sim_2layer.html</loc></url>
 <url><loc>https://accidda.github.io/imuGAP/reference/warn_fmt_if.html</loc></url>
 </urlset>
 
