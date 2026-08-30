@@ -1,14 +1,14 @@
 make_test_locs <- function() {
   data.frame(
     loc_id = c("state", "cnty1", "cnty2", "schl1", "schl2"),
-    parent_id = c(NA, "state", "state", "cnty1", "cnty2")
+    parent_id = c(NA, "state", "state", "cnty1", "cnty1")
   )
 }
 
 make_test_locs_implicit_root <- function() {
   data.frame(
     loc_id = c("a", "b", "c", "d"),
-    parent_id = c("root", "root", "a", "b")
+    parent_id = c("root", "root", "a", "a")
   )
 }
 

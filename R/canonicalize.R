@@ -126,9 +126,9 @@ ERR_LOCATIONS_NO_CYCLES <- paste0(
   "`locations` hierarchy cannot contain cycles; found %d location(s) ",
   "in cycle(s): %s"
 )
-ERR_LOCATIONS_LAYER_MIN_SIZE <- paste0(
-  "`locations` layers below root (layer >= 2) must contain more than 1 location; ",
-  "layer %d has %d location(s)"
+ERR_LOCATIONS_OFFSPRING_COUNT <- paste0(
+  "`locations` each location must have either 0 or strictly greater than 1 offspring; ",
+  "found %d location(s) with exactly 1 offspring: %s"
 )
 
 ERR_OBS_NA_ID <- paste0(
@@ -276,14 +276,14 @@ canonicalize_locations <- function(locations) {
     )
   }
 
-  # check that each non-root layer has > 1 member
-  layer_counts <- locations[, .N, by = layer]
-  small_layers <- layer_counts[layer > 1L & N <= 1L]
+  # check that each location has either 0 or strictly greater than 1 offspring
+  child_counts <- locations[!is.na(parent_id), .N, by = parent_id]
+  single_child_parents <- child_counts[N == 1L, parent_id]
   stop_fmt_if(
-    nrow(small_layers) > 0L,
-    ERR_LOCATIONS_LAYER_MIN_SIZE,
-    small_layers$layer[1],
-    small_layers$N[1]
+    length(single_child_parents) > 0L,
+    ERR_LOCATIONS_OFFSPRING_COUNT,
+    length(single_child_parents),
+    toString(single_child_parents, width = 80)
   )
 
   # Validate population hierarchy if population column is present

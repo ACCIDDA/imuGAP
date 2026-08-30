@@ -3,7 +3,7 @@
 make_3layer_locs <- function() {
   data.frame(
     loc_id = c("state", "cnty1", "cnty2", "schlA", "schlB"),
-    parent_id = c(NA, "state", "state", "cnty1", "cnty2")
+    parent_id = c(NA, "state", "state", "cnty1", "cnty1")
   )
 }
 
