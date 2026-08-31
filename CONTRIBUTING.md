@@ -1,147 +1,166 @@
 # Contributing to imuGAP
 
-Thank you for your interest in contributing to imuGAP! This document
-explains how to report issues, propose changes, and what to expect from
-the CI pipeline when you open a pull request.
+Thank you for your interest in contributing to imuGAP! This document explains how to develop, test, and propose changes to the package, as well as the coding conventions, error handling standards, and CI pipelines enforced across the repository.
+
+---
 
 ## Code of Conduct
 
-All contributors are expected to be respectful and professional in all
-interactions — issues, pull requests, code reviews, and discussions.
-Constructive feedback is welcome; personal attacks and dismissive
-language are not.
+All contributors are expected to be respectful and professional in all interactions — issues, pull requests, code reviews, and discussions. Constructive feedback is welcome; personal attacks and dismissive language are not.
 
-## Reporting Bugs
+---
 
-Use the [bug report template](https://github.com/ACCIDDA/imuGAP/issues/new?template=bug_report.yml)
-when opening a new issue. It asks for a description, a minimal reprex,
-your `sessionInfo()` output, and your operating system.
+## Reporting Bugs and Feature Requests
 
-## Suggesting Features
+* **Bugs**: Use the [bug report template](https://github.com/ACCIDDA/imuGAP/issues/new?template=bug_report.yml). Provide a minimal reproducible example (reprex), session info, and operating system.
+* **Features**: Use the [feature request template](https://github.com/ACCIDDA/imuGAP/issues/new?template=feature_request.yml). Explain the use case and how it connects to the `imuGAP` workflow (`canonicalize` -> Stan sampling -> prediction/summary).
 
-Use the [feature request template](https://github.com/ACCIDDA/imuGAP/issues/new?template=feature_request.yml).
-Describe the use case and, if possible, how the feature fits into the
-existing model workflow (`imuGAP()` -> Stan sampling -> post-processing).
-You can also open a blank issue if neither template fits.
+---
 
-## Submitting Changes
+## Development Workflow & `just` Recipes
 
-1. **Fork & branch.** Create a feature branch off `main` (e.g.
-   `fix/obs-population-check` or `feature/predict-mode`).
-2. **Make your changes.** Follow the style conventions below.
-3. **Test locally.** Run `R CMD check` and the test suite before
-   pushing (see the commands below).
-4. **Open a pull request** against `main` with a clear description of
-   what changed and why.
+We use [`just`](https://github.com/casey/just) to automate development tasks. All recipes handle namespace and environment configuration automatically:
 
-### Local Development Commands
+| Recipe | Description | Equivalent Base Command |
+|---|---|---|
+| `just` | Run full validation pipeline: clean, format, lint, docs, test | *(compound command)* |
+| `just format` | Format R code using `air` | `air format .` |
+| `just lint` | Lint R code using `air` and `lintr` | `air format . --check && Rscript -e "lintr::lint_package()"` |
+| `just docs` | Regenerate roxygen documentation (`man/`, `R/globals.R`) | `Rscript -e "roxygen2::roxygenize()"` |
+| `just test` | Run complete unit test suite via `testthat` / `devtools` | `Rscript -e "devtools::test()"` |
+| `just test-fast` | Run tests, stopping on first failure | `Rscript -e "devtools::test(stop_on_failure = TRUE)"` |
+| `just coverage` | Measure test coverage via `covr` | `Rscript -e "covr::package_coverage()"` |
+| `just spell` | Check spelling across docs and vignettes via `spelling` | `Rscript -e "spelling::spell_check_package()"` |
+| `just render` | Render all vignettes to HTML and PDF | `Rscript -e "rmarkdown::render(...)"` |
+| `just site` | Build the full `pkgdown` documentation site into `docs/` | `Rscript -e "pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)"` |
+| `just site-preview [port=8000]` | Build and preview pkgdown documentation site on localhost | `Rscript -e "httpuv::runStaticServer(dir = 'docs', port = 8000)"` |
+| `just data-fit` | Regenerate pre-computed Stan fits (`fit_sim`, `target_sim`, etc.) | `Rscript data-raw/fit_data.R` |
+| `just build` | Build package `.tar.gz` archive | `R CMD build .` |
+| `just check` | Check package archive | `R CMD check imuGAP_*.tar.gz --no-manual --no-tests` |
+| `just check-cran` | Check package archive using strict CRAN settings | `R CMD check imuGAP_*.tar.gz --as-cran` |
 
-```sh
-# Full rebuild + install (required after editing any .stan file)
-R CMD INSTALL --preclean .
+---
 
-# Regenerate documentation from roxygen comments. This writes man/*.Rd,
-# NAMESPACE, and R/globals.R -- all roxygen2/roxyglobals output, none tracked in
-# git (#53, #115). CI regenerates them on every build, so never hand-edit them.
-Rscript -e 'devtools::document()'
+## Code Coverage and Spell Checking
 
-# Regenerate the fitted data artifacts (NOT tracked in git, like man/*.Rd).
-# fit_sim/target_sim/predict_sim/latent_params_sim must exist before `R CMD
-# build`/`check`, the vignette, or the examples will run. Needs a Stan toolchain.
-just data-fit   # or: Rscript data-raw/fit_data.R
+### 1. Code Coverage (`covr`)
+* Run `just coverage` to measure package test coverage.
+* The CI workflow (`.github/workflows/test-coverage.yaml`) runs `covr::codecov()` on every pull request and uploads reports to Codecov.
+* Aim to maintain high coverage (>90%, targeting 100%) across all active R source files (`R/canonicalize.R`, `R/checkers.R`, `R/helpers.R`, `R/imuGAP.R`, `R/methods.R`, `R/options.R`).
+* **Covered vs. Ignored Files (`.covrignore`)**:
+  * `src/*.{cc,cpp,h}`: Generated C++ Stan headers and model exports compiled by `rstantools` from `inst/stan/*.stan`. They cannot be instrumented directly by `covr`; the underlying models are verified through integration tests (`sampling()`, `predict()`).
+  * `R/stanmodels.R`: Generated Stan model loader emitted by `rstantools::rstan_config()`.
+  * `R/flexstanr.R`: Generated backend integration shim emitted by `flexstanr::use_flexstanr()`.
 
-# Run the test suite
-Rscript -e 'devtools::test()'
+### 2. Spell Checking (`spelling`)
+* Run `just spell` to check spelling across all `.Rd` documentation, vignettes, and `README.md`.
+* Legitimate technical terms, package names, author names, or domain vocabulary are maintained in `inst/WORDLIST`. Update the list with `Rscript -e "spelling::update_wordlist()"`.
 
-# Lint the package (config in .lintr)
-Rscript -e 'lintr::lint_package()'
+---
 
-# Build and check
-R CMD build . && R CMD check imuGAP_*.tar.gz
-```
+## Code Style, Linting, and Documentation
 
-### Style
+### 1. Formatting & Linting
+* R code is formatted with `air` and linted with `lintr` (rules in `.lintr`).
+* Maximum line length is **100 characters**.
+* `R/stanmodels.R`, `R/flexstanr.R`, `inst/analysis/`, `inst/scripts/`, and `data-raw/` are excluded from linting because they are generated artifacts or standalone scratch scripts.
 
-- R code is linted with `lintr` (configuration in `.lintr`).
-  `R/stanmodels.R` and `inst/analysis/` are excluded from linting
-  because they are generated or standalone scripts, respectively.
-- Do not hand-edit generated files: `R/stanmodels.R`,
-  `src/stanExports_*.{cc,h}`, `configure`, and `configure.win` are all
-  produced by `rstantools::rstan_config()`; `NAMESPACE`, `R/globals.R`, and
-  `man/*.Rd` are produced by `roxygen2::roxygenise()` (via roxygen tags and
-  the roxyglobals roclet) and are untracked -- regenerate with
-  `devtools::document()`.
-- Because `NAMESPACE` is untracked but is needed to install/load the package,
-  CI regenerates it from source (`roxygen2::roxygenise(roclets = "namespace",
-  load_code = "source")`) in a "Bootstrap NAMESPACE" step before the package is
-  installed (#115). Source-mode roxygen cannot evaluate package objects, so
-  **document exported datasets with the `@name` / `@docType data` idiom, not the
-  bare-string form** (`#' "my_data"`): the string form makes roxygen `get()` the
-  object, which fails in source mode and breaks the bootstrap. See the data
-  blocks in `R/imuGAP-package.R` for the pattern.
-- Stan model variants are composed via `#include` toggling in the
-  top-level `.stan` files — prefer toggling includes over duplicating
-  whole model files.
+### 2. Untracked Artifacts & Generated Files
+* **Do not hand-edit generated files**:
+  * `R/globals.R` and `man/*.Rd` are produced by `roxygen2::roxygenise()` (via `roxygen2` and `roxyglobals`) and are untracked (#53). Regenerate them with `just docs`.
+  * Pre-computed fitted data artifacts (`data/fit_sim*.rda`, `data/predict_sim*.rda`, `data/target_sim*.rda`) are untracked and generated via `just data-fit`.
+  * `R/flexstanr.R` is generated by `flexstanr::use_flexstanr()`.
+* **Exported Datasets**: Document datasets with the `@name <data>` / `@docType data` idiom in `R/imuGAP-package.R`.
 
-## The Stan backend is vendored from flexstanr
+### 3. Markdown Documentation
+* `roxygen2` markdown mode is enabled (`Roxygen: list(markdown = TRUE)`).
+* Prefer standard markdown syntax:
+  * Use backticks for code identifiers, arguments, and return types (e.g. `` `locations` ``, `` `data.table` ``).
+  * Use cross-reference markdown links (e.g. `[sampling()]`, `[flexstanr::stan_options()]`).
+  * Use markdown lists, bold text, and tables rather than raw `\code{}`, `\link{}`, or `\tabular{}` Rd tags.
 
-`R/import-standalone-backends.R` is **not edited here**. It is a standalone file
-vendored from [ACCIDDA/flexstanr](https://github.com/ACCIDDA/flexstanr) — the
-single source of truth for the portable backend layer shared across imuGAP,
-hestia, and SeverityEstimate (see #112). Its header says *"do not edit by
-hand."*
-
-- To change backend behavior, edit **flexstanr**, then re-sync here. The
-  preferred way is the justfile recipe:
-  ```sh
-  just update-standalones
-  ```
-  It re-runs `use_standalone` for each vendored source and restores `DESCRIPTION`
-  afterwards. The manual equivalent is:
+### 4. Roxygen Examples: Dual `@examplesIf` and `\donttest` Pattern
+For computationally heavy functions (such as `sampling()` or multi-draw `predict()`):
+* **Always combine `@examplesIf interactive()` with `\donttest{}`**:
   ```r
-  usethis::use_standalone("ACCIDDA/flexstanr", "backends")
+  #' @examplesIf interactive()
+  #' \donttest{
+  #' data("locations_sim")
+  #' data("observations_sim")
+  #' data("populations_sim")
+  #' st_opts <- stan_options(chains = 2, iter = 500)
+  #' sampling(
+  #'   observations_sim, populations_sim, locations_sim,
+  #'   stan_opts = st_opts
+  #' )
+  #' }
   ```
-  but note that call also rewrites `DESCRIPTION` — it strips version pins, e.g.
-  `rstan (>= 2.18.1)` → `rstan`
-  ([usethis#2198](https://github.com/r-lib/usethis/issues/2198)) — so you must
-  **revert that DESCRIPTION change** by hand; the re-sync should only touch
-  `R/import-standalone-backends.R`. The recipe does that revert for you.
-- The vendored header's `# repo: ACCIDDA/flexstanr` line parses as R, so
-  `commented_code_linter` is disabled globally in `.lintr` (rather than excluding
-  the file); the vendored file is otherwise linted like any other.
-- `use_standalone` is a one-shot copy, so the vendored file can fall behind
-  upstream. The **`backends-sync`** workflow (weekly) discovers every vendored
-  standalone file, reads each one's source from its `# Source:` header, compares
-  against upstream, and — if anything has drifted — opens a pull request with the
-  refreshed copies. Review and merge that PR to re-sync.
+* **Why both are necessary**:
+  * `pkgdown` runs `\donttest{}` blocks during site builds; `@examplesIf interactive()` evaluates to `FALSE` during non-interactive batch builds, keeping site build time fast (~35 seconds instead of >25 minutes).
+  * CRAN checks (`R CMD check --as-cran`) look for `\donttest{}` to skip lengthy runtime checks during package validation.
+  * Interactive user sessions (`example(sampling)`) execute normally.
 
-## Dependencies: cmdstanr, `Remotes`, and the pak gotcha
+### 5. Vignette Plot Styling & Dark Mode Compatibility
+To ensure plots remain clear and readable regardless of whether users view the pkgdown site in light or dark mode:
+* In vignette setup chunks, specify `knitr::opts_chunk$set(dev.args = list(bg = "white"))`.
+* Disable automatic plot theme inversion with `if (requireNamespace("thematic", quietly = TRUE)) thematic::thematic_off()`.
+* Configure `ggplot2::theme_set()` with solid white backgrounds (`plot.background`, `panel.background`, `legend.background`) and black text (`text`, `axis.text`, `axis.title`, `plot.title`).
 
-cmdstanr is an optional, non-CRAN `Suggests`. It is resolved in CI via
-**`Remotes: stan-dev/cmdstanr`** in `DESCRIPTION`: pak (used by `r-lib/actions`)
-reads `Remotes` but **not** `Additional_repositories`
-([r-lib/pak#424](https://github.com/r-lib/pak/issues/424)). The
-`Additional_repositories` entry is kept only for base `install.packages` and
-`R CMD check --as-cran`.
+---
 
-**Do not** add the stan-dev r-universe as a repository (e.g. an
-`extra-repositories` in a workflow): pak would then prefer its **dev** builds of
-the whole Stan stack (StanHeaders/rstan), which fail to compile against CRAN's
-RcppEigen and break every job. `Remotes` pins *only* cmdstanr and keeps the rest
-of the Stan stack on CRAN. (This one has bitten us — see #101.)
+## Error Messages and Signaling Standards
 
-## What Happens When You Open a PR
+All user-facing validation errors and warnings should follow these standards:
 
-Every pull request triggers two GitHub Actions workflows:
+### 1. Centralized Format String Constants
+* Define error and warning message format strings as constants at the top of each R file prefixed with `ERR_` or `MSG_`:
+  ```r
+  ERR_MUST_BE_INTEGER <- "`%s` column '%s' must contain integers"
+  ERR_CANNOT_HAVE_NA <- "`%s` column '%s' cannot contain NA values"
+  ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
+  ```
 
-| Workflow | What it does |
-|----------|-------------|
-| **R-CMD-check** | Runs `R CMD check --as-cran` on Ubuntu, macOS, and Windows across R release, oldrel, and devel (9 jobs total). R-devel jobs are allowed to fail without blocking the PR. Stan compilation artifacts are cached per OS and R version. |
-| **pkgdown** | Builds the documentation site. On PRs this is a build-only check (no deployment); the site is deployed to GitHub Pages on pushes to `main`, published releases, and manual workflow dispatches. |
+### 2. Signaling Functions: `stop_fmt_if` and `warn_fmt_if`
+* Use internal helpers `stop_fmt_if()` and `warn_fmt_if()` for validation assertions:
+  ```r
+  stop_fmt_if(
+    !all(as.integer(dt[, get(x)]) == dt[, get(x)]),
+    ERR_MUST_BE_INTEGER,
+    deparse(substitute(dt)),
+    x,
+    n = n + 1L
+  )
+  ```
+* Use the parameter `n` to adjust the call stack offset so the error is attributed to the user's top-level function call rather than internal helper functions.
 
-Both workflows should pass before a PR is merged.
+### 3. Typography: Backticks vs. Single Quotes
+Follow a strict convention when formatting error and warning strings:
+* **Backticks (`` `code` ``)**: Use for formal R code symbols, argument names, function names, expressions, and classes:
+  * `` `observations` must be a data.frame ``
+  * `` `df` must be a single positive integer ``
+  * `` `stan_opts` must be created by stan_options() ``
+* **Single Quotes (`'value'`)**: Use for user-supplied string values, column names, model names, or discrete inputs:
+  * `` column '%s' cannot contain NA values ``
+  * `` unknown model '%s' ``
+  * `` '%s' must be numeric ``
 
-## Questions?
+---
 
-If something is unclear, open an issue or comment on an existing one —
-we are happy to help.
+## Stan Backend and Dependencies
+
+* **`flexstanr`**: Portable Stan backend support is provided by the imported package `flexstanr (>= 0.2.0)`. The integration helper `R/flexstanr.R` is generated by `flexstanr::use_flexstanr()`.
+* **`cmdstanr`**: An optional, non-CRAN `Suggests`. It is resolved in CI via **`Remotes: stan-dev/cmdstanr`** in `DESCRIPTION`.
+* **Stan Stack Pinning**: **Do not** add the `stan-dev` r-universe as an extra repository in CI workflows: `pak` would then select dev builds of `StanHeaders`/`rstan`, which fail to compile against CRAN's `RcppEigen` (#101). `Remotes` pins *only* `cmdstanr` while keeping the remainder of the Stan stack on CRAN.
+
+---
+
+## Pull Request and CI Workflows
+
+Every pull request triggers four automated GitHub Actions workflows:
+
+1. **`R-CMD-check`**: Runs `R CMD check --as-cran` across Ubuntu, macOS, and Windows on R release, oldrel, and devel (9 jobs).
+2. **`lint`**: Verifies formatting with `air format . --check` and lint rules with `lintr::lint_package()`.
+3. **`test-coverage`**: Computes code coverage with `covr` and uploads results to Codecov.
+4. **`pkgdown`**: Builds the documentation site and confirms that all vignettes compile cleanly. Deployed to GitHub Pages upon push to `main` and published releases.
+
+All checks must pass before merging.

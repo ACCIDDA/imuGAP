@@ -11,6 +11,11 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  fig.retina = 2,
+  dpi = 300,
+  out.width = "100%",
   dev.args = list(bg = "white")
 )
 ```
@@ -163,7 +168,152 @@ See the `canonicalize_*` function documentation for more complete validation req
 
 ---
 
-## 2. Fitting the Model
+## 2. Exploring the Synthetic Dataset and Latent Features
+
+Before fitting the model, we can explore how the synthetic observations relate to the underlying latent parameters across all geographic levels in the simulation:
+
+1. **State Level (ChildVaxView, SchoolVaxView, TeenVaxView)**: Observations across cohorts spanning doses 1 and 2, plotted against the underlying lifetime propensity $\phi_{st}$.
+2. **County Level (6th Grade Surveys)**: Right-censored dose 2 coverage at age 11 across Scruggs, Simone, and Watson counties, reflecting county-specific random offsets.
+3. **School Level (Kindergarten Entry)**: Annual kindergarten entry coverage (dose 2 at age 5) across all 24 individual schools, showing school-level variation around county baselines.
+
+### State-Level Observations & Latent Propensity
+
+```{r synthetic-state-viz}
+data("latent_params_sim", package = "imuGAP")
+
+# Categorize state-level observation sources
+state_obs <- copy(observations_sim[loc_id == "State"])
+state_obs[, source := fcase(
+  dose == 1, paste0("ChildVaxView (Dose 1, Age ", age_min, ")"),
+  age_min == 5, "SchoolVaxView (Dose 2, Age 5)",
+  default = "TeenVaxView (Dose 2, Ages 14-18)"
+)]
+state_obs[, obs_prop := positive / sample_n]
+
+# True state propensity across cohorts
+latent_state <- data.table(
+  cohort_min = seq_along(latent_params_sim$phi_state),
+  phi = latent_params_sim$phi_state
+)
+
+ggplot() +
+  geom_line(
+    data = latent_state,
+    aes(x = cohort_min, y = phi, linetype = "True Lifetime Propensity (phi)"),
+    color = "black", linewidth = 0.9
+  ) +
+  geom_point(
+    data = state_obs,
+    aes(x = cohort_min, y = obs_prop, color = source, shape = source),
+    size = 2.2, alpha = 0.85
+  ) +
+  theme_bw() +
+  scale_y_continuous(limits = c(0.4, 1.0)) +
+  scale_linetype_manual(
+    name = NULL,
+    values = c("True Lifetime Propensity (phi)" = "dashed")
+  ) +
+  scale_color_brewer(name = "Data Source", palette = "Dark2") +
+  scale_shape_manual(name = "Data Source", values = c(16, 17, 15, 18)) +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.98, 0.02),
+    legend.justification.inside = c(1, 0)
+  ) +
+  labs(
+    x = "Birth Cohort Index",
+    y = "Vaccination Proportion"
+  )
+```
+
+### County-Level Observations & Offsets
+
+```{r synthetic-county-viz}
+county_obs <- copy(observations_sim[loc_id %in% c("Scruggs", "Simone", "Watson")])
+county_obs[, obs_prop := positive / sample_n]
+
+# Analytical county-level latent curves for 6th grade survey (age 11, dose 2, censored)
+county_latent <- rbindlist(lapply(names(latent_params_sim$off_cnty), function(cnty) {
+  cohorts <- seq_len(19)
+  c_idx <- match(cnty, names(latent_params_sim$off_cnty))
+  offset <- latent_params_sim$off_cnty[c_idx]
+  phi_shifted <- plogis(qlogis(latent_params_sim$phi_state[cohorts]) + offset)
+  cov_true <- phi_shifted * latent_params_sim$uptake[11, 2] * latent_params_sim$censor_reduction
+  data.table(loc_id = cnty, cohort_min = cohorts, latent_cov = cov_true)
+}))
+
+ggplot() +
+  geom_point(
+    data = county_obs,
+    aes(x = cohort_min, y = obs_prop),
+    color = "steelblue", size = 2, alpha = 0.85
+  ) +
+  geom_line(
+    data = county_latent,
+    aes(x = cohort_min, y = latent_cov, color = "True Latent Coverage"),
+    linetype = "dashed", linewidth = 0.9
+  ) +
+  facet_wrap(~loc_id) +
+  theme_bw() +
+  scale_y_continuous(limits = c(0.4, 1.0)) +
+  scale_color_manual(name = NULL, values = c("True Latent Coverage" = "firebrick")) +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.85, 0.15),
+    legend.justification.inside = c(1, 0)
+  ) +
+  labs(
+    x = "Birth Cohort Index",
+    y = "6th Grade Survey Coverage (Dose 2, Age 11)"
+  )
+```
+
+### School-Level Observations Across Counties
+
+```{r synthetic-school-viz}
+school_obs <- merge(
+  observations_sim[!loc_id %in% c("State", "Scruggs", "Simone", "Watson")],
+  locations_sim,
+  by = "loc_id"
+)
+school_obs[, obs_prop := positive / sample_n]
+
+# True county-level latent trajectories at kindergarten entry (age 5, dose 2)
+sch_cohorts <- 6:30
+county_sch_latent <- rbindlist(lapply(names(latent_params_sim$off_cnty), function(cnty) {
+  c_idx <- match(cnty, names(latent_params_sim$off_cnty))
+  offset <- latent_params_sim$off_cnty[c_idx]
+  phi_shifted <- plogis(qlogis(latent_params_sim$phi_state[sch_cohorts]) + offset)
+  cov_true <- phi_shifted * latent_params_sim$uptake[5, 2]
+  data.table(parent_id = cnty, cohort_min = sch_cohorts, latent_cov = cov_true)
+}))
+
+ggplot(school_obs) +
+  aes(x = cohort_min, y = obs_prop) +
+  geom_line(aes(group = loc_id), alpha = 0.2, color = "steelblue") +
+  geom_point(alpha = 0.3, size = 1.1, color = "steelblue") +
+  geom_line(
+    data = county_sch_latent,
+    aes(x = cohort_min, y = latent_cov, color = "True County Latent"),
+    linetype = "dashed", linewidth = 0.9
+  ) +
+  facet_wrap(~parent_id) +
+  theme_bw() +
+  scale_color_manual(name = NULL, values = c("True County Latent" = "firebrick")) +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.85, 0.15),
+    legend.justification.inside = c(1, 0)
+  ) +
+  labs(
+    x = "Birth Cohort Index",
+    y = "Kindergarten Entry Coverage (Dose 2, Age 5)"
+  )
+```
+
+---
+
+## 3. Fitting the Model
 
 Using the prepared input datasets, we can fit the Bayesian model using `sampling()`. The options for the sampler can be configured using `stan_options()`.
 
@@ -205,7 +355,7 @@ bayesplot::mcmc_trace(fit_sim$stanfit,
 
 ---
 
-## 3. Defining a Target for Predictions
+## 4. Defining a Target for Predictions
 
 To predict vaccine coverage for a target population (which can include locations or cohorts without direct observations, as long as they exist in the locations hierarchy), we first define a target grid using `create_target()`. Note that predictions can only be made for birth cohorts and locations that have at least some observations included in the estimation run. In other words, the model cannot predict coverage for future birth cohorts or unobserved locations. 
 
@@ -221,7 +371,7 @@ head(target_sim)
 
 ---
 
-## 4. Predicting Coverage
+## 5. Predicting Coverage
 
 Finally, we run `predict()` to generate predicted coverage probabilities for each target population combination. By default it uses every posterior draw; here we pass `posterior_size` to predict over a smaller sub-sample taken from the end of each chain.
 
@@ -248,15 +398,34 @@ head(summary_predict)
 Now let's visualize the results. First we will take a look at overall state coverage by cohort. Note that the lower coverage among 5 year olds is due to them only having been eligible for their second dose for one year.   
 
 ```{r state-viz}
-summary_predict |>
-  subset(loc_id == "State" & dose == 2 & age > 4) |>
-  ggplot() +
+data("latent_params_sim", package = "imuGAP")
+
+# Filter predictions for the State level, dose 2, and ages > 4
+state_predict <- summary_predict[loc_id == "State" & dose == 2 & age > 4]
+
+# Create the lookup index for the matching target populations to attach true latent values
+state_idx <- predict_sim$target[loc_id == "State" & dose == 2 & age > 4, which = TRUE]
+state_predict[, latent := latent_params_sim$coverage[state_idx]]
+
+ggplot(state_predict) +
   aes(x = age) +
-  geom_line(aes(y = q50)) +
-  geom_ribbon(aes(ymin = q2_5, ymax = q97_5), alpha = 0.5) +
+  geom_ribbon(aes(ymin = q2_5, ymax = q97_5, fill = "95% Credible Interval"), alpha = 0.25) +
+  geom_line(aes(y = q50, color = "Posterior Median"), linewidth = 0.8) +
+  geom_line(aes(y = latent, color = "True Latent"), linetype = "dashed", linewidth = 0.8) +
   theme_bw() +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  labs(x = "Age", y = "Coverage", title = "State-level two dose coverage")
+  scale_y_continuous(limits = c(0.85, 1.0)) +
+  scale_color_manual(
+    name = NULL,
+    values = c("Posterior Median" = "black", "True Latent" = "firebrick")
+  ) +
+  scale_fill_manual(name = NULL, values = c("95% Credible Interval" = "grey50")) +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.05, 0.05),
+    legend.justification.inside = c(0, 0)
+  ) +
+  labs(x = "Age", y = "State-Level Two-Dose Coverage")
 ```
 
 We can also look at the trend in coverage by age at the county level. Note that they follow the same trend as the state but with differing magnitude.

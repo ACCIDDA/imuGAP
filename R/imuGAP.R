@@ -31,9 +31,11 @@ ERR_EXTRACT_RSTAN_ONLY <- paste0(
 #' failure can be handled with `tryCatch()`. The check is backend-agnostic (see
 #' `backend_has_draws()`).
 #'
-#' @examples
+#' @examplesIf interactive()
 #' \donttest{
-#' data("locations_sim"); data("observations_sim"); data("populations_sim")
+#' data("locations_sim")
+#' data("observations_sim")
+#' data("populations_sim")
 #' st_opts <- stan_options(chains = 2, iter = 500)
 #' sampling(
 #'   observations_sim, populations_sim, locations_sim,

@@ -18,3 +18,8 @@
 ^\.bin$
 ^doc$
 ^Meta$
+^AGENTS\.md$
+^\.agents$
+^\.claude$
+^\.cursorrules$
+^\.cursor$
