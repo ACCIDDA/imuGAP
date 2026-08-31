@@ -12,3 +12,5 @@ src/*.cc
 src/*.cpp
 src/*.h
 R/stanmodels.R
+R/flexstanr.R
+

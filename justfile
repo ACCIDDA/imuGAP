@@ -58,6 +58,12 @@ coverage: bootstrap-namespace
 	#!/usr/bin/env Rscript
 	if (require(covr)) print(covr::package_coverage()) else stop("missing 'covr'")
 
+[doc('Check spelling across documentation and vignettes using spelling')]
+spell: bootstrap-namespace
+	#!/usr/bin/env Rscript
+	if (require(spelling)) spelling::spell_check_package() else stop("missing 'spelling'")
+
+
 [group('renv')]
 [doc('Install package dependencies using renv')]
 renv-install:

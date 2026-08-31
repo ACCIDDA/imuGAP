@@ -57,7 +57,7 @@ MSG_POSTERIOR_SUBSAMPLE_WARN <- paste0(
 #' @return An object of class `imugap_predict` wrapping the 3D array of predicted
 #'   draws and the canonical target dataset.
 #'
-#' @examples
+#' @examplesIf interactive()
 #' \donttest{
 #' # Load example fit object and target population
 #' data("fit_sim", package = "imuGAP")
