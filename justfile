@@ -142,3 +142,20 @@ render: bootstrap-namespace
 	  rmarkdown::render(f, output_format = "pdf_document", quiet = TRUE)
 	}
 
+[group('site')]
+[doc('Build the pkgdown documentation site into docs/')]
+site: bootstrap-namespace docs
+	#!/usr/bin/env Rscript
+	if (!requireNamespace("pkgdown", quietly = TRUE)) stop("missing 'pkgdown'")
+	pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+
+[group('site')]
+[doc('Preview the pkgdown documentation site on localhost using httpuv')]
+site-preview port="8000": site
+	#!/usr/bin/env Rscript
+	if (!requireNamespace("httpuv", quietly = TRUE)) stop("missing 'httpuv'")
+	port_num <- as.integer("{{ port }}")
+	message(sprintf("Serving pkgdown site at http://127.0.0.1:%d/ (Ctrl+C to stop)", port_num))
+	httpuv::runStaticServer(dir = "docs", host = "127.0.0.1", port = port_num, browse = TRUE)
+
+

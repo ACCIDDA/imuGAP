@@ -34,3 +34,25 @@ html[data-bs-theme="dark"] .accidda-footer-logo-dark { display: inline; }
   html:not([data-bs-theme="light"]) .accidda-footer-logo-light { display: none; }
   html:not([data-bs-theme="light"]) .accidda-footer-logo-dark { display: inline; }
 }
+
+/* Ensure plots in vignettes/articles remain clearly legible on dark mode */
+html[data-bs-theme="dark"] .figure img,
+html[data-bs-theme="dark"] .r-plot img,
+html[data-bs-theme="dark"] article img,
+html[data-bs-theme="dark"] main img:not(.accidda-footer-logo) {
+  background-color: #ffffff;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-bs-theme="light"]) .figure img,
+  html:not([data-bs-theme="light"]) .r-plot img,
+  html:not([data-bs-theme="light"]) article img,
+  html:not([data-bs-theme="light"]) main img:not(.accidda-footer-logo) {
+    background-color: #ffffff;
+    border-radius: 4px;
+    padding: 4px;
+  }
+}
+
