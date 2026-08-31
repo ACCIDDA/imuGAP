@@ -10,11 +10,16 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  dev.args = list(bg = "white")
 )
 ```
 
-```{r setup, echo = FALSE, message = FALSE, warning=FALSE}
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+if (requireNamespace("thematic", quietly = TRUE)) {
+  thematic::thematic_off()
+}
+
 # List all suggested packages needed for this vignette
 required_pkgs <- c(
   "imuGAP", "data.table", "bayesplot", "ggplot2",
@@ -33,6 +38,24 @@ if (!pkgs_available) {
   # sapply() returns (the setup block should render no output).
   chk <- suppressPackageStartupMessages(
     sapply(required_pkgs, require, character.only = TRUE)
+  )
+
+  # Always enforce white background and black text on plots
+  ggplot2::theme_set(
+    ggplot2::theme_bw() +
+      ggplot2::theme(
+        plot.background = ggplot2::element_rect(fill = "white", colour = NA),
+        panel.background = ggplot2::element_rect(fill = "white", colour = NA),
+        legend.background = ggplot2::element_rect(fill = "white", colour = NA),
+        legend.box.background = ggplot2::element_blank(),
+        text = ggplot2::element_text(colour = "black"),
+        axis.text = ggplot2::element_text(colour = "black"),
+        axis.title = ggplot2::element_text(colour = "black"),
+        plot.title = ggplot2::element_text(colour = "black"),
+        plot.subtitle = ggplot2::element_text(colour = "black"),
+        strip.text = ggplot2::element_text(colour = "black"),
+        strip.background = ggplot2::element_rect(fill = "grey90", colour = "grey20")
+      )
   )
 }
 ```
