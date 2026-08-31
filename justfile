@@ -149,8 +149,19 @@ render: bootstrap-namespace
 	}
 
 [group('site')]
-[doc('Build the pkgdown documentation site into docs/')]
+[doc('Fast build of pkgdown documentation site into docs/ (no package reinstallation)')]
 site: bootstrap-namespace docs
+	#!/usr/bin/env Rscript
+	if (!requireNamespace("pkgdown", quietly = TRUE)) stop("missing 'pkgdown'")
+	pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+
+[group('site')]
+[doc('Alias for just site (fast documentation build)')]
+site-quick: site
+
+[group('site')]
+[doc('Full build of pkgdown site with package reinstallation so vignettes see updated data/code')]
+site-full: bootstrap-namespace install docs
 	#!/usr/bin/env Rscript
 	if (!requireNamespace("pkgdown", quietly = TRUE)) stop("missing 'pkgdown'")
 	pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
@@ -163,5 +174,6 @@ site-preview port="8000": site
 	port_num <- as.integer("{{ port }}")
 	message(sprintf("Serving pkgdown site at http://127.0.0.1:%d/ (Ctrl+C to stop)", port_num))
 	httpuv::runStaticServer(dir = "docs", host = "127.0.0.1", port = port_num, browse = TRUE)
+
 
 

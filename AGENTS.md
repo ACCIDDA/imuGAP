@@ -47,7 +47,9 @@ This document provides concise instructions and rules for AI coding assistants w
   * Vignette plots must enforce a solid white background and black text (`dev.args = list(bg = "white")`, `thematic::thematic_off()`, and `ggplot2::theme_set(...)`).
 * **Test Coverage Expectations (`covr`)**:
   * All manually authored R files (`R/canonicalize.R`, `R/checkers.R`, `R/helpers.R`, `R/imuGAP.R`, `R/methods.R`, `R/options.R`) must maintain high test coverage (>90%, targeting 100%).
-  * `.covrignore` excludes generated files: `src/*.{cc,cpp,h}` (Stan C++ exports), `R/stanmodels.R` (Stan model loader), and `R/flexstanr.R` (backend shim).
+* **Package Reinstallation & Vignette Data**:
+  * Vignette chunks use `data(..., package = "imuGAP")`, which resolves datasets from the **installed package library** rather than the working directory.
+  * When troubleshooting vignette (and related `pkgdown` site) issues associated with rendering package example data, if the fix ends up being in the package data (`data-raw/DATASET.R` or `data-raw/fit_data.R`), you must reinstall the package (`just install` or `R CMD INSTALL .`) before re-rendering vignettes or rebuilding the site with updated data (or use `just site-full`).
 
 ---
 
@@ -56,15 +58,18 @@ This document provides concise instructions and rules for AI coding assistants w
 Use `just` recipes for development workflows:
 
 ```sh
-just format        # Format R code
+just format        # Format R code (air)
 just lint          # Lint R code (air + lintr)
 just docs          # Regenerate man/*.Rd, R/globals.R
+just install       # Install package into R library
 just test          # Run full test suite
 just test-fast     # Run test suite, stopping on first failure
 just coverage      # Check code coverage (covr)
 just spell         # Check spelling across docs and vignettes (spelling)
 just render        # Render HTML and PDF vignettes
-just site          # Build pkgdown site into docs/
+just site          # Fast build of pkgdown site into docs/ (no reinstall)
+just site-quick    # Alias for fast site build
+just site-full     # Full build of pkgdown site with package reinstall
 just site-preview  # Preview pkgdown site on localhost:8000
 just check-cran    # Run R CMD check --as-cran
 ```

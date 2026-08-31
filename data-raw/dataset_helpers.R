@@ -343,11 +343,11 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
   u_cvv_24 <- setup$u_cvv_24
   u_cvv_36 <- setup$u_cvv_36
 
-  vax_inc <- cov[3, 1] - cov[2, 1]
   p_24 <- pmin(pmax(phi_st * cov[2, 1] * other_vax_reduction, 0), 1)
-  at_24 <- qbinom(u_cvv_24, n_cvv, p_24)
+  p_36 <- pmin(pmax(phi_st * cov[3, 1] * other_vax_reduction, 0), 1)
+  p_36_cond <- pmin(pmax((p_36 - p_24) / (1 - p_24), 0), 1)
 
-  p_36_cond <- pmin(pmax(phi_st * vax_inc * other_vax_reduction, 0), 1)
+  at_24 <- qbinom(u_cvv_24, n_cvv, p_24)
   rem_n <- pmax(n_cvv - at_24, 0L)
   at_36 <- at_24 + qbinom(u_cvv_36, rem_n, p_36_cond)
 
