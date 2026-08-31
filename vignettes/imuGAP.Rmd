@@ -363,39 +363,140 @@ ggplot() +
 ### School-Level Observations Across Counties
 
 ```{r synthetic-school-viz}
+# Select representative schools at the 0, 0.25, 0.5, 0.75, and 1 quantiles of school offsets
+sch_info <- locations_sim[!loc_id %in% c("State", "Scruggs", "Simone", "Watson")]
+sch_info[, off := latent_params_sim$off_sch[loc_id]]
+
+probs <- c(0, 0.25, 0.5, 0.75, 1)
+labels <- c("0% (Min)", "25% (Q1)", "50% (Median)", "75% (Q3)", "100% (Max)")
+
+sel_schools <- sch_info[, {
+  q_vals <- quantile(off, probs = probs, type = 7)
+  chosen_idx <- sapply(q_vals, function(qv) which.min(abs(off - qv)))
+  .(
+    quantile_label = factor(labels, levels = labels),
+    loc_id = loc_id[chosen_idx],
+    off = off[chosen_idx]
+  )
+}, by = parent_id]
+
+# Filter school observations to the selected quantile schools
 school_obs <- merge(
-  observations_sim[!loc_id %in% c("State", "Scruggs", "Simone", "Watson")],
-  locations_sim,
-  by = "loc_id"
+  observations_sim,
+  sel_schools[, .(parent_id, loc_id, quantile_label)],
+  by = c("parent_id", "loc_id")
 )
 school_obs[, obs_prop := positive / sample_n]
 
-# True county-level latent trajectories at kindergarten entry (age 5, dose 2)
-sch_cohorts <- 6:30
-county_sch_latent <- rbindlist(lapply(names(latent_params_sim$off_cnty), function(cnty) {
-  c_idx <- match(cnty, names(latent_params_sim$off_cnty))
-  offset <- latent_params_sim$off_cnty[c_idx]
-  phi_shifted <- plogis(qlogis(latent_params_sim$phi_state[sch_cohorts]) + offset)
-  cov_true <- phi_shifted * latent_params_sim$uptake[5, 2]
-  data.table(parent_id = cnty, cohort_min = sch_cohorts, latent_cov = cov_true)
-}))
+sch_cohorts <- 1:28
 
-ggplot(school_obs) +
-  aes(x = cohort_min, y = obs_prop) +
-  geom_line(aes(group = loc_id), alpha = 0.2, color = "steelblue") +
-  geom_point(alpha = 0.3, size = 1.1, color = "steelblue") +
+# 1. State-level lifetime propensity reference
+state_sch_propensity <- rbindlist(lapply(
+  c("Scruggs", "Simone", "Watson"),
+  function(cnty) {
+    data.table(
+      parent_id = cnty,
+      cohort_min = sch_cohorts,
+      phi = latent_params_sim$phi_state[sch_cohorts]
+    )
+  }
+))
+
+# 2. County-level latent milestone trajectory (age 5, dose 2)
+county_sch_latent <- rbindlist(lapply(
+  names(latent_params_sim$off_cnty),
+  function(cnty) {
+    c_idx <- match(cnty, names(latent_params_sim$off_cnty))
+    offset <- latent_params_sim$off_cnty[c_idx]
+    phi_shifted <- plogis(
+      qlogis(latent_params_sim$phi_state[sch_cohorts]) + offset
+    )
+    cov_true <- phi_shifted * latent_params_sim$uptake[5, 2]
+    data.table(parent_id = cnty, cohort_min = sch_cohorts, latent_cov = cov_true)
+  }
+))
+
+# 3. School-level latent milestone trajectories for selected quantile schools
+school_sch_latent <- rbindlist(lapply(
+  seq_len(nrow(sel_schools)),
+  function(i) {
+    row <- sel_schools[i]
+    cnty <- row$parent_id
+    s_name <- row$loc_id
+    q_lab <- row$quantile_label
+    c_offset <- latent_params_sim$off_cnty[cnty]
+    s_offset <- latent_params_sim$off_sch[s_name]
+    phi_sch <- plogis(
+      qlogis(latent_params_sim$phi_state[sch_cohorts]) + c_offset + s_offset
+    )
+    cov_sch <- phi_sch * latent_params_sim$uptake[5, 2]
+    data.table(
+      parent_id = cnty,
+      loc_id = s_name,
+      quantile_label = q_lab,
+      cohort_min = sch_cohorts,
+      latent_cov = cov_sch
+    )
+  }
+))
+
+ggplot() +
+  # State lifetime propensity reference
+  geom_line(
+    data = state_sch_propensity,
+    aes(x = cohort_min, y = phi, linetype = "True State Lifetime Propensity (phi)"),
+    color = "gray40",
+    linewidth = 0.8,
+    alpha = 0.5
+  ) +
+  # County latent curve
   geom_line(
     data = county_sch_latent,
-    aes(x = cohort_min, y = latent_cov, color = "True County Latent"),
-    linetype = "dashed", linewidth = 0.9
+    aes(x = cohort_min, y = latent_cov, linetype = "True County Latent Coverage"),
+    color = "firebrick",
+    linewidth = 0.9
+  ) +
+  # School latent curves
+  geom_line(
+    data = school_sch_latent,
+    aes(x = cohort_min, y = latent_cov, color = quantile_label, group = loc_id),
+    linetype = "dashed",
+    linewidth = 0.7,
+    alpha = 0.8
+  ) +
+  # School observation points (faded)
+  geom_point(
+    data = school_obs,
+    aes(x = cohort_min, y = obs_prop, color = quantile_label),
+    size = 1.8,
+    alpha = 0.6
   ) +
   facet_wrap(~parent_id) +
   theme_bw() +
-  scale_color_manual(name = NULL, values = c("True County Latent" = "firebrick")) +
+  scale_x_continuous(
+    breaks = seq(0, 30, by = 5),
+    minor_breaks = seq(1, 30, by = 1)
+  ) +
+  scale_y_continuous(limits = c(0.4, 1.0)) +
+  scale_color_viridis_d(name = "School Quantile", option = "plasma", end = 0.9) +
+  scale_linetype_manual(
+    name = "Reference Curves",
+    values = c(
+      "True State Lifetime Propensity (phi)" = "dotted",
+      "True County Latent Coverage" = "solid"
+    )
+  ) +
+  guides(
+    color = guide_legend(reverse = TRUE, order = 1),
+    linetype = guide_legend(order = 2)
+  ) +
   theme(
     legend.position = "inside",
-    legend.position.inside = c(0.85, 0.15),
-    legend.justification.inside = c(1, 0)
+    legend.position.inside = c(0.02, 0.05),
+    legend.justification.inside = c(0, 0),
+    legend.background = element_rect(fill = alpha("white", 0.8), color = NA),
+    legend.box = "horizontal",
+    legend.spacing.x = unit(0.3, "cm")
   ) +
   labs(
     x = "Birth Cohort Index",
