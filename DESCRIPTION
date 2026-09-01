@@ -47,8 +47,9 @@ LinkingTo:
 SystemRequirements: GNU make
 Additional_repositories:
     https://stan-dev.r-universe.dev
+Config/Needs/check:
+    stan-dev/cmdstanr
 Suggests:
-    cmdstanr,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
@@ -63,8 +64,6 @@ Suggests:
     thematic
 VignetteBuilder: knitr
 Config/testthat/edition: 3
-Config/pak/dependencies:
-    stan-dev/cmdstanr
 URL: https://accidda.github.io/imuGAP/, https://github.com/ACCIDDA/imuGAP
 BugReports: https://github.com/ACCIDDA/imuGAP/issues
 LazyData: true
