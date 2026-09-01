@@ -194,185 +194,249 @@ used for input.
 # --- canonicalize_locations ---
 data("locations_sim")
 locations_sim
-#>                        loc_id parent_id
-#>                        <char>    <char>
-#>  1:                     State      <NA>
-#>  2:                   Scruggs     State
-#>  3:                    Simone     State
-#>  4:                    Watson     State
-#>  5:      Chickadee Elementary   Scruggs
-#>  6:          Nuthatch Academy   Scruggs
-#>  7:         Blue Heron School   Scruggs
-#>  8:     Flycatcher Elementary   Scruggs
-#>  9:  Bluebird Learning Center   Scruggs
-#> 10:           Catbird Academy   Scruggs
-#> 11:          Finch Elementary   Scruggs
-#> 12:            Sparrow School   Scruggs
-#> 13: Towhee Children's Academy   Scruggs
-#> 14:        Warbler Elementary   Scruggs
-#> 15:          Egret Elementary    Simone
-#> 16:          Cardinal Academy    Simone
-#> 17:            Bunting School    Simone
-#> 18:           Tanager Academy    Simone
-#> 19:      Oriole Youth Academy    Simone
-#> 20:  Grosbeak Learning Center    Simone
-#> 21:          Junco Elementary    Simone
-#> 22:         Meadowlark School    Watson
-#> 23:      Goldfinch Elementary    Watson
-#> 24:       Mockingbird Academy    Watson
-#> 25:   Kinglet Learning Center    Watson
-#> 26:              Vireo School    Watson
-#> 27:        Kingfisher Academy    Watson
-#> 28:      Cormorant Elementary    Watson
-#>                        loc_id parent_id
-#>                        <char>    <char>
+#>                        loc_id population parent_id
+#>                        <char>      <num>    <char>
+#>  1:                     State 2895.13333      <NA>
+#>  2:                   Scruggs 1527.70000     State
+#>  3:                    Simone  746.63333     State
+#>  4:                    Watson  620.80000     State
+#>  5:      Chickadee Elementary  147.83333   Scruggs
+#>  6:          Nuthatch Academy  368.53333   Scruggs
+#>  7:         Blue Heron School  115.43333   Scruggs
+#>  8:     Flycatcher Elementary   59.03333   Scruggs
+#>  9:  Bluebird Learning Center   49.63333   Scruggs
+#> 10:           Catbird Academy  423.40000   Scruggs
+#> 11:          Finch Elementary   32.36667   Scruggs
+#> 12:            Sparrow School   86.93333   Scruggs
+#> 13: Towhee Children's Academy  207.13333   Scruggs
+#> 14:        Warbler Elementary   37.40000   Scruggs
+#> 15:          Egret Elementary  165.43333    Simone
+#> 16:          Cardinal Academy   27.96667    Simone
+#> 17:            Bunting School   93.70000    Simone
+#> 18:           Tanager Academy   34.23333    Simone
+#> 19:      Oriole Youth Academy  166.23333    Simone
+#> 20:  Grosbeak Learning Center   27.73333    Simone
+#> 21:          Junco Elementary  231.33333    Simone
+#> 22:         Meadowlark School   52.66667    Watson
+#> 23:      Goldfinch Elementary  110.50000    Watson
+#> 24:       Mockingbird Academy   81.00000    Watson
+#> 25:   Kinglet Learning Center   87.76667    Watson
+#> 26:              Vireo School   58.23333    Watson
+#> 27:        Kingfisher Academy   58.43333    Watson
+#> 28:      Cormorant Elementary  172.20000    Watson
+#>                        loc_id population parent_id
+#>                        <char>      <num>    <char>
 canonicalize_locations(locations_sim)
 #> Key: <layer, parent_id, loc_id>
-#>                        loc_id parent_id layer loc_c_id loc_cp_id layer_bound
-#>                        <char>    <char> <int>    <int>     <int>       <int>
-#>  1:                     State      <NA>     1        1        NA           1
-#>  2:                   Scruggs     State     2        2         1           1
-#>  3:                    Simone     State     2        3         1           1
-#>  4:                    Watson     State     2        4         1           1
-#>  5:         Blue Heron School   Scruggs     3        5         2           1
-#>  6:  Bluebird Learning Center   Scruggs     3        6         2           1
-#>  7:           Catbird Academy   Scruggs     3        7         2           1
-#>  8:      Chickadee Elementary   Scruggs     3        8         2           1
-#>  9:          Finch Elementary   Scruggs     3        9         2           1
-#> 10:     Flycatcher Elementary   Scruggs     3       10         2           1
-#> 11:          Nuthatch Academy   Scruggs     3       11         2           1
-#> 12:            Sparrow School   Scruggs     3       12         2           1
-#> 13: Towhee Children's Academy   Scruggs     3       13         2           1
-#> 14:        Warbler Elementary   Scruggs     3       14         2           1
-#> 15:            Bunting School    Simone     3       15         3          11
-#> 16:          Cardinal Academy    Simone     3       16         3          11
-#> 17:          Egret Elementary    Simone     3       17         3          11
-#> 18:  Grosbeak Learning Center    Simone     3       18         3          11
-#> 19:          Junco Elementary    Simone     3       19         3          11
-#> 20:      Oriole Youth Academy    Simone     3       20         3          11
-#> 21:           Tanager Academy    Simone     3       21         3          11
-#> 22:      Cormorant Elementary    Watson     3       22         4          18
-#> 23:      Goldfinch Elementary    Watson     3       23         4          18
-#> 24:        Kingfisher Academy    Watson     3       24         4          18
-#> 25:   Kinglet Learning Center    Watson     3       25         4          18
-#> 26:         Meadowlark School    Watson     3       26         4          18
-#> 27:       Mockingbird Academy    Watson     3       27         4          18
-#> 28:              Vireo School    Watson     3       28         4          18
-#>                        loc_id parent_id layer loc_c_id loc_cp_id layer_bound
-#>                        <char>    <char> <int>    <int>     <int>       <int>
+#>                        loc_id population parent_id layer loc_c_id loc_cp_id
+#>                        <char>      <num>    <char> <int>    <int>     <int>
+#>  1:                     State 2895.13333      <NA>     1        1        NA
+#>  2:                   Scruggs 1527.70000     State     2        2         1
+#>  3:                    Simone  746.63333     State     2        3         1
+#>  4:                    Watson  620.80000     State     2        4         1
+#>  5:         Blue Heron School  115.43333   Scruggs     3        5         2
+#>  6:  Bluebird Learning Center   49.63333   Scruggs     3        6         2
+#>  7:           Catbird Academy  423.40000   Scruggs     3        7         2
+#>  8:      Chickadee Elementary  147.83333   Scruggs     3        8         2
+#>  9:          Finch Elementary   32.36667   Scruggs     3        9         2
+#> 10:     Flycatcher Elementary   59.03333   Scruggs     3       10         2
+#> 11:          Nuthatch Academy  368.53333   Scruggs     3       11         2
+#> 12:            Sparrow School   86.93333   Scruggs     3       12         2
+#> 13: Towhee Children's Academy  207.13333   Scruggs     3       13         2
+#> 14:        Warbler Elementary   37.40000   Scruggs     3       14         2
+#> 15:            Bunting School   93.70000    Simone     3       15         3
+#> 16:          Cardinal Academy   27.96667    Simone     3       16         3
+#> 17:          Egret Elementary  165.43333    Simone     3       17         3
+#> 18:  Grosbeak Learning Center   27.73333    Simone     3       18         3
+#> 19:          Junco Elementary  231.33333    Simone     3       19         3
+#> 20:      Oriole Youth Academy  166.23333    Simone     3       20         3
+#> 21:           Tanager Academy   34.23333    Simone     3       21         3
+#> 22:      Cormorant Elementary  172.20000    Watson     3       22         4
+#> 23:      Goldfinch Elementary  110.50000    Watson     3       23         4
+#> 24:        Kingfisher Academy   58.43333    Watson     3       24         4
+#> 25:   Kinglet Learning Center   87.76667    Watson     3       25         4
+#> 26:         Meadowlark School   52.66667    Watson     3       26         4
+#> 27:       Mockingbird Academy   81.00000    Watson     3       27         4
+#> 28:              Vireo School   58.23333    Watson     3       28         4
+#>                        loc_id population parent_id layer loc_c_id loc_cp_id
+#>                        <char>      <num>    <char> <int>    <int>     <int>
+#>     layer_bound
+#>           <int>
+#>  1:           1
+#>  2:           1
+#>  3:           1
+#>  4:           1
+#>  5:           1
+#>  6:           1
+#>  7:           1
+#>  8:           1
+#>  9:           1
+#> 10:           1
+#> 11:           1
+#> 12:           1
+#> 13:           1
+#> 14:           1
+#> 15:          11
+#> 16:          11
+#> 17:          11
+#> 18:          11
+#> 19:          11
+#> 20:          11
+#> 21:          11
+#> 22:          18
+#> 23:          18
+#> 24:          18
+#> 25:          18
+#> 26:          18
+#> 27:          18
+#> 28:          18
+#>     layer_bound
+#>           <int>
 # can also be provided in non-canonical order, and with an implicit root
 weird_locations <- subset(locations_sim, !is.na(parent_id))[
   sample(nrow(locations_sim) - 1L)
 ]
 canonicalize_locations(weird_locations)
 #> Key: <layer, parent_id, loc_id>
-#>                        loc_id parent_id layer loc_c_id loc_cp_id layer_bound
-#>                        <char>    <char> <int>    <int>     <int>       <int>
-#>  1:                     State      <NA>     1        1        NA           1
-#>  2:                   Scruggs     State     2        2         1           1
-#>  3:                    Simone     State     2        3         1           1
-#>  4:                    Watson     State     2        4         1           1
-#>  5:         Blue Heron School   Scruggs     3        5         2           1
-#>  6:  Bluebird Learning Center   Scruggs     3        6         2           1
-#>  7:           Catbird Academy   Scruggs     3        7         2           1
-#>  8:      Chickadee Elementary   Scruggs     3        8         2           1
-#>  9:          Finch Elementary   Scruggs     3        9         2           1
-#> 10:     Flycatcher Elementary   Scruggs     3       10         2           1
-#> 11:          Nuthatch Academy   Scruggs     3       11         2           1
-#> 12:            Sparrow School   Scruggs     3       12         2           1
-#> 13: Towhee Children's Academy   Scruggs     3       13         2           1
-#> 14:        Warbler Elementary   Scruggs     3       14         2           1
-#> 15:            Bunting School    Simone     3       15         3          11
-#> 16:          Cardinal Academy    Simone     3       16         3          11
-#> 17:          Egret Elementary    Simone     3       17         3          11
-#> 18:  Grosbeak Learning Center    Simone     3       18         3          11
-#> 19:          Junco Elementary    Simone     3       19         3          11
-#> 20:      Oriole Youth Academy    Simone     3       20         3          11
-#> 21:           Tanager Academy    Simone     3       21         3          11
-#> 22:      Cormorant Elementary    Watson     3       22         4          18
-#> 23:      Goldfinch Elementary    Watson     3       23         4          18
-#> 24:        Kingfisher Academy    Watson     3       24         4          18
-#> 25:   Kinglet Learning Center    Watson     3       25         4          18
-#> 26:         Meadowlark School    Watson     3       26         4          18
-#> 27:       Mockingbird Academy    Watson     3       27         4          18
-#> 28:              Vireo School    Watson     3       28         4          18
-#>                        loc_id parent_id layer loc_c_id loc_cp_id layer_bound
-#>                        <char>    <char> <int>    <int>     <int>       <int>
+#>                        loc_id population parent_id layer loc_c_id loc_cp_id
+#>                        <char>      <num>    <char> <int>    <int>     <int>
+#>  1:                     State 2895.13333      <NA>     1        1        NA
+#>  2:                   Scruggs 1527.70000     State     2        2         1
+#>  3:                    Simone  746.63333     State     2        3         1
+#>  4:                    Watson  620.80000     State     2        4         1
+#>  5:         Blue Heron School  115.43333   Scruggs     3        5         2
+#>  6:  Bluebird Learning Center   49.63333   Scruggs     3        6         2
+#>  7:           Catbird Academy  423.40000   Scruggs     3        7         2
+#>  8:      Chickadee Elementary  147.83333   Scruggs     3        8         2
+#>  9:          Finch Elementary   32.36667   Scruggs     3        9         2
+#> 10:     Flycatcher Elementary   59.03333   Scruggs     3       10         2
+#> 11:          Nuthatch Academy  368.53333   Scruggs     3       11         2
+#> 12:            Sparrow School   86.93333   Scruggs     3       12         2
+#> 13: Towhee Children's Academy  207.13333   Scruggs     3       13         2
+#> 14:        Warbler Elementary   37.40000   Scruggs     3       14         2
+#> 15:            Bunting School   93.70000    Simone     3       15         3
+#> 16:          Cardinal Academy   27.96667    Simone     3       16         3
+#> 17:          Egret Elementary  165.43333    Simone     3       17         3
+#> 18:  Grosbeak Learning Center   27.73333    Simone     3       18         3
+#> 19:          Junco Elementary  231.33333    Simone     3       19         3
+#> 20:      Oriole Youth Academy  166.23333    Simone     3       20         3
+#> 21:           Tanager Academy   34.23333    Simone     3       21         3
+#> 22:      Cormorant Elementary  172.20000    Watson     3       22         4
+#> 23:      Goldfinch Elementary  110.50000    Watson     3       23         4
+#> 24:        Kingfisher Academy   58.43333    Watson     3       24         4
+#> 25:   Kinglet Learning Center   87.76667    Watson     3       25         4
+#> 26:         Meadowlark School   52.66667    Watson     3       26         4
+#> 27:       Mockingbird Academy   81.00000    Watson     3       27         4
+#> 28:              Vireo School   58.23333    Watson     3       28         4
+#>                        loc_id population parent_id layer loc_c_id loc_cp_id
+#>                        <char>      <num>    <char> <int>    <int>     <int>
+#>     layer_bound
+#>           <int>
+#>  1:           1
+#>  2:           1
+#>  3:           1
+#>  4:           1
+#>  5:           1
+#>  6:           1
+#>  7:           1
+#>  8:           1
+#>  9:           1
+#> 10:           1
+#> 11:           1
+#> 12:           1
+#> 13:           1
+#> 14:           1
+#> 15:          11
+#> 16:          11
+#> 17:          11
+#> 18:          11
+#> 19:          11
+#> 20:          11
+#> 21:          11
+#> 22:          18
+#> 23:          18
+#> 24:          18
+#> 25:          18
+#> 26:          18
+#> 27:          18
+#> 28:          18
+#>     layer_bound
+#>           <int>
 # --- canonicalize_observations ---
 data("observations_sim")
 observations_sim
-#>       year parent_id               loc_id positive sample_n age_min  dose
-#>      <num>    <char>               <char>    <num>    <num>   <num> <int>
-#>   1:  2001   Scruggs Chickadee Elementary       42       52       5     2
-#>   2:  2002   Scruggs Chickadee Elementary       41       51       5     2
-#>   3:  2003   Scruggs Chickadee Elementary       46       50       5     2
-#>   4:  2004   Scruggs Chickadee Elementary       41       48       5     2
-#>   5:  2005   Scruggs Chickadee Elementary       44       53       5     2
-#>  ---                                                                     
-#> 751:  2021     State               Watson      203      232      11     2
-#> 752:  2022     State               Watson      163      180      11     2
-#> 753:  2023     State               Watson      170      189      11     2
-#> 754:  2024     State               Watson      210      236      11     2
-#> 755:  2025     State               Watson      153      164      11     2
-#>      censored age_max cohort_min obs_id
-#>         <num>   <int>      <num>  <int>
-#>   1:       NA      NA          4      1
-#>   2:       NA      NA          5      2
-#>   3:       NA      NA          6      3
-#>   4:       NA      NA          7      4
-#>   5:       NA      NA          8      5
+#>      cohort parent_id               loc_id positive sample_n age_min  dose
+#>       <int>    <char>               <char>    <num>    <num>   <int> <int>
+#>   1:      1   Scruggs Chickadee Elementary      111      155       5     2
+#>   2:      2   Scruggs Chickadee Elementary       99      152       5     2
+#>   3:      3   Scruggs Chickadee Elementary      110      156       5     2
+#>   4:      4   Scruggs Chickadee Elementary      104      155       5     2
+#>   5:      5   Scruggs Chickadee Elementary      123      155       5     2
+#>  ---                                                                      
+#> 837:     18     State               Watson      160      184      11     2
+#> 838:     19     State               Watson      195      220      11     2
+#> 839:     20     State               Watson      142      174      11     2
+#> 840:     21     State               Watson      207      228      11     2
+#> 841:     22     State               Watson      171      201      11     2
+#>      censored age_max obs_id cohort_min
+#>         <num>   <int>  <int>      <int>
+#>   1:       NA      NA      1          1
+#>   2:       NA      NA      2          2
+#>   3:       NA      NA      3          3
+#>   4:       NA      NA      4          4
+#>   5:       NA      NA      5          5
 #>  ---                                   
-#> 751:        1      NA         18    751
-#> 752:        1      NA         19    752
-#> 753:        1      NA         20    753
-#> 754:        1      NA         21    754
-#> 755:        1      NA         22    755
+#> 837:        1      NA    837         18
+#> 838:        1      NA    838         19
+#> 839:        1      NA    839         20
+#> 840:        1      NA    840         21
+#> 841:        1      NA    841         22
 canonicalize_observations(observations_sim)
 #> Key: <censored, obs_id>
 #>      obs_c_id positive sample_n censored obs_id
 #>         <int>    <int>    <int>    <num>  <int>
-#>   1:        1       42       52       NA      1
-#>   2:        2       41       51       NA      2
-#>   3:        3       46       50       NA      3
-#>   4:        4       41       48       NA      4
-#>   5:        5       44       53       NA      5
+#>   1:        1      111      155       NA      1
+#>   2:        2       99      152       NA      2
+#>   3:        3      110      156       NA      3
+#>   4:        4      104      155       NA      4
+#>   5:        5      123      155       NA      5
 #>  ---                                           
-#> 751:      751      203      232        1    751
-#> 752:      752      163      180        1    752
-#> 753:      753      170      189        1    753
-#> 754:      754      210      236        1    754
-#> 755:      755      153      164        1    755
+#> 837:      837      160      184        1    837
+#> 838:      838      195      220        1    838
+#> 839:      839      142      174        1    839
+#> 840:      840      207      228        1    840
+#> 841:      841      171      201        1    841
 # --- canonicalize_populations ---
 data("populations_sim"); data("locations_sim"); data("observations_sim")
 populations_sim
 #>      obs_id               loc_id cohort   age  dose weight
 #>       <int>               <char>  <int> <int> <int>  <num>
-#>   1:      1 Chickadee Elementary      4     5     2      1
-#>   2:      2 Chickadee Elementary      5     5     2      1
-#>   3:      3 Chickadee Elementary      6     5     2      1
-#>   4:      4 Chickadee Elementary      7     5     2      1
-#>   5:      5 Chickadee Elementary      8     5     2      1
+#>   1:      1 Chickadee Elementary      1     5     2      1
+#>   2:      2 Chickadee Elementary      2     5     2      1
+#>   3:      3 Chickadee Elementary      3     5     2      1
+#>   4:      4 Chickadee Elementary      4     5     2      1
+#>   5:      5 Chickadee Elementary      5     5     2      1
 #>  ---                                                      
-#> 803:    751               Watson     18    11     2      1
-#> 804:    752               Watson     19    11     2      1
-#> 805:    753               Watson     20    11     2      1
-#> 806:    754               Watson     21    11     2      1
-#> 807:    755               Watson     22    11     2      1
+#> 897:    837               Watson     18    11     2      1
+#> 898:    838               Watson     19    11     2      1
+#> 899:    839               Watson     20    11     2      1
+#> 900:    840               Watson     21    11     2      1
+#> 901:    841               Watson     22    11     2      1
 canonicalize_populations(populations_sim, observations_sim, locations_sim)
 #> Key: <obs_c_id, loc_c_id, cohort, age, dose>
 #>      obs_id               loc_id cohort   age  dose weight obs_c_id loc_c_id
 #>       <int>               <char>  <int> <int> <int>  <num>    <int>    <int>
-#>   1:      1 Chickadee Elementary      4     5     2      1        1        8
-#>   2:      2 Chickadee Elementary      5     5     2      1        2        8
-#>   3:      3 Chickadee Elementary      6     5     2      1        3        8
-#>   4:      4 Chickadee Elementary      7     5     2      1        4        8
-#>   5:      5 Chickadee Elementary      8     5     2      1        5        8
+#>   1:      1 Chickadee Elementary      1     5     2      1        1        8
+#>   2:      2 Chickadee Elementary      2     5     2      1        2        8
+#>   3:      3 Chickadee Elementary      3     5     2      1        3        8
+#>   4:      4 Chickadee Elementary      4     5     2      1        4        8
+#>   5:      5 Chickadee Elementary      5     5     2      1        5        8
 #>  ---                                                                        
-#> 803:    751               Watson     18    11     2      1      751        4
-#> 804:    752               Watson     19    11     2      1      752        4
-#> 805:    753               Watson     20    11     2      1      753        4
-#> 806:    754               Watson     21    11     2      1      754        4
-#> 807:    755               Watson     22    11     2      1      755        4
+#> 897:    837               Watson     18    11     2      1      837        4
+#> 898:    838               Watson     19    11     2      1      838        4
+#> 899:    839               Watson     20    11     2      1      839        4
+#> 900:    840               Watson     21    11     2      1      840        4
+#> 901:    841               Watson     22    11     2      1      841        4
 #>      range_start
 #>            <int>
 #>   1:           1
@@ -381,9 +445,9 @@ canonicalize_populations(populations_sim, observations_sim, locations_sim)
 #>   4:           4
 #>   5:           5
 #>  ---            
-#> 803:         803
-#> 804:         804
-#> 805:         805
-#> 806:         806
-#> 807:         807
+#> 897:         897
+#> 898:         898
+#> 899:         899
+#> 900:         900
+#> 901:         901
 ```

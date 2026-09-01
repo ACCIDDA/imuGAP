@@ -44,94 +44,255 @@
 
 <div id="contributing-to-imugap" class="section level1">
 
-<p>Thank you for your interest in contributing to imuGAP! This document explains how to report issues, propose changes, and what to expect from the CI pipeline when you open a pull request.</p>
-<div class="section level2">
+<p>Thank you for your interest in contributing to imuGAP! This document explains how to develop, test, and propose changes to the package, as well as the coding conventions, error handling standards, and CI pipelines enforced across the repository.</p>
+<hr><div class="section level2">
 <h2 id="code-of-conduct">Code of Conduct<a class="anchor" aria-label="anchor" href="#code-of-conduct"></a></h2>
 <p>All contributors are expected to be respectful and professional in all interactions — issues, pull requests, code reviews, and discussions. Constructive feedback is welcome; personal attacks and dismissive language are not.</p>
-</div>
+<hr></div>
 <div class="section level2">
-<h2 id="reporting-bugs">Reporting Bugs<a class="anchor" aria-label="anchor" href="#reporting-bugs"></a></h2>
-<p>Use the <a href="https://github.com/ACCIDDA/imuGAP/issues/new?template=bug_report.yml" class="external-link">bug report template</a> when opening a new issue. It asks for a description, a minimal reprex, your <code><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo()</a></code> output, and your operating system.</p>
-</div>
-<div class="section level2">
-<h2 id="suggesting-features">Suggesting Features<a class="anchor" aria-label="anchor" href="#suggesting-features"></a></h2>
-<p>Use the <a href="https://github.com/ACCIDDA/imuGAP/issues/new?template=feature_request.yml" class="external-link">feature request template</a>. Describe the use case and, if possible, how the feature fits into the existing model workflow (<code><a href="reference/imuGAP-package.html">imuGAP()</a></code> -&gt; Stan sampling -&gt; post-processing). You can also open a blank issue if neither template fits.</p>
-</div>
-<div class="section level2">
-<h2 id="submitting-changes">Submitting Changes<a class="anchor" aria-label="anchor" href="#submitting-changes"></a></h2>
-<ol style="list-style-type: decimal"><li>
-<strong>Fork &amp; branch.</strong> Create a feature branch off <code>main</code> (e.g. <code>fix/obs-population-check</code> or <code>feature/predict-mode</code>).</li>
-<li>
-<strong>Make your changes.</strong> Follow the style conventions below.</li>
-<li>
-<strong>Test locally.</strong> Run <code>R CMD check</code> and the test suite before pushing (see the commands below).</li>
-<li>
-<strong>Open a pull request</strong> against <code>main</code> with a clear description of what changed and why.</li>
-</ol><div class="section level3">
-<h3 id="local-development-commands">Local Development Commands<a class="anchor" aria-label="anchor" href="#local-development-commands"></a></h3>
-<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Full rebuild + install (required after editing any .stan file)</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">R</span> CMD INSTALL <span class="at">--preclean</span> .</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co"># Regenerate documentation from roxygen comments. This writes man/*.Rd,</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co"># NAMESPACE, and R/globals.R -- all roxygen2/roxyglobals output, none tracked in</span></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co"># git (#53, #115). CI regenerates them on every build, so never hand-edit them.</span></span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'devtools::document()'</span></span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co"># Regenerate the fitted data artifacts (NOT tracked in git, like man/*.Rd).</span></span>
-<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co"># fit_sim/target_sim/predict_sim/latent_params_sim must exist before `R CMD</span></span>
-<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co"># build`/`check`, the vignette, or the examples will run. Needs a Stan toolchain.</span></span>
-<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="ex">just</span> data-fit   <span class="co"># or: Rscript data-raw/fit_data.R</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co"># Run the test suite</span></span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'devtools::test()'</span></span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="co"># Lint the package (config in .lintr)</span></span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'lintr::lint_package()'</span></span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="co"># Build and check</span></span>
-<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="ex">R</span> CMD build . <span class="kw">&amp;&amp;</span> <span class="ex">R</span> CMD check imuGAP_<span class="pp">*</span>.tar.gz</span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="style">Style<a class="anchor" aria-label="anchor" href="#style"></a></h3>
-<ul><li>R code is linted with <code>lintr</code> (configuration in <code>.lintr</code>). <code>R/stanmodels.R</code> and <code>inst/analysis/</code> are excluded from linting because they are generated or standalone scripts, respectively.</li>
-<li>Do not hand-edit generated files: <code>R/stanmodels.R</code>, <code>src/stanExports_*.{cc,h}</code>, <code>configure</code>, and <code>configure.win</code> are all produced by <code><a href="https://mc-stan.org/rstantools/reference/rstan_config.html" class="external-link">rstantools::rstan_config()</a></code>; <code>NAMESPACE</code>, <code>R/globals.R</code>, and <code>man/*.Rd</code> are produced by <code><a href="https://roxygen2.r-lib.org/reference/roxygenize.html" class="external-link">roxygen2::roxygenise()</a></code> (via roxygen tags and the roxyglobals roclet) and are untracked – regenerate with <code>devtools::document()</code>.</li>
-<li>Because <code>NAMESPACE</code> is untracked but is needed to install/load the package, CI regenerates it from source (<code>roxygen2::roxygenise(roclets = "namespace", load_code = "source")</code>) in a “Bootstrap NAMESPACE” step before the package is installed (#115). Source-mode roxygen cannot evaluate package objects, so <strong>document exported datasets with the <code>@name</code> / <code>@docType data</code> idiom, not the bare-string form</strong> (<code>#' "my_data"</code>): the string form makes roxygen <code><a href="https://rdrr.io/r/base/get.html" class="external-link">get()</a></code> the object, which fails in source mode and breaks the bootstrap. See the data blocks in <code>R/imuGAP-package.R</code> for the pattern.</li>
-<li>Stan model variants are composed via <code>#include</code> toggling in the top-level <code>.stan</code> files — prefer toggling includes over duplicating whole model files.</li>
-</ul></div>
-</div>
-<div class="section level2">
-<h2 id="the-stan-backend-is-vendored-from-flexstanr">The Stan backend is vendored from flexstanr<a class="anchor" aria-label="anchor" href="#the-stan-backend-is-vendored-from-flexstanr"></a></h2>
-<p><code>R/import-standalone-backends.R</code> is <strong>not edited here</strong>. It is a standalone file vendored from <a href="https://github.com/ACCIDDA/flexstanr" class="external-link">ACCIDDA/flexstanr</a> — the single source of truth for the portable backend layer shared across imuGAP, hestia, and SeverityEstimate (see #112). Its header says <em>“do not edit by hand.”</em></p>
+<h2 id="reporting-bugs-and-feature-requests">Reporting Bugs and Feature Requests<a class="anchor" aria-label="anchor" href="#reporting-bugs-and-feature-requests"></a></h2>
 <ul><li>
-<p>To change backend behavior, edit <strong>flexstanr</strong>, then re-sync here. The preferred way is the justfile recipe:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">just</span> update-standalones</span></code></pre></div>
-<p>It re-runs <code>use_standalone</code> for each vendored source and restores <code>DESCRIPTION</code> afterwards. The manual equivalent is:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">usethis</span><span class="fu">::</span><span class="fu">use_standalone</span><span class="op">(</span><span class="st">"ACCIDDA/flexstanr"</span>, <span class="st">"backends"</span><span class="op">)</span></span></code></pre></div>
-<p>but note that call also rewrites <code>DESCRIPTION</code> — it strips version pins, e.g. <code>rstan (&gt;= 2.18.1)</code> → <code>rstan</code> (<a href="https://github.com/r-lib/usethis/issues/2198" class="external-link">usethis#2198</a>) — so you must <strong>revert that DESCRIPTION change</strong> by hand; the re-sync should only touch <code>R/import-standalone-backends.R</code>. The recipe does that revert for you.</p>
-</li>
-<li><p>The vendored header’s <code># repo: ACCIDDA/flexstanr</code> line parses as R, so <code>commented_code_linter</code> is disabled globally in <code>.lintr</code> (rather than excluding the file); the vendored file is otherwise linted like any other.</p></li>
-<li><p><code>use_standalone</code> is a one-shot copy, so the vendored file can fall behind upstream. The <strong><code>backends-sync</code></strong> workflow (weekly) discovers every vendored standalone file, reads each one’s source from its <code># Source:</code> header, compares against upstream, and — if anything has drifted — opens a pull request with the refreshed copies. Review and merge that PR to re-sync.</p></li>
+<strong>Bugs</strong>: Use the <a href="https://github.com/ACCIDDA/imuGAP/issues/new?template=bug_report.yml" class="external-link">bug report template</a>. Provide a minimal reproducible example (reprex), session info, and operating system.</li>
+<li>
+<strong>Features</strong>: Use the <a href="https://github.com/ACCIDDA/imuGAP/issues/new?template=feature_request.yml" class="external-link">feature request template</a>. Explain the use case and how it connects to the <code>imuGAP</code> workflow (<code>canonicalize</code> -&gt; Stan sampling -&gt; prediction/summary).</li>
+</ul><hr></div>
+<div class="section level2">
+<h2 id="development-workflow--just-recipes">Development Workflow &amp; <code>just</code> Recipes<a class="anchor" aria-label="anchor" href="#development-workflow--just-recipes"></a></h2>
+<p>We use <a href="https://github.com/casey/just" class="external-link"><code>just</code></a> to automate development tasks. All recipes handle namespace and environment configuration automatically:</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Recipe</th>
+<th>Description</th>
+<th>Equivalent Base Command</th>
+</tr></thead><tbody><tr><td><code>just</code></td>
+<td>Run full validation pipeline: clean, format, lint, docs, test</td>
+<td><em>(compound command)</em></td>
+</tr><tr><td><code>just format</code></td>
+<td>Format R code using <code>air</code>
+</td>
+<td><code>air format .</code></td>
+</tr><tr><td><code>just lint</code></td>
+<td>Lint R code using <code>air</code> and <code>lintr</code>
+</td>
+<td><code>air format . --check &amp;&amp; Rscript -e "lintr::lint_package()"</code></td>
+</tr><tr><td><code>just docs</code></td>
+<td>Regenerate roxygen documentation (<code>man/</code>, <code>R/globals.R</code>)</td>
+<td><code>Rscript -e "roxygen2::roxygenize()"</code></td>
+</tr><tr><td><code>just install</code></td>
+<td>Install package into local R library</td>
+<td><code>R CMD INSTALL .</code></td>
+</tr><tr><td><code>just test</code></td>
+<td>Run complete unit test suite via <code>testthat</code> / <code>devtools</code>
+</td>
+<td><code>Rscript -e "devtools::test()"</code></td>
+</tr><tr><td><code>just test-fast</code></td>
+<td>Run tests, stopping on first failure</td>
+<td><code>Rscript -e "devtools::test(stop_on_failure = TRUE)"</code></td>
+</tr><tr><td><code>just coverage</code></td>
+<td>Measure test coverage via <code>covr</code>
+</td>
+<td><code>Rscript -e "covr::package_coverage()"</code></td>
+</tr><tr><td><code>just spell</code></td>
+<td>Check spelling across docs and vignettes via <code>spelling</code>
+</td>
+<td><code>Rscript -e "spelling::spell_check_package()"</code></td>
+</tr><tr><td><code>just render</code></td>
+<td>Render all vignettes to HTML and PDF</td>
+<td><code>Rscript -e "rmarkdown::render(...)"</code></td>
+</tr><tr><td>
+<code>just site</code> / <code>just site-quick</code>
+</td>
+<td>Fast build of <code>pkgdown</code> documentation site (no package reinstall)</td>
+<td><code>Rscript -e "pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)"</code></td>
+</tr><tr><td><code>just site-full</code></td>
+<td>Full build of <code>pkgdown</code> site with package reinstallation (for updated data)</td>
+<td><em>(compound: install + site)</em></td>
+</tr><tr><td><code>just site-preview [port=8000]</code></td>
+<td>Build and preview pkgdown documentation site on localhost</td>
+<td><code>Rscript -e "httpuv::runStaticServer(dir = 'docs', port = 8000)"</code></td>
+</tr><tr><td><code>just data-inputs</code></td>
+<td>Regenerate <code>*_sim</code> input datasets from raw simulation</td>
+<td><code>Rscript data-raw/DATASET.R</code></td>
+</tr><tr><td><code>just data-fit</code></td>
+<td>Regenerate pre-computed Stan fits (<code>fit_sim</code>, <code>target_sim</code>, etc.)</td>
+<td><code>Rscript data-raw/fit_data.R</code></td>
+</tr><tr><td><code>just data</code></td>
+<td>Regenerate all package data (<code>data-inputs</code> + <code>data-fit</code>)</td>
+<td><em>(compound command)</em></td>
+</tr><tr><td><code>just build</code></td>
+<td>Build package <code>.tar.gz</code> archive</td>
+<td><code>R CMD build .</code></td>
+</tr><tr><td><code>just check</code></td>
+<td>Check package archive</td>
+<td><code>R CMD check imuGAP_*.tar.gz --no-manual --no-tests</code></td>
+</tr><tr><td><code>just check-cran</code></td>
+<td>Check package archive using strict CRAN settings</td>
+<td><code>R CMD check imuGAP_*.tar.gz --as-cran</code></td>
+</tr></tbody></table><hr></div>
+<div class="section level2">
+<h2 id="code-coverage-and-spell-checking">Code Coverage and Spell Checking<a class="anchor" aria-label="anchor" href="#code-coverage-and-spell-checking"></a></h2>
+<div class="section level3">
+<h3 id="id_1-code-coverage-covr">1. Code Coverage (<code>covr</code>)<a class="anchor" aria-label="anchor" href="#id_1-code-coverage-covr"></a></h3>
+<ul><li>Run <code>just coverage</code> to measure package test coverage.</li>
+<li>The CI workflow (<code>.github/workflows/test-coverage.yaml</code>) runs <code>covr::codecov()</code> on every pull request and uploads reports to Codecov.</li>
+<li>Aim to maintain high coverage (&gt;90%, targeting 100%) across all active R source files (<code>R/canonicalize.R</code>, <code>R/checkers.R</code>, <code>R/helpers.R</code>, <code>R/imuGAP.R</code>, <code>R/methods.R</code>, <code>R/options.R</code>).</li>
+<li>
+<strong>Covered vs. Ignored Files (<code>.covrignore</code>)</strong>:
+<ul><li>
+<code>src/*.{cc,cpp,h}</code>: Generated C++ Stan headers and model exports compiled by <code>rstantools</code> from <code>inst/stan/*.stan</code>. They cannot be instrumented directly by <code>covr</code>; the underlying models are verified through integration tests (<code><a href="reference/sampling.html">sampling()</a></code>, <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>).</li>
+<li>
+<code>R/stanmodels.R</code>: Generated Stan model loader emitted by <code><a href="https://mc-stan.org/rstantools/reference/rstan_config.html" class="external-link">rstantools::rstan_config()</a></code>.</li>
+<li>
+<code>R/flexstanr.R</code>: Generated backend integration shim emitted by <code><a href="https://accidda.github.io/flexstanr/reference/use_flexstanr.html" class="external-link">flexstanr::use_flexstanr()</a></code>.</li>
+</ul></li>
 </ul></div>
-<div class="section level2">
-<h2 id="dependencies-cmdstanr-remotes-and-the-pak-gotcha">Dependencies: cmdstanr, <code>Remotes</code>, and the pak gotcha<a class="anchor" aria-label="anchor" href="#dependencies-cmdstanr-remotes-and-the-pak-gotcha"></a></h2>
-<p>cmdstanr is an optional, non-CRAN <code>Suggests</code>. It is resolved in CI via <strong><code>Remotes: stan-dev/cmdstanr</code></strong> in <code>DESCRIPTION</code>: pak (used by <code>r-lib/actions</code>) reads <code>Remotes</code> but <strong>not</strong> <code>Additional_repositories</code> (<a href="https://github.com/r-lib/pak/issues/424" class="external-link">r-lib/pak#424</a>). The <code>Additional_repositories</code> entry is kept only for base <code>install.packages</code> and <code>R CMD check --as-cran</code>.</p>
-<p><strong>Do not</strong> add the stan-dev r-universe as a repository (e.g. an <code>extra-repositories</code> in a workflow): pak would then prefer its <strong>dev</strong> builds of the whole Stan stack (StanHeaders/rstan), which fail to compile against CRAN’s RcppEigen and break every job. <code>Remotes</code> pins <em>only</em> cmdstanr and keeps the rest of the Stan stack on CRAN. (This one has bitten us — see #101.)</p>
+<div class="section level3">
+<h3 id="id_2-spell-checking-spelling">2. Spell Checking (<code>spelling</code>)<a class="anchor" aria-label="anchor" href="#id_2-spell-checking-spelling"></a></h3>
+<ul><li>Run <code>just spell</code> to check spelling across all <code>.Rd</code> documentation, vignettes, and <code>README.md</code>.</li>
+<li>Legitimate technical terms, package names, author names, or domain vocabulary are maintained in <code>inst/WORDLIST</code>. Update the list with <code>Rscript -e "spelling::update_wordlist()"</code>.</li>
+</ul><hr></div>
 </div>
 <div class="section level2">
-<h2 id="what-happens-when-you-open-a-pr">What Happens When You Open a PR<a class="anchor" aria-label="anchor" href="#what-happens-when-you-open-a-pr"></a></h2>
-<p>Every pull request triggers two GitHub Actions workflows:</p>
-<table class="table"><colgroup><col width="43%"><col width="56%"></colgroup><thead><tr><th>Workflow</th>
-<th>What it does</th>
-</tr></thead><tbody><tr><td><strong>R-CMD-check</strong></td>
-<td>Runs <code>R CMD check --as-cran</code> on Ubuntu, macOS, and Windows across R release, oldrel, and devel (9 jobs total). R-devel jobs are allowed to fail without blocking the PR. Stan compilation artifacts are cached per OS and R version.</td>
-</tr><tr><td><strong>pkgdown</strong></td>
-<td>Builds the documentation site. On PRs this is a build-only check (no deployment); the site is deployed to GitHub Pages on pushes to <code>main</code>, published releases, and manual workflow dispatches.</td>
-</tr></tbody></table><p>Both workflows should pass before a PR is merged.</p>
+<h2 id="code-style-linting-and-documentation">Code Style, Linting, and Documentation<a class="anchor" aria-label="anchor" href="#code-style-linting-and-documentation"></a></h2>
+<div class="section level3">
+<h3 id="id_1-formatting--linting">1. Formatting &amp; Linting<a class="anchor" aria-label="anchor" href="#id_1-formatting--linting"></a></h3>
+<ul><li>R code is formatted with <code>air</code> and linted with <code>lintr</code> (rules in <code>.lintr</code>).</li>
+<li>Maximum line length is <strong>100 characters</strong>.</li>
+<li>
+<code>R/stanmodels.R</code>, <code>R/flexstanr.R</code>, <code>inst/analysis/</code>, <code>inst/scripts/</code>, and <code>data-raw/</code> are excluded from linting because they are generated artifacts or standalone scratch scripts.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_2-untracked-artifacts--generated-files">2. Untracked Artifacts &amp; Generated Files<a class="anchor" aria-label="anchor" href="#id_2-untracked-artifacts--generated-files"></a></h3>
+<ul><li>
+<strong>Do not hand-edit generated files</strong>:
+<ul><li>
+<code>R/globals.R</code> and <code>man/*.Rd</code> are produced by <code><a href="https://roxygen2.r-lib.org/reference/roxygenize.html" class="external-link">roxygen2::roxygenise()</a></code> (via <code>roxygen2</code> and <code>roxyglobals</code>) and are untracked (#53). Regenerate them with <code>just docs</code>.</li>
+<li>Pre-computed fitted data artifacts (<code>data/fit_sim*.rda</code>, <code>data/predict_sim*.rda</code>, <code>data/target_sim*.rda</code>) are untracked and generated via <code>just data-fit</code>.</li>
+<li>
+<code>R/flexstanr.R</code> is generated by <code><a href="https://accidda.github.io/flexstanr/reference/use_flexstanr.html" class="external-link">flexstanr::use_flexstanr()</a></code>.</li>
+</ul></li>
+<li>
+<strong>Exported Datasets</strong>: Document datasets with the <code>@name &lt;data&gt;</code> / <code>@docType data</code> idiom in <code>R/imuGAP-package.R</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_3-markdown-documentation">3. Markdown Documentation<a class="anchor" aria-label="anchor" href="#id_3-markdown-documentation"></a></h3>
+<ul><li>
+<code>roxygen2</code> markdown mode is enabled (<code>Roxygen: list(markdown = TRUE)</code>).</li>
+<li>Prefer standard markdown syntax:
+<ul><li>Use backticks for code identifiers, arguments, and return types (e.g. <code>`locations`</code>, <code>`data.table`</code>).</li>
+<li>Use cross-reference markdown links (e.g. <code>[sampling()]</code>, <code>[flexstanr::stan_options()]</code>).</li>
+<li>Use markdown lists, bold text, and tables rather than raw <code>\code{}</code>, <code>\link{}</code>, or <code>\tabular{}</code> Rd tags.</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_4-roxygen-examples-dual-examplesif-and-donttest-pattern">4. Roxygen Examples: Dual <code>@examplesIf</code> and <code>\donttest</code> Pattern<a class="anchor" aria-label="anchor" href="#id_4-roxygen-examples-dual-examplesif-and-donttest-pattern"></a></h3>
+<p>For computationally heavy functions (such as <code><a href="reference/sampling.html">sampling()</a></code> or multi-draw <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>):</p>
+<ul><li>
+<p><strong>Always combine <code>@examplesIf interactive()</code> with <code>\donttest{}</code></strong>:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#' @examplesIf interactive()</span></span>
+<span><span class="co">#' \donttest{</span></span>
+<span><span class="co">#' data("locations_sim")</span></span>
+<span><span class="co">#' data("observations_sim")</span></span>
+<span><span class="co">#' data("populations_sim")</span></span>
+<span><span class="co">#' st_opts &lt;- stan_options(chains = 2, iter = 500)</span></span>
+<span><span class="co">#' sampling(</span></span>
+<span><span class="co">#'   observations_sim, populations_sim, locations_sim,</span></span>
+<span><span class="co">#'   stan_opts = st_opts</span></span>
+<span><span class="co">#' )</span></span>
+<span><span class="co">#' }</span></span></code></pre></div>
+</li>
+<li>
+<p><strong>Why both are necessary</strong>:</p>
+<ul><li>
+<code>pkgdown</code> runs <code>\donttest{}</code> blocks during site builds; <code>@examplesIf interactive()</code> evaluates to <code>FALSE</code> during non-interactive batch builds, keeping site build time fast (~35 seconds instead of &gt;25 minutes).</li>
+<li>CRAN checks (<code>R CMD check --as-cran</code>) look for <code>\donttest{}</code> to skip lengthy runtime checks during package validation.</li>
+<li>Interactive user sessions (<code>example(sampling)</code>) execute normally.</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_5-modular-stan-architecture">5. Modular Stan Architecture<a class="anchor" aria-label="anchor" href="#id_5-modular-stan-architecture"></a></h3>
+<ul><li>Stan models in <code>imuGAP</code> are designed modularly.</li>
+<li>Top-level Stan models directly in <code>inst/stan/</code> (and not Stan code in subdirectories) must remain concise assembly skeletons composed of <code>#include &lt;subpath&gt;.stan</code> directives for particular modular elements (<code>functions/</code>, <code>data/</code>, <code>transformed_data/</code>, <code>parameters/</code>, <code>model/</code>, <code>generated_quantities/</code>).</li>
+<li>Never inline full block contents or raw logic directly into top-level models in <code>inst/stan/</code>; keep component logic encapsulated in dedicated sub-files to facilitate reuse, maintainability, and clean diffs.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_6-vignette-plot-styling--dark-mode-compatibility">6. Vignette Plot Styling &amp; Dark Mode Compatibility<a class="anchor" aria-label="anchor" href="#id_6-vignette-plot-styling--dark-mode-compatibility"></a></h3>
+<p>To ensure plots remain clear and readable regardless of whether users view the pkgdown site in light or dark mode:</p>
+<ul><li>In vignette setup chunks, specify <code>knitr::opts_chunk$set(dev.args = list(bg = "white"))</code>.</li>
+<li>Disable automatic plot theme inversion with <code>if (requireNamespace("thematic", quietly = TRUE)) thematic::thematic_off()</code>.</li>
+<li>Configure <code><a href="https://ggplot2.tidyverse.org/reference/get_theme.html" class="external-link">ggplot2::theme_set()</a></code> with solid white backgrounds (<code>plot.background</code>, <code>panel.background</code>, <code>legend.background</code>) and black text (<code>text</code>, <code>axis.text</code>, <code>axis.title</code>, <code>plot.title</code>).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_7-package-reinstallation--vignette-data">7. Package Reinstallation &amp; Vignette Data<a class="anchor" aria-label="anchor" href="#id_7-package-reinstallation--vignette-data"></a></h3>
+<p>Vignette chunks load data using <code>data(..., package = "imuGAP")</code>, which resolves datasets from the <strong>installed package library</strong> rather than the working directory. When troubleshooting vignette (and related <code>pkgdown</code> site) issues associated with rendering package example data, if the fix ends up being in the package data (<code>data-raw/DATASET.R</code> or <code>data-raw/fit_data.R</code>), you must reinstall the package (<code>just install</code> or <code>R CMD INSTALL .</code>) before re-rendering vignettes or rebuilding the site with updated data (or use <code>just site-full</code>).</p>
+<hr></div>
 </div>
 <div class="section level2">
-<h2 id="questions">Questions?<a class="anchor" aria-label="anchor" href="#questions"></a></h2>
-<p>If something is unclear, open an issue or comment on an existing one — we are happy to help.</p>
+<h2 id="error-messages-and-signaling-standards">Error Messages and Signaling Standards<a class="anchor" aria-label="anchor" href="#error-messages-and-signaling-standards"></a></h2>
+<p>All user-facing validation errors and warnings should follow these standards:</p>
+<div class="section level3">
+<h3 id="id_1-centralized-format-string-constants">1. Centralized Format String Constants<a class="anchor" aria-label="anchor" href="#id_1-centralized-format-string-constants"></a></h3>
+<ul><li>
+<p>Define error and warning message format strings as constants at the top of each R file prefixed with <code>ERR_</code> or <code>MSG_</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ERR_MUST_BE_INTEGER</span> <span class="op">&lt;-</span> <span class="st">"`%s` column '%s' must contain integers"</span></span>
+<span><span class="va">ERR_CANNOT_HAVE_NA</span> <span class="op">&lt;-</span> <span class="st">"`%s` column '%s' cannot contain NA values"</span></span>
+<span><span class="va">ERR_OPT_UNKNOWN_MODEL</span> <span class="op">&lt;-</span> <span class="st">"`imugap_opts` unknown model '%s'"</span></span></code></pre></div>
+</li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_2-signaling-functions-stop_fmt_if-and-warn_fmt_if">2. Signaling Functions: <code>stop_fmt_if</code> and <code>warn_fmt_if</code>
+<a class="anchor" aria-label="anchor" href="#id_2-signaling-functions-stop_fmt_if-and-warn_fmt_if"></a></h3>
+<ul><li>
+<p>Use internal helpers <code><a href="reference/stop_fmt_if.html">stop_fmt_if()</a></code> and <code><a href="reference/warn_fmt_if.html">warn_fmt_if()</a></code> for validation assertions:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/stop_fmt_if.html">stop_fmt_if</a></span><span class="op">(</span></span>
+<span>  <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">dt</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/get.html" class="external-link">get</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">]</span><span class="op">)</span> <span class="op">==</span> <span class="va">dt</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/get.html" class="external-link">get</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>  <span class="va">ERR_MUST_BE_INTEGER</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/deparse.html" class="external-link">deparse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/substitute.html" class="external-link">substitute</a></span><span class="op">(</span><span class="va">dt</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="va">x</span>,</span>
+<span>  n <span class="op">=</span> <span class="va">n</span> <span class="op">+</span> <span class="fl">1L</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</li>
+<li><p>Use the parameter <code>n</code> to adjust the call stack offset so the error is attributed to the user’s top-level function call rather than internal helper functions.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_3-typography-backticks-vs-single-quotes">3. Typography: Backticks vs. Single Quotes<a class="anchor" aria-label="anchor" href="#id_3-typography-backticks-vs-single-quotes"></a></h3>
+<p>Follow a strict convention when formatting error and warning strings:</p>
+<ul><li>
+<strong>Backticks (<code>`code`</code>)</strong>: Use for formal R code symbols, argument names, function names, expressions, and classes:
+<ul><li><code>`observations` must be a data.frame</code></li>
+<li><code>`df` must be a single positive integer</code></li>
+<li><code>`stan_opts` must be created by stan_options()</code></li>
+</ul></li>
+<li>
+<strong>Single Quotes (<code>'value'</code>)</strong>: Use for user-supplied string values, column names, model names, or discrete inputs:
+<ul><li><code>column '%s' cannot contain NA values</code></li>
+<li><code>unknown model '%s'</code></li>
+<li><code>'%s' must be numeric</code></li>
+</ul></li>
+</ul><hr></div>
+</div>
+<div class="section level2">
+<h2 id="stan-backend-and-dependencies">Stan Backend and Dependencies<a class="anchor" aria-label="anchor" href="#stan-backend-and-dependencies"></a></h2>
+<ul><li>
+<strong><code>flexstanr</code></strong>: Portable Stan backend support is provided by the imported package <code>flexstanr (&gt;= 0.2.0)</code>. The integration helper <code>R/flexstanr.R</code> is generated by <code><a href="https://accidda.github.io/flexstanr/reference/use_flexstanr.html" class="external-link">flexstanr::use_flexstanr()</a></code>.</li>
+<li>
+<strong><code>cmdstanr</code></strong>: An optional, non-CRAN <code>Suggests</code>. It is resolved in CI via <strong><code>Remotes: stan-dev/cmdstanr</code></strong> in <code>DESCRIPTION</code>.</li>
+<li>
+<strong>Stan Stack Pinning</strong>: <strong>Do not</strong> add the <code>stan-dev</code> r-universe as an extra repository in CI workflows: <code>pak</code> would then select dev builds of <code>StanHeaders</code>/<code>rstan</code>, which fail to compile against CRAN’s <code>RcppEigen</code> (#101). <code>Remotes</code> pins <em>only</em> <code>cmdstanr</code> while keeping the remainder of the Stan stack on CRAN.</li>
+</ul><hr></div>
+<div class="section level2">
+<h2 id="pull-request-and-ci-workflows">Pull Request and CI Workflows<a class="anchor" aria-label="anchor" href="#pull-request-and-ci-workflows"></a></h2>
+<p>Every pull request triggers four automated GitHub Actions workflows:</p>
+<ol style="list-style-type: decimal"><li>
+<strong><code>R-CMD-check</code></strong>: Runs <code>R CMD check --as-cran</code> across Ubuntu, macOS, and Windows on R release, oldrel, and devel (9 jobs).</li>
+<li>
+<strong><code>lint</code></strong>: Verifies formatting with <code>air format . --check</code> and lint rules with <code><a href="https://lintr.r-lib.org/reference/lint.html" class="external-link">lintr::lint_package()</a></code>.</li>
+<li>
+<strong><code>test-coverage</code></strong>: Computes code coverage with <code>covr</code> and uploads results to Codecov.</li>
+<li>
+<strong><code>pkgdown</code></strong>: Builds the documentation site and confirms that all vignettes compile cleanly. Deployed to GitHub Pages upon push to <code>main</code> and published releases.</li>
+</ol><p>All checks must pass before merging.</p>
 </div>
 </div>
 

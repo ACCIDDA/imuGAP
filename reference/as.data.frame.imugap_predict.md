@@ -46,10 +46,10 @@ df <- as.data.frame(predict_sim)
 head(df)
 #>    iteration chain obs_c_id loc_id   age cohort  dose weight loc_c_id coverage
 #>        <int> <int>    <int> <char> <int>  <num> <num>  <num>    <int>    <num>
-#> 1:         1     1        1  State     1     30     1      1        1        0
-#> 2:         2     1        1  State     1     30     1      1        1        0
-#> 3:         3     1        1  State     1     30     1      1        1        0
-#> 4:         4     1        1  State     1     30     1      1        1        0
-#> 5:         5     1        1  State     1     30     1      1        1        0
-#> 6:         6     1        1  State     1     30     1      1        1        0
+#> 1:         1     1        1  State     1     29     1      1        1        0
+#> 2:         2     1        1  State     1     29     1      1        1        0
+#> 3:         3     1        1  State     1     29     1      1        1        0
+#> 4:         4     1        1  State     1     29     1      1        1        0
+#> 5:         5     1        1  State     1     29     1      1        1        0
+#> 6:         6     1        1  State     1     29     1      1        1        0
 ```
