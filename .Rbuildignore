@@ -23,3 +23,6 @@
 ^\.claude$
 ^\.cursorrules$
 ^\.cursor$
+^Rplots\.pdf$
+^vignettes/.*\.html$
+^vignettes/.*\.pdf$
