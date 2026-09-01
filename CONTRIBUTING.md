@@ -113,7 +113,13 @@ For computationally heavy functions (such as `sampling()` or multi-draw `predict
   * CRAN checks (`R CMD check --as-cran`) look for `\donttest{}` to skip lengthy runtime checks during package validation.
   * Interactive user sessions (`example(sampling)`) execute normally.
 
-### 5. Vignette Plot Styling & Dark Mode Compatibility
+### 5. Modular Stan Architecture
+
+* Stan models in `imuGAP` are designed modularly.
+* Top-level Stan models directly in `inst/stan/` (and not Stan code in subdirectories) must remain concise assembly skeletons composed of `#include <subpath>.stan` directives for particular modular elements (`functions/`, `data/`, `transformed_data/`, `parameters/`, `model/`, `generated_quantities/`).
+* Never inline full block contents or raw logic directly into top-level models in `inst/stan/`; keep component logic encapsulated in dedicated sub-files to facilitate reuse, maintainability, and clean diffs.
+
+### 6. Vignette Plot Styling & Dark Mode Compatibility
 
 To ensure plots remain clear and readable regardless of whether users view the pkgdown site in light or dark mode:
 
@@ -121,7 +127,7 @@ To ensure plots remain clear and readable regardless of whether users view the p
 * Disable automatic plot theme inversion with `if (requireNamespace("thematic", quietly = TRUE)) thematic::thematic_off()`.
 * Configure `ggplot2::theme_set()` with solid white backgrounds (`plot.background`, `panel.background`, `legend.background`) and black text (`text`, `axis.text`, `axis.title`, `plot.title`).
 
-### 6. Package Reinstallation & Vignette Data
+### 7. Package Reinstallation & Vignette Data
 
 Vignette chunks load data using `data(..., package = "imuGAP")`, which resolves datasets from the **installed package library** rather than the working directory. When troubleshooting vignette (and related `pkgdown` site) issues associated with rendering package example data, if the fix ends up being in the package data (`data-raw/DATASET.R` or `data-raw/fit_data.R`), you must reinstall the package (`just install` or `R CMD INSTALL .`) before re-rendering vignettes or rebuilding the site with updated data (or use `just site-full`).
 
