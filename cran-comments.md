@@ -13,10 +13,10 @@ Thanks, we see:
 Please fix and resubmit.
 "
 
-We have removed the remotes field and adjusted our internal CI. `cmdstanr` continues to appear in the `Suggests` field as an optional non-CRAN package that users may want to use with `imuGAP`. To support discoverability for internal CI with `pak`, we added
+We have removed the remotes field and adjusted our internal CI. We continue to support `cmdstanr` as an optional non-CRAN package that users may want to use with `imuGAP`. To support discoverability for internal CI with `pak`, we added
 
 ```
-Config/pak/dependencies:
+Config/Needs/check:
     stan-dev/cmdstanr
 ```
 
