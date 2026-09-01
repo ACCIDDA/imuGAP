@@ -11,7 +11,7 @@ by the [sampling()] sampler and the underlying Stan models."><meta property="og:
 
     <a class="navbar-brand me-2" href="../index.html">imuGAP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -152,12 +152,18 @@ process and validate these inputs as described below:</p><div class="section">
 <h3 id="locations-canonicalize-locations-">Locations (<code>canonicalize_locations</code>)<a class="anchor" aria-label="anchor" href="#locations-canonicalize-locations-"></a></h3>
 
 
-<p>The <code>[sampling()]</code> sampler works on a hierarchical model of locations,
-and must be provided that structure. This method checks location structure
-validity, and returns a canonical version including the layer membership.</p>
+<p>The <code>[sampling()]</code> sampler supports hierarchical models of arbitrary depth
+(e.g., 1-layer root only, 2-layer root + sub-locations, 3-layer like
+state -&gt; county -&gt; school, or deeper regional partitions). This method checks
+location structure validity and returns a canonical version including layer
+membership.</p>
 <p>A valid structure has:</p><ul><li><p>a unique root,</p></li>
-<li><p>no cycles, and</p></li>
-<li><p>no duplicate <code>loc_id</code>s</p></li>
+<li><p>no cycles,</p></li>
+<li><p>no duplicate <code>loc_id</code>s, and</p></li>
+<li><p><strong>branching constraints</strong>: every location node must have either <strong>0 offspring</strong>
+(leaf location) or <strong>at least 2 offspring</strong> (&gt;= 2 children). Single-child
+chains (a parent location with exactly 1 child) are rejected to ensure
+variance components are statistically identifiable across adjacent layers.</p></li>
 </ul><p>Users may explicitly identify the root <code>loc_id</code> by providing a row with
 <code>parent_id</code> equal to <code>NA</code>. Otherwise, any <code>parent_id</code> that does not appear
 in <code>loc_id</code> is treated as the root.</p>
@@ -198,6 +204,9 @@ of left-censoring.</p>
 
 <p>This method validates the meta-data associated with the observations, as well
 as converting that meta-data to use the canonical id formats.</p>
+<p>Weights must be non-negative, finite numbers with no <code>NA</code> values. If not
+explicitly supplied, weights default to 1 for observations with a single
+contributing row.</p>
 <p>Regarding "cohorts" and "ages": these are counted from 1, by 1 "unit". You
 can imagine the units are whatever resolution is appropriate for your data:
 months, quarters, years, etc. As long as these are used consistently,

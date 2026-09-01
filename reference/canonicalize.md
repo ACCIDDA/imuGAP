@@ -130,18 +130,25 @@ below:
 
 ### Locations (`canonicalize_locations`)
 
-The `[sampling()]` sampler works on a hierarchical model of locations,
-and must be provided that structure. This method checks location
-structure validity, and returns a canonical version including the layer
-membership.
+The `[sampling()]` sampler supports hierarchical models of arbitrary
+depth (e.g., 1-layer root only, 2-layer root + sub-locations, 3-layer
+like state -\> county -\> school, or deeper regional partitions). This
+method checks location structure validity and returns a canonical
+version including layer membership.
 
 A valid structure has:
 
 - a unique root,
 
-- no cycles, and
+- no cycles,
 
-- no duplicate `loc_id`s
+- no duplicate `loc_id`s, and
+
+- **branching constraints**: every location node must have either **0
+  offspring** (leaf location) or **at least 2 offspring** (\>= 2
+  children). Single-child chains (a parent location with exactly 1
+  child) are rejected to ensure variance components are statistically
+  identifiable across adjacent layers.
 
 Users may explicitly identify the root `loc_id` by providing a row with
 `parent_id` equal to `NA`. Otherwise, any `parent_id` that does not
@@ -181,6 +188,10 @@ that for potential future support of left-censoring.
 
 This method validates the meta-data associated with the observations, as
 well as converting that meta-data to use the canonical id formats.
+
+Weights must be non-negative, finite numbers with no `NA` values. If not
+explicitly supplied, weights default to 1 for observations with a single
+contributing row.
 
 Regarding "cohorts" and "ages": these are counted from 1, by 1 "unit".
 You can imagine the units are whatever resolution is appropriate for

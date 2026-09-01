@@ -82,8 +82,9 @@ documentation and CI architecture, see
     `--as-cran` checks and remaining runnable for interactive users.
 - **Vignette Plots & Dark Mode**:
   - Vignette plots must enforce a solid white background and black text
-    (`dev.args = list(bg = "white")`, `thematic::thematic_off()`, and
-    `ggplot2::theme_set(...)`).
+    (`dev.args = list(bg = "white")`,
+    [`thematic::thematic_off()`](https://rstudio.github.io/thematic/reference/thematic_on.html),
+    and `ggplot2::theme_set(...)`).
 - **Test Coverage Expectations (`covr`)**:
   - All manually authored R files (`R/canonicalize.R`, `R/checkers.R`,
     `R/helpers.R`, `R/imuGAP.R`, `R/methods.R`, `R/options.R`) must

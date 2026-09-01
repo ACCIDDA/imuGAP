@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">imuGAP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -132,7 +132,7 @@
 <div class="section level3">
 <h3 id="id_1-code-coverage-covr">1. Code Coverage (<code>covr</code>)<a class="anchor" aria-label="anchor" href="#id_1-code-coverage-covr"></a></h3>
 <ul><li>Run <code>just coverage</code> to measure package test coverage.</li>
-<li>The CI workflow (<code>.github/workflows/test-coverage.yaml</code>) runs <code>covr::codecov()</code> on every pull request and uploads reports to Codecov.</li>
+<li>The CI workflow (<code>.github/workflows/test-coverage.yaml</code>) runs <code><a href="http://covr.r-lib.org/reference/codecov.html" class="external-link">covr::codecov()</a></code> on every pull request and uploads reports to Codecov.</li>
 <li>Aim to maintain high coverage (&gt;90%, targeting 100%) across all active R source files (<code>R/canonicalize.R</code>, <code>R/checkers.R</code>, <code>R/helpers.R</code>, <code>R/imuGAP.R</code>, <code>R/methods.R</code>, <code>R/options.R</code>).</li>
 <li>
 <strong>Covered vs. Ignored Files (<code>.covrignore</code>)</strong>:

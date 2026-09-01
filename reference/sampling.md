@@ -1,7 +1,8 @@
 # Immunity: Geographic & Age-based Projection, `imuGAP`
 
-This a sampler interface to convert user-friendly data into the
-necessary format to feed the immunity estimation model.
+Fits the imuGAP Bayesian hierarchical vaccine coverage estimation model
+across arbitrary user-specified location partitions, birth cohorts,
+ages, and vaccine doses.
 
 ## Usage
 
@@ -61,20 +62,35 @@ sampling(
 
 - imugap_opts:
 
-  options for the `imuGAP` model
+  options for the `imuGAP` model, created by `[imugap_options()]`.
 
 - stan_opts:
 
-  passed to
-  [`rstan::sampling`](https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html)
-  (e.g. `iter`, `chains`).
+  sampler configuration created by `[stan_options()]` (see
+  `[flexstanr::stan_options()]` for details on supported sampler
+  arguments, including `iter`, `chains`, `cores`, `seed`, and
+  `backend`).
 
 ## Value
 
-An object of class `imugap_fit` wrapping the raw `stanfit` object along
-with settings and dataset metadata.
+An object of class `imugap_fit` wrapping the raw `stanfit` (or
+`CmdStanMCMC`) object along with model settings and dataset metadata.
 
 ## Details
+
+`sampling()` automatically inspects the depth of the location hierarchy
+supplied in `locations` via `[canonicalize_locations()]` and
+`[assemble_layer_data()]`:
+
+- **Single-layer (1 layer)**: When only a root location is supplied,
+  `sampling()` automatically dispatches to the optimized single-location
+  model.
+
+- **Multi-layer (\>= 2 layers)**: When hierarchical sub-locations are
+  supplied (e.g., 2-layer state -\> county, 3-layer state -\> county -\>
+  school, or deeper trees), `sampling()` dispatches to the general
+  hierarchical model with partial pooling across layer-specific variance
+  components.
 
 If the Stan sampler fails to initialize and produces no draws (for the
 rstan backend, a mode-2 `stanfit` with an empty `@sim`), `sampling()`

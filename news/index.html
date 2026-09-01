@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">imuGAP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,6 +43,48 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0" id="imugap-020">imuGAP 0.2.0<a class="anchor" aria-label="anchor" href="#imugap-020"></a></h2>
+<div class="section level3">
+<h3 id="major-features-0-2-0">Major Features<a class="anchor" aria-label="anchor" href="#major-features-0-2-0"></a></h3>
+<ul><li>
+<strong>Arbitrary Hierarchy Layer Depth</strong>:
+<ul><li>
+<code><a href="../reference/sampling.html">sampling()</a></code>, <code><a href="../reference/canonicalize.html">canonicalize_locations()</a></code>, and underlying Stan models now support user-defined hierarchical location structures of arbitrary depth (e.g. 1-layer statewide, 2-layer state-county, 3-layer state-county-school, or deeper regional partitions).</li>
+<li>Added <code><a href="../reference/assemble_layer_data.html">assemble_layer_data()</a></code> helper to construct and validate hierarchical metadata, bounds, and parent mappings.</li>
+<li>Added dedicated single-layer model <code>impute_school_coverage_process_v6_single_layer</code> with automatic dispatch when single-layer inputs are supplied.</li>
+<li>Added a new vignette (<code>user_specified_layers</code>) demonstrating 1-layer, 2-layer, and 3-layer model estimation and prediction workflows.</li>
+</ul></li>
+<li>
+<strong>Backend Abstraction via <code>flexstanr</code></strong>:
+<ul><li>Integrated <code>flexstanr (&gt;= 0.2.0)</code> to provide uniform backend abstraction across <code>rstan</code> and <code>cmdstanr</code> MCMC engines.</li>
+<li>Re-exported <code><a href="https://accidda.github.io/flexstanr/reference/stan_options.html" class="external-link">flexstanr::stan_options()</a></code> for seamless sampler configuration.</li>
+</ul></li>
+<li>
+<strong>Modular Stan Architecture</strong>:
+<ul><li>Refactored top-level Stan models into concise assembly skeletons utilizing modular <code>#include</code> directives (<code>functions/</code>, <code>data/</code>, <code>transformed_data/</code>, <code>parameters/</code>, <code>model/</code>).</li>
+<li>Pruned legacy/vestigial Stan scripts to streamline code base maintenance.</li>
+</ul></li>
+<li>
+<strong>Data Pipeline &amp; Target Generation</strong>:
+<ul><li>Split target generation into fit-free constructor <code><a href="../reference/create_target.html">create_target()</a></code> and validation function <code><a href="../reference/canonicalize_target.html">canonicalize_target()</a></code>.</li>
+<li>Added bundled example fitted datasets for single-layer and 2-layer models (<code>fit_sim_1layer</code>, <code>fit_sim_2layer</code>, <code>predict_sim_1layer</code>, <code>predict_sim_2layer</code>, <code>target_sim_1layer</code>, <code>target_sim_2layer</code>).</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="enhancements--bug-fixes-0-2-0">Enhancements &amp; Bug Fixes<a class="anchor" aria-label="anchor" href="#enhancements--bug-fixes-0-2-0"></a></h3>
+<ul><li>
+<strong>Location Hierarchy Invariant</strong>: Enforced structural validation ensuring location nodes have either 0 offspring (leaf) or <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≥</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">\ge 2</annotation></semantics></math> offspring (preventing single-child degenerate chains).</li>
+<li>
+<strong>Error Handling &amp; Assertions</strong>: Standardized assertion messages across all functions using module-level <code>ERR_*</code> format string constants and helper assertion functions <code><a href="../reference/stop_fmt_if.html">stop_fmt_if()</a></code> and <code><a href="../reference/warn_fmt_if.html">warn_fmt_if()</a></code>.</li>
+<li>
+<strong>Validation</strong>: Added validation against <code>NA</code> weights in population and target specifications.</li>
+<li>
+<strong>Documentation Examples &amp; Check Times</strong>: Applied combined <code>@examplesIf interactive()</code> and <code>\donttest{}</code> idiom to computationally heavy examples, enabling fast <code>pkgdown</code> builds (~35 seconds) while remaining CRAN <code>--as-cran</code> compliant.</li>
+<li>
+<strong>Vignette Dark Mode Compatibility</strong>: Enforced solid white backgrounds and high-contrast styling across all vignette plots for clean rendering in light/dark modes.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="imugap-010">imuGAP 0.1.0<a class="anchor" aria-label="anchor" href="#imugap-010"></a></h2><p class="text-muted">CRAN release: 2026-06-22</p>
 <p>First public release. Initial feature set:</p>
 <ul><li>
@@ -64,7 +106,8 @@
 <li>Bundled example datasets for end-to-end examples and tests: <code>locations_sim</code>, <code>observations_sim</code>, <code>populations_sim</code>, <code>latent_params_sim</code>, <code>predict_sim</code>, <code>target_sim</code>, and the reference <code>fit_sim</code> <code>stanfit</code> fixture.</li>
 <li>pkgdown documentation site published at <a href="https://accidda.github.io/imuGAP/" class="uri">https://accidda.github.io/imuGAP/</a>.</li>
 </ul></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

@@ -1,6 +1,6 @@
 # imuGAP Model Options
 
-This function encapsulates option passing for imuGAP settings.
+Configures model-side options for `imuGAP` estimation.
 
 ## Usage
 
@@ -12,16 +12,19 @@ imugap_options(df = 5L, dose_schedule = c(1, 4), model = c("default"))
 
 - df:
 
-  degrees of freedom to use in bspline
+  single positive integer; degrees of freedom to use for the cohort
+  B-spline basis expansion (default: 5L).
 
 - dose_schedule:
 
-  an integer vector, the ages at which dose(s) `n` are scheduled, with
-  vector indices and doses matching
+  an ascending integer vector of ages at which each dose `1..n` becomes
+  eligible (default: `c(1, 4)` for 2-dose vaccines).
 
 - model:
 
-  which model formulation to use; currently "default" is supported
+  character string specifying the model formulation. Defaults to
+  `"default"`, with dispatch to optimized single versus multilayer
+  versions within `[sampling()]`
 
 ## Value
 

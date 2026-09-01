@@ -65,8 +65,8 @@ automatically:
 
 - Run `just coverage` to measure package test coverage.
 - The CI workflow (`.github/workflows/test-coverage.yaml`) runs
-  `covr::codecov()` on every pull request and uploads reports to
-  Codecov.
+  [`covr::codecov()`](http://covr.r-lib.org/reference/codecov.md) on
+  every pull request and uploads reports to Codecov.
 - Aim to maintain high coverage (\>90%, targeting 100%) across all
   active R source files (`R/canonicalize.R`, `R/checkers.R`,
   `R/helpers.R`, `R/imuGAP.R`, `R/methods.R`, `R/options.R`).
