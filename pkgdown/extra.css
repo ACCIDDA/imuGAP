@@ -56,3 +56,37 @@ html[data-bs-theme="dark"] main img:not(.accidda-footer-logo) {
   }
 }
 
+/* Collapsible code blocks */
+.chunk-plot-first {
+  display: flex;
+  flex-direction: column;
+}
+
+.chunk-plot-first > details {
+  order: 2;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.chunk-plot-first > .figure,
+.chunk-plot-first > p,
+.chunk-plot-first > img {
+  order: 1;
+}
+
+details {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+details summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  user-select: none;
+}
+
+details summary:hover {
+  text-decoration: underline;
+}
+

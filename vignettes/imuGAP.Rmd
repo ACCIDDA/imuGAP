@@ -25,6 +25,31 @@ if (requireNamespace("thematic", quietly = TRUE)) {
   thematic::thematic_off()
 }
 
+# Define a knitr hook to fold source code into a <details> block below the plot
+local({
+  hook_source <- knitr::knit_hooks$get("source")
+  knitr::knit_hooks$set(source = function(x, options) {
+    res <- hook_source(x, options)
+    if (isTRUE(options$fold) || !is.null(options$code_summary)) {
+      label <- options$code_summary
+      if (is.null(label)) label <- "Show code"
+      sprintf("\n<details><summary><b>%s</b></summary>\n\n%s\n</details>\n", label, res)
+    } else {
+      res
+    }
+  })
+
+  hook_chunk <- knitr::knit_hooks$get("chunk")
+  knitr::knit_hooks$set(chunk = function(x, options) {
+    res <- hook_chunk(x, options)
+    if (isTRUE(options$fold)) {
+      sprintf("\n<div class=\"chunk-plot-first\">\n%s\n</div>\n", res)
+    } else {
+      res
+    }
+  })
+})
+
 # List all suggested packages needed for this vignette
 required_pkgs <- c(
   "imuGAP", "data.table", "bayesplot", "ggplot2",
@@ -179,7 +204,7 @@ Before fitting the model, we can explore how the synthetic observations relate t
 
 ### State-Level Observations & Latent Propensity
 
-```{r synthetic-state-viz}
+```{r synthetic-state-viz, fold = TRUE, code_summary = "Show plot code"}
 data("latent_params_sim", package = "imuGAP")
 
 # Categorize state-level observation sources
@@ -278,6 +303,7 @@ ggplot() +
   ) +
   theme_bw() +
   scale_x_continuous(
+    limits = c(0, 30),
     breaks = seq(0, 30, by = 5),
     minor_breaks = seq(1, 30, by = 1)
   ) +
@@ -320,7 +346,7 @@ ggplot() +
 
 ### County-Level Observations & Offsets
 
-```{r synthetic-county-viz}
+```{r synthetic-county-viz, fold = TRUE, code_summary = "Show plot code"}
 county_obs <- copy(observations_sim[loc_id %in% c("Scruggs", "Simone", "Watson")])
 county_obs[, obs_prop := positive / sample_n]
 
@@ -347,6 +373,11 @@ ggplot() +
   ) +
   facet_wrap(~loc_id) +
   theme_bw() +
+  scale_x_continuous(
+    limits = c(0, 30),
+    breaks = seq(0, 30, by = 5),
+    minor_breaks = seq(1, 30, by = 1)
+  ) +
   scale_y_continuous(limits = c(0.4, 1.0)) +
   scale_color_manual(name = NULL, values = c("True Latent Coverage" = "firebrick")) +
   theme(
@@ -362,7 +393,7 @@ ggplot() +
 
 ### School-Level Observations Across Counties
 
-```{r synthetic-school-viz}
+```{r synthetic-school-viz, fold = TRUE, code_summary = "Show plot code"}
 # Select representative schools at the 0, 0.25, 0.5, 0.75, and 1 quantiles of school offsets
 sch_info <- locations_sim[!loc_id %in% c("State", "Scruggs", "Simone", "Watson")]
 sch_info[, off := latent_params_sim$off_sch[loc_id]]
@@ -474,6 +505,7 @@ ggplot() +
   facet_wrap(~parent_id) +
   theme_bw() +
   scale_x_continuous(
+    limits = c(0, 30),
     breaks = seq(0, 30, by = 5),
     minor_breaks = seq(1, 30, by = 1)
   ) +
@@ -538,7 +570,7 @@ We can also examine trace plots for key parameters to check MCMC convergence and
 
 #### Basis Spline Coefficients ($\beta_{\text{bs}}$)
 
-```{r trace-plot-beta}
+```{r trace-plot-beta, fold = TRUE, code_summary = "Show plot code"}
 bayesplot::mcmc_trace(
   fit_sim$stanfit,
   pars = c(
@@ -558,7 +590,7 @@ bayesplot::mcmc_trace(
 
 Trace plots for the hierarchy layer standard deviations $\sigma_{\text{county}}$ (`sigma_layer[1]`) and $\sigma_{\text{school}}$ (`sigma_layer[2]`) zoomed to the shared range $[0, 2.5]$ via coordinate clipping (preserving full chains), compared against the true simulation standard deviations (dashed red lines and annotated values):
 
-```{r trace-plot-sigmas}
+```{r trace-plot-sigmas, fold = TRUE, code_summary = "Show plot code"}
 sigma_ref <- data.frame(
   parameter = c("sigma_layer[1]", "sigma_layer[2]"),
   true_val = c(latent_params_sim$sigma_cnty, latent_params_sim$sigma_sch),
@@ -603,7 +635,7 @@ bayesplot::mcmc_trace(
 
 Trace plots for the unconstrained dose uptake rates $\lambda_{\text{raw}}$ (`lambda_raw[1]` and `lambda_raw[2]`) zoomed to the shared range $[\exp(0.5), \exp(1.5)]$ via coordinate clipping (preserving full chains), compared against the log-transformed true simulation parameters $\log(\lambda)$ (dashed red lines and annotated values) with an exponentiated y-axis scale and tick labels:
 
-```{r trace-plot-lambdas}
+```{r trace-plot-lambdas, fold = TRUE, code_summary = "Show plot code"}
 lambda_ref <- data.frame(
   parameter = c("lambda_raw[1]", "lambda_raw[2]"),
   true_val = log(latent_params_sim$lambda),
@@ -614,8 +646,8 @@ bayesplot::mcmc_trace(
   fit_sim$stanfit,
   pars = c("lambda_raw[1]", "lambda_raw[2]"),
   facet_args = list(labeller = ggplot2::as_labeller(c(
-    "lambda_raw[1]" = "lambda[raw*\", \"*1]~(Dose~1)",
-    "lambda_raw[2]" = "lambda[raw*\", \"*2]~(Dose~2)"
+    "lambda_raw[1]" = "lambda[1]~(Dose~1)",
+    "lambda_raw[2]" = "lambda[2]~(Dose~2)"
   ), default = ggplot2::label_parsed))
 ) +
   geom_hline(
@@ -641,7 +673,7 @@ bayesplot::mcmc_trace(
     transform = "exp",
     labels = function(x) sprintf("%.2f", exp(x))
   ) +
-  labs(y = "Uptake Rate: exp(lambda_raw)") +
+  labs(y = "Uptake Rate (exponential scale)") +
   theme_bw() +
   theme(legend.position = "bottom")
 ```
@@ -690,7 +722,7 @@ head(summary_predict)
 
 Now let's visualize the results. First we will take a look at overall state coverage by cohort. Note that the lower coverage among 5 year olds is due to them only having been eligible for their second dose for one year.   
 
-```{r state-viz}
+```{r state-viz, fold = TRUE, code_summary = "Show plot code"}
 data("latent_params_sim", package = "imuGAP")
 
 # Filter predictions for the State level, dose 2, and ages > 4
@@ -707,7 +739,7 @@ ggplot(state_predict) +
   geom_line(aes(y = latent, color = "True Latent"), linetype = "dashed", linewidth = 0.8) +
   theme_bw() +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.85, 1.0)) +
+  scale_y_continuous(limits = c(0.8, 1.0)) +
   scale_color_manual(
     name = NULL,
     values = c("Posterior Median" = "black", "True Latent" = "firebrick")
@@ -723,7 +755,7 @@ ggplot(state_predict) +
 
 We can also look at the trend in coverage by age at the county level. Note that they follow the same trend as the state but with differing magnitude.
 
-```{r county-viz}
+```{r county-viz, fold = TRUE, code_summary = "Show plot code"}
 summary_predict |>
   subset(loc_id %in% c("Scruggs", "Simone", "Watson") & dose == 2 & age > 4) |>
   transform(loc_id = factor(loc_id, levels = c("Simone", "Watson", "Scruggs"))) |>
@@ -738,7 +770,7 @@ summary_predict |>
     legend.justification.inside = c(0, 0)
   ) +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.85, 1.0)) +
+  scale_y_continuous(limits = c(0.8, 1.0)) +
   scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
   labs(
     x = "Age", y = "County-Level Two-Dose Coverage"
@@ -747,7 +779,7 @@ summary_predict |>
 
 Next, we can zoom into school-level coverage estimates. As an example, we examine the median (50% quantile) school within Scruggs County from the latent data, visualizing individual posterior trajectory draws (spaghetti plot) alongside the posterior median and the true underlying latent coverage:
 
-```{r grade-viz}
+```{r grade-viz, fold = TRUE, code_summary = "Show plot code"}
 scruggs_schools <- locations_sim[parent_id == "Scruggs", loc_id]
 off_scruggs <- latent_params_sim$off_sch[scruggs_schools]
 med_sch <- names(off_scruggs)[which.min(
@@ -788,7 +820,7 @@ ggplot() +
   ) +
   theme_bw() +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.85, 1.0)) +
+  scale_y_continuous(limits = c(0.8, 1.0)) +
   scale_color_manual(
     name = NULL,
     values = c(
@@ -802,6 +834,13 @@ ggplot() +
       alpha = c(1, 1, 0.6)
     ))
   ) +
+  annotate(
+    "text",
+    x = 18, y = 0.99,
+    label = sprintf("%s (50%% Quantile School)", med_sch),
+    hjust = 1, vjust = 1,
+    size = 3.5, fontface = "italic"
+  ) +
   theme(
     legend.position = "inside",
     legend.position.inside = c(0.05, 0.05),
@@ -809,13 +848,13 @@ ggplot() +
   ) +
   labs(
     x = "Age",
-    y = sprintf("Two-Dose Coverage (%s, 50%% Quantile School)", med_sch)
+    y = "Two-Dose Coverage"
   )
 ```
 
 Finally let's look at some selected schools and see how their predicted coverage compared to true underlying coverage from the data simulation process.
 
-```{r}
+```{r school-viz, fold = TRUE, code_summary = "Show plot code"}
 schools <- c(
   "Towhee Children's Academy", # ~380 per grade
   "Flycatcher Elementary", # ~110 per grade
@@ -859,7 +898,7 @@ ggplot() +
   ) +
   scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.85, 1.0)) +
+  scale_y_continuous(limits = c(0.8, 1.0)) +
   theme(legend.position = "bottom") +
   labs(color = "School", x = "Age", y = "Two-Dose Coverage")
 ```

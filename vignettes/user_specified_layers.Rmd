@@ -18,6 +18,32 @@ knitr::opts_chunk$set(
 if (requireNamespace("thematic", quietly = TRUE)) {
   thematic::thematic_off()
 }
+
+# Define a knitr hook to fold source code into a <details> block below the plot
+local({
+  hook_source <- knitr::knit_hooks$get("source")
+  knitr::knit_hooks$set(source = function(x, options) {
+    res <- hook_source(x, options)
+    if (isTRUE(options$fold) || !is.null(options$code_summary)) {
+      label <- options$code_summary
+      if (is.null(label)) label <- "Show code"
+      sprintf("\n<details><summary><b>%s</b></summary>\n\n%s\n</details>\n", label, res)
+    } else {
+      res
+    }
+  })
+
+  hook_chunk <- knitr::knit_hooks$get("chunk")
+  knitr::knit_hooks$set(chunk = function(x, options) {
+    res <- hook_chunk(x, options)
+    if (isTRUE(options$fold)) {
+      sprintf("\n<div class=\"chunk-plot-first\">\n%s\n</div>\n", res)
+    } else {
+      res
+    }
+  })
+})
+
 library(imuGAP)
 library(data.table)
 library(ggplot2)
@@ -189,7 +215,7 @@ As seen in previous sections, the actual fitting and prediction steps are identi
 
 First, compare estimated State-level coverage from the 1-layer, 2-layer, and 3-layer model fits against the latent coverage stored in `latent_params_sim$coverage`. Faceting by data resolution (columns) shows that macro State trends are estimated accurately regardless of whether lower-level sub-population data are provided:
 
-```{r state-plot, echo = FALSE, fig.cap = "State-level coverage comparison across 1-layer, 2-layer, and 3-layer model fits against true values.", fig.width = 8, fig.height = 4}
+```{r state-plot, fold = TRUE, code_summary = "Show plot code", fig.cap = "State-level coverage comparison across 1-layer, 2-layer, and 3-layer model fits against true values.", fig.width = 8, fig.height = 4}
 state_name <- locations_sim[is.na(parent_id), loc_id]
 
 state_1layer_pred <- summary_1layer[
@@ -252,7 +278,7 @@ ggplot() +
   scale_fill_manual(name = "", values = c("Estimated (95% CI)" = "#1b9e77")) +
   theme_bw() +
   scale_x_continuous(breaks = seq(5, 18, by = 3), minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.85, 1.0)) +
+  scale_y_continuous(limits = c(0.8, 1.0)) +
   theme(
     legend.position = "inside",
     legend.position.inside = c(0.02, 0.05),
@@ -270,7 +296,7 @@ ggplot() +
 
 Next, we compare County-level coverage estimates between the 2-layer and 3-layer model fits across counties (*Scruggs*, *Simone*, *Watson*):
 
-```{r county-plot, echo = FALSE, fig.cap = "County-level coverage comparison: 2-layer vs. 3-layer model estimates against true values.", fig.width = 8, fig.height = 4}
+```{r county-plot, fold = TRUE, code_summary = "Show plot code", fig.cap = "County-level coverage comparison: 2-layer vs. 3-layer model estimates against true values.", fig.width = 8, fig.height = 4}
 counties <- locations_sim[parent_id == state_name, loc_id]
 
 county_2layer_pred <- summary_2layer[
@@ -327,7 +353,7 @@ ggplot() +
   scale_shape_manual(name = "", values = c("True Coverage" = 18)) +
   scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
   scale_x_continuous(breaks = seq(5, 18, by = 3), minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.85, 1.0)) +
+  scale_y_continuous(limits = c(0.8, 1.0)) +
   theme_bw() +
   theme(
     legend.position = "inside",
@@ -346,7 +372,7 @@ ggplot() +
 
 We also examine the model's ability to estimate the underlying force of vaccination parameters ($\lambda$) across different location data resolutions.
 
-```{r lambda-plot, echo = FALSE, fig.cap = "Force of vaccination (lambda) estimates across data resolutions compared to true values.", fig.width = 7, fig.height = 4}
+```{r lambda-plot, fold = TRUE, code_summary = "Show plot code", fig.cap = "Force of vaccination (lambda) estimates across data resolutions compared to true values.", fig.width = 7, fig.height = 4}
 extract_lambda_summary <- function(fit, label) {
   draws <- rstan::extract(fit$stanfit, pars = "lambda_raw")$lambda_raw
   doses_factor <- factor(c(
@@ -411,7 +437,7 @@ ggplot(lambda_est, aes(x = hierarchy, y = q50)) +
   theme_bw() +
   labs(
     x = "Data Resolution (Model Hierarchy)",
-    y = "Uptake Rate: exp(lambda_raw)"
+    y = "Uptake Rate (exponential scale)"
   )
 ```
 
