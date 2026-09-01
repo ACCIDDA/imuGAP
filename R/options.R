@@ -6,12 +6,14 @@ ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
 #' @title imuGAP Model Options
 #'
 #' @description
-#' This function encapsulates option passing for imuGAP settings.
+#' Configures model-side options for `imuGAP` estimation.
 #'
-#' @param df degrees of freedom to use in bspline
-#' @param dose_schedule an integer vector, the ages at which dose(s) `n` are
-#'   scheduled, with vector indices and doses matching
-#' @param model which model formulation to use; currently "default" is supported
+#' @param df single positive integer; degrees of freedom to use for the cohort B-spline
+#'   basis expansion (default: 5L).
+#' @param dose_schedule an ascending integer vector of ages at which each dose `1..n`
+#'   becomes eligible (default: `c(1, 4)` for 2-dose vaccines).
+#' @param model character string specifying the model formulation. Defaults to `"default"`,
+#'   with dispatch to optimized single versus multilayer versions within `[sampling()]`
 #'
 #' @examples
 #' imugap_options()

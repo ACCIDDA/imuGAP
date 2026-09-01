@@ -1,8 +1,4 @@
 # Internal error message format strings for imuGAP.R
-ERR_IMUGAP_LAYER_COUNT <- paste0(
-  "imuGAP currently supports only 3-layer models (e.g., state -> county -> ",
-  "school); supplied %d layers"
-)
 ERR_STAN_OPTS_CLASS <- "`stan_opts` must be created by stan_options()"
 ERR_EXTRACT_RSTAN_ONLY <- paste0(
   "extract_imugap() currently supports only the 'rstan' backend; ",
@@ -12,19 +8,31 @@ ERR_EXTRACT_RSTAN_ONLY <- paste0(
 #' @title Immunity: Geographic & Age-based Projection, `imuGAP`
 #'
 #' @description
-#' This a sampler interface to convert user-friendly data into the necessary
-#' format to feed the immunity estimation model.
+#' Fits the imuGAP Bayesian hierarchical vaccine coverage estimation model across
+#' arbitrary user-specified location partitions, birth cohorts, ages, and vaccine
+#' doses.
 #'
 #' @inheritParams canonicalize_observations
 #' @inheritParams canonicalize_populations
 #' @inheritParams canonicalize_locations
-#' @param imugap_opts options for the `imuGAP` model
-#' @param stan_opts passed to `rstan::sampling` (e.g. `iter`, `chains`).
+#' @param imugap_opts options for the `imuGAP` model, created by `[imugap_options()]`.
+#' @param stan_opts sampler configuration created by `[stan_options()]`
+#'   (see `[flexstanr::stan_options()]` for details on supported sampler arguments,
+#'   including `iter`, `chains`, `cores`, `seed`, and `backend`).
 #'
-#' @return An object of class `imugap_fit` wrapping the raw `stanfit` object
-#'   along with settings and dataset metadata.
+#' @return An object of class `imugap_fit` wrapping the raw `stanfit` (or
+#'   `CmdStanMCMC`) object along with model settings and dataset metadata.
 #'
 #' @details
+#' `sampling()` automatically inspects the depth of the location hierarchy
+#' supplied in `locations` via `[canonicalize_locations()]` and `[assemble_layer_data()]`:
+#' - **Single-layer (1 layer)**: When only a root location is supplied,
+#'   `sampling()` automatically dispatches to the optimized single-location model.
+#' - **Multi-layer (>= 2 layers)**: When hierarchical sub-locations are
+#'   supplied (e.g., 2-layer state -> county, 3-layer state -> county -> school,
+#'   or deeper trees), `sampling()` dispatches to the general hierarchical model
+#'   with partial pooling across layer-specific variance components.
+#'
 #' If the Stan sampler fails to initialize and produces no draws (for the rstan
 #' backend, a mode-2 `stanfit` with an empty `@sim`), `sampling()` raises an
 #' error of class `imugap_no_draws` rather than returning an empty fit, so the
