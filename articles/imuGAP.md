@@ -252,6 +252,8 @@ in the simulation:
 
 #### State-Level Observations & Latent Propensity
 
+**Show plot code**
+
 ``` r
 
 data("latent_params_sim", package = "imuGAP")
@@ -352,6 +354,7 @@ ggplot() +
   ) +
   theme_bw() +
   scale_x_continuous(
+    limits = c(0, 30),
     breaks = seq(0, 30, by = 5),
     minor_breaks = seq(1, 30, by = 1)
   ) +
@@ -396,6 +399,8 @@ ggplot() +
 
 #### County-Level Observations & Offsets
 
+**Show plot code**
+
 ``` r
 
 county_obs <- copy(observations_sim[loc_id %in% c("Scruggs", "Simone", "Watson")])
@@ -424,6 +429,11 @@ ggplot() +
   ) +
   facet_wrap(~loc_id) +
   theme_bw() +
+  scale_x_continuous(
+    limits = c(0, 30),
+    breaks = seq(0, 30, by = 5),
+    minor_breaks = seq(1, 30, by = 1)
+  ) +
   scale_y_continuous(limits = c(0.4, 1.0)) +
   scale_color_manual(name = NULL, values = c("True Latent Coverage" = "firebrick")) +
   theme(
@@ -440,6 +450,8 @@ ggplot() +
 ![](imuGAP_files/figure-html/synthetic-county-viz-1.png)
 
 #### School-Level Observations Across Counties
+
+**Show plot code**
 
 ``` r
 
@@ -554,6 +566,7 @@ ggplot() +
   facet_wrap(~parent_id) +
   theme_bw() +
   scale_x_continuous(
+    limits = c(0, 30),
     breaks = seq(0, 30, by = 5),
     minor_breaks = seq(1, 30, by = 1)
   ) +
@@ -627,7 +640,7 @@ state-level vaccine uptake baseline:
 beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 #> List of 1
-#>  $ beta_bs: num [1:2000, 1:5] -1.58 -1.64 -1.65 -1.62 -1.61 ...
+#>  $ beta_bs: num [1:2000, 1:5] -1.65 -1.58 -1.54 -1.59 -1.6 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ iterations: NULL
 #>   .. ..$           : NULL
@@ -638,6 +651,8 @@ convergence and evaluate parameter recovery against the true
 data-generating simulation parameters (`latent_params_sim`).
 
 ##### Basis Spline Coefficients ($`\beta_{\text{bs}}`$)
+
+**Show plot code**
 
 ``` r
 
@@ -666,6 +681,8 @@ $`\sigma_{\text{school}}`$ (`sigma_layer[2]`) zoomed to the shared range
 $`[0, 2.5]`$ via coordinate clipping (preserving full chains), compared
 against the true simulation standard deviations (dashed red lines and
 annotated values):
+
+**Show plot code**
 
 ``` r
 
@@ -720,6 +737,8 @@ the shared range $`[\exp(0.5), \exp(1.5)]`$ via coordinate clipping
 simulation parameters $`\log(\lambda)`$ (dashed red lines and annotated
 values) with an exponentiated y-axis scale and tick labels:
 
+**Show plot code**
+
 ``` r
 
 lambda_ref <- data.frame(
@@ -732,8 +751,8 @@ bayesplot::mcmc_trace(
   fit_sim$stanfit,
   pars = c("lambda_raw[1]", "lambda_raw[2]"),
   facet_args = list(labeller = ggplot2::as_labeller(c(
-    "lambda_raw[1]" = "lambda[raw*\", \"*1]~(Dose~1)",
-    "lambda_raw[2]" = "lambda[raw*\", \"*2]~(Dose~2)"
+    "lambda_raw[1]" = "lambda[1]~(Dose~1)",
+    "lambda_raw[2]" = "lambda[2]~(Dose~2)"
   ), default = ggplot2::label_parsed))
 ) +
   geom_hline(
@@ -759,7 +778,7 @@ bayesplot::mcmc_trace(
     transform = "exp",
     labels = function(x) sprintf("%.2f", exp(x))
   ) +
-  labs(y = "Uptake Rate: exp(lambda_raw)") +
+  labs(y = "Uptake Rate (exponential scale)") +
   theme_bw() +
   theme(legend.position = "bottom")
 ```
@@ -860,6 +879,8 @@ state coverage by cohort. Note that the lower coverage among 5 year olds
 is due to them only having been eligible for their second dose for one
 year.
 
+**Show plot code**
+
 ``` r
 
 data("latent_params_sim", package = "imuGAP")
@@ -878,7 +899,7 @@ ggplot(state_predict) +
   geom_line(aes(y = latent, color = "True Latent"), linetype = "dashed", linewidth = 0.8) +
   theme_bw() +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.85, 1.0)) +
+  scale_y_continuous(limits = c(0.8, 1.0)) +
   scale_color_manual(
     name = NULL,
     values = c("Posterior Median" = "black", "True Latent" = "firebrick")
@@ -898,6 +919,8 @@ We can also look at the trend in coverage by age at the county level.
 Note that they follow the same trend as the state but with differing
 magnitude.
 
+**Show plot code**
+
 ``` r
 
 summary_predict |>
@@ -914,7 +937,7 @@ summary_predict |>
     legend.justification.inside = c(0, 0)
   ) +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.85, 1.0)) +
+  scale_y_continuous(limits = c(0.8, 1.0)) +
   scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
   labs(
     x = "Age", y = "County-Level Two-Dose Coverage"
@@ -928,6 +951,8 @@ we examine the median (50% quantile) school within Scruggs County from
 the latent data, visualizing individual posterior trajectory draws
 (spaghetti plot) alongside the posterior median and the true underlying
 latent coverage:
+
+**Show plot code**
 
 ``` r
 
@@ -971,7 +996,7 @@ ggplot() +
   ) +
   theme_bw() +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.85, 1.0)) +
+  scale_y_continuous(limits = c(0.8, 1.0)) +
   scale_color_manual(
     name = NULL,
     values = c(
@@ -985,6 +1010,13 @@ ggplot() +
       alpha = c(1, 1, 0.6)
     ))
   ) +
+  annotate(
+    "text",
+    x = 18, y = 0.99,
+    label = sprintf("%s (50%% Quantile School)", med_sch),
+    hjust = 1, vjust = 1,
+    size = 3.5, fontface = "italic"
+  ) +
   theme(
     legend.position = "inside",
     legend.position.inside = c(0.05, 0.05),
@@ -992,17 +1024,20 @@ ggplot() +
   ) +
   labs(
     x = "Age",
-    y = sprintf("Two-Dose Coverage (%s, 50%% Quantile School)", med_sch)
+    y = "Two-Dose Coverage"
   )
-#> Warning: Removed 14 rows containing missing values or values outside the scale range
-#> (`geom_line()`).
 ```
+
+    #> Warning: Removed 14 rows containing missing values or values outside the scale range
+    #> (`geom_line()`).
 
 ![](imuGAP_files/figure-html/grade-viz-1.png)
 
 Finally let’s look at some selected schools and see how their predicted
 coverage compared to true underlying coverage from the data simulation
 process.
+
+**Show plot code**
 
 ``` r
 
@@ -1049,13 +1084,9 @@ ggplot() +
   ) +
   scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.85, 1.0)) +
+  scale_y_continuous(limits = c(0.8, 1.0)) +
   theme(legend.position = "bottom") +
   labs(color = "School", x = "Age", y = "Two-Dose Coverage")
-#> Warning: Removed 282 rows containing missing values or values outside the scale range
-#> (`geom_point()`).
-#> Warning: Removed 1 row containing missing values or values outside the scale range
-#> (`geom_point()`).
 ```
 
-![](imuGAP_files/figure-html/unnamed-chunk-2-1.png)
+![](imuGAP_files/figure-html/school-viz-1.png)

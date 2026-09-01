@@ -187,6 +187,86 @@ and 3-layer model fits against the latent coverage stored in
 shows that macro State trends are estimated accurately regardless of
 whether lower-level sub-population data are provided:
 
+**Show plot code**
+
+``` r
+
+state_name <- locations_sim[is.na(parent_id), loc_id]
+
+state_1layer_pred <- summary_1layer[
+  loc_id == state_name & dose == 2 & age > 4
+][, hierarchy := "1-Layer (State Only)"]
+state_2layer_pred <- summary_2layer[
+  loc_id == state_name & dose == 2 & age > 4
+][, hierarchy := "2-Layer (State/County)"]
+state_3layer_pred <- summary_3layer[
+  loc_id == state_name & dose == 2 & age > 4
+][, hierarchy := "3-Layer (State/County/School)"]
+
+state_cov_pred <- rbindlist(list(
+  state_1layer_pred,
+  state_2layer_pred,
+  state_3layer_pred
+))
+h_levels_3 <- c(
+  "1-Layer (State Only)",
+  "2-Layer (State/County)",
+  "3-Layer (State/County/School)"
+)
+state_cov_pred[, hierarchy := factor(hierarchy, levels = h_levels_3)]
+
+state_idx <- predict_sim$target[
+  loc_id == state_name & dose == 2 & age > 4,
+  which = TRUE
+]
+true_state_df <- data.table(
+  age = predict_sim$target[state_idx, age],
+  coverage = latent_params_sim$coverage[state_idx]
+)
+
+true_state_faceted <- rbindlist(lapply(h_levels_3, function(h) {
+  df <- copy(true_state_df)
+  df[, hierarchy := factor(h, levels = h_levels_3)]
+  df
+}))
+
+ggplot() +
+  geom_ribbon(
+    data = state_cov_pred,
+    aes(x = age, ymin = q2_5, ymax = q97_5, fill = "Estimated (95% CI)"),
+    alpha = 0.2
+  ) +
+  geom_line(
+    data = state_cov_pred,
+    aes(x = age, y = q50, color = "Estimated (Median)"),
+    linewidth = 1
+  ) +
+  geom_point(
+    data = true_state_faceted,
+    aes(x = age, y = coverage, shape = "True Coverage"),
+    color = "black",
+    size = 2.2
+  ) +
+  facet_grid(. ~ hierarchy) +
+  scale_shape_manual(name = "", values = c("True Coverage" = 17)) +
+  scale_color_manual(name = "", values = c("Estimated (Median)" = "#1b9e77")) +
+  scale_fill_manual(name = "", values = c("Estimated (95% CI)" = "#1b9e77")) +
+  theme_bw() +
+  scale_x_continuous(breaks = seq(5, 18, by = 3), minor_breaks = NULL) +
+  scale_y_continuous(limits = c(0.8, 1.0)) +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.02, 0.05),
+    legend.justification.inside = c(0, 0),
+    legend.direction = "horizontal",
+    legend.box = "horizontal"
+  ) +
+  labs(
+    x = "Age",
+    y = "State-Level Two-Dose Coverage"
+  )
+```
+
 ![State-level coverage comparison across 1-layer, 2-layer, and 3-layer
 model fits against true
 values.](user_specified_layers_files/figure-html/state-plot-1.png)
@@ -198,6 +278,81 @@ model fits against true values.
 
 Next, we compare County-level coverage estimates between the 2-layer and
 3-layer model fits across counties (*Scruggs*, *Simone*, *Watson*):
+
+**Show plot code**
+
+``` r
+
+counties <- locations_sim[parent_id == state_name, loc_id]
+
+county_2layer_pred <- summary_2layer[
+  loc_id %in% counties & dose == 2 & age > 4
+][, hierarchy := "2-Layer (State/County)"]
+county_3layer_pred <- summary_3layer[
+  loc_id %in% counties & dose == 2 & age > 4
+][, hierarchy := "3-Layer (State/County/School)"]
+
+county_cov_pred <- rbindlist(list(county_2layer_pred, county_3layer_pred))
+h_levels_county <- c("2-Layer (State/County)", "3-Layer (State/County/School)")
+county_cov_pred[, hierarchy := factor(hierarchy, levels = h_levels_county)]
+county_cov_pred[, loc_id := factor(
+  loc_id,
+  levels = c("Simone", "Watson", "Scruggs")
+)]
+
+county_idx <- predict_sim$target[
+  loc_id %in% counties & dose == 2 & age > 4,
+  which = TRUE
+]
+true_county_df <- data.table(
+  loc_id = factor(
+    predict_sim$target[county_idx, loc_id],
+    levels = c("Simone", "Watson", "Scruggs")
+  ),
+  age = predict_sim$target[county_idx, age],
+  coverage = latent_params_sim$coverage[county_idx]
+)
+
+true_county_faceted <- rbindlist(lapply(h_levels_county, function(h) {
+  df <- copy(true_county_df)
+  df[, hierarchy := factor(h, levels = h_levels_county)]
+  df
+}))
+
+ggplot() +
+  geom_ribbon(
+    data = county_cov_pred,
+    aes(x = age, ymin = q2_5, ymax = q97_5, fill = loc_id),
+    alpha = 0.15
+  ) +
+  geom_line(
+    data = county_cov_pred,
+    aes(x = age, y = q50, color = loc_id),
+    linewidth = 0.9
+  ) +
+  geom_point(
+    data = true_county_faceted,
+    aes(x = age, y = coverage, color = loc_id, shape = "True Coverage"),
+    size = 2
+  ) +
+  facet_grid(. ~ hierarchy) +
+  scale_shape_manual(name = "", values = c("True Coverage" = 18)) +
+  scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
+  scale_x_continuous(breaks = seq(5, 18, by = 3), minor_breaks = NULL) +
+  scale_y_continuous(limits = c(0.8, 1.0)) +
+  theme_bw() +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.02, 0.05),
+    legend.justification.inside = c(0, 0),
+    legend.direction = "horizontal",
+    legend.box = "horizontal"
+  ) +
+  labs(
+    x = "Age",
+    y = "County-Level Two-Dose Coverage"
+  )
+```
 
 ![County-level coverage comparison: 2-layer vs. 3-layer model estimates
 against true
@@ -211,6 +366,78 @@ against true values.
 We also examine the model’s ability to estimate the underlying force of
 vaccination parameters ($`\lambda`$) across different location data
 resolutions.
+
+**Show plot code**
+
+``` r
+
+extract_lambda_summary <- function(fit, label) {
+  draws <- rstan::extract(fit$stanfit, pars = "lambda_raw")$lambda_raw
+  doses_factor <- factor(c(
+    rep("Dose 1", nrow(draws)),
+    rep("Dose 2", nrow(draws))
+  ))
+  data.table(
+    hierarchy = label,
+    dose = doses_factor,
+    lambda_raw = c(draws[, 1], draws[, 2])
+  )[, .(
+    q50 = stats::median(lambda_raw),
+    q2_5 = stats::quantile(lambda_raw, 0.025),
+    q97_5 = stats::quantile(lambda_raw, 0.975)
+  ), by = .(hierarchy, dose)]
+}
+
+lambda_est <- rbindlist(list(
+  extract_lambda_summary(fit_sim_1layer, "1-Layer"),
+  extract_lambda_summary(fit_sim_2layer, "2-Layer"),
+  extract_lambda_summary(fit_sim, "3-Layer")
+))
+h_levels_lambda <- c("1-Layer", "2-Layer", "3-Layer")
+lambda_est[, hierarchy := factor(hierarchy, levels = h_levels_lambda)]
+
+true_lambda <- data.table(
+  dose = factor(c("Dose 1", "Dose 2")),
+  hierarchy = factor("1-Layer", levels = h_levels_lambda),
+  true_val = log(latent_params_sim$lambda),
+  label = sprintf("True~lambda == %.1f", latent_params_sim$lambda)
+)
+
+ggplot(lambda_est, aes(x = hierarchy, y = q50)) +
+  geom_hline(
+    data = true_lambda,
+    aes(yintercept = true_val),
+    color = "firebrick",
+    linetype = "dashed",
+    linewidth = 0.8
+  ) +
+  geom_label(
+    data = true_lambda,
+    aes(x = hierarchy, y = true_val, label = label),
+    parse = TRUE,
+    color = "firebrick",
+    fill = ggplot2::alpha("white", 0.75),
+    linewidth = NA,
+    vjust = -0.3,
+    hjust = 0.1,
+    size = 3.2
+  ) +
+  geom_pointrange(
+    aes(ymin = q2_5, ymax = q97_5),
+    size = 0.7
+  ) +
+  facet_wrap(~dose) +
+  coord_cartesian(ylim = c(0.5, 1.5)) +
+  scale_y_continuous(
+    transform = "exp",
+    labels = function(x) sprintf("%.2f", exp(x))
+  ) +
+  theme_bw() +
+  labs(
+    x = "Data Resolution (Model Hierarchy)",
+    y = "Uptake Rate (exponential scale)"
+  )
+```
 
 ![Force of vaccination (lambda) estimates across data resolutions
 compared to true

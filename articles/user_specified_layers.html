@@ -295,11 +295,89 @@ different resolutions affect parameter and coverage estimation.</p>
 <code>latent_params_sim$coverage</code>. Faceting by data resolution
 (columns) shows that macro State trends are estimated accurately
 regardless of whether lower-level sub-population data are provided:</p>
-<div class="figure">
+<div class="chunk-plot-first">
+<details><summary><b>Show plot code</b>
+</summary><div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">state_name</span> <span class="op">&lt;-</span> <span class="va">locations_sim</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">parent_id</span><span class="op">)</span>, <span class="va">loc_id</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">state_1layer_pred</span> <span class="op">&lt;-</span> <span class="va">summary_1layer</span><span class="op">[</span></span>
+<span>  <span class="va">loc_id</span> <span class="op">==</span> <span class="va">state_name</span> <span class="op">&amp;</span> <span class="va">dose</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;</span> <span class="va">age</span> <span class="op">&gt;</span> <span class="fl">4</span></span>
+<span><span class="op">]</span><span class="op">[</span>, <span class="va">hierarchy</span> <span class="op">:=</span> <span class="st">"1-Layer (State Only)"</span><span class="op">]</span></span>
+<span><span class="va">state_2layer_pred</span> <span class="op">&lt;-</span> <span class="va">summary_2layer</span><span class="op">[</span></span>
+<span>  <span class="va">loc_id</span> <span class="op">==</span> <span class="va">state_name</span> <span class="op">&amp;</span> <span class="va">dose</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;</span> <span class="va">age</span> <span class="op">&gt;</span> <span class="fl">4</span></span>
+<span><span class="op">]</span><span class="op">[</span>, <span class="va">hierarchy</span> <span class="op">:=</span> <span class="st">"2-Layer (State/County)"</span><span class="op">]</span></span>
+<span><span class="va">state_3layer_pred</span> <span class="op">&lt;-</span> <span class="va">summary_3layer</span><span class="op">[</span></span>
+<span>  <span class="va">loc_id</span> <span class="op">==</span> <span class="va">state_name</span> <span class="op">&amp;</span> <span class="va">dose</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;</span> <span class="va">age</span> <span class="op">&gt;</span> <span class="fl">4</span></span>
+<span><span class="op">]</span><span class="op">[</span>, <span class="va">hierarchy</span> <span class="op">:=</span> <span class="st">"3-Layer (State/County/School)"</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">state_cov_pred</span> <span class="op">&lt;-</span> <span class="fu">rbindlist</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="va">state_1layer_pred</span>,</span>
+<span>  <span class="va">state_2layer_pred</span>,</span>
+<span>  <span class="va">state_3layer_pred</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">h_levels_3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"1-Layer (State Only)"</span>,</span>
+<span>  <span class="st">"2-Layer (State/County)"</span>,</span>
+<span>  <span class="st">"3-Layer (State/County/School)"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">state_cov_pred</span><span class="op">[</span>, <span class="va">hierarchy</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">hierarchy</span>, levels <span class="op">=</span> <span class="va">h_levels_3</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">state_idx</span> <span class="op">&lt;-</span> <span class="va">predict_sim</span><span class="op">$</span><span class="va">target</span><span class="op">[</span></span>
+<span>  <span class="va">loc_id</span> <span class="op">==</span> <span class="va">state_name</span> <span class="op">&amp;</span> <span class="va">dose</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;</span> <span class="va">age</span> <span class="op">&gt;</span> <span class="fl">4</span>,</span>
+<span>  which <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">]</span></span>
+<span><span class="va">true_state_df</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="op">(</span></span>
+<span>  age <span class="op">=</span> <span class="va">predict_sim</span><span class="op">$</span><span class="va">target</span><span class="op">[</span><span class="va">state_idx</span>, <span class="va">age</span><span class="op">]</span>,</span>
+<span>  coverage <span class="op">=</span> <span class="va">latent_params_sim</span><span class="op">$</span><span class="va">coverage</span><span class="op">[</span><span class="va">state_idx</span><span class="op">]</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">true_state_faceted</span> <span class="op">&lt;-</span> <span class="fu">rbindlist</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">h_levels_3</span>, <span class="kw">function</span><span class="op">(</span><span class="va">h</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">copy</span><span class="op">(</span><span class="va">true_state_df</span><span class="op">)</span></span>
+<span>  <span class="va">df</span><span class="op">[</span>, <span class="va">hierarchy</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">h</span>, levels <span class="op">=</span> <span class="va">h_levels_3</span><span class="op">)</span><span class="op">]</span></span>
+<span>  <span class="va">df</span></span>
+<span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">ggplot</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_ribbon</span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="va">state_cov_pred</span>,</span>
+<span>    <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>, ymin <span class="op">=</span> <span class="va">q2_5</span>, ymax <span class="op">=</span> <span class="va">q97_5</span>, fill <span class="op">=</span> <span class="st">"Estimated (95% CI)"</span><span class="op">)</span>,</span>
+<span>    alpha <span class="op">=</span> <span class="fl">0.2</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_line</span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="va">state_cov_pred</span>,</span>
+<span>    <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>, y <span class="op">=</span> <span class="va">q50</span>, color <span class="op">=</span> <span class="st">"Estimated (Median)"</span><span class="op">)</span>,</span>
+<span>    linewidth <span class="op">=</span> <span class="fl">1</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_point</span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="va">true_state_faceted</span>,</span>
+<span>    <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>, y <span class="op">=</span> <span class="va">coverage</span>, shape <span class="op">=</span> <span class="st">"True Coverage"</span><span class="op">)</span>,</span>
+<span>    color <span class="op">=</span> <span class="st">"black"</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">2.2</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">facet_grid</span><span class="op">(</span><span class="va">.</span> <span class="op">~</span> <span class="va">hierarchy</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_shape_manual</span><span class="op">(</span>name <span class="op">=</span> <span class="st">""</span>, values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"True Coverage"</span> <span class="op">=</span> <span class="fl">17</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_color_manual</span><span class="op">(</span>name <span class="op">=</span> <span class="st">""</span>, values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Estimated (Median)"</span> <span class="op">=</span> <span class="st">"#1b9e77"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_fill_manual</span><span class="op">(</span>name <span class="op">=</span> <span class="st">""</span>, values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Estimated (95% CI)"</span> <span class="op">=</span> <span class="st">"#1b9e77"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">theme_bw</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_x_continuous</span><span class="op">(</span>breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">18</span>, by <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>, minor_breaks <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_y_continuous</span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.8</span>, <span class="fl">1.0</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">theme</span><span class="op">(</span></span>
+<span>    legend.position <span class="op">=</span> <span class="st">"inside"</span>,</span>
+<span>    legend.position.inside <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.02</span>, <span class="fl">0.05</span><span class="op">)</span>,</span>
+<span>    legend.justification.inside <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
+<span>    legend.direction <span class="op">=</span> <span class="st">"horizontal"</span>,</span>
+<span>    legend.box <span class="op">=</span> <span class="st">"horizontal"</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">labs</span><span class="op">(</span></span>
+<span>    x <span class="op">=</span> <span class="st">"Age"</span>,</span>
+<span>    y <span class="op">=</span> <span class="st">"State-Level Two-Dose Coverage"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+</details><div class="figure">
 <img src="user_specified_layers_files/figure-html/state-plot-1.png" class="r-plt" alt="State-level coverage comparison across 1-layer, 2-layer, and 3-layer model fits against true values." width="768"><p class="caption">
 State-level coverage comparison across 1-layer, 2-layer, and 3-layer
 model fits against true values.
 </p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="county-level-coverage-across-data-resolutions">County-Level Coverage Across Data Resolutions<a class="anchor" aria-label="anchor" href="#county-level-coverage-across-data-resolutions"></a>
@@ -307,11 +385,84 @@ model fits against true values.
 <p>Next, we compare County-level coverage estimates between the 2-layer
 and 3-layer model fits across counties (<em>Scruggs</em>,
 <em>Simone</em>, <em>Watson</em>):</p>
-<div class="figure">
+<div class="chunk-plot-first">
+<details><summary><b>Show plot code</b>
+</summary><div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">counties</span> <span class="op">&lt;-</span> <span class="va">locations_sim</span><span class="op">[</span><span class="va">parent_id</span> <span class="op">==</span> <span class="va">state_name</span>, <span class="va">loc_id</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">county_2layer_pred</span> <span class="op">&lt;-</span> <span class="va">summary_2layer</span><span class="op">[</span></span>
+<span>  <span class="va">loc_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">counties</span> <span class="op">&amp;</span> <span class="va">dose</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;</span> <span class="va">age</span> <span class="op">&gt;</span> <span class="fl">4</span></span>
+<span><span class="op">]</span><span class="op">[</span>, <span class="va">hierarchy</span> <span class="op">:=</span> <span class="st">"2-Layer (State/County)"</span><span class="op">]</span></span>
+<span><span class="va">county_3layer_pred</span> <span class="op">&lt;-</span> <span class="va">summary_3layer</span><span class="op">[</span></span>
+<span>  <span class="va">loc_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">counties</span> <span class="op">&amp;</span> <span class="va">dose</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;</span> <span class="va">age</span> <span class="op">&gt;</span> <span class="fl">4</span></span>
+<span><span class="op">]</span><span class="op">[</span>, <span class="va">hierarchy</span> <span class="op">:=</span> <span class="st">"3-Layer (State/County/School)"</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">county_cov_pred</span> <span class="op">&lt;-</span> <span class="fu">rbindlist</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">county_2layer_pred</span>, <span class="va">county_3layer_pred</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">h_levels_county</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2-Layer (State/County)"</span>, <span class="st">"3-Layer (State/County/School)"</span><span class="op">)</span></span>
+<span><span class="va">county_cov_pred</span><span class="op">[</span>, <span class="va">hierarchy</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">hierarchy</span>, levels <span class="op">=</span> <span class="va">h_levels_county</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">county_cov_pred</span><span class="op">[</span>, <span class="va">loc_id</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span></span>
+<span>  <span class="va">loc_id</span>,</span>
+<span>  levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Simone"</span>, <span class="st">"Watson"</span>, <span class="st">"Scruggs"</span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">county_idx</span> <span class="op">&lt;-</span> <span class="va">predict_sim</span><span class="op">$</span><span class="va">target</span><span class="op">[</span></span>
+<span>  <span class="va">loc_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">counties</span> <span class="op">&amp;</span> <span class="va">dose</span> <span class="op">==</span> <span class="fl">2</span> <span class="op">&amp;</span> <span class="va">age</span> <span class="op">&gt;</span> <span class="fl">4</span>,</span>
+<span>  which <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">]</span></span>
+<span><span class="va">true_county_df</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="op">(</span></span>
+<span>  loc_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span></span>
+<span>    <span class="va">predict_sim</span><span class="op">$</span><span class="va">target</span><span class="op">[</span><span class="va">county_idx</span>, <span class="va">loc_id</span><span class="op">]</span>,</span>
+<span>    levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Simone"</span>, <span class="st">"Watson"</span>, <span class="st">"Scruggs"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  age <span class="op">=</span> <span class="va">predict_sim</span><span class="op">$</span><span class="va">target</span><span class="op">[</span><span class="va">county_idx</span>, <span class="va">age</span><span class="op">]</span>,</span>
+<span>  coverage <span class="op">=</span> <span class="va">latent_params_sim</span><span class="op">$</span><span class="va">coverage</span><span class="op">[</span><span class="va">county_idx</span><span class="op">]</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">true_county_faceted</span> <span class="op">&lt;-</span> <span class="fu">rbindlist</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">h_levels_county</span>, <span class="kw">function</span><span class="op">(</span><span class="va">h</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">copy</span><span class="op">(</span><span class="va">true_county_df</span><span class="op">)</span></span>
+<span>  <span class="va">df</span><span class="op">[</span>, <span class="va">hierarchy</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">h</span>, levels <span class="op">=</span> <span class="va">h_levels_county</span><span class="op">)</span><span class="op">]</span></span>
+<span>  <span class="va">df</span></span>
+<span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">ggplot</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_ribbon</span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="va">county_cov_pred</span>,</span>
+<span>    <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>, ymin <span class="op">=</span> <span class="va">q2_5</span>, ymax <span class="op">=</span> <span class="va">q97_5</span>, fill <span class="op">=</span> <span class="va">loc_id</span><span class="op">)</span>,</span>
+<span>    alpha <span class="op">=</span> <span class="fl">0.15</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_line</span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="va">county_cov_pred</span>,</span>
+<span>    <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>, y <span class="op">=</span> <span class="va">q50</span>, color <span class="op">=</span> <span class="va">loc_id</span><span class="op">)</span>,</span>
+<span>    linewidth <span class="op">=</span> <span class="fl">0.9</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_point</span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="va">true_county_faceted</span>,</span>
+<span>    <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">age</span>, y <span class="op">=</span> <span class="va">coverage</span>, color <span class="op">=</span> <span class="va">loc_id</span>, shape <span class="op">=</span> <span class="st">"True Coverage"</span><span class="op">)</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">2</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">facet_grid</span><span class="op">(</span><span class="va">.</span> <span class="op">~</span> <span class="va">hierarchy</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_shape_manual</span><span class="op">(</span>name <span class="op">=</span> <span class="st">""</span>, values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"True Coverage"</span> <span class="op">=</span> <span class="fl">18</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_color_discrete</span><span class="op">(</span><span class="cn">NULL</span>, aesthetics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"color"</span>, <span class="st">"fill"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_x_continuous</span><span class="op">(</span>breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">18</span>, by <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>, minor_breaks <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_y_continuous</span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.8</span>, <span class="fl">1.0</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">theme_bw</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">theme</span><span class="op">(</span></span>
+<span>    legend.position <span class="op">=</span> <span class="st">"inside"</span>,</span>
+<span>    legend.position.inside <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.02</span>, <span class="fl">0.05</span><span class="op">)</span>,</span>
+<span>    legend.justification.inside <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
+<span>    legend.direction <span class="op">=</span> <span class="st">"horizontal"</span>,</span>
+<span>    legend.box <span class="op">=</span> <span class="st">"horizontal"</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">labs</span><span class="op">(</span></span>
+<span>    x <span class="op">=</span> <span class="st">"Age"</span>,</span>
+<span>    y <span class="op">=</span> <span class="st">"County-Level Two-Dose Coverage"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+</details><div class="figure">
 <img src="user_specified_layers_files/figure-html/county-plot-1.png" class="r-plt" alt="County-level coverage comparison: 2-layer vs. 3-layer model estimates against true values." width="768"><p class="caption">
 County-level coverage comparison: 2-layer vs. 3-layer model estimates
 against true values.
 </p>
+</div>
 </div>
 </div>
 <div class="section level3">
@@ -323,11 +474,81 @@ Estimation<a class="anchor" aria-label="anchor" href="#force-of-vaccination-lamb
 of vaccination parameters
 (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math>)
 across different location data resolutions.</p>
-<div class="figure">
+<div class="chunk-plot-first">
+<details><summary><b>Show plot code</b>
+</summary><div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">extract_lambda_summary</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">fit</span>, <span class="va">label</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">draws</span> <span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-extract.html" class="external-link">extract</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">stanfit</span>, pars <span class="op">=</span> <span class="st">"lambda_raw"</span><span class="op">)</span><span class="op">$</span><span class="va">lambda_raw</span></span>
+<span>  <span class="va">doses_factor</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Dose 1"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">draws</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Dose 2"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">draws</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu">data.table</span><span class="op">(</span></span>
+<span>    hierarchy <span class="op">=</span> <span class="va">label</span>,</span>
+<span>    dose <span class="op">=</span> <span class="va">doses_factor</span>,</span>
+<span>    lambda_raw <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">draws</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">draws</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span><span class="op">)</span></span>
+<span>  <span class="op">)</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span></span>
+<span>    q50 <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">lambda_raw</span><span class="op">)</span>,</span>
+<span>    q2_5 <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">lambda_raw</span>, <span class="fl">0.025</span><span class="op">)</span>,</span>
+<span>    q97_5 <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">lambda_raw</span>, <span class="fl">0.975</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>, by <span class="op">=</span> <span class="fu">.</span><span class="op">(</span><span class="va">hierarchy</span>, <span class="va">dose</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">lambda_est</span> <span class="op">&lt;-</span> <span class="fu">rbindlist</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="fu">extract_lambda_summary</span><span class="op">(</span><span class="va">fit_sim_1layer</span>, <span class="st">"1-Layer"</span><span class="op">)</span>,</span>
+<span>  <span class="fu">extract_lambda_summary</span><span class="op">(</span><span class="va">fit_sim_2layer</span>, <span class="st">"2-Layer"</span><span class="op">)</span>,</span>
+<span>  <span class="fu">extract_lambda_summary</span><span class="op">(</span><span class="va">fit_sim</span>, <span class="st">"3-Layer"</span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">h_levels_lambda</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1-Layer"</span>, <span class="st">"2-Layer"</span>, <span class="st">"3-Layer"</span><span class="op">)</span></span>
+<span><span class="va">lambda_est</span><span class="op">[</span>, <span class="va">hierarchy</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">hierarchy</span>, levels <span class="op">=</span> <span class="va">h_levels_lambda</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">true_lambda</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="op">(</span></span>
+<span>  dose <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Dose 1"</span>, <span class="st">"Dose 2"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  hierarchy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="st">"1-Layer"</span>, levels <span class="op">=</span> <span class="va">h_levels_lambda</span><span class="op">)</span>,</span>
+<span>  true_val <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">latent_params_sim</span><span class="op">$</span><span class="va">lambda</span><span class="op">)</span>,</span>
+<span>  label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"True~lambda == %.1f"</span>, <span class="va">latent_params_sim</span><span class="op">$</span><span class="va">lambda</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">ggplot</span><span class="op">(</span><span class="va">lambda_est</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">hierarchy</span>, y <span class="op">=</span> <span class="va">q50</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_hline</span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="va">true_lambda</span>,</span>
+<span>    <span class="fu">aes</span><span class="op">(</span>yintercept <span class="op">=</span> <span class="va">true_val</span><span class="op">)</span>,</span>
+<span>    color <span class="op">=</span> <span class="st">"firebrick"</span>,</span>
+<span>    linetype <span class="op">=</span> <span class="st">"dashed"</span>,</span>
+<span>    linewidth <span class="op">=</span> <span class="fl">0.8</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_label</span><span class="op">(</span></span>
+<span>    data <span class="op">=</span> <span class="va">true_lambda</span>,</span>
+<span>    <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">hierarchy</span>, y <span class="op">=</span> <span class="va">true_val</span>, label <span class="op">=</span> <span class="va">label</span><span class="op">)</span>,</span>
+<span>    parse <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    color <span class="op">=</span> <span class="st">"firebrick"</span>,</span>
+<span>    fill <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://scales.r-lib.org/reference/alpha.html" class="external-link">alpha</a></span><span class="op">(</span><span class="st">"white"</span>, <span class="fl">0.75</span><span class="op">)</span>,</span>
+<span>    linewidth <span class="op">=</span> <span class="cn">NA</span>,</span>
+<span>    vjust <span class="op">=</span> <span class="op">-</span><span class="fl">0.3</span>,</span>
+<span>    hjust <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">3.2</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_pointrange</span><span class="op">(</span></span>
+<span>    <span class="fu">aes</span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">q2_5</span>, ymax <span class="op">=</span> <span class="va">q97_5</span><span class="op">)</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">0.7</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">facet_wrap</span><span class="op">(</span><span class="op">~</span><span class="va">dose</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">coord_cartesian</span><span class="op">(</span>ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1.5</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">scale_y_continuous</span><span class="op">(</span></span>
+<span>    transform <span class="op">=</span> <span class="st">"exp"</span>,</span>
+<span>    labels <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%.2f"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">theme_bw</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">labs</span><span class="op">(</span></span>
+<span>    x <span class="op">=</span> <span class="st">"Data Resolution (Model Hierarchy)"</span>,</span>
+<span>    y <span class="op">=</span> <span class="st">"Uptake Rate (exponential scale)"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+</details><div class="figure">
 <img src="user_specified_layers_files/figure-html/lambda-plot-1.png" class="r-plt" alt="Force of vaccination (lambda) estimates across data resolutions compared to true values." width="672"><p class="caption">
 Force of vaccination (lambda) estimates across data resolutions compared
 to true values.
 </p>
+</div>
 </div>
 <hr>
 </div>
