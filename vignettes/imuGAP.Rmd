@@ -534,16 +534,116 @@ beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 ```
 
-We can also look at trace plots for selected parameters to ensure convergence has been reached.
+We can also examine trace plots for key parameters to check MCMC convergence and evaluate parameter recovery against the true data-generating simulation parameters (`latent_params_sim`).
 
-```{r trace-plot}
-bayesplot::mcmc_trace(fit_sim$stanfit,
+#### Basis Spline Coefficients ($\beta_{\text{bs}}$)
+
+```{r trace-plot-beta}
+bayesplot::mcmc_trace(
+  fit_sim$stanfit,
   pars = c(
     "beta_bs[1]", "beta_bs[2]", "beta_bs[3]",
     "beta_bs[4]", "beta_bs[5]"
   )
-) + theme_bw() +
-  theme(legend.position = c(.9, .1), legend.justification = c(1, 0))
+) +
+  theme_bw() +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.9, 0.1),
+    legend.justification.inside = c(1, 0)
+  )
+```
+
+#### Hierarchy Layer Variances ($\sigma$)
+
+Trace plots for the hierarchy layer standard deviations $\sigma_{\text{county}}$ (`sigma_layer[1]`) and $\sigma_{\text{school}}$ (`sigma_layer[2]`) zoomed to the shared range $[0, 2.5]$ via coordinate clipping (preserving full chains), compared against the true simulation standard deviations (dashed red lines and annotated values):
+
+```{r trace-plot-sigmas}
+sigma_ref <- data.frame(
+  parameter = c("sigma_layer[1]", "sigma_layer[2]"),
+  true_val = c(latent_params_sim$sigma_cnty, latent_params_sim$sigma_sch),
+  label = sprintf(
+    "True~sigma == %.2f",
+    c(latent_params_sim$sigma_cnty, latent_params_sim$sigma_sch)
+  )
+)
+
+bayesplot::mcmc_trace(
+  fit_sim$stanfit,
+  pars = c("sigma_layer[1]", "sigma_layer[2]"),
+  facet_args = list(labeller = ggplot2::as_labeller(c(
+    "sigma_layer[1]" = "sigma[County]",
+    "sigma_layer[2]" = "sigma[School]"
+  ), default = ggplot2::label_parsed))
+) +
+  geom_hline(
+    data = sigma_ref,
+    aes(yintercept = true_val),
+    color = "firebrick",
+    linetype = "dashed",
+    linewidth = 0.8
+  ) +
+  geom_label(
+    data = sigma_ref,
+    aes(x = 100, y = true_val, label = label),
+    parse = TRUE,
+    color = "firebrick",
+    fill = ggplot2::alpha("white", 0.75),
+    linewidth = NA,
+    vjust = -0.3,
+    hjust = 0,
+    size = 3.2
+  ) +
+  coord_cartesian(ylim = c(0, 2.5)) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+#### Vaccination Uptake Rates ($\lambda_{\text{raw}}$)
+
+Trace plots for the unconstrained dose uptake rates $\lambda_{\text{raw}}$ (`lambda_raw[1]` and `lambda_raw[2]`) zoomed to the shared range $[\exp(0.5), \exp(1.5)]$ via coordinate clipping (preserving full chains), compared against the log-transformed true simulation parameters $\log(\lambda)$ (dashed red lines and annotated values) with an exponentiated y-axis scale and tick labels:
+
+```{r trace-plot-lambdas}
+lambda_ref <- data.frame(
+  parameter = c("lambda_raw[1]", "lambda_raw[2]"),
+  true_val = log(latent_params_sim$lambda),
+  label = sprintf("True~lambda == %.1f", latent_params_sim$lambda)
+)
+
+bayesplot::mcmc_trace(
+  fit_sim$stanfit,
+  pars = c("lambda_raw[1]", "lambda_raw[2]"),
+  facet_args = list(labeller = ggplot2::as_labeller(c(
+    "lambda_raw[1]" = "lambda[raw*\", \"*1]~(Dose~1)",
+    "lambda_raw[2]" = "lambda[raw*\", \"*2]~(Dose~2)"
+  ), default = ggplot2::label_parsed))
+) +
+  geom_hline(
+    data = lambda_ref,
+    aes(yintercept = true_val),
+    color = "firebrick",
+    linetype = "dashed",
+    linewidth = 0.8
+  ) +
+  geom_label(
+    data = lambda_ref,
+    aes(x = 100, y = true_val, label = label),
+    parse = TRUE,
+    color = "firebrick",
+    fill = ggplot2::alpha("white", 0.75),
+    linewidth = NA,
+    vjust = -0.3,
+    hjust = 0,
+    size = 3.2
+  ) +
+  coord_cartesian(ylim = c(0.5, 1.5)) +
+  scale_y_continuous(
+    transform = "exp",
+    labels = function(x) sprintf("%.2f", exp(x))
+  ) +
+  labs(y = "Uptake Rate: exp(lambda_raw)") +
+  theme_bw() +
+  theme(legend.position = "bottom")
 ```
 
 ---
@@ -626,36 +726,90 @@ We can also look at the trend in coverage by age at the county level. Note that 
 ```{r county-viz}
 summary_predict |>
   subset(loc_id %in% c("Scruggs", "Simone", "Watson") & dose == 2 & age > 4) |>
+  transform(loc_id = factor(loc_id, levels = c("Simone", "Watson", "Scruggs"))) |>
   ggplot() +
   aes(x = age) +
   geom_line(aes(y = q50, color = loc_id)) +
   geom_ribbon(aes(ymin = q2_5, ymax = q97_5, fill = loc_id), alpha = 0.2) +
   theme_bw() +
   theme(
-    legend.position = "inside", legend.position.inside = c(.2, 0.05),
+    legend.position = "inside",
+    legend.position.inside = c(0.12, 0.05),
     legend.justification.inside = c(0, 0)
   ) +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
+  scale_y_continuous(limits = c(0.85, 1.0)) +
   scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
   labs(
-    x = "Age", y = "Coverage", title = "County-level two dose coverage"
+    x = "Age", y = "County-Level Two-Dose Coverage"
   )
 ```
 
-Next, we can look at the distribution of school-level coverage estimates by age group. Let's focus on Scruggs County as an example. 
+Next, we can zoom into school-level coverage estimates. As an example, we examine the median (50% quantile) school within Scruggs County from the latent data, visualizing individual posterior trajectory draws (spaghetti plot) alongside the posterior median and the true underlying latent coverage:
 
 ```{r grade-viz}
 scruggs_schools <- locations_sim[parent_id == "Scruggs", loc_id]
-summary_predict |>
-  subset(
-    loc_id %in% scruggs_schools & dose == 2 & age > 4
-  ) |>
-  ggplot() +
-  geom_boxplot(aes(x = factor(age), y = q50)) +
+off_scruggs <- latent_params_sim$off_sch[scruggs_schools]
+med_sch <- names(off_scruggs)[which.min(
+  abs(off_scruggs - stats::quantile(off_scruggs, 0.5))
+)]
+
+predict_sch <- subset(predict_sim, loc_id == med_sch & dose == 2 & age > 4)
+draws_sch <- as.data.frame(predict_sch)
+
+sch_target <- predict_sch$target
+sch_target$latent <- latent_params_sim$coverage[sch_target$obs_id]
+
+summary_sch <- summary(predict_sch)
+summary_sch$latent <- sch_target$latent
+
+ggplot() +
+  geom_line(
+    data = draws_sch,
+    aes(
+      x = age,
+      y = coverage,
+      group = interaction(chain, iteration),
+      color = "Posterior Draws"
+    ),
+    alpha = 0.12,
+    linewidth = 0.4
+  ) +
+  geom_line(
+    data = summary_sch,
+    aes(x = age, y = q50, color = "Posterior Median"),
+    linewidth = 0.9
+  ) +
+  geom_line(
+    data = summary_sch,
+    aes(x = age, y = latent, color = "True Latent"),
+    linetype = "dashed",
+    linewidth = 0.9
+  ) +
   theme_bw() +
+  scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
+  scale_y_continuous(limits = c(0.85, 1.0)) +
+  scale_color_manual(
+    name = NULL,
+    values = c(
+      "Posterior Median" = "black",
+      "True Latent" = "firebrick",
+      "Posterior Draws" = "steelblue"
+    ),
+    guide = guide_legend(override.aes = list(
+      linewidth = c(0.9, 0.9, 0.8),
+      linetype = c("solid", "dashed", "solid"),
+      alpha = c(1, 1, 0.6)
+    ))
+  ) +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.05, 0.05),
+    legend.justification.inside = c(0, 0)
+  ) +
   labs(
-    x = "Age", y = "Coverage",
-    title = "Distribution of School-Level Coverage For Scruggs County"
+    x = "Age",
+    y = sprintf("Two-Dose Coverage (%s, 50%% Quantile School)", med_sch)
   )
 ```
 
@@ -673,9 +827,9 @@ predict_sub <- predict_sim |>
   subset(loc_id %in% schools & dose == 2 & age > 4)
 
 # Get the pre-computed background coverage matching the subsetted target
+target_idx <- predict_sim$target[loc_id %in% schools & dose == 2 & age > 4, which = TRUE]
 latent_ref <- copy(predict_sub$target)
-latent_ref$coverage <- latent_params_sim$coverage[predict_sub$target$obs_id]
-
+latent_ref$coverage <- latent_params_sim$coverage[target_idx]
 
 # Convert predictions to a long-format data.frame
 draws_df <- as.data.frame(predict_sub)
@@ -685,7 +839,7 @@ ggplot() +
   aes(age, coverage, color = loc_id) +
   geom_point(
     data = draws_df,
-    alpha = 1 / 256, shape = 16,
+    alpha = 0.15, shape = 16, size = 1.2,
     position = position_jitterdodge(
       dodge.width = 0.5,
       jitter.width = 0.15
@@ -694,7 +848,9 @@ ggplot() +
   geom_point(
     data = latent_ref,
     mapping = aes(shape = "True value"),
-    fill = NA
+    size = 2.5,
+    stroke = 1.1,
+    position = position_dodge(width = 0.5)
   ) +
   theme_bw() +
   scale_shape_manual(
@@ -703,7 +859,8 @@ ggplot() +
   ) +
   scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
+  scale_y_continuous(limits = c(0.85, 1.0)) +
   theme(legend.position = "bottom") +
-  labs(color = "School", x = "Age", y = "Coverage")
+  labs(color = "School", x = "Age", y = "Two-Dose Coverage")
 ```
 
