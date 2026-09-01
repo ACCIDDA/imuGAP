@@ -2,6 +2,19 @@
 
 This is a minor release update of imuGAP (version 0.2.0).
 
+In response to
+
+"
+Thanks, we see:
+
+   Unknown, possibly misspelled, fields in DESCRIPTION:
+     'Remotes'
+
+Please fix and resubmit.
+"
+
+We have removed the remotes field and adjusted our internal CI. `cmdstanr` continues to appear in the `Suggests` field as an optional non-CRAN package that users may want to use with `imuGAP`
+
 ### Summary of Changes Since Previous Version (0.1.0)
 
 * **Arbitrary Hierarchy Layer Depth**:
