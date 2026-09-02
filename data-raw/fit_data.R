@@ -29,7 +29,7 @@ stopifnot(
   all(c("beta_bs", "lambda_raw") %in% fit_sim$stanfit@model_pars),
   all(is.finite(rstan::extract(fit_sim$stanfit, pars = "beta_bs")$beta_bs))
 )
-save(fit_sim, file = "data/fit_sim.rda", compress = "xz")
+usethis::use_data(fit_sim, overwrite = TRUE, compress = "xz")
 
 target_sim <- canonicalize_target(
   create_target(
@@ -41,14 +41,14 @@ target_sim <- canonicalize_target(
   ),
   fit_sim
 )
-save(target_sim, file = "data/target_sim.rda")
+usethis::use_data(target_sim, overwrite = TRUE, compress = "xz")
 
 stopifnot(length(latent_params_sim$coverage) == nrow(target_sim))
 
 predict_sim <- suppressWarnings(
   predict(object = fit_sim, target = target_sim, posterior_size = 100)
 )
-save(predict_sim, file = "data/predict_sim.rda", compress = "xz")
+usethis::use_data(predict_sim, overwrite = TRUE, compress = "xz")
 
 # --- 2-Layer Fit (State -> County) ----------------------------------------
 locations_sim_2layer <- locations_sim[is.na(parent_id) | parent_id == "State"]
@@ -70,7 +70,7 @@ fit_sim_2layer <- suppressWarnings(sampling(
 ))
 
 stopifnot(inherits(fit_sim_2layer$stanfit, "stanfit"))
-save(fit_sim_2layer, file = "data/fit_sim_2layer.rda", compress = "xz")
+usethis::use_data(fit_sim_2layer, overwrite = TRUE, compress = "xz")
 
 target_sim_2layer <- canonicalize_target(
   create_target(
@@ -82,7 +82,7 @@ target_sim_2layer <- canonicalize_target(
   ),
   fit_sim_2layer
 )
-save(target_sim_2layer, file = "data/target_sim_2layer.rda")
+usethis::use_data(target_sim_2layer, overwrite = TRUE, compress = "xz")
 
 predict_sim_2layer <- suppressWarnings(
   predict(
@@ -91,7 +91,7 @@ predict_sim_2layer <- suppressWarnings(
     posterior_size = 100
   )
 )
-save(predict_sim_2layer, file = "data/predict_sim_2layer.rda", compress = "xz")
+usethis::use_data(predict_sim_2layer, overwrite = TRUE, compress = "xz")
 
 # --- 1-Layer Fit (State Only) ---------------------------------------------
 locations_sim_1layer <- locations_sim[is.na(parent_id)]
@@ -112,7 +112,7 @@ fit_sim_1layer <- suppressWarnings(sampling(
 ))
 
 stopifnot(inherits(fit_sim_1layer$stanfit, "stanfit"))
-save(fit_sim_1layer, file = "data/fit_sim_1layer.rda", compress = "xz")
+usethis::use_data(fit_sim_1layer, overwrite = TRUE, compress = "xz")
 
 target_sim_1layer <- canonicalize_target(
   create_target(
@@ -124,7 +124,7 @@ target_sim_1layer <- canonicalize_target(
   ),
   fit_sim_1layer
 )
-save(target_sim_1layer, file = "data/target_sim_1layer.rda")
+usethis::use_data(target_sim_1layer, overwrite = TRUE, compress = "xz")
 
 predict_sim_1layer <- suppressWarnings(
   predict(
@@ -133,4 +133,4 @@ predict_sim_1layer <- suppressWarnings(
     posterior_size = 100
   )
 )
-save(predict_sim_1layer, file = "data/predict_sim_1layer.rda", compress = "xz")
+usethis::use_data(predict_sim_1layer, overwrite = TRUE, compress = "xz")

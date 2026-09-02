@@ -26,3 +26,7 @@
 ^Rplots\.pdf$
 ^vignettes/.*\.html$
 ^vignettes/.*\.pdf$
+^figure$
+^figures$
+^inst/doc/.*\.html$
+^.*\.tar\.gz$
