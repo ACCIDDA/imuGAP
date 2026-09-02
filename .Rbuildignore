@@ -28,5 +28,4 @@
 ^vignettes/.*\.pdf$
 ^figure$
 ^figures$
-^inst/doc/.*\.html$
 ^.*\.tar\.gz$
