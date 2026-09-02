@@ -145,9 +145,13 @@ head(canonical_observations)
 
 The populations dataset acts as observation metadata, mapping each
 observation ID (`obs_id`) to the corresponding location, birth cohort,
-age at observation, vaccine dose, and observation weight. We validate
-and canonicalize it using
+age at observation, vaccine dose, and observation weight (`weight`). We
+validate and canonicalize it using
 [`canonicalize_populations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md).
+
+For observations that record coverage for a single cohort and age (such
+as kindergarten entry surveys), there is a 1:1 mapping where each
+`obs_id` has a single row with `weight = 1.0`:
 
 ``` r
 
@@ -161,6 +165,39 @@ head(populations_sim)
 #> 4:      4 Chickadee Elementary      4     5     2      1
 #> 5:      5 Chickadee Elementary      5     5     2      1
 #> 6:      6 Chickadee Elementary      6     5     2      1
+```
+
+However, composite observations (such as TeenVaxView surveys spanning
+multiple age groups) aggregate individuals across multiple cohorts and
+ages into a single observation. In such cases, `populations_sim`
+contains multiple rows for the same `obs_id`, with fractional weights
+summing to `1.0`:
+
+``` r
+
+# TeenVaxView-style observation spanning ages 14 to 18
+observations_sim[
+  obs_id == 761,
+  .(obs_id, loc_id, positive, sample_n, age_min, age_max, dose)
+]
+#>    obs_id loc_id positive sample_n age_min age_max  dose
+#>     <int> <char>    <num>    <num>   <int>   <int> <int>
+#> 1:    761  State      224      257      14      19     2
+
+# Corresponding population metadata with distributed weights summing to 1
+populations_sim[obs_id == 761]
+#>    obs_id loc_id cohort   age  dose weight
+#>     <int> <char>  <int> <int> <int>  <num>
+#> 1:    761  State      5    14     2    0.2
+#> 2:    761  State      4    15     2    0.2
+#> 3:    761  State      3    16     2    0.2
+#> 4:    761  State      2    17     2    0.2
+#> 5:    761  State      1    18     2    0.2
+```
+
+We can then validate and canonicalize the dataset:
+
+``` r
 
 # Canonicalize and validate
 canonical_populations <- canonicalize_populations(
@@ -640,7 +677,7 @@ state-level vaccine uptake baseline:
 beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 #> List of 1
-#>  $ beta_bs: num [1:2000, 1:5] -1.57 -1.7 -1.62 -1.65 -1.59 ...
+#>  $ beta_bs: num [1:2000, 1:5] -1.65 -1.59 -1.57 -1.64 -1.68 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ iterations: NULL
 #>   .. ..$           : NULL
@@ -965,11 +1002,12 @@ med_sch <- names(off_scruggs)[which.min(
 predict_sch <- subset(predict_sim, loc_id == med_sch & dose == 2 & age > 4)
 draws_sch <- as.data.frame(predict_sch)
 
-sch_target <- predict_sch$target
-sch_target$latent <- latent_params_sim$coverage[sch_target$obs_id]
-
+target_idx <- predict_sim$target[
+  loc_id == med_sch & dose == 2 & age > 4,
+  which = TRUE
+]
 summary_sch <- summary(predict_sch)
-summary_sch$latent <- sch_target$latent
+summary_sch$latent <- latent_params_sim$coverage[target_idx]
 
 ggplot() +
   geom_line(
@@ -1028,23 +1066,27 @@ ggplot() +
   )
 ```
 
-    #> Warning: Removed 14 rows containing missing values or values outside the scale range
-    #> (`geom_line()`).
-
 ![](imuGAP_files/figure-html/grade-viz-1.png)
 
 Finally let’s look at some selected schools and see how their predicted
-coverage compared to true underlying coverage from the data simulation
-process.
+coverage compares to the true underlying coverage from the data
+simulation process.
+
+Because the model employs hierarchical partial pooling, estimates for
+schools with smaller sample sizes (such as Flycatcher Elementary, ~59
+students per grade) experience stronger shrinkage toward the county mean
+($`\delta_{\text{cnty}} = +0.22`$) than larger schools (such as Towhee
+Children’s Academy, ~207 students per grade), balancing local empirical
+data with group-level priors.
 
 **Show plot code**
 
 ``` r
 
 schools <- c(
-  "Towhee Children's Academy", # ~380 per grade
-  "Flycatcher Elementary", # ~110 per grade
-  "Sparrow School" # ~60 per grade
+  "Towhee Children's Academy", # ~207 per grade
+  "Sparrow School", # ~87 per grade
+  "Flycatcher Elementary" # ~59 per grade
 )
 
 # Subset to targets of interest (all retained posterior draws)
