@@ -2,18 +2,20 @@
 
 This is a minor release update of imuGAP (version 0.2.0).
 
-In response to
+We have addressed issues that led to package size issues (inadvertant inclusion of intermediate vignette elements), as well as conducted additional optimizations (compression of example datasets).
+
+Relative to CRAN response:
 
 "
-Thanks, we see:
-
-   Unknown, possibly misspelled, fields in DESCRIPTION:
-     'Remotes'
-
-Please fix and resubmit.
+Is there some reference about the method you can add in the Description
+field in the form Authors (year) <doi:10.....>?
 "
 
-We have removed the remotes field and adjusted our internal CI. We continue to support `cmdstanr` as an optional non-CRAN package that users may want to use with `imuGAP`. To support discoverability for internal CI with `pak`, we added
+There is no such reference at this time. We are developing a manuscript for submission, and intend to update the package DESCRIPTION once that manuscript is pre-printed. In the interim, we have documented the method in the vignettes and will continue to expand those as we complete further stages of method exploration, analysis, and refinement.
+
+Reference to `cmdstanr` in Additional_respositories no longer appears.
+
+We have removed the Remotes field and adjusted our internal CI. We continue to support `cmdstanr` as an optional non-CRAN package that users may want to use with `imuGAP`. To support discoverability for internal CI with `pak`, we added
 
 ```
 Config/Needs/check:
