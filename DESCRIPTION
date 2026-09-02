@@ -45,8 +45,6 @@ LinkingTo:
     rstan (>= 2.32),
     StanHeaders (>= 2.32)
 SystemRequirements: GNU make
-Additional_repositories:
-    https://stan-dev.r-universe.dev
 Config/Needs/check:
     stan-dev/cmdstanr
 Suggests:
