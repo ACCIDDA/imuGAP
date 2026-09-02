@@ -39,10 +39,10 @@ sim_internals <- sim_data$sim_internals
 target_sim <- sim_data$target_sim
 
 # Create imugap input package data objects
-usethis::use_data(observations_sim, overwrite = TRUE)
-usethis::use_data(populations_sim, overwrite = TRUE)
-usethis::use_data(locations_sim, overwrite = TRUE)
-usethis::use_data(latent_params_sim, overwrite = TRUE)
+usethis::use_data(observations_sim, overwrite = TRUE, compress = "xz")
+usethis::use_data(populations_sim, overwrite = TRUE, compress = "xz")
+usethis::use_data(locations_sim, overwrite = TRUE, compress = "xz")
+usethis::use_data(latent_params_sim, overwrite = TRUE, compress = "xz")
 
 saveRDS(sim_internals, "data-raw/sim_internals.rds")
 saveRDS(target_sim, file = "data-raw/target_sim.rds")
