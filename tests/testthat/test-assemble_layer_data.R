@@ -102,3 +102,21 @@ test_that("assemble_layer_data handles 4-layer deep hierarchy", {
     ]
   )
 })
+
+test_that("assemble_layer_data extracts population weights correctly", {
+  locs_with_pop <- canonicalize_locations(data.frame(
+    loc_id = c("state", "c1", "c2", "s1", "s2", "s3", "s4"),
+    parent_id = c(NA, "state", "state", "c1", "c1", "c2", "c2"),
+    population = c(100, 40, 60, 10, 30, 20, 40)
+  ))
+  d_pop <- assemble_layer_data(locs_with_pop)
+  expect_equal(as.numeric(d_pop$loc_population), locs_with_pop$population)
+
+  # When population is unsupplied, defaults to 1.0 for all locations
+  locs_no_pop <- canonicalize_locations(data.frame(
+    loc_id = c("state", "c1", "c2"),
+    parent_id = c(NA, "state", "state")
+  ))
+  d_no_pop <- assemble_layer_data(locs_no_pop)
+  expect_equal(as.numeric(d_no_pop$loc_population), rep(1.0, 3))
+})

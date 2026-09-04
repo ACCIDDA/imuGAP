@@ -397,6 +397,14 @@ assemble_layer_data <- function(loc_info) {
   }
   parent_loc_id <- as.integer(parent_loc_info$parent_loc_c_id)
 
+  loc_population <- if ("population" %in% names(loc_info)) {
+    pop <- as.numeric(loc_info$population)
+    pop[is.na(pop)] <- 1.0
+    pop
+  } else {
+    rep(1.0, n_locs)
+  }
+
   list(
     n_locs = n_locs,
     n_layers = n_layers,
@@ -410,6 +418,7 @@ assemble_layer_data <- function(loc_info) {
       as.integer(parent_child_bounds),
       nrow = 2,
       ncol = n_parent_locs
-    )
+    ),
+    loc_population = as.array(as.numeric(loc_population))
   )
 }
