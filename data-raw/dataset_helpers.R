@@ -270,13 +270,39 @@ get_simulation_setup <- function(seed = 93254) {
   )
 }
 
-#' Generate latent probability matrices under current logit offset model
+#' Compute orthonormal basis Q* for weighted sum-to-zero constraint
+get_weighted_qr_basis <- function(w) {
+  w <- as.numeric(w)
+  w <- w / sum(w)
+  K <- length(w)
+  v1 <- w / sqrt(sum(w^2))
+  qr_decomp <- qr(cbind(v1, diag(K)))
+  Q <- qr.Q(qr_decomp)
+  Q[, 2:K, drop = FALSE]
+}
+
+#' Generate latent probability matrices under weighted balanced logit offset model
 generate_latent_current <- function(setup) {
   sch_per_cnty <- copy(setup$sch_per_cnty)
-  delta_cnty <- setup$z_raw_cnty * setup$sigma_cnty
+
+  # County offsets: balanced with county population shares
+  w_cnty <- setup$ncty_base / sum(setup$ncty_base)
+  Q_star_cnty <- get_weighted_qr_basis(w_cnty)
+  z_cnty <- setup$z_raw_cnty[seq_len(length(setup$county_names) - 1L)]
+  delta_cnty <- as.vector(Q_star_cnty %*% z_cnty) * setup$sigma_cnty
   names(delta_cnty) <- setup$county_names
 
-  delta_sch <- setup$z_raw_sch * setup$sigma_sch
+  # School offsets: balanced per county with school population shares
+  delta_sch <- numeric(setup$tot_sch)
+  for (c_idx in seq_along(setup$county_names)) {
+    ll <- sch_per_cnty$ll[c_idx]
+    ul <- sch_per_cnty$ul[c_idx]
+    k_sch <- ul - ll + 1L
+    w_sch <- setup$nsch_base[ll:ul] / sum(setup$nsch_base[ll:ul])
+    Q_star_sch <- get_weighted_qr_basis(w_sch)
+    z_sch_c <- setup$z_raw_sch[ll:(ll + k_sch - 2L)]
+    delta_sch[ll:ul] <- as.vector(Q_star_sch %*% z_sch_c) * setup$sigma_sch
+  }
   names(delta_sch) <- setup$school_names
 
   state_logit <- qlogis(setup$phi_st_target)

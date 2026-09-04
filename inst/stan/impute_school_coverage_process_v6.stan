@@ -17,6 +17,9 @@ parameters {
   #include parameters/layer_offsets.stan
   #include parameters/static_lambda.stan
 }
+transformed parameters {
+  #include transformed_parameters/layer_offsets.stan
+}
 model {
   if (!predict_mode) {
     #include model/bspline.stan

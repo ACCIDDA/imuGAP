@@ -14,6 +14,7 @@
   int<lower=1> n_parent_locs; // number of parent locations with children
   array[n_parent_locs] int<lower=1, upper=n_locs> parent_loc_id; // canonical loc ID of each parent
   array[2, n_parent_locs] int<lower=1, upper=n_locs> parent_child_bounds; // [start_child_id, end_child_id] for each parent
+  vector<lower=0>[n_locs] loc_population; // population sizes for sibling offset weighting
 
   // dose schedules
   int<lower=1> n_doses;
