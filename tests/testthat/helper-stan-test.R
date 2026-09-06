@@ -90,23 +90,31 @@ skip_if_stan_unchanged <- function(include_relpaths) {
   invisible(TRUE)
 }
 
-run_stan_harness <- function(
-  stan_code,
-  data = list(),
-  seed = 42L,
-  return_fit = FALSE
-) {
+compile_stan_harness <- function(stan_code) {
   stan_dir <- find_stan_include_dir()
   tmp_stan <- tempfile(fileext = ".stan")
   on.exit(unlink(tmp_stan), add = TRUE)
   writeLines(stan_code, tmp_stan)
 
-  sm <- suppressWarnings(suppressMessages(rstan::stan_model(
+  suppressWarnings(suppressMessages(rstan::stan_model(
     file = tmp_stan,
     isystem = stan_dir,
     auto_write = FALSE,
     save_dso = FALSE
   )))
+}
+
+run_stan_harness <- function(
+  model_or_code,
+  data = list(),
+  seed = 42L,
+  return_fit = FALSE
+) {
+  sm <- if (inherits(model_or_code, "stanmodel")) {
+    model_or_code
+  } else {
+    compile_stan_harness(model_or_code)
+  }
 
   fit <- suppressWarnings(suppressMessages(rstan::sampling(
     sm,
