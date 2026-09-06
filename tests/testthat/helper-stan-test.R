@@ -1,24 +1,27 @@
 # Helper functions for Stan unit test harnesses
 
 find_stan_include_dir <- function() {
-  # Check source directory (local dev / devtools::test())
+  # 1. Check installed package library (standard during R CMD check)
+  inst_dir <- system.file("stan", package = "imuGAP")
+  if (nzchar(inst_dir) && dir.exists(inst_dir)) {
+    return(normalizePath(inst_dir))
+  }
+
+  # 2. Check source directory via testthat::test_path
+  dev_dir <- tryCatch(
+    normalizePath(testthat::test_path("../../inst/stan"), mustWork = TRUE),
+    error = function(e) ""
+  )
+  if (nzchar(dev_dir) && dir.exists(dev_dir)) {
+    return(dev_dir)
+  }
+
+  # 3. Fallback: check getwd()/inst/stan
   src_dir <- file.path(getwd(), "inst", "stan")
   if (dir.exists(src_dir)) {
     return(normalizePath(src_dir))
   }
-  # Check installed package (R CMD check)
-  inst_dir <- base::system.file("stan", package = "imuGAP")
-  if (nzchar(inst_dir) && dir.exists(inst_dir)) {
-    return(normalizePath(inst_dir))
-  }
-  # Fallback: search parent directories
-  pkg_dir <- tryCatch(
-    rprojroot::find_package_root_file("inst", "stan"),
-    error = function(e) ""
-  )
-  if (nzchar(pkg_dir) && dir.exists(pkg_dir)) {
-    return(normalizePath(pkg_dir))
-  }
+
   stop("Could not locate inst/stan include directory")
 }
 
