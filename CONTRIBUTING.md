@@ -133,6 +133,45 @@ Vignette chunks load data using `data(..., package = "imuGAP")`, which resolves 
 
 ---
 
+## Unit Testing Stan Include Components
+
+Stan code in `imuGAP` is organized into modular include files in `inst/stan/` (across `functions/`, `transformed_data/`, `model/`, etc.). To ensure individual Stan elements function as intended in isolation, we maintain a dedicated Stan unit testing suite in `tests/testthat/`.
+
+### 1. Authoring Unit Tests for New Stan Include Files
+
+When adding or refactoring Stan include files, create unit tests following these guidelines:
+
+* **Use Isolated Test Harnesses**: Write dynamic Stan model fixtures that `#include` the specific include file(s) inside the relevant block (`functions`, `transformed data`, `model`, etc.).
+* **Test via `rstan` Deterministically**: Use the internal test helper `run_stan_harness()` (defined in `tests/testthat/helper-stan-test.R`), which executes `rstan::sampling()` using `algorithm = "Fixed_param"`, `iter = 1`, `warmup = 0`, `chains = 1`, and a fixed random seed.
+* **Deterministic Verification**:
+  * **Functions & Transformed Data**: Pass fixed deterministic test data in `data` and assign computed values to `generated quantities` variables for direct extraction and assertion with `expect_equal()`.
+  * **Likelihood & Model Priors**: For files evaluating `target += ...` or `~`, use `run_stan_harness(..., return_fit = TRUE)` and evaluate `rstan::log_prob(fit, upars = c(0.0), adjust_transform = FALSE)`. Note that Stan's sampling statement `~` drops normalization constants with respect to parameters, so test against unnormalized log-densities (e.g. `sum(dbinom(...) - lchoose(...))`).
+  * **1D Array Wrapping**: Wrap 1D integer/numeric arrays in `data` with `as.array()` (e.g. `obs_to_weights_bounds = as.array(1L)`) so Rstan does not collapse them into scalars.
+* **Smart Change-Detection Caching**:
+  * Guard every Stan test block with `skip_if_not_installed("rstan")` and `skip_if_stan_unchanged("<subpath>.stan")`.
+  * In **local development**, `skip_if_stan_unchanged()` caches MD5 hashes in `tempdir()` to skip model recompilation (~20–25s per model) when the tested Stan files have not changed.
+  * During **full checks** (`R CMD check`, `_R_CHECK_PACKAGE_NAME_`, or `CI`), caching is completely bypassed — tests run unconditionally and do not read or write the local cache.
+
+### 2. Stan Include Coverage Mapping
+
+| Stan Subdirectory | Stan File | Test File | Test Focus & Verification |
+| :--- | :--- | :--- | :--- |
+| **`functions/`** | `bounds_to_range.stan` | `test-stan-functions.R` | Index segment calculation for cumulative weight bounds |
+| | `element_mult_expand.stan` | `test-stan-functions.R` | Vector-to-matrix row-wise expansion and multiplication |
+| | `diff.stan` | `test-stan-functions.R` | Forward difference for `vector` and `row_vector` types |
+| | `matrix_sums.stan` | `test-stan-functions.R` | Column-wise (`colsum`) and row-wise (`rowsum`) summations |
+| | `unrolled_dose_static_lambda.stan` | `test-stan-functions.R` | Multi-dose CDF unrolling given schedule and rate $\lambda$ |
+| | `convenience.stan` | `test-stan-functions.R` | Composite include of the 4 sub-functions above |
+| **`transformed_data/`** | `epsilon.stan` | `test-stan-transformed-data.R` | Numerical precision constant (`epsilon_p = 1e-10`) |
+| | `layer_indices.stan` | `test-stan-transformed-data.R` | Lookups: `obs_map`, `cohort_shift_counter`, `loc_layer_idx`, `phi_lookup`, `cdf_lookup` |
+| | `single_indices.stan` | `test-stan-transformed-data.R` | Single-location lookups: `obs_map`, `phi_lookup`, `cdf_lookup` |
+| | `censoring.stan` | `test-stan-transformed-data.R` | Left-bound count shifting (`y_obs_trans = y_obs - 1`) |
+| **`model/`** | `hierarchical_phi.stan` | `test-stan-model-phi.R` | Deterministic hierarchical observation probabilities against closed-form analytical formula |
+| | `single_phi.stan` | `test-stan-model-phi.R` | Deterministic single-location observation probabilities against closed-form analytical formula |
+| | `censored.stan` | `test-stan-likelihood.R` | Log-likelihood accumulation for uncensored (`dbinom`) and interval-censored (`pbinom`) data |
+
+---
+
 ## Error Messages and Signaling Standards
 
 All user-facing validation errors and warnings should follow these standards:
