@@ -1,64 +1,110 @@
+skip_if_not_installed("rstan")
+skip_if_stan_unchanged(c(
+  "functions/diff.stan",
+  "functions/unrolled_dose_static_lambda.stan",
+  "functions/bounds_to_range.stan",
+  "transformed_data/layer_indices.stan",
+  "transformed_data/single_indices.stan",
+  "model/hierarchical_phi.stan",
+  "model/single_phi.stan"
+))
+
+code_hierarchical_phi <- "
+functions {
+  #include functions/diff.stan
+  #include functions/unrolled_dose_static_lambda.stan
+  #include functions/bounds_to_range.stan
+}
+data {
+  int n_obs;
+  int n_weights;
+  int n_cohort;
+  int n_yr;
+  int n_locs;
+  int n_layers;
+  int n_parent_locs;
+  array[n_parent_locs] int parent_loc_id;
+  array[2, n_parent_locs] int parent_child_bounds;
+  array[n_obs] int obs_to_weights_bounds;
+  array[n_weights] int weights_cohort;
+  array[n_weights] int weights_location;
+  array[n_weights] int weights_dose;
+  array[n_weights] int weights_life_year;
+  vector[n_weights] weights;
+  array[2, n_layers] int layer_bounds;
+  array[n_layers] int layer_sizes;
+
+  int k_bs;
+  matrix[n_cohort, k_bs] bs;
+  int n_doses;
+  matrix[n_yr, n_doses] dose_sched;
+  real epsilon_p;
+
+  // Deterministic parameter inputs passed via data for exact testing
+  vector[k_bs] beta_bs;
+  vector[n_doses] lambda_raw;
+  vector[n_locs - 1] off_layer;
+}
+transformed data {
+  #include transformed_data/layer_indices.stan
+}
+parameters {
+  real dummy;
+}
+model {
+  dummy ~ normal(0, 1);
+}
+generated quantities {
+  vector[n_obs] p_obs;
+  #include model/hierarchical_phi.stan
+}
+"
+
+code_single_phi <- "
+functions {
+  #include functions/diff.stan
+  #include functions/unrolled_dose_static_lambda.stan
+  #include functions/bounds_to_range.stan
+}
+data {
+  int n_obs;
+  int n_weights;
+  int n_cohort;
+  int n_yr;
+  array[n_obs] int obs_to_weights_bounds;
+  array[n_weights] int weights_cohort;
+  array[n_weights] int weights_dose;
+  array[n_weights] int weights_life_year;
+  vector[n_weights] weights;
+
+  int k_bs;
+  matrix[n_cohort, k_bs] bs;
+  int n_doses;
+  matrix[n_yr, n_doses] dose_sched;
+  real epsilon_p;
+
+  vector[k_bs] beta_bs;
+  vector[n_doses] lambda_raw;
+}
+transformed data {
+  #include transformed_data/single_indices.stan
+}
+parameters {
+  real dummy;
+}
+model {
+  dummy ~ normal(0, 1);
+}
+generated quantities {
+  vector[n_obs] p_obs;
+  #include model/single_phi.stan
+}
+"
+
+model_hierarchical_phi <- compile_stan_harness(code_hierarchical_phi)
+model_single_phi <- compile_stan_harness(code_single_phi)
+
 test_that("Stan model/hierarchical_phi.stan computes observation probabilities deterministically", {
-  skip_if_not_installed("rstan")
-  skip_if_stan_unchanged(c(
-    "functions/diff.stan",
-    "functions/unrolled_dose_static_lambda.stan",
-    "functions/bounds_to_range.stan",
-    "transformed_data/layer_indices.stan",
-    "model/hierarchical_phi.stan"
-  ))
-
-  code <- "
-  functions {
-    #include functions/diff.stan
-    #include functions/unrolled_dose_static_lambda.stan
-    #include functions/bounds_to_range.stan
-  }
-  data {
-    int n_obs;
-    int n_weights;
-    int n_cohort;
-    int n_yr;
-    int n_locs;
-    int n_layers;
-    int n_parent_locs;
-    array[n_parent_locs] int parent_loc_id;
-    array[2, n_parent_locs] int parent_child_bounds;
-    array[n_obs] int obs_to_weights_bounds;
-    array[n_weights] int weights_cohort;
-    array[n_weights] int weights_location;
-    array[n_weights] int weights_dose;
-    array[n_weights] int weights_life_year;
-    vector[n_weights] weights;
-    array[2, n_layers] int layer_bounds;
-    array[n_layers] int layer_sizes;
-
-    int k_bs;
-    matrix[n_cohort, k_bs] bs;
-    int n_doses;
-    matrix[n_yr, n_doses] dose_sched;
-    real epsilon_p;
-
-    // Deterministic parameter inputs passed via data for exact testing
-    vector[k_bs] beta_bs;
-    vector[n_doses] lambda_raw;
-    vector[n_locs - 1] off_layer;
-  }
-  transformed data {
-    #include transformed_data/layer_indices.stan
-  }
-  parameters {
-    real dummy;
-  }
-  model {
-    dummy ~ normal(0, 1);
-  }
-  generated quantities {
-    vector[n_obs] p_obs;
-    #include model/hierarchical_phi.stan
-  }
-  "
-
   # Minimal hierarchy: Root (1), County (2)
   n_obs <- 1L
   n_weights <- 2L
@@ -103,7 +149,7 @@ test_that("Stan model/hierarchical_phi.stan computes observation probabilities d
     off_layer = as.array(0.0)
   )
 
-  res <- run_stan_harness(code, data = data_list)
+  res <- run_stan_harness(model_hierarchical_phi, data = data_list)
   p_obs <- as.numeric(res$p_obs[1, ])
 
   expect_length(p_obs, 1)
@@ -121,56 +167,6 @@ test_that("Stan model/hierarchical_phi.stan computes observation probabilities d
 })
 
 test_that("Stan model/single_phi.stan computes single-location observation probabilities", {
-  skip_if_not_installed("rstan")
-  skip_if_stan_unchanged(c(
-    "functions/diff.stan",
-    "functions/unrolled_dose_static_lambda.stan",
-    "functions/bounds_to_range.stan",
-    "transformed_data/single_indices.stan",
-    "model/single_phi.stan"
-  ))
-
-  code <- "
-  functions {
-    #include functions/diff.stan
-    #include functions/unrolled_dose_static_lambda.stan
-    #include functions/bounds_to_range.stan
-  }
-  data {
-    int n_obs;
-    int n_weights;
-    int n_cohort;
-    int n_yr;
-    array[n_obs] int obs_to_weights_bounds;
-    array[n_weights] int weights_cohort;
-    array[n_weights] int weights_dose;
-    array[n_weights] int weights_life_year;
-    vector[n_weights] weights;
-
-    int k_bs;
-    matrix[n_cohort, k_bs] bs;
-    int n_doses;
-    matrix[n_yr, n_doses] dose_sched;
-    real epsilon_p;
-
-    vector[k_bs] beta_bs;
-    vector[n_doses] lambda_raw;
-  }
-  transformed data {
-    #include transformed_data/single_indices.stan
-  }
-  parameters {
-    real dummy;
-  }
-  model {
-    dummy ~ normal(0, 1);
-  }
-  generated quantities {
-    vector[n_obs] p_obs;
-    #include model/single_phi.stan
-  }
-  "
-
   data_list <- list(
     n_obs = 1L,
     n_weights = 2L,
@@ -190,7 +186,7 @@ test_that("Stan model/single_phi.stan computes single-location observation proba
     lambda_raw = as.array(log(1.0))
   )
 
-  res <- run_stan_harness(code, data = data_list)
+  res <- run_stan_harness(model_single_phi, data = data_list)
   p_obs <- as.numeric(res$p_obs[1, ])
 
   # Expected: (1 - 0.5) * 0.5 * ( (1 - exp(-1)) + (1 - exp(-2)) )
