@@ -1,7 +1,14 @@
 skip_if_not_installed("rstan")
-skip_if_stan_unchanged("model/censored.stan")
+# ' "model/censored.stan" defines
+# ' the observation likelihood evaluating exact binomial log-probabilities for
+# ' uncensored data and binomial CDF log-probabilities for interval-censored data.
 
-code_likelihood <- "
+target <- "model/censored.stan"
+
+skip_if_stan_unchanged(target)
+
+model_likelihood <- sprintf(
+  "
 data {
   int n_obs;
   int n_uncensored_obs;
@@ -17,20 +24,21 @@ transformed parameters {
 }
 model {
   dummy ~ normal(0, 1);
-  #include model/censored.stan
+  #include %s
 }
-"
+",
+  target
+) |>
+  compile_stan_harness()
 
-model_likelihood <- compile_stan_harness(code_likelihood)
-
-test_that("Stan model/censored.stan computes binomial log-likelihood for uncensored observations", {
+test_that("censored.stan computes binomial log-likelihood for uncensored observations", {
   y_obs <- c(10L, 20L, 30L)
   y_smp <- c(20L, 40L, 50L)
   p_obs <- c(0.4, 0.5, 0.6)
 
   data_list <- list(
-    n_obs = 3L,
-    n_uncensored_obs = 3L,
+    n_obs = length(y_obs),
+    n_uncensored_obs = length(y_obs),
     y_obs = y_obs,
     y_smp = y_smp,
     p_obs_in = p_obs
@@ -48,15 +56,16 @@ test_that("Stan model/censored.stan computes binomial log-likelihood for uncenso
   expect_equal(lp, expected_total_lp, tolerance = 1e-4)
 })
 
-test_that("Stan model/censored.stan computes log-likelihood with censored observations", {
+test_that("censored.stan computes log-likelihood with censored observations", {
   # Obs 1 is uncensored, Obs 2 is censored (y_obs represents failure bound)
   y_obs <- c(10L, 5L)
   y_smp <- c(20L, 20L)
   p_obs <- c(0.4, 0.7)
+  n_uncensored <- 1L
 
   data_list <- list(
-    n_obs = 2L,
-    n_uncensored_obs = 1L,
+    n_obs = length(y_obs),
+    n_uncensored_obs = n_uncensored,
     y_obs = y_obs,
     y_smp = y_smp,
     p_obs_in = p_obs
@@ -65,10 +74,10 @@ test_that("Stan model/censored.stan computes log-likelihood with censored observ
   fit <- run_stan_harness(model_likelihood, data = data_list, return_fit = TRUE)
   lp <- rstan::log_prob(fit, upars = c(0.0), adjust_transform = FALSE)
 
-  # Obs 1: target += binomial_lpmf(10 | 20, 0.4) [includes lchoose]
-  # Obs 2: target += binomial_lcdf(5 | 20, 1 - 0.7) = pbinom(5, 20, 0.3, log.p = TRUE)
-  expected_total_lp <- stats::dbinom(10, 20, 0.4, log = TRUE) +
-    stats::pbinom(5, 20, 1 - 0.7, log.p = TRUE)
+  # Obs 1: target += binomial_lpmf(y_obs[1] | y_smp[1], p_obs[1]) [includes lchoose]
+  # Obs 2: target += binomial_lcdf(y_obs[2] | y_smp[2], 1 - p_obs[2])
+  expected_total_lp <- stats::dbinom(y_obs[1], y_smp[1], p_obs[1], log = TRUE) +
+    stats::pbinom(y_obs[2], y_smp[2], 1 - p_obs[2], log.p = TRUE)
 
   expect_equal(lp, expected_total_lp, tolerance = 1e-4)
 })
