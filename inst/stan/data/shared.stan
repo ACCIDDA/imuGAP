@@ -1,8 +1,5 @@
 
-  // STRUCTURAL DEFINITIONS
-
-  int<lower=1> n_yr; // number of years to model for each cohort - should be at least year of oldest observation
-  int<lower=1> n_cohort; // number of birth year cohorts
+  #include data/shared_single.stan
 
   // Location hierarchy: arbitrary user-specified layers (multi-layer, n_layers >= 2)
   int<lower=3> n_locs; // total number of locations (root + all sub-locations)
@@ -15,25 +12,7 @@
   array[n_parent_locs] int<lower=1, upper=n_locs> parent_loc_id; // canonical loc ID of each parent
   array[2, n_parent_locs] int<lower=1, upper=n_locs> parent_child_bounds; // [start_child_id, end_child_id] for each parent
 
-  // dose schedules
-  int<lower=1> n_doses;
-  matrix<lower=0, upper=1>[n_yr, n_doses] dose_sched;
-
-  // DATA DEFINITIONS
-
-  int<lower=1> n_obs;
-  array[n_obs] int<lower=0> y_obs;
-  array[n_obs] int<lower=0> y_smp;
-
-  int<lower=n_obs> n_weights;
-  array[n_obs] int<lower=1, upper=n_weights> obs_to_weights_bounds; // each entry is the start of the range
-
-  array[n_weights] int<lower=1, upper=n_locs> weights_location;
-  array[n_weights] int<lower=1, upper=n_cohort> weights_cohort;
-  array[n_weights] int<lower=1, upper=n_yr> weights_life_year;
-  array[n_weights] int<lower=1, upper=n_doses> weights_dose;
-
-  vector<lower=0, upper=1>[n_weights] weights; // contribution of this (location, cohort, year, dose) to an observation
-
-  // run mode: 0 = estimation, 1 = prediction
-  int<lower=0, upper=1> predict_mode;
+  // Location indices for weights
+  array[n_weights_uncensored] int<lower=1, upper=n_locs> weights_location_uncensored;
+  array[n_weights_right] int<lower=1, upper=n_locs> weights_location_right;
+  array[n_weights_left] int<lower=1, upper=n_locs> weights_location_left;

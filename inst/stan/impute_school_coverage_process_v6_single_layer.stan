@@ -20,14 +20,14 @@ model {
   if (!predict_mode) {
     #include model/bspline.stan
     #include model/static_lambda.stan
-    vector[n_obs] p_obs;
     #include model/single_phi.stan
     #include model/censored.stan
   }
 }
 generated quantities {
-  vector[predict_mode ? n_obs : 0] p_obs;
+  vector[predict_mode ? n_obs_uncensored : 0] p_obs;
   if (predict_mode) {
     #include model/single_phi.stan
+    p_obs = p_obs_uncensored;
   }
 }

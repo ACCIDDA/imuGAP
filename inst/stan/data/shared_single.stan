@@ -10,20 +10,35 @@
 
   // DATA DEFINITIONS
 
-  int<lower=1> n_obs;
-  array[n_obs] int<lower=0> y_obs;
-  array[n_obs] int<lower=0> y_smp;
-  // have school id ranges for observations & for doses; school id 0 == statewide?
-  // array[n_obs] int obs_sch_id_bounds;
+  int<lower=0> n_obs_uncensored;
+  array[n_obs_uncensored] int<lower=0> y_obs_uncensored;
+  array[n_obs_uncensored] int<lower=0> y_smp_uncensored;
+  int<lower=0> n_weights_uncensored;
+  array[n_obs_uncensored] int<lower=1, upper=n_weights_uncensored> obs_to_weights_bounds_uncensored;
+  array[n_weights_uncensored] int<lower=1, upper=n_cohort> weights_cohort_uncensored;
+  array[n_weights_uncensored] int<lower=1, upper=n_yr> weights_life_year_uncensored;
+  array[n_weights_uncensored] int<lower=1, upper=n_doses> weights_dose_uncensored;
+  vector<lower=0, upper=1>[n_weights_uncensored] weights_uncensored;
 
-  int<lower=n_obs> n_weights;
-  array[n_obs] int<lower=1, upper=n_weights> obs_to_weights_bounds; // each entry is the start of the range
+  int<lower=0> n_obs_right;
+  array[n_obs_right] int<lower=0> y_obs_right;
+  array[n_obs_right] int<lower=0> y_smp_right;
+  int<lower=0> n_weights_right;
+  array[n_obs_right] int<lower=1, upper=n_weights_right> obs_to_weights_bounds_right;
+  array[n_weights_right] int<lower=1, upper=n_cohort> weights_cohort_right;
+  array[n_weights_right] int<lower=1, upper=n_yr> weights_life_year_right;
+  array[n_weights_right] int<lower=1, upper=n_doses> weights_dose_right;
+  vector<lower=0, upper=1>[n_weights_right] weights_right;
 
-  array[n_weights] int<lower=1,upper=n_cohort> weights_cohort;
-  array[n_weights] int<lower=1,upper=n_yr> weights_life_year;
-  array[n_weights] int<lower=1,upper=n_doses> weights_dose;
-
-  vector<lower=0,upper=1>[n_weights] weights; // contribution of this (school, cohort, year, dose) to an observation
+  int<lower=0> n_obs_left;
+  array[n_obs_left] int<lower=0> y_obs_left;
+  array[n_obs_left] int<lower=0> y_smp_left;
+  int<lower=0> n_weights_left;
+  array[n_obs_left] int<lower=1, upper=n_weights_left> obs_to_weights_bounds_left;
+  array[n_weights_left] int<lower=1, upper=n_cohort> weights_cohort_left;
+  array[n_weights_left] int<lower=1, upper=n_yr> weights_life_year_left;
+  array[n_weights_left] int<lower=1, upper=n_doses> weights_dose_left;
+  vector<lower=0, upper=1>[n_weights_left] weights_left;
 
   // run mode: 0 = estimation, 1 = prediction
   int<lower=0, upper=1> predict_mode;
