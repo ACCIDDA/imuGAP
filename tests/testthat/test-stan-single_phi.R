@@ -1,6 +1,6 @@
 skip_if_not_installed("rstan")
 # ' "model/single_phi.stan" evaluates
-# ' observation probabilities `p_obs` for single-location models by combining
+# ' observation probabilities `p_obs_*` for single-location models by combining
 # ' cohort baseline spline effects with cumulative dose coverage.
 
 target <- "model/single_phi.stan"
@@ -9,7 +9,10 @@ skip_if_stan_unchanged(c(
   "functions/diff.stan",
   "functions/unrolled_dose_static_lambda.stan",
   "functions/bounds_to_range.stan",
+  "functions/lookups.stan",
+  "transformed_data/common_indices.stan",
   "transformed_data/single_indices.stan",
+  "model/common_phi.stan",
   target
 ))
 
@@ -19,17 +22,35 @@ functions {
   #include functions/diff.stan
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/bounds_to_range.stan
+  #include functions/lookups.stan
 }
 data {
-  int n_obs;
-  int n_weights;
+  int<lower=0> n_obs_uncensored;
+  int<lower=0> n_weights_uncensored;
+  array[n_obs_uncensored] int obs_to_weights_bounds_uncensored;
+  array[n_weights_uncensored] int weights_cohort_uncensored;
+  array[n_weights_uncensored] int weights_dose_uncensored;
+  array[n_weights_uncensored] int weights_life_year_uncensored;
+  vector[n_weights_uncensored] weights_uncensored;
+
+  int<lower=0> n_obs_right;
+  int<lower=0> n_weights_right;
+  array[n_obs_right] int obs_to_weights_bounds_right;
+  array[n_weights_right] int weights_cohort_right;
+  array[n_weights_right] int weights_dose_right;
+  array[n_weights_right] int weights_life_year_right;
+  vector[n_weights_right] weights_right;
+
+  int<lower=0> n_obs_left;
+  int<lower=0> n_weights_left;
+  array[n_obs_left] int obs_to_weights_bounds_left;
+  array[n_weights_left] int weights_cohort_left;
+  array[n_weights_left] int weights_dose_left;
+  array[n_weights_left] int weights_life_year_left;
+  vector[n_weights_left] weights_left;
+
   int n_cohort;
   int n_yr;
-  array[n_obs] int obs_to_weights_bounds;
-  array[n_weights] int weights_cohort;
-  array[n_weights] int weights_dose;
-  array[n_weights] int weights_life_year;
-  vector[n_weights] weights;
 
   int k_bs;
   matrix[n_cohort, k_bs] bs;
@@ -50,7 +71,6 @@ model {
   dummy ~ normal(0, 1);
 }
 generated quantities {
-  vector[n_obs] p_obs;
   #include %s
 }
 ",
@@ -71,15 +91,29 @@ test_that("single_phi.stan computes observation probabilities accurately", {
   lambda_val <- 1.0
 
   data_list <- list(
-    n_obs = length(obs_bounds),
-    n_weights = length(w_cohort),
+    n_obs_uncensored = length(obs_bounds),
+    n_weights_uncensored = length(w_cohort),
+    obs_to_weights_bounds_uncensored = obs_bounds,
+    weights_cohort_uncensored = w_cohort,
+    weights_dose_uncensored = w_dose,
+    weights_life_year_uncensored = w_life_year,
+    weights_uncensored = weights,
+    n_obs_right = 0L,
+    n_weights_right = 0L,
+    obs_to_weights_bounds_right = integer(0),
+    weights_cohort_right = integer(0),
+    weights_dose_right = integer(0),
+    weights_life_year_right = integer(0),
+    weights_right = numeric(0),
+    n_obs_left = 0L,
+    n_weights_left = 0L,
+    obs_to_weights_bounds_left = integer(0),
+    weights_cohort_left = integer(0),
+    weights_dose_left = integer(0),
+    weights_life_year_left = integer(0),
+    weights_left = numeric(0),
     n_cohort = nrow(bs),
     n_yr = nrow(dose_sched),
-    obs_to_weights_bounds = obs_bounds,
-    weights_cohort = w_cohort,
-    weights_dose = w_dose,
-    weights_life_year = w_life_year,
-    weights = weights,
     k_bs = ncol(bs),
     bs = bs,
     n_doses = ncol(dose_sched),
@@ -89,7 +123,7 @@ test_that("single_phi.stan computes observation probabilities accurately", {
     lambda_raw = as.array(log(lambda_val))
   )
 
-  p_obs <- run_stan_harness(model_single_phi, data = data_list, p_obs)
+  p_obs <- run_stan_harness(model_single_phi, data = data_list, p_obs_uncensored)
 
   # Analytical closed form expectation:
   phi_inv <- 1.0 - stats::plogis(0)

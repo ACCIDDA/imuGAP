@@ -3,6 +3,10 @@
 // to (lower, upper) pairs (l_1, l_2-1), (l_2, l_3-1), ...
 array[,] int bounds_to_range(array[] int lowers, int ub) {
   int size_bounds = size(lowers);
+  if (size_bounds == 0) {
+    array[2, 0] int empty_res;
+    return empty_res;
+  }
   if (lowers[size_bounds] > ub) {
     print("Upper bound, ", ub, " is less than last lower bound, ", lowers[size_bounds]);
   }

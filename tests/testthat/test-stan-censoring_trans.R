@@ -1,7 +1,7 @@
 skip_if_not_installed("rstan")
 # ' "transformed_data/censoring.stan" defines
-# ' `array[n_obs] int y_obs_trans`
-# ' which transforms count observation bounds by shifting censored indices by -1.
+# ' `array[n_obs_right] int y_fail_right`
+# ' which transforms count observations into failures (y_smp_right - y_obs_right).
 
 target <- "transformed_data/censoring.stan"
 
@@ -10,8 +10,9 @@ skip_if_stan_unchanged(target)
 model_censoring_trans <- sprintf(
   "
 data {
-  int n_obs;
-  array[n_obs] int y_obs;
+  int<lower=0> n_obs_right;
+  array[n_obs_right] int y_obs_right;
+  array[n_obs_right] int y_smp_right;
 }
 transformed data {
   #include %s
@@ -23,20 +24,26 @@ model {
   dummy ~ normal(0, 1);
 }
 generated quantities {
-  array[n_obs] int out_y_trans = y_obs_trans;
+  array[n_obs_right] int out_y_fail = y_fail_right;
 }
 ",
   target
 ) |>
   compile_stan_harness()
 
-test_that("censoring.stan shifts count observation bounds", {
+test_that("censoring.stan computes right-censored failure counts", {
   y_obs_test <- c(10L, 25L, 0L)
-  out_y_trans <- run_stan_harness(
+  y_smp_test <- c(20L, 30L, 5L)
+  out_y_fail <- run_stan_harness(
     model_censoring_trans,
-    data = list(n_obs = length(y_obs_test), y_obs = y_obs_test),
-    out_y_trans
+    data = list(
+      n_obs_right = length(y_obs_test),
+      y_obs_right = y_obs_test,
+      y_smp_right = y_smp_test
+    ),
+    out_y_fail
   )
 
-  expect_equal(out_y_trans, y_obs_test - 1L)
+  expect_equal(out_y_fail, y_smp_test - y_obs_test)
 })
+

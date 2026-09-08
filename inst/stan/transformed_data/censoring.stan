@@ -1,7 +1,8 @@
 
-array[n_obs] int<lower=-1> y_obs_trans;
+array[n_obs_right] int<lower=0> y_fail_right;
 
-for(i in 1:n_obs) {
-  y_obs_trans[i] = y_obs[i] - 1;
+for (i in 1:n_obs_right) {
+  y_fail_right[i] = y_smp_right[i] - y_obs_right[i];
 }
+
 

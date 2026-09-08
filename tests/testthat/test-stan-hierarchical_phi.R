@@ -1,6 +1,6 @@
 skip_if_not_installed("rstan")
 # ' "model/hierarchical_phi.stan" evaluates
-# ' hierarchical spatial observation probabilities `p_obs` by accumulating
+# ' hierarchical spatial observation probabilities `p_obs_*` by accumulating
 # ' baseline spline effects and multi-layer spatial random walk offsets across
 # ' location hierarchies.
 
@@ -10,7 +10,10 @@ skip_if_stan_unchanged(c(
   "functions/diff.stan",
   "functions/unrolled_dose_static_lambda.stan",
   "functions/bounds_to_range.stan",
+  "functions/lookups.stan",
+  "transformed_data/common_indices.stan",
   "transformed_data/layer_indices.stan",
+  "model/common_phi.stan",
   target
 ))
 
@@ -20,10 +23,36 @@ functions {
   #include functions/diff.stan
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/bounds_to_range.stan
+  #include functions/lookups.stan
 }
 data {
-  int n_obs;
-  int n_weights;
+  int<lower=0> n_obs_uncensored;
+  int<lower=0> n_weights_uncensored;
+  array[n_obs_uncensored] int obs_to_weights_bounds_uncensored;
+  array[n_weights_uncensored] int weights_cohort_uncensored;
+  array[n_weights_uncensored] int weights_location_uncensored;
+  array[n_weights_uncensored] int weights_dose_uncensored;
+  array[n_weights_uncensored] int weights_life_year_uncensored;
+  vector[n_weights_uncensored] weights_uncensored;
+
+  int<lower=0> n_obs_right;
+  int<lower=0> n_weights_right;
+  array[n_obs_right] int obs_to_weights_bounds_right;
+  array[n_weights_right] int weights_cohort_right;
+  array[n_weights_right] int weights_location_right;
+  array[n_weights_right] int weights_dose_right;
+  array[n_weights_right] int weights_life_year_right;
+  vector[n_weights_right] weights_right;
+
+  int<lower=0> n_obs_left;
+  int<lower=0> n_weights_left;
+  array[n_obs_left] int obs_to_weights_bounds_left;
+  array[n_weights_left] int weights_cohort_left;
+  array[n_weights_left] int weights_location_left;
+  array[n_weights_left] int weights_dose_left;
+  array[n_weights_left] int weights_life_year_left;
+  vector[n_weights_left] weights_left;
+
   int n_cohort;
   int n_yr;
   int n_locs;
@@ -31,12 +60,6 @@ data {
   int n_parent_locs;
   array[n_parent_locs] int parent_loc_id;
   array[2, n_parent_locs] int parent_child_bounds;
-  array[n_obs] int obs_to_weights_bounds;
-  array[n_weights] int weights_cohort;
-  array[n_weights] int weights_location;
-  array[n_weights] int weights_dose;
-  array[n_weights] int weights_life_year;
-  vector[n_weights] weights;
   array[2, n_layers] int layer_bounds;
   array[n_layers] int layer_sizes;
 
@@ -61,7 +84,6 @@ model {
   dummy ~ normal(0, 1);
 }
 generated quantities {
-  vector[n_obs] p_obs;
   #include %s
 }
 ",
@@ -87,8 +109,30 @@ test_that("hierarchical_phi.stan computes observation probabilities accurately",
   lambda_val <- 1.0
 
   data_list <- list(
-    n_obs = length(obs_bounds),
-    n_weights = length(w_cohort),
+    n_obs_uncensored = length(obs_bounds),
+    n_weights_uncensored = length(w_cohort),
+    obs_to_weights_bounds_uncensored = obs_bounds,
+    weights_cohort_uncensored = w_cohort,
+    weights_location_uncensored = w_loc,
+    weights_dose_uncensored = w_dose,
+    weights_life_year_uncensored = w_life_year,
+    weights_uncensored = weights,
+    n_obs_right = 0L,
+    n_weights_right = 0L,
+    obs_to_weights_bounds_right = integer(0),
+    weights_cohort_right = integer(0),
+    weights_location_right = integer(0),
+    weights_dose_right = integer(0),
+    weights_life_year_right = integer(0),
+    weights_right = numeric(0),
+    n_obs_left = 0L,
+    n_weights_left = 0L,
+    obs_to_weights_bounds_left = integer(0),
+    weights_cohort_left = integer(0),
+    weights_location_left = integer(0),
+    weights_dose_left = integer(0),
+    weights_life_year_left = integer(0),
+    weights_left = numeric(0),
     n_cohort = nrow(bs),
     n_yr = nrow(dose_sched),
     n_locs = ld_sim$n_locs,
@@ -96,12 +140,6 @@ test_that("hierarchical_phi.stan computes observation probabilities accurately",
     n_parent_locs = ld_sim$n_parent_locs,
     parent_loc_id = ld_sim$parent_loc_id,
     parent_child_bounds = ld_sim$parent_child_bounds,
-    obs_to_weights_bounds = obs_bounds,
-    weights_cohort = w_cohort,
-    weights_location = w_loc,
-    weights_dose = w_dose,
-    weights_life_year = w_life_year,
-    weights = weights,
     layer_bounds = ld_sim$layer_bounds,
     layer_sizes = ld_sim$layer_sizes,
     k_bs = ncol(bs),
@@ -114,7 +152,7 @@ test_that("hierarchical_phi.stan computes observation probabilities accurately",
     off_layer = rep(0.0, ld_sim$n_locs - 1L)
   )
 
-  p_obs <- run_stan_harness(model_hierarchical_phi, data = data_list, p_obs)
+  p_obs <- run_stan_harness(model_hierarchical_phi, data = data_list, p_obs_uncensored)
 
   expect_length(p_obs, length(obs_bounds))
   expect_true(p_obs > 0 && p_obs < 1)

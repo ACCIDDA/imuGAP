@@ -122,20 +122,63 @@ predict.imugap_fit <- function(
 
   target <- canonicalize_target(target, fit)
 
+  empty_stream <- function(suffix) {
+    stats::setNames(
+      list(
+        0L,
+        integer(0),
+        integer(0),
+        0L,
+        integer(0),
+        integer(0),
+        integer(0),
+        integer(0),
+        integer(0),
+        numeric(0)
+      ),
+      paste0(
+        c(
+          "n_obs", "y_obs", "y_smp", "n_weights", "obs_to_weights_bounds",
+          "weights_location", "weights_cohort", "weights_life_year",
+          "weights_dose", "weights"
+        ),
+        "_",
+        suffix
+      )
+    )
+  }
+
+  target_stream <- stats::setNames(
+    list(
+      nrow(target),
+      rep(0L, nrow(target)),
+      rep(1L, nrow(target)),
+      nrow(target),
+      seq_len(nrow(target)),
+      target$loc_c_id,
+      target$cohort,
+      target$age,
+      target$dose,
+      target$weight
+    ),
+    paste0(
+      c(
+        "n_obs", "y_obs", "y_smp", "n_weights", "obs_to_weights_bounds",
+        "weights_location", "weights_cohort", "weights_life_year",
+        "weights_dose", "weights"
+      ),
+      "_uncensored"
+    )
+  )
+
   # Update the data object for prediction mode
-  dat_stan <- fit$data
-  dat_stan$n_uncensored_obs <- nrow(target)
-  dat_stan$n_obs <- nrow(target)
-  dat_stan$y_obs <- rep(0L, nrow(target))
-  dat_stan$y_smp <- rep(1L, nrow(target))
-  dat_stan$n_weights <- nrow(target)
-  dat_stan$obs_to_weights_bounds <- seq_len(nrow(target))
-  dat_stan$weights_location <- target$loc_c_id
-  dat_stan$weights_cohort <- target$cohort
-  dat_stan$weights_life_year <- target$age
-  dat_stan$weights_dose <- target$dose
-  dat_stan$weights <- target$weight
-  dat_stan$predict_mode <- 1
+  dat_stan <- c(
+    fit$data,
+    target_stream,
+    empty_stream("right"),
+    empty_stream("left"),
+    list(predict_mode = 1)
+  )
 
   # Slice the iterations dimension, keeping an equal number of draws from the
   # end of each chain (the converged tail); otherwise use every draw.
