@@ -72,12 +72,22 @@ make_stream_list <- function(unc = NULL, lt = NULL, rt = NULL) {
     if (is.null(stream) || length(stream$y_obs) == 0L) {
       stats::setNames(
         list(0L, integer(0), integer(0), numeric(0)),
-        paste0(c("n_obs", "y_obs", "y_smp", "p_obs"), "_", suffix, c("", "", "", "_in"))
+        paste0(
+          c("n_obs", "y_obs", "y_smp", "p_obs"),
+          "_",
+          suffix,
+          c("", "", "", "_in")
+        )
       )
     } else {
       stats::setNames(
         list(length(stream$y_obs), stream$y_obs, stream$y_smp, stream$p_obs),
-        paste0(c("n_obs", "y_obs", "y_smp", "p_obs"), "_", suffix, c("", "", "", "_in"))
+        paste0(
+          c("n_obs", "y_obs", "y_smp", "p_obs"),
+          "_",
+          suffix,
+          c("", "", "", "_in")
+        )
       )
     }
   }
@@ -92,15 +102,33 @@ make_stream_list <- function(unc = NULL, lt = NULL, rt = NULL) {
 calc_expected_lp <- function(unc = NULL, lt = NULL, rt = NULL) {
   lp <- 0
   if (!is.null(unc) && length(unc$y_obs) > 0L) {
-    lp <- lp + sum(stats::dbinom(unc$y_obs, size = unc$y_smp, prob = unc$p_obs, log = TRUE))
+    lp <- lp +
+      sum(stats::dbinom(
+        unc$y_obs,
+        size = unc$y_smp,
+        prob = unc$p_obs,
+        log = TRUE
+      ))
   }
   if (!is.null(lt) && length(lt$y_obs) > 0L) {
-    lp <- lp + sum(stats::pbinom(lt$y_obs, size = lt$y_smp, prob = lt$p_obs, log.p = TRUE))
+    lp <- lp +
+      sum(stats::pbinom(
+        lt$y_obs,
+        size = lt$y_smp,
+        prob = lt$p_obs,
+        log.p = TRUE
+      ))
   }
   if (!is.null(rt) && length(rt$y_obs) > 0L) {
-    lp <- lp + sum(
-      stats::pbinom(rt$y_smp - rt$y_obs, size = rt$y_smp, prob = 1 - rt$p_obs, log.p = TRUE)
-    )
+    lp <- lp +
+      sum(
+        stats::pbinom(
+          rt$y_smp - rt$y_obs,
+          size = rt$y_smp,
+          prob = 1 - rt$p_obs,
+          log.p = TRUE
+        )
+      )
   }
   lp
 }
@@ -109,25 +137,48 @@ test_cases <- list(
   list(name = "uncensored only", unc = unc_data, lt = NULL, rt = NULL),
   list(name = "right-censored only", unc = NULL, lt = NULL, rt = rt_data),
   list(name = "left-censored only", unc = NULL, lt = lt_data, rt = NULL),
-  list(name = "uncensored and right-censored", unc = unc_data, lt = NULL, rt = rt_data),
-  list(name = "uncensored and left-censored", unc = unc_data, lt = lt_data, rt = NULL),
-  list(name = "right-censored and left-censored", unc = NULL, lt = lt_data, rt = rt_data),
+  list(
+    name = "uncensored and right-censored",
+    unc = unc_data,
+    lt = NULL,
+    rt = rt_data
+  ),
+  list(
+    name = "uncensored and left-censored",
+    unc = unc_data,
+    lt = lt_data,
+    rt = NULL
+  ),
+  list(
+    name = "right-censored and left-censored",
+    unc = NULL,
+    lt = lt_data,
+    rt = rt_data
+  ),
   list(
     name = "uncensored, right-censored, and left-censored",
     unc = unc_data,
     lt = lt_data,
     rt = rt_data
   ),
-  list(name = "no observations (empty streams)", unc = NULL, lt = NULL, rt = NULL)
+  list(
+    name = "no observations (empty streams)",
+    unc = NULL,
+    lt = NULL,
+    rt = NULL
+  )
 )
 
 for (tc in test_cases) {
   test_that(sprintf("censored.stan computes log-likelihood for %s", tc$name), {
     data_list <- make_stream_list(tc$unc, tc$lt, tc$rt)
-    fit <- run_stan_harness(model_likelihood, data = data_list, return_fit = TRUE)
+    fit <- run_stan_harness(
+      model_likelihood,
+      data = data_list,
+      return_fit = TRUE
+    )
     lp <- rstan::log_prob(fit, upars = c(0.0), adjust_transform = FALSE)
     expected_lp <- calc_expected_lp(tc$unc, tc$lt, tc$rt)
     expect_equal(lp, expected_lp, tolerance = 1e-4)
   })
 }
-

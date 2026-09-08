@@ -123,7 +123,11 @@ test_that("single_phi.stan computes observation probabilities accurately", {
     lambda_raw = as.array(log(lambda_val))
   )
 
-  p_obs <- run_stan_harness(model_single_phi, data = data_list, p_obs_uncensored)
+  p_obs <- run_stan_harness(
+    model_single_phi,
+    data = data_list,
+    p_obs_uncensored
+  )
 
   # Analytical closed form expectation:
   phi_inv <- 1.0 - stats::plogis(0)

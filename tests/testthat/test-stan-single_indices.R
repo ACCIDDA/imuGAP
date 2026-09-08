@@ -90,10 +90,18 @@ test_that("single_indices.stan sets single-location lookup indices", {
     n_yr = n_yr
   )
 
-  phi_lookup <- run_stan_harness(model_single_indices, data = data_single_list, out_phi_lookup_unc)
+  phi_lookup <- run_stan_harness(
+    model_single_indices,
+    data = data_single_list,
+    out_phi_lookup_unc
+  )
   expect_equal(as.numeric(phi_lookup), w_cohort)
 
-  cdf_lookup <- run_stan_harness(model_single_indices, data = data_single_list, out_cdf_lookup_unc)
+  cdf_lookup <- run_stan_harness(
+    model_single_indices,
+    data = data_single_list,
+    out_cdf_lookup_unc
+  )
   expect_equal(
     as.numeric(cdf_lookup),
     w_life_year + (w_dose - 1L) * n_yr

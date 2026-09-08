@@ -46,4 +46,3 @@ test_that("censoring.stan computes right-censored failure counts", {
 
   expect_equal(out_y_fail, y_smp_test - y_obs_test)
 })
-
