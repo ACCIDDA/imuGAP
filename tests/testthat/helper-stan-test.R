@@ -110,6 +110,7 @@ compile_stan_harness <- function(stan_code) {
 run_stan_harness <- function(
   model_or_code,
   data = list(),
+  pars = NULL,
   seed = 42L,
   return_fit = FALSE
 ) {
@@ -134,5 +135,35 @@ run_stan_harness <- function(
   if (return_fit) {
     return(fit)
   }
-  rstan::extract(fit)
+
+  pars_expr <- substitute(pars)
+  pars_val <- tryCatch(
+    if (is.null(pars)) NULL else as.character(pars),
+    error = function(e) as.character(pars_expr)
+  )
+
+  reshape_single_iter <- function(x) {
+    d <- dim(x)
+    if (is.null(d)) {
+      return(x)
+    }
+    if (length(d) == 1L) {
+      return(x[[1]])
+    }
+    if (length(d) == 2L) {
+      return(as.vector(x))
+    }
+    array(x, dim = d[-1])
+  }
+
+  if (is.null(pars_val)) {
+    extracted <- rstan::extract(fit)
+    return(lapply(extracted, reshape_single_iter))
+  }
+
+  extracted <- rstan::extract(fit, pars = pars_val)
+  if (length(pars_val) == 1L) {
+    return(reshape_single_iter(extracted[[pars_val]]))
+  }
+  lapply(extracted[pars_val], reshape_single_iter)
 }
