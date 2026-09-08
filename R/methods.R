@@ -138,9 +138,16 @@ predict.imugap_fit <- function(
       ),
       paste0(
         c(
-          "n_obs", "y_obs", "y_smp", "n_weights", "obs_to_weights_bounds",
-          "weights_location", "weights_cohort", "weights_life_year",
-          "weights_dose", "weights"
+          "n_obs",
+          "y_obs",
+          "y_smp",
+          "n_weights",
+          "obs_to_weights_bounds",
+          "weights_location",
+          "weights_cohort",
+          "weights_life_year",
+          "weights_dose",
+          "weights"
         ),
         "_",
         suffix
@@ -163,22 +170,30 @@ predict.imugap_fit <- function(
     ),
     paste0(
       c(
-        "n_obs", "y_obs", "y_smp", "n_weights", "obs_to_weights_bounds",
-        "weights_location", "weights_cohort", "weights_life_year",
-        "weights_dose", "weights"
+        "n_obs",
+        "y_obs",
+        "y_smp",
+        "n_weights",
+        "obs_to_weights_bounds",
+        "weights_location",
+        "weights_cohort",
+        "weights_life_year",
+        "weights_dose",
+        "weights"
       ),
       "_uncensored"
     )
   )
 
   # Update the data object for prediction mode
-  dat_stan <- c(
-    fit$data,
+  dat_stan <- fit$data
+  updates <- c(
     target_stream,
     empty_stream("right"),
     empty_stream("left"),
-    list(predict_mode = 1)
+    list(predict_mode = 1L)
   )
+  dat_stan[names(updates)] <- updates
 
   # Slice the iterations dimension, keeping an equal number of draws from the
   # end of each chain (the converged tail); otherwise use every draw.

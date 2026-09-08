@@ -152,7 +152,11 @@ test_that("hierarchical_phi.stan computes observation probabilities accurately",
     off_layer = rep(0.0, ld_sim$n_locs - 1L)
   )
 
-  p_obs <- run_stan_harness(model_hierarchical_phi, data = data_list, p_obs_uncensored)
+  p_obs <- run_stan_harness(
+    model_hierarchical_phi,
+    data = data_list,
+    p_obs_uncensored
+  )
 
   expect_length(p_obs, length(obs_bounds))
   expect_true(p_obs > 0 && p_obs < 1)

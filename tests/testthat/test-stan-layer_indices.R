@@ -115,26 +115,46 @@ test_that("layer_indices.stan constructs multi-layer mappings with canonical hie
     layer_sizes = ld_sim$layer_sizes
   )
 
-  obs_map <- run_stan_harness(model_layer_indices, data = data_layer_list, out_obs_map_unc)
+  obs_map <- run_stan_harness(
+    model_layer_indices,
+    data = data_layer_list,
+    out_obs_map_unc
+  )
   expect_equal(obs_map[1, ], obs_bounds)
   expect_equal(obs_map[2, ], c(tail(obs_bounds, -1) - 1L, length(w_cohort)))
 
-  out_shift <- run_stan_harness(model_layer_indices, data = data_layer_list, out_shift)
+  out_shift <- run_stan_harness(
+    model_layer_indices,
+    data = data_layer_list,
+    out_shift
+  )
   expect_equal(as.numeric(out_shift), seq_len(n_cohort))
 
-  loc_layer_idx <- run_stan_harness(model_layer_indices, data = data_layer_list, out_loc_layer_idx)
+  loc_layer_idx <- run_stan_harness(
+    model_layer_indices,
+    data = data_layer_list,
+    out_loc_layer_idx
+  )
   expect_equal(
     as.numeric(loc_layer_idx),
     c(rep(1L, ld_sim$layer_sizes[2]), rep(2L, ld_sim$layer_sizes[3]))
   )
 
-  phi_lookup <- run_stan_harness(model_layer_indices, data = data_layer_list, out_phi_lookup_unc)
+  phi_lookup <- run_stan_harness(
+    model_layer_indices,
+    data = data_layer_list,
+    out_phi_lookup_unc
+  )
   expect_equal(
     as.numeric(phi_lookup),
     w_cohort + (w_loc - 1L) * n_cohort
   )
 
-  cdf_lookup <- run_stan_harness(model_layer_indices, data = data_layer_list, out_cdf_lookup_unc)
+  cdf_lookup <- run_stan_harness(
+    model_layer_indices,
+    data = data_layer_list,
+    out_cdf_lookup_unc
+  )
   expect_equal(
     as.numeric(cdf_lookup),
     w_life_year + (w_dose - 1L) * n_yr
