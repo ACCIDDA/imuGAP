@@ -156,21 +156,23 @@ When adding or refactoring Stan include files, create unit tests following these
 
 ### 2. Stan Include Coverage Mapping
 
-| Stan Subdirectory | Stan File | Test File | Test Focus & Verification |
+| Stan Subdirectory | Stan File / Module | Test File | Test Focus & Verification |
 | :--- | :--- | :--- | :--- |
-| **`functions/`** | `bounds_to_range.stan` | `test-stan-bounds_to_range.R` | Index segment calculation for cumulative weight bounds |
-| | `element_mult_expand.stan` | `test-stan-element_mult_expand.R` | Vector-to-matrix row-wise expansion and multiplication |
+| **`functions/`** | `bounds_to_range.stan` | `test-stan-bounds_to_range.R` | Index segment calculation and validation for cumulative weight bounds |
 | | `diff.stan` | `test-stan-diff.R` | Forward difference for `vector` and `row_vector` types |
-| | `matrix_sums.stan` | `test-stan-matrix_sums.R` | Column-wise (`colsum`) and row-wise (`rowsum`) summations |
+| | `layer_offsets.stan` | `test-stan-layer_offsets.R` | Multi-layer tree offset accumulation and hierarchical phi calculation |
+| | `lookups.stan` | `test-stan-lookups.R` | Column-major index flattening (`compute_cdf_lookup`, `compute_phi_lookup`) and bounds validation |
 | | `unrolled_dose_static_lambda.stan` | `test-stan-unrolled_dose.R` | Multi-dose CDF unrolling given schedule and rate $\lambda$ |
-| | `convenience.stan` | *(composite include)* | Tested via its 4 constituent sub-function unit tests |
+| | `convenience.stan` | *(composite include)* | Tested via constituent sub-function unit tests |
+| **`data/`** | `uncensored/`, `right/`, `left/` | *(composite includes)* | Modular observation data and weights definitions |
+| | `locations.stan`, `structural.stan` | *(composite includes)* | Structural indices and location hierarchy data |
 | **`transformed_data/`** | `epsilon.stan` | `test-stan-epsilon.R` | Numerical precision constant (`epsilon_p = 1e-10`) |
-| | `layer_indices.stan` | `test-stan-layer_indices.R` | Lookups: `obs_map`, `cohort_shift_counter`, `loc_layer_idx`, `phi_lookup`, `cdf_lookup` |
-| | `single_indices.stan` | `test-stan-single_indices.R` | Single-location lookups: `obs_map`, `phi_lookup`, `cdf_lookup` |
-| | `censoring.stan` | `test-stan-censoring_trans.R` | Left-bound count shifting (`y_obs_trans = y_obs - 1`) |
-| **`model/`** | `hierarchical_phi.stan` | `test-stan-hierarchical_phi.R` | Deterministic hierarchical observation probabilities against closed-form analytical formula |
-| | `single_phi.stan` | `test-stan-single_phi.R` | Deterministic single-location observation probabilities against closed-form analytical formula |
-| | `censored.stan` | `test-stan-censored_likelihood.R` | Log-likelihood accumulation for uncensored (`dbinom`) and interval-censored (`pbinom`) data |
+| | `common_indices.stan`, `layer_phi_lookup.stan` | `test-stan-common_indices.R` | Structural integration for precomputed indices (`obs_map_*`, `cdf_lookup_*`, `phi_lookup_*`) |
+| | `layer_indices.stan` | `test-stan-layer_indices.R` | Multi-layer location bounds: `layer_bounds`, `parent_child_bounds`, `loc_layer_idx` |
+| | `single_phi_lookup.stan` | `test-stan-single_phi_lookup.R` | Single-location phi lookups (`phi_lookup_*`) via subdirectories |
+| **`model/`** | `hierarchical_phi.stan` | `test-stan-hierarchical_phi.R` | Deterministic hierarchical observation probabilities against analytical formula |
+| | `single_phi.stan` | `test-stan-single_phi.R` | Deterministic single-location observation probabilities against analytical formula |
+| | `observation_likelihood.stan` | `test-stan-observation_likelihood.R` | Modular observation log-likelihoods (`uncensored/`, `right/`, `left/`) |
 
 ---
 

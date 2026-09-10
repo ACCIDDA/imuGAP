@@ -1,16 +1,22 @@
 functions {
   #include functions/convenience.stan
+  #include functions/layer_offsets.stan
   #include functions/unrolled_dose_static_lambda.stan
 }
 data {
   #include data/shared.stan
+  #include data/locations.stan
+  #include data/uncensored/weights_location.stan
+  #include data/right/weights_location.stan
+  #include data/left/weights_location.stan
   #include data/bspline.stan
-  #include data/censoring.stan
 }
 transformed data {
   #include transformed_data/epsilon.stan
+  #include transformed_data/common_indices.stan
+  #include transformed_data/right/observations.stan
   #include transformed_data/layer_indices.stan
-  #include transformed_data/censoring.stan
+  #include transformed_data/layer_phi_lookup.stan
 }
 parameters {
   #include parameters/bspline.stan
@@ -23,7 +29,7 @@ model {
     #include model/static_lambda.stan
     #include model/layer_offsets.stan
     #include model/hierarchical_phi.stan
-    #include model/censored.stan
+    #include model/observation_likelihood.stan
   }
 }
 generated quantities {

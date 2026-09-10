@@ -120,20 +120,32 @@ run_stan_harness <- function(
     compile_stan_harness(model_or_code)
   }
 
-  fit <- suppressWarnings(suppressMessages(rstan::sampling(
-    sm,
-    data = data,
-    algorithm = "Fixed_param",
-    iter = 1,
-    warmup = 0,
-    chains = 1,
-    refresh = 0,
-    seed = seed,
-    show_messages = FALSE
-  )))
+  out_lines <- utils::capture.output(
+    fit <- suppressWarnings(suppressMessages(rstan::sampling(
+      sm,
+      data = data,
+      algorithm = "Fixed_param",
+      iter = 1,
+      warmup = 0,
+      chains = 1,
+      refresh = 0,
+      seed = seed,
+      show_messages = FALSE
+    ))),
+    type = "output"
+  )
 
   if (return_fit) {
     return(fit)
+  }
+
+  if (fit@mode != 0L) {
+    stop(
+      "Stan execution failed (fit@mode == ",
+      fit@mode,
+      "):\n",
+      paste(out_lines, collapse = "\n")
+    )
   }
 
   pars_expr <- substitute(pars)

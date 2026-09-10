@@ -62,8 +62,8 @@ test_that("imuGAP::sampling() runs end-to-end with 1-layer location hierarchy", 
 
   expect_s3_class(fit, "imugap_fit")
   expect_s4_class(fit$stanfit, "stanfit")
-  expect_equal(fit$data$n_layers, max(locs_1layer$layer))
-  expect_equal(fit$data$n_locs, nrow(locs_1layer))
+  expect_null(fit$data$n_layers)
+  expect_null(fit$data$n_locs)
   expect_true("beta_bs" %in% fit$stanfit@model_pars)
 })
 

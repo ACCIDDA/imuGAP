@@ -54,38 +54,41 @@ get_simulation_setup <- function(seed = 93254) {
   grade6_max_cohort <- n_cohort + cvv_max_age - grade6_start
   grade6_cohorts <- seq_len(grade6_max_cohort)
 
-  phi_st_target <- c(
-    0.8401733,
-    0.8458791,
-    0.8515769,
-    0.8572586,
-    0.8629160,
-    0.8685411,
-    0.8741259,
-    0.8796623,
-    0.8851422,
-    0.8905575,
-    0.8958959,
-    0.9011275,
-    0.9062182,
-    0.9111339,
-    0.9158404,
-    0.9203035,
-    0.9244892,
-    0.9283632,
-    0.9318916,
-    0.9350400,
-    0.9377351,
-    0.9397467,
-    0.9408054,
-    0.9407130,
-    0.9395576,
-    0.9375024,
-    0.9347246,
-    0.9314054,
-    0.9277256,
-    0.9298663
-  )
+  # True state-level lifetime NON-uptake proportion (phi) across cohorts.
+  # (1 - phi_st_target) gives the vaccinating population uptake propensity (~84% - 94%).
+  phi_st_target <- 1 -
+    c(
+      0.8401733,
+      0.8458791,
+      0.8515769,
+      0.8572586,
+      0.8629160,
+      0.8685411,
+      0.8741259,
+      0.8796623,
+      0.8851422,
+      0.8905575,
+      0.8958959,
+      0.9011275,
+      0.9062182,
+      0.9111339,
+      0.9158404,
+      0.9203035,
+      0.9244892,
+      0.9283632,
+      0.9318916,
+      0.9350400,
+      0.9377351,
+      0.9397467,
+      0.9408054,
+      0.9407130,
+      0.9395576,
+      0.9375024,
+      0.9347246,
+      0.9314054,
+      0.9277256,
+      0.9298663
+    )
 
   lambda <- c(2.8, 3.0)
   n_doses <- length(lambda)
@@ -343,8 +346,9 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
   u_cvv_24 <- setup$u_cvv_24
   u_cvv_36 <- setup$u_cvv_36
 
-  p_24 <- pmin(pmax(phi_st * cov[2, 1] * other_vax_reduction, 0), 1)
-  p_36 <- pmin(pmax(phi_st * cov[3, 1] * other_vax_reduction, 0), 1)
+  # Note: (1 - phi_st) represents the vaccinating population uptake propensity
+  p_24 <- pmin(pmax((1 - phi_st) * cov[2, 1], 0), 1)
+  p_36 <- pmin(pmax((1 - phi_st) * cov[3, 1], 0), 1)
   p_36_cond <- pmin(pmax((p_36 - p_24) / (1 - p_24), 0), 1)
 
   at_24 <- qbinom(u_cvv_24, n_cvv, p_24)
@@ -368,7 +372,7 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
       positive = at_36,
       sample_n = n_cvv
     )
-  )[, dose := 1L][, censored := 1.0]
+  )[, dose := 1L][, censored := NA_real_]
 
   # 2. TeenVaxView using pre-drawn uniform quantiles
   sim_teen <- data.table(
@@ -385,7 +389,7 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
     samp_size <- setup$teen_samp_sizes[i, ]
     u_slice <- setup$u_teen[i, ]
     phi_slice <- tvv_cohorts[i] + max(study_ages) - study_ages
-    p_slice <- pmin(pmax(phi_st[phi_slice] * cov[study_ages, 2], 0), 1)
+    p_slice <- pmin(pmax((1 - phi_st[phi_slice]) * cov[study_ages, 2], 0), 1)
 
     sim_teen$sample_n[i] <- sum(samp_size)
     sim_teen$positive[i] <- sum(qbinom(u_slice, samp_size, p_slice))
@@ -398,7 +402,7 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
     nsch <- nsch_matrix[skv_cohorts, s]
     u_vector <- setup$u_sch_matrix[, s]
     p_vector <- pmin(
-      pmax(schl_prob_matrix[skv_cohorts, s] * cov[sch_start, 2L], 0),
+      pmax((1 - schl_prob_matrix[skv_cohorts, s]) * cov[sch_start, 2L], 0),
       1
     )
 
@@ -447,7 +451,7 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
     u_vector <- setup$u_grade6_matrix[, c]
     p_vector <- pmin(
       pmax(
-        cnty_prob_matrix[grade6_cohorts, c] *
+        (1 - cnty_prob_matrix[grade6_cohorts, c]) *
           cov[grade6_start, 2L] *
           other_vax_reduction,
         0
@@ -536,14 +540,15 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
   )
 
   coverage <- target_grid[,
-    fcase(
-      loc_id == "State"                                            ,
-      phi_st[cohort]                                               ,
-      loc_id %in% county_names                                     ,
-      cnty_prob_matrix[cbind(cohort, match(loc_id, county_names))] ,
-      loc_id %in% school_names                                     ,
-      schl_prob_matrix[cbind(cohort, match(loc_id, school_names))]
-    ) *
+    (1 -
+      fcase(
+        loc_id == "State"                                            ,
+        phi_st[cohort]                                               ,
+        loc_id %in% county_names                                     ,
+        cnty_prob_matrix[cbind(cohort, match(loc_id, county_names))] ,
+        loc_id %in% school_names                                     ,
+        schl_prob_matrix[cbind(cohort, match(loc_id, school_names))]
+      )) *
       cov[cbind(age, dose)]
   ]
 

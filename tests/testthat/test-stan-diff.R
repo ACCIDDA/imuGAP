@@ -1,7 +1,7 @@
 skip_if_not_installed("rstan")
-# ' "functions/diff.stan" defines
-# ' `vector diff(vector obj)` and `row_vector diff(row_vector obj)`
-# ' which compute sequential first differences `obj[2:] - obj[:(sz - 1)]`.
+#' "functions/diff.stan" defines
+#' `vector diff(vector obj)` and `row_vector diff(row_vector obj)`
+#' which compute sequential first differences `obj[2:] - obj[:(sz - 1)]`.
 
 target <- "functions/diff.stan"
 
@@ -49,4 +49,16 @@ test_that("diff computes sequential differences for vector and row_vector types"
   expected <- diff(v)
   expect_equal(out_diff_v, expected)
   expect_equal(out_diff_rv, expected)
+})
+
+test_that("diff computes sequential differences for non-monotonic sequences with negative values", {
+  v <- c(-5.2, 3.1, -1.4, -8.0, 4.5)
+
+  out_diff_v <- run_stan_harness(
+    model_diff,
+    data = list(N = length(v), v = v, rv = v),
+    out_diff_v
+  )
+
+  expect_equal(out_diff_v, diff(v))
 })

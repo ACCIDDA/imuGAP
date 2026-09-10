@@ -11,7 +11,7 @@ skip_if_stan_unchanged(c(
   "functions/bounds_to_range.stan",
   "functions/lookups.stan",
   "transformed_data/common_indices.stan",
-  "transformed_data/single_indices.stan",
+  "transformed_data/single_phi_lookup.stan",
   "model/common_phi.stan",
   target
 ))
@@ -62,7 +62,8 @@ data {
   vector[n_doses] lambda_raw;
 }
 transformed data {
-  #include transformed_data/single_indices.stan
+  #include transformed_data/common_indices.stan
+  #include transformed_data/single_phi_lookup.stan
 }
 parameters {
   real dummy;
