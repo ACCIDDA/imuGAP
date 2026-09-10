@@ -91,38 +91,6 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
   set.seed(42)
   off_layer <- rnorm(ld_sim$n_locs - 1L, mean = 0, sd = 0.5)
 
-  empty_stream <- function(tag) {
-    setNames(
-      list(
-        0L,
-        integer(0),
-        integer(0),
-        0L,
-        integer(0),
-        integer(0),
-        integer(0),
-        integer(0),
-        integer(0),
-        numeric(0)
-      ),
-      paste0(
-        c(
-          "n_obs_",
-          "y_obs_",
-          "y_smp_",
-          "n_weights_",
-          "obs_to_weights_bounds_",
-          "weights_cohort_",
-          "weights_location_",
-          "weights_dose_",
-          "weights_life_year_",
-          "weights_"
-        ),
-        tag
-      )
-    )
-  }
-
   data_list <- c(
     list(
       n_yr = nrow(dose_sched),
@@ -141,8 +109,8 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
       weights_life_year_uncensored = w_life_year,
       weights_uncensored = weights
     ),
-    empty_stream("right"),
-    empty_stream("left"),
+    empty_obs_stream("right"),
+    empty_obs_stream("left"),
     ld_sim,
     list(
       k_bs = ncol(bs),

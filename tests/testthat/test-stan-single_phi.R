@@ -65,44 +65,32 @@ test_that("single_phi.stan computes observation probabilities accurately", {
   beta_bs <- c(0.0, 0.0)
   lambda_val <- 1.0
 
-  data_list <- list(
-    n_yr = nrow(dose_sched),
-    n_cohort = nrow(bs),
-    n_doses = ncol(dose_sched),
-    dose_sched = dose_sched,
-    predict_mode = 0L,
-    n_obs_uncensored = length(obs_bounds),
-    y_obs_uncensored = rep(10L, length(obs_bounds)),
-    y_smp_uncensored = rep(20L, length(obs_bounds)),
-    n_weights_uncensored = length(w_cohort),
-    obs_to_weights_bounds_uncensored = obs_bounds,
-    weights_cohort_uncensored = w_cohort,
-    weights_dose_uncensored = w_dose,
-    weights_life_year_uncensored = w_life_year,
-    weights_uncensored = weights,
-    n_obs_right = 0L,
-    y_obs_right = integer(0),
-    y_smp_right = integer(0),
-    n_weights_right = 0L,
-    obs_to_weights_bounds_right = integer(0),
-    weights_cohort_right = integer(0),
-    weights_dose_right = integer(0),
-    weights_life_year_right = integer(0),
-    weights_right = numeric(0),
-    n_obs_left = 0L,
-    y_obs_left = integer(0),
-    y_smp_left = integer(0),
-    n_weights_left = 0L,
-    obs_to_weights_bounds_left = integer(0),
-    weights_cohort_left = integer(0),
-    weights_dose_left = integer(0),
-    weights_life_year_left = integer(0),
-    weights_left = numeric(0),
-    k_bs = ncol(bs),
-    bs = bs,
-    epsilon_p = 1e-9,
-    beta_bs = beta_bs,
-    lambda_raw = as.array(log(lambda_val))
+  data_list <- c(
+    list(
+      n_yr = nrow(dose_sched),
+      n_cohort = nrow(bs),
+      n_doses = ncol(dose_sched),
+      dose_sched = dose_sched,
+      predict_mode = 0L,
+      n_obs_uncensored = length(obs_bounds),
+      y_obs_uncensored = rep(10L, length(obs_bounds)),
+      y_smp_uncensored = rep(20L, length(obs_bounds)),
+      n_weights_uncensored = length(w_cohort),
+      obs_to_weights_bounds_uncensored = obs_bounds,
+      weights_cohort_uncensored = w_cohort,
+      weights_dose_uncensored = w_dose,
+      weights_life_year_uncensored = w_life_year,
+      weights_uncensored = weights
+    ),
+    empty_obs_stream("right"),
+    empty_obs_stream("left"),
+    list(
+      k_bs = ncol(bs),
+      bs = bs,
+      epsilon_p = 1e-9,
+      beta_bs = beta_bs,
+      lambda_raw = as.array(log(lambda_val))
+    )
   )
 
   p_obs <- run_stan_harness(
