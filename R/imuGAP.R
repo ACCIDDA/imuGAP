@@ -62,7 +62,9 @@ sampling <- function(
 ) {
   # check location argument
   loc_info <- canonicalize_locations(locations)
-  layer_data <- assemble_layer_data(loc_info)
+  n_layers <- max(loc_info$layer)
+  is_multilayer <- n_layers > 1L
+  layer_data <- if (is_multilayer) assemble_layer_data(loc_info) else NULL
 
   # check observations argument
   obs <- canonicalize_observations(observations)
@@ -131,7 +133,7 @@ sampling <- function(
       n_yr = max(wts$age),
       n_cohort = max(wts$cohort)
     ),
-    layer_data,
+    if (is_multilayer) layer_data,
     list(
       n_doses = length(dose_schedule),
       dose_sched = doses,
@@ -156,10 +158,10 @@ sampling <- function(
   # hierarchical model.
   model <- imugap_opts$model %||% "default"
   model_name <- if (identical(model, "default")) {
-    if (layer_data$n_layers == 1L) {
-      "impute_school_coverage_process_v6_single_layer"
-    } else {
+    if (is_multilayer) {
       "impute_school_coverage_process_v6"
+    } else {
+      "impute_school_coverage_process_v6_single_layer"
     }
   } else {
     stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model)

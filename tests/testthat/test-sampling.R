@@ -121,13 +121,10 @@ test_that("sampling assembles stan_opts$data with all expected fields", {
     "n_cohort",
     "n_locs",
     "n_layers",
-    "layer_sizes",
-    "layer_bounds",
-    "parent_id_map",
-    "layer_id_map",
+    "layer_starts",
     "n_parent_locs",
     "parent_loc_id",
-    "parent_child_bounds",
+    "parent_child_starts",
     "n_doses",
     "dose_sched",
     "k_bs",
@@ -183,7 +180,8 @@ test_that("sampling data assembly produces sane derived values", {
   expect_equal(d$predict_mode, 0)
   expect_equal(d$n_locs, 5L)
   expect_equal(d$n_layers, 3L)
-  expect_equal(as.integer(d$layer_sizes), c(1L, 2L, 2L))
+  expect_equal(as.integer(d$layer_starts), c(1L, 2L, 4L))
+  expect_equal(as.integer(d$parent_child_starts), c(2L, 4L))
   expect_equal(nrow(d$dose_sched), d$n_yr)
   expect_equal(ncol(d$dose_sched), d$n_doses)
 })

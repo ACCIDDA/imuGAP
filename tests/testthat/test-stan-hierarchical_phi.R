@@ -11,8 +11,10 @@ skip_if_stan_unchanged(c(
   "functions/unrolled_dose_static_lambda.stan",
   "functions/bounds_to_range.stan",
   "functions/lookups.stan",
+  "functions/layer_offsets.stan",
   "transformed_data/common_indices.stan",
   "transformed_data/layer_indices.stan",
+  "transformed_data/layer_phi_lookup.stan",
   "model/common_phi.stan",
   target
 ))
@@ -24,6 +26,7 @@ functions {
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/bounds_to_range.stan
   #include functions/lookups.stan
+  #include functions/layer_offsets.stan
 }
 data {
   int<lower=0> n_obs_uncensored;
@@ -57,11 +60,10 @@ data {
   int n_yr;
   int n_locs;
   int n_layers;
+  array[n_layers] int layer_starts;
   int n_parent_locs;
   array[n_parent_locs] int parent_loc_id;
-  array[2, n_parent_locs] int parent_child_bounds;
-  array[2, n_layers] int layer_bounds;
-  array[n_layers] int layer_sizes;
+  array[n_parent_locs] int parent_child_starts;
 
   int k_bs;
   matrix[n_cohort, k_bs] bs;
@@ -75,7 +77,9 @@ data {
   vector[n_locs - 1] off_layer;
 }
 transformed data {
+  #include transformed_data/common_indices.stan
   #include transformed_data/layer_indices.stan
+  #include transformed_data/layer_phi_lookup.stan
 }
 parameters {
   real dummy;
@@ -108,48 +112,46 @@ test_that("hierarchical_phi.stan computes observation probabilities accurately",
   beta_bs <- c(0.0, 0.0)
   lambda_val <- 1.0
 
-  data_list <- list(
-    n_obs_uncensored = length(obs_bounds),
-    n_weights_uncensored = length(w_cohort),
-    obs_to_weights_bounds_uncensored = obs_bounds,
-    weights_cohort_uncensored = w_cohort,
-    weights_location_uncensored = w_loc,
-    weights_dose_uncensored = w_dose,
-    weights_life_year_uncensored = w_life_year,
-    weights_uncensored = weights,
-    n_obs_right = 0L,
-    n_weights_right = 0L,
-    obs_to_weights_bounds_right = integer(0),
-    weights_cohort_right = integer(0),
-    weights_location_right = integer(0),
-    weights_dose_right = integer(0),
-    weights_life_year_right = integer(0),
-    weights_right = numeric(0),
-    n_obs_left = 0L,
-    n_weights_left = 0L,
-    obs_to_weights_bounds_left = integer(0),
-    weights_cohort_left = integer(0),
-    weights_location_left = integer(0),
-    weights_dose_left = integer(0),
-    weights_life_year_left = integer(0),
-    weights_left = numeric(0),
-    n_cohort = nrow(bs),
-    n_yr = nrow(dose_sched),
-    n_locs = ld_sim$n_locs,
-    n_layers = ld_sim$n_layers,
-    n_parent_locs = ld_sim$n_parent_locs,
-    parent_loc_id = ld_sim$parent_loc_id,
-    parent_child_bounds = ld_sim$parent_child_bounds,
-    layer_bounds = ld_sim$layer_bounds,
-    layer_sizes = ld_sim$layer_sizes,
-    k_bs = ncol(bs),
-    bs = bs,
-    n_doses = ncol(dose_sched),
-    dose_sched = dose_sched,
-    epsilon_p = 1e-9,
-    beta_bs = beta_bs,
-    lambda_raw = as.array(log(lambda_val)),
-    off_layer = rep(0.0, ld_sim$n_locs - 1L)
+  data_list <- c(
+    list(
+      n_obs_uncensored = length(obs_bounds),
+      n_weights_uncensored = length(w_cohort),
+      obs_to_weights_bounds_uncensored = obs_bounds,
+      weights_cohort_uncensored = w_cohort,
+      weights_location_uncensored = w_loc,
+      weights_dose_uncensored = w_dose,
+      weights_life_year_uncensored = w_life_year,
+      weights_uncensored = weights,
+      n_obs_right = 0L,
+      n_weights_right = 0L,
+      obs_to_weights_bounds_right = integer(0),
+      weights_cohort_right = integer(0),
+      weights_location_right = integer(0),
+      weights_dose_right = integer(0),
+      weights_life_year_right = integer(0),
+      weights_right = numeric(0),
+      n_obs_left = 0L,
+      n_weights_left = 0L,
+      obs_to_weights_bounds_left = integer(0),
+      weights_cohort_left = integer(0),
+      weights_location_left = integer(0),
+      weights_dose_left = integer(0),
+      weights_life_year_left = integer(0),
+      weights_left = numeric(0),
+      n_cohort = nrow(bs),
+      n_yr = nrow(dose_sched)
+    ),
+    ld_sim,
+    list(
+      k_bs = ncol(bs),
+      bs = bs,
+      n_doses = ncol(dose_sched),
+      dose_sched = dose_sched,
+      epsilon_p = 1e-9,
+      beta_bs = beta_bs,
+      lambda_raw = as.array(log(lambda_val)),
+      off_layer = rep(0.0, ld_sim$n_locs - 1L)
+    )
   )
 
   p_obs <- run_stan_harness(

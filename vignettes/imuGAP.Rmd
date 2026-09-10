@@ -215,7 +215,7 @@ See the `canonicalize_*` function documentation for more complete validation req
 
 Before fitting the model, we can explore how the synthetic observations relate to the underlying latent parameters across all geographic levels in the simulation:
 
-1. **State Level (ChildVaxView, SchoolVaxView, TeenVaxView)**: Observations across cohorts spanning doses 1 and 2, plotted against the underlying lifetime propensity $\phi_{st}$.
+1. **State Level (ChildVaxView, SchoolVaxView, TeenVaxView)**: Observations across cohorts spanning doses 1 and 2, plotted against the underlying lifetime uptake propensity $1 - \phi_{st}$.
 2. **County Level (6th Grade Surveys)**: Right-censored dose 2 coverage at age 11 across Scruggs, Simone, and Watson counties, reflecting county-specific random offsets.
 3. **School Level (Kindergarten Entry)**: Annual kindergarten entry coverage (dose 2 at age 5) across all 24 individual schools, showing school-level variation around county baselines.
 
@@ -247,10 +247,11 @@ single_cohort_obs <- state_obs[is.na(age_max) | age_max == age_min + 1L]
 multi_cohort_obs <- copy(state_obs[!is.na(age_max) & age_max > age_min + 1L])
 multi_cohort_obs[, cohort_max := cohort_min + (age_max - 1L) - age_min]
 
-# True state lifetime propensity across cohorts
+# True state lifetime uptake propensity across cohorts (1 - phi)
+# Note: phi represents the non-uptake rate, so (1 - phi) represents the vaccinating population
 latent_state <- data.table(
   cohort_min = seq_along(latent_params_sim$phi_state),
-  phi = latent_params_sim$phi_state
+  propensity = 1 - latent_params_sim$phi_state
 )
 
 # Latent milestone coverage curves corresponding to each observation source
@@ -258,27 +259,25 @@ n_c <- length(latent_params_sim$phi_state)
 latent_curves <- rbindlist(list(
   data.table(
     cohort_min = seq_len(n_c),
-    latent_cov = latent_params_sim$phi_state *
-      latent_params_sim$uptake[2, 1] *
-      latent_params_sim$censor_reduction,
+    latent_cov = (1 - latent_params_sim$phi_state) *
+      latent_params_sim$uptake[2, 1],
     source = "ChildVaxView (Dose 1, Age 2)"
   ),
   data.table(
     cohort_min = seq_len(n_c),
-    latent_cov = latent_params_sim$phi_state *
-      latent_params_sim$uptake[3, 1] *
-      latent_params_sim$censor_reduction,
+    latent_cov = (1 - latent_params_sim$phi_state) *
+      latent_params_sim$uptake[3, 1],
     source = "ChildVaxView (Dose 1, Age 3)"
   ),
   data.table(
     cohort_min = seq_len(28),
-    latent_cov = latent_params_sim$phi_state[1:28] *
+    latent_cov = (1 - latent_params_sim$phi_state[1:28]) *
       latent_params_sim$uptake[5, 2],
     source = "SchoolVaxView (Dose 2, Age 5)"
   ),
   data.table(
     cohort_min = seq_len(15),
-    latent_cov = latent_params_sim$phi_state[1:15] *
+    latent_cov = (1 - latent_params_sim$phi_state[1:15]) *
       mean(latent_params_sim$uptake[14:18, 2]),
     source = "TeenVaxView (Dose 2, Ages 14-18)"
   )
@@ -288,7 +287,11 @@ latent_curves[, source := factor(source, levels = levels(state_obs$source))]
 ggplot() +
   geom_line(
     data = latent_state,
-    aes(x = cohort_min, y = phi, linetype = "True Lifetime Propensity (phi)"),
+    aes(
+      x = cohort_min,
+      y = propensity,
+      linetype = "True Lifetime Uptake Propensity (1 - phi)"
+    ),
     color = "gray40",
     linewidth = 0.8,
     alpha = 0.5
@@ -327,7 +330,7 @@ ggplot() +
   scale_y_continuous(limits = c(0.4, 1.0)) +
   scale_linetype_manual(
     name = NULL,
-    values = c("True Lifetime Propensity (phi)" = "dashed")
+    values = c("True Lifetime Uptake Propensity (1 - phi)" = "dashed")
   ) +
   scale_color_brewer(name = "Data Source", palette = "Dark2") +
   scale_shape_manual(
@@ -368,12 +371,13 @@ county_obs <- copy(observations_sim[loc_id %in% c("Scruggs", "Simone", "Watson")
 county_obs[, obs_prop := positive / sample_n]
 
 # Analytical county-level latent curves for 6th grade survey (age 11, dose 2, censored)
+# Note: phi represents non-uptake, so (1 - phi_shifted) represents the vaccinating population
 county_latent <- rbindlist(lapply(names(latent_params_sim$off_cnty), function(cnty) {
   cohorts <- seq_len(19)
   c_idx <- match(cnty, names(latent_params_sim$off_cnty))
   offset <- latent_params_sim$off_cnty[c_idx]
   phi_shifted <- plogis(qlogis(latent_params_sim$phi_state[cohorts]) + offset)
-  cov_true <- phi_shifted * latent_params_sim$uptake[11, 2] * latent_params_sim$censor_reduction
+  cov_true <- (1 - phi_shifted) * latent_params_sim$uptake[11, 2]
   data.table(loc_id = cnty, cohort_min = cohorts, latent_cov = cov_true)
 }))
 
@@ -438,14 +442,14 @@ school_obs[, obs_prop := positive / sample_n]
 
 sch_cohorts <- 1:28
 
-# 1. State-level lifetime propensity reference
+# 1. State-level lifetime uptake propensity reference (1 - phi)
 state_sch_propensity <- rbindlist(lapply(
   c("Scruggs", "Simone", "Watson"),
   function(cnty) {
     data.table(
       parent_id = cnty,
       cohort_min = sch_cohorts,
-      phi = latent_params_sim$phi_state[sch_cohorts]
+      propensity = 1 - latent_params_sim$phi_state[sch_cohorts]
     )
   }
 ))
@@ -459,7 +463,7 @@ county_sch_latent <- rbindlist(lapply(
     phi_shifted <- plogis(
       qlogis(latent_params_sim$phi_state[sch_cohorts]) + offset
     )
-    cov_true <- phi_shifted * latent_params_sim$uptake[5, 2]
+    cov_true <- (1 - phi_shifted) * latent_params_sim$uptake[5, 2]
     data.table(parent_id = cnty, cohort_min = sch_cohorts, latent_cov = cov_true)
   }
 ))
@@ -477,7 +481,7 @@ school_sch_latent <- rbindlist(lapply(
     phi_sch <- plogis(
       qlogis(latent_params_sim$phi_state[sch_cohorts]) + c_offset + s_offset
     )
-    cov_sch <- phi_sch * latent_params_sim$uptake[5, 2]
+    cov_sch <- (1 - phi_sch) * latent_params_sim$uptake[5, 2]
     data.table(
       parent_id = cnty,
       loc_id = s_name,
@@ -489,10 +493,14 @@ school_sch_latent <- rbindlist(lapply(
 ))
 
 ggplot() +
-  # State lifetime propensity reference
+  # State lifetime uptake propensity reference
   geom_line(
     data = state_sch_propensity,
-    aes(x = cohort_min, y = phi, linetype = "True State Lifetime Propensity (phi)"),
+    aes(
+      x = cohort_min,
+      y = propensity,
+      linetype = "True State Lifetime Uptake Propensity (1 - phi)"
+    ),
     color = "gray40",
     linewidth = 0.8,
     alpha = 0.5
@@ -531,7 +539,7 @@ ggplot() +
   scale_linetype_manual(
     name = "Reference Curves",
     values = c(
-      "True State Lifetime Propensity (phi)" = "dotted",
+      "True State Lifetime Uptake Propensity (1 - phi)" = "dotted",
       "True County Latent Coverage" = "solid"
     )
   ) +
@@ -552,6 +560,7 @@ ggplot() +
     y = "Kindergarten Entry Coverage (Dose 2, Age 5)"
   )
 ```
+
 
 ---
 
