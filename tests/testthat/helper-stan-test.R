@@ -179,3 +179,36 @@ run_stan_harness <- function(
   }
   lapply(extracted[pars_val], reshape_single_iter)
 }
+
+empty_obs_stream <- function(tag = c("uncensored", "right", "left")) {
+  tag <- match.arg(tag)
+  setNames(
+    list(
+      0L,
+      integer(0),
+      integer(0),
+      0L,
+      integer(0),
+      integer(0),
+      integer(0),
+      integer(0),
+      integer(0),
+      numeric(0)
+    ),
+    paste0(
+      c(
+        "n_obs_",
+        "y_obs_",
+        "y_smp_",
+        "n_weights_",
+        "obs_to_weights_bounds_",
+        "weights_cohort_",
+        "weights_location_",
+        "weights_dose_",
+        "weights_life_year_",
+        "weights_"
+      ),
+      tag
+    )
+  )
+}
