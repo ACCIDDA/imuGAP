@@ -117,32 +117,48 @@ test_that("sampling assembles stan_opts$data with all expected fields", {
   d <- out$captured$data
   expect_true(is.list(d))
   expected_fields <- c(
-    "n_uncensored_obs",
     "n_yr",
     "n_cohort",
     "n_locs",
     "n_layers",
-    "layer_sizes",
-    "layer_bounds",
-    "parent_id_map",
-    "layer_id_map",
+    "layer_starts",
     "n_parent_locs",
     "parent_loc_id",
-    "parent_child_bounds",
+    "parent_child_starts",
     "n_doses",
     "dose_sched",
     "k_bs",
     "bs",
-    "n_obs",
-    "y_obs",
-    "y_smp",
-    "n_weights",
-    "obs_to_weights_bounds",
-    "weights_location",
-    "weights_cohort",
-    "weights_life_year",
-    "weights_dose",
-    "weights",
+    "n_obs_uncensored",
+    "y_obs_uncensored",
+    "y_smp_uncensored",
+    "n_weights_uncensored",
+    "obs_to_weights_bounds_uncensored",
+    "weights_location_uncensored",
+    "weights_cohort_uncensored",
+    "weights_life_year_uncensored",
+    "weights_dose_uncensored",
+    "weights_uncensored",
+    "n_obs_right",
+    "y_obs_right",
+    "y_smp_right",
+    "n_weights_right",
+    "obs_to_weights_bounds_right",
+    "weights_location_right",
+    "weights_cohort_right",
+    "weights_life_year_right",
+    "weights_dose_right",
+    "weights_right",
+    "n_obs_left",
+    "y_obs_left",
+    "y_smp_left",
+    "n_weights_left",
+    "obs_to_weights_bounds_left",
+    "weights_location_left",
+    "weights_cohort_left",
+    "weights_life_year_left",
+    "weights_dose_left",
+    "weights_left",
     "predict_mode"
   )
   expect_true(all(expected_fields %in% names(d)))
@@ -157,13 +173,15 @@ test_that("sampling data assembly produces sane derived values", {
     imuGAP::sampling(observations = obs, populations = pops, locations = locs)
   ))
   d <- out$captured$data
-  expect_equal(d$n_obs, nrow(obs))
-  expect_equal(d$n_uncensored_obs, nrow(obs))
+  expect_equal(d$n_obs_uncensored, nrow(obs))
+  expect_equal(d$n_obs_right, 0L)
+  expect_equal(d$n_obs_left, 0L)
   expect_equal(d$n_doses, length(opts$dose_schedule))
   expect_equal(d$predict_mode, 0)
   expect_equal(d$n_locs, 5L)
   expect_equal(d$n_layers, 3L)
-  expect_equal(as.integer(d$layer_sizes), c(1L, 2L, 2L))
+  expect_equal(as.integer(d$layer_starts), c(1L, 2L, 4L))
+  expect_equal(as.integer(d$parent_child_starts), c(2L, 4L))
   expect_equal(nrow(d$dose_sched), d$n_yr)
   expect_equal(ncol(d$dose_sched), d$n_doses)
 })
@@ -178,8 +196,8 @@ test_that("sampling forwards observation positive/sample_n into stan data", {
     )
   ))
   d <- out$captured$data
-  expect_setequal(d$y_obs, obs$positive)
-  expect_setequal(d$y_smp, obs$sample_n)
+  expect_setequal(d$y_obs_uncensored, obs$positive)
+  expect_setequal(d$y_smp_uncensored, obs$sample_n)
 })
 
 test_that("sampling translates model from imugap_opts and hierarchy depth to stan model", {

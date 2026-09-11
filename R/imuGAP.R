@@ -5,6 +5,53 @@ ERR_EXTRACT_RSTAN_ONLY <- paste0(
   "refit with stan_options(backend = 'rstan')"
 )
 
+#' @title Slice weights data.table for Stan input
+#'
+#' @param wts_dt Canonicalized `[data.table()]` of weights mapping, corresponding
+#'   to the canonicalized `populations` input from `[canonicalize_populations()]`.
+#' @param obs_dt Canonicalized `[data.table()]` of observations slice from
+#'   `[canonicalize_observations()]`.
+#' @param suffix Character suffix appended to output list element names.
+#'
+#' @return A named list formatted for Stan data consumption.
+#'
+#' @keywords internal
+#' @noRd
+#' @autoglobal
+slice_weights <- function(wts_dt, obs_dt, suffix) {
+  res <- if (nrow(obs_dt) == 0L) {
+    list(
+      n_obs = 0L,
+      y_obs = integer(0),
+      y_smp = integer(0),
+      n_weights = 0L,
+      obs_to_weights_bounds = integer(0),
+      weights_location = integer(0),
+      weights_cohort = integer(0),
+      weights_life_year = integer(0),
+      weights_dose = integer(0),
+      weights = numeric(0)
+    )
+  } else {
+    w <- wts_dt[obs_dt, on = .(obs_c_id), nomatch = NULL]
+    w[, range_start := seq_len(.N)]
+    w[, range_start := min(range_start), by = obs_c_id]
+    list(
+      n_obs = nrow(obs_dt),
+      y_obs = obs_dt$positive,
+      y_smp = obs_dt$sample_n,
+      n_weights = nrow(w),
+      obs_to_weights_bounds = unique(w$range_start),
+      weights_location = w$loc_c_id,
+      weights_cohort = w$cohort,
+      weights_life_year = w$age,
+      weights_dose = w$dose,
+      weights = w$weight
+    )
+  }
+  stats::setNames(res, paste0(names(res), "_", suffix))
+}
+
 #' @title Immunity: Geographic & Age-based Projection, `imuGAP`
 #'
 #' @description
@@ -62,7 +109,9 @@ sampling <- function(
 ) {
   # check location argument
   loc_info <- canonicalize_locations(locations)
-  layer_data <- assemble_layer_data(loc_info)
+  n_layers <- max(loc_info$layer)
+  is_multilayer <- n_layers > 1L
+  layer_data <- if (is_multilayer) assemble_layer_data(loc_info) else NULL
 
   # check observations argument
   obs <- canonicalize_observations(observations)
@@ -87,29 +136,27 @@ sampling <- function(
     doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
   }
 
+  st_uncensored <- slice_weights(wts, obs[is.na(censored)], "uncensored")
+  st_right <- slice_weights(wts, obs[censored == 1], "right")
+  st_left <- slice_weights(wts, obs[0], "left")
+
   # prepare dat_stan
   dat_stan <- c(
     list(
-      n_uncensored_obs = obs[is.na(censored), .N],
       n_yr = max(wts$age),
       n_cohort = max(wts$cohort)
     ),
-    layer_data,
+    if (is_multilayer) layer_data,
     list(
       n_doses = length(dose_schedule),
       dose_sched = doses,
       k_bs = ncol(bsp),
-      bs = bsp,
-      n_obs = nrow(obs),
-      y_obs = obs$positive,
-      y_smp = obs$sample_n,
-      n_weights = nrow(wts),
-      obs_to_weights_bounds = unique(wts$range_start),
-      weights_location = wts$loc_c_id,
-      weights_cohort = wts$cohort,
-      weights_life_year = wts$age,
-      weights_dose = wts$dose,
-      weights = wts$weight,
+      bs = bsp
+    ),
+    st_uncensored,
+    st_right,
+    st_left,
+    list(
       predict_mode = 0
     )
   )
@@ -124,10 +171,10 @@ sampling <- function(
   # hierarchical model.
   model <- imugap_opts$model %||% "default"
   model_name <- if (identical(model, "default")) {
-    if (layer_data$n_layers == 1L) {
-      "impute_school_coverage_process_v6_single_layer"
-    } else {
+    if (is_multilayer) {
       "impute_school_coverage_process_v6"
+    } else {
+      "impute_school_coverage_process_v6_single_layer"
     }
   } else {
     stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model)

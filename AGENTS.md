@@ -33,6 +33,10 @@ This document provides concise instructions and rules for AI coding assistants w
   * Define error format strings as module constants (`ERR_*`, `MSG_*`) at the top of each file.
   * Use `stop_fmt_if()` and `warn_fmt_if()` for assertions.
   * **Typography**: Use backticks (`` `code` ``) for function/argument/symbol names and single quotes (`'value'`) for user string values, column names, and model names.
+* **Roxygen Documentation Standards**:
+  * **Explicit `@title` and `@description`**: Roxygen blocks must use explicit `@title` and `@description` tags rather than relying on automatic inference.
+  * **`data.table` and `@autoglobal`**: Functions containing `data.table` calculations or non-standard evaluation expressions should generally be annotated with `@autoglobal` so `roxyglobals` generates appropriate symbol declarations in `R/globals.R`.
+  * **Internal Helper Functions**: Unexported internal functions should be marked with `@keywords internal` and `@noRd` to keep code documented in source without generating unused `.Rd` files.
 * **Roxygen Examples**:
   * For computationally expensive functions (e.g. `sampling()`, multi-draw `predict()`), **always combine `@examplesIf interactive()` with `\donttest{ ... }`**:
     ```r
@@ -48,6 +52,12 @@ This document provides concise instructions and rules for AI coding assistants w
   * This ensures fast `pkgdown` site builds (~35s) while passing CRAN `--as-cran` checks and remaining runnable for interactive users.
 * **Vignette Plots & Dark Mode**:
   * Vignette plots must enforce a solid white background and black text (`dev.args = list(bg = "white")`, `thematic::thematic_off()`, and `ggplot2::theme_set(...)`).
+* **Stan Component Unit Testing**:
+  * Unit tests for Stan include files in `inst/stan/` live in granular files `tests/testthat/test-stan-*.R`.
+  * Explicitly declare `target <- "<subpath>.stan"` and compile via `sprintf(...) |> compile_stan_harness()`.
+  * Extract output variables via `run_stan_harness(model, data, out_var)` (or `out_var` symbol), which automatically reshapes 1-iteration draws to remove the leading singleton dimension.
+  * Express expectations and test data dimensions dynamically from input relationships (e.g. `length(x)`, `nrow(mat)`, `c(tail(lbounds, -1) - 1L, ubound)`, analytical formulas) rather than hardcoding static magic numbers.
+  * Always guard with `skip_if_not_installed("rstan")` and `skip_if_stan_unchanged(target)`.
 * **Test Coverage Expectations (`covr`)**:
   * All manually authored R files (`R/canonicalize.R`, `R/checkers.R`, `R/helpers.R`, `R/imuGAP.R`, `R/methods.R`, `R/options.R`) must maintain high test coverage (>90%, targeting 100%).
 * **Package Reinstallation & Vignette Data**:
