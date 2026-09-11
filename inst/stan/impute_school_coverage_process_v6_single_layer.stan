@@ -7,7 +7,6 @@ data {
   #include data/bspline.stan
 }
 transformed data {
-  #include transformed_data/epsilon.stan
   #include transformed_data/common_indices.stan
   #include transformed_data/right/observations.stan
   #include transformed_data/single_phi_lookup.stan

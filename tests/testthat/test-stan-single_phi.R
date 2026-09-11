@@ -6,7 +6,6 @@ skip_if_not_installed("rstan")
 target <- "model/single_phi.stan"
 
 skip_if_stan_unchanged(c(
-  "functions/diff.stan",
   "functions/unrolled_dose_static_lambda.stan",
   "functions/bounds_to_range.stan",
   "functions/lookups.stan",
@@ -21,7 +20,6 @@ skip_if_stan_unchanged(c(
 model_single_phi <- sprintf(
   "
 functions {
-  #include functions/diff.stan
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/bounds_to_range.stan
   #include functions/lookups.stan
@@ -29,7 +27,6 @@ functions {
 data {
   #include data/shared.stan
   #include data/bspline.stan
-  real epsilon_p;
 
   // Deterministic parameter inputs passed via data for exact testing
   vector[k_bs] beta_bs;
@@ -73,8 +70,8 @@ test_that("single_phi.stan computes observation probabilities accurately", {
       dose_sched = dose_sched,
       predict_mode = 0L,
       n_obs_uncensored = length(obs_bounds),
-      y_obs_uncensored = rep(10L, length(obs_bounds)),
-      y_smp_uncensored = rep(20L, length(obs_bounds)),
+      y_obs_uncensored = as.array(rep(10L, length(obs_bounds))),
+      y_smp_uncensored = as.array(rep(20L, length(obs_bounds))),
       n_weights_uncensored = length(w_cohort),
       obs_to_weights_bounds_uncensored = obs_bounds,
       weights_cohort_uncensored = w_cohort,
@@ -87,7 +84,6 @@ test_that("single_phi.stan computes observation probabilities accurately", {
     list(
       k_bs = ncol(bs),
       bs = bs,
-      epsilon_p = 1e-9,
       beta_bs = beta_bs,
       lambda_raw = as.array(log(lambda_val))
     )

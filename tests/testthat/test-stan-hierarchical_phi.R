@@ -7,7 +7,6 @@ skip_if_not_installed("rstan")
 target <- "model/hierarchical_phi.stan"
 
 skip_if_stan_unchanged(c(
-  "functions/diff.stan",
   "functions/unrolled_dose_static_lambda.stan",
   "functions/bounds_to_range.stan",
   "functions/lookups.stan",
@@ -28,7 +27,6 @@ skip_if_stan_unchanged(c(
 model_hierarchical_phi <- sprintf(
   "
 functions {
-  #include functions/diff.stan
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/bounds_to_range.stan
   #include functions/lookups.stan
@@ -41,7 +39,6 @@ data {
   #include data/right/weights_location.stan
   #include data/left/weights_location.stan
   #include data/bspline.stan
-  real epsilon_p;
 
   // Deterministic parameter inputs passed via data for exact testing
   vector[k_bs] beta_bs;
@@ -84,7 +81,7 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
   weights <- c(0.4, 0.6, 0.5, 0.5, 1.0)
 
   bs <- matrix(c(1.0, 0.0, 0.0, 1.0), nrow = 2L, ncol = 2L)
-  dose_sched <- matrix(c(1.0, 1.0), nrow = 3L, ncol = 1L)
+  dose_sched <- matrix(1.0, nrow = 3L, ncol = 1L)
   beta_bs <- c(-0.2, 0.3)
   lambda_val <- 1.2
 
@@ -115,7 +112,6 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
     list(
       k_bs = ncol(bs),
       bs = bs,
-      epsilon_p = 1e-9,
       beta_bs = beta_bs,
       lambda_raw = as.array(log(lambda_val)),
       off_layer = off_layer

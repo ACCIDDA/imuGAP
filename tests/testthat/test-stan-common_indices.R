@@ -77,14 +77,14 @@ test_that("structural data and transformed indices create compliant lookup and r
   w_loc_unc <- c(1L, 2L, 3L, 4L)
 
   # Right-censored subset
-  obs_bounds_right <- as.array(1L)
+  obs_bounds_right <- 1L
   w_cohort_right <- c(2L, 3L)
   w_dose_right <- c(1L, 2L)
   w_life_year_right <- c(2L, 4L)
   w_loc_right <- c(2L, 5L)
 
   # Left-censored subset
-  obs_bounds_left <- as.array(1L)
+  obs_bounds_left <- 1L
   w_cohort_left <- c(1L, 4L)
   w_dose_left <- c(2L, 2L)
   w_life_year_left <- c(3L, 5L)
@@ -102,8 +102,8 @@ test_that("structural data and transformed indices create compliant lookup and r
     n_layers = n_layers,
     layer_starts = layer_starts,
     n_parent_locs = n_parent_locs,
-    parent_loc_id = parent_loc_id,
-    parent_child_starts = parent_child_starts,
+    parent_loc_id = as.array(parent_loc_id),
+    parent_child_starts = as.array(parent_child_starts),
     # Uncensored data
     n_obs_uncensored = length(obs_bounds_unc),
     y_obs_uncensored = rep(10L, length(obs_bounds_unc)),
@@ -117,10 +117,10 @@ test_that("structural data and transformed indices create compliant lookup and r
     weights_location_uncensored = w_loc_unc,
     # Right-censored data
     n_obs_right = length(obs_bounds_right),
-    y_obs_right = rep(5L, length(obs_bounds_right)),
-    y_smp_right = rep(15L, length(obs_bounds_right)),
+    y_obs_right = as.array(rep(5L, length(obs_bounds_right))),
+    y_smp_right = as.array(rep(15L, length(obs_bounds_right))),
     n_weights_right = length(w_dose_right),
-    obs_to_weights_bounds_right = obs_bounds_right,
+    obs_to_weights_bounds_right = as.array(obs_bounds_right),
     weights_cohort_right = w_cohort_right,
     weights_life_year_right = w_life_year_right,
     weights_dose_right = w_dose_right,
@@ -128,10 +128,10 @@ test_that("structural data and transformed indices create compliant lookup and r
     weights_location_right = w_loc_right,
     # Left-censored data
     n_obs_left = length(obs_bounds_left),
-    y_obs_left = rep(3L, length(obs_bounds_left)),
-    y_smp_left = rep(12L, length(obs_bounds_left)),
+    y_obs_left = as.array(rep(3L, length(obs_bounds_left))),
+    y_smp_left = as.array(rep(12L, length(obs_bounds_left))),
     n_weights_left = length(w_dose_left),
-    obs_to_weights_bounds_left = obs_bounds_left,
+    obs_to_weights_bounds_left = as.array(obs_bounds_left),
     weights_cohort_left = w_cohort_left,
     weights_life_year_left = w_life_year_left,
     weights_dose_left = w_dose_left,
