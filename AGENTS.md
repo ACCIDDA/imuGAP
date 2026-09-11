@@ -33,6 +33,10 @@ This document provides concise instructions and rules for AI coding assistants w
   * Define error format strings as module constants (`ERR_*`, `MSG_*`) at the top of each file.
   * Use `stop_fmt_if()` and `warn_fmt_if()` for assertions.
   * **Typography**: Use backticks (`` `code` ``) for function/argument/symbol names and single quotes (`'value'`) for user string values, column names, and model names.
+* **Roxygen Documentation Standards**:
+  * **Explicit `@title` and `@description`**: Roxygen blocks must use explicit `@title` and `@description` tags rather than relying on automatic inference.
+  * **`data.table` and `@autoglobal`**: Functions containing `data.table` calculations or non-standard evaluation expressions should generally be annotated with `@autoglobal` so `roxyglobals` generates appropriate symbol declarations in `R/globals.R`.
+  * **Internal Helper Functions**: Unexported internal functions should be marked with `@keywords internal` and `@noRd` to keep code documented in source without generating unused `.Rd` files.
 * **Roxygen Examples**:
   * For computationally expensive functions (e.g. `sampling()`, multi-draw `predict()`), **always combine `@examplesIf interactive()` with `\donttest{ ... }`**:
     ```r

@@ -5,6 +5,53 @@ ERR_EXTRACT_RSTAN_ONLY <- paste0(
   "refit with stan_options(backend = 'rstan')"
 )
 
+#' @title Slice weights data.table for Stan input
+#'
+#' @param wts_dt Canonicalized `[data.table()]` of weights mapping, corresponding
+#'   to the canonicalized `populations` input from `[canonicalize_populations()]`.
+#' @param obs_dt Canonicalized `[data.table()]` of observations slice from
+#'   `[canonicalize_observations()]`.
+#' @param suffix Character suffix appended to output list element names.
+#'
+#' @return A named list formatted for Stan data consumption.
+#'
+#' @keywords internal
+#' @noRd
+#' @autoglobal
+slice_weights <- function(wts_dt, obs_dt, suffix) {
+  res <- if (nrow(obs_dt) == 0L) {
+    list(
+      n_obs = 0L,
+      y_obs = integer(0),
+      y_smp = integer(0),
+      n_weights = 0L,
+      obs_to_weights_bounds = integer(0),
+      weights_location = integer(0),
+      weights_cohort = integer(0),
+      weights_life_year = integer(0),
+      weights_dose = integer(0),
+      weights = numeric(0)
+    )
+  } else {
+    w <- wts_dt[obs_dt, on = .(obs_c_id), nomatch = NULL]
+    w[, range_start := seq_len(.N)]
+    w[, range_start := min(range_start), by = obs_c_id]
+    list(
+      n_obs = nrow(obs_dt),
+      y_obs = obs_dt$positive,
+      y_smp = obs_dt$sample_n,
+      n_weights = nrow(w),
+      obs_to_weights_bounds = unique(w$range_start),
+      weights_location = w$loc_c_id,
+      weights_cohort = w$cohort,
+      weights_life_year = w$age,
+      weights_dose = w$dose,
+      weights = w$weight
+    )
+  }
+  stats::setNames(res, paste0(names(res), "_", suffix))
+}
+
 #' @title Immunity: Geographic & Age-based Projection, `imuGAP`
 #'
 #' @description
@@ -87,40 +134,6 @@ sampling <- function(
   doses <- matrix(0, ncol = length(dose_schedule), nrow = max(wts$age))
   for (i in seq_along(dose_schedule)) {
     doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
-  }
-
-  slice_weights <- function(wts_dt, obs_dt, suffix) {
-    res <- if (nrow(obs_dt) == 0L) {
-      list(
-        n_obs = 0L,
-        y_obs = integer(0),
-        y_smp = integer(0),
-        n_weights = 0L,
-        obs_to_weights_bounds = integer(0),
-        weights_location = integer(0),
-        weights_cohort = integer(0),
-        weights_life_year = integer(0),
-        weights_dose = integer(0),
-        weights = numeric(0)
-      )
-    } else {
-      w <- wts_dt[obs_dt, on = .(obs_c_id), nomatch = NULL]
-      w[, range_start := seq_len(.N)]
-      w[, range_start := min(range_start), by = obs_c_id]
-      list(
-        n_obs = nrow(obs_dt),
-        y_obs = obs_dt$positive,
-        y_smp = obs_dt$sample_n,
-        n_weights = nrow(w),
-        obs_to_weights_bounds = unique(w$range_start),
-        weights_location = w$loc_c_id,
-        weights_cohort = w$cohort,
-        weights_life_year = w$age,
-        weights_dose = w$dose,
-        weights = w$weight
-      )
-    }
-    stats::setNames(res, paste0(names(res), "_", suffix))
   }
 
   st_uncensored <- slice_weights(wts, obs[is.na(censored)], "uncensored")

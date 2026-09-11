@@ -1,7 +1,9 @@
 skip_if_not_installed("rstan")
 #' "functions/lookups.stan" defines
 #' `array[] int compute_cdf_lookup(array[] int life_year, array[] int dose, int n_yr, int n_doses)`
-#' and `array[] int compute_phi_lookup(array[] int cohort, array[] int location, int n_cohort, int n_locs)`
+#' and `array[] int compute_phi_lookup(
+#'   array[] int cohort, array[] int location, int n_cohort, int n_locs
+#' )`
 #' for 1D column-major index flattening with bounds validation.
 #' These functions convert observation meta data (e.g. life year and dose) into
 #' the index to work with the lookup objects.
@@ -235,8 +237,8 @@ test_that("compute_cdf_lookup errors if n_yr or n_doses is less than 1", {
       model_lookups,
       data = list(
         N_cdf = 1L,
-        life_year = 1L,
-        dose = 1L,
+        life_year = as.array(1L),
+        dose = as.array(1L),
         n_yr = 0L,
         n_doses = 3L,
         N_phi = 0L,
@@ -265,8 +267,8 @@ test_that("compute_cdf_lookup errors if n_yr or n_doses is less than 1", {
       model_lookups,
       data = list(
         N_cdf = 1L,
-        life_year = 1L,
-        dose = 1L,
+        life_year = as.array(1L),
+        dose = as.array(1L),
         n_yr = 5L,
         n_doses = 0L,
         N_phi = 0L,
@@ -465,8 +467,8 @@ test_that("compute_phi_lookup errors if n_cohort or n_locs is less than 1", {
         n_yr = 1L,
         n_doses = 1L,
         N_phi = 1L,
-        cohort = 1L,
-        location = 1L,
+        cohort = as.array(1L),
+        location = as.array(1L),
         n_cohort = 0L,
         n_locs = 3L,
         n_obs_p = 0L,
@@ -495,8 +497,8 @@ test_that("compute_phi_lookup errors if n_cohort or n_locs is less than 1", {
         n_yr = 1L,
         n_doses = 1L,
         N_phi = 1L,
-        cohort = 1L,
-        location = 1L,
+        cohort = as.array(1L),
+        location = as.array(1L),
         n_cohort = 5L,
         n_locs = 0L,
         n_obs_p = 0L,
@@ -516,8 +518,8 @@ test_that("compute_phi_lookup errors if n_cohort or n_locs is less than 1", {
   )
 })
 
-test_that("compute_p_obs computes segmented weighted observation probabilities across single and multi-element observations", {
-  # Mix of single-element (Obs 1: 1..1, Obs 3: 4..4) and multi-element (Obs 2: 2..3, Obs 4: 5..7) spans
+test_that("compute_p_obs computes segmented weighted observation probabilities", {
+  # Mix of single-element (1..1, 4..4) and multi-element (2..3, 5..7) spans
   obs_map <- matrix(
     c(
       1L,
