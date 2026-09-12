@@ -41,20 +41,37 @@ runs:
       if: runner.os == 'macOS'
       shell: bash
       run: |
-        brew install gettext gcc || true
+        brew install gettext || true
         GETTEXT_PREFIX="$(brew --prefix gettext)"
         mkdir -p ~/.R
         echo "CPPFLAGS += -I${GETTEXT_PREFIX}/include" >> ~/.R/Makevars
         echo "LDFLAGS += -L${GETTEXT_PREFIX}/lib" >> ~/.R/Makevars
 
-        # Map Fortran compiler to Homebrew's gfortran and create symlinks for CRAN paths
-        FC_BIN="$(which gfortran || true)"
-        if [ -n "$FC_BIN" ]; then
-          echo "FC = ${FC_BIN}" >> ~/.R/Makevars
-          echo "F77 = ${FC_BIN}" >> ~/.R/Makevars
-          sudo mkdir -p /opt/R/flang-23/bin /opt/gfortran/bin
-          sudo ln -sf "$FC_BIN" /opt/R/flang-23/bin/flang
-          sudo ln -sf "$FC_BIN" /opt/gfortran/bin/gfortran
+        ARCH="$(uname -m)"
+        # Install official CRAN flang-23 (required for R-devel and R 4.5 macOS builds)
+        curl -sSL "https://mac.r-project.org/tools/flang-23-darwin20-${ARCH}.tar.gz" -o /tmp/flang.tar.gz || true
+        if [ -s /tmp/flang.tar.gz ]; then
+          sudo tar -xzf /tmp/flang.tar.gz -C / || true
+          rm -f /tmp/flang.tar.gz
+        fi
+
+        # Install official CRAN gfortran-14.2 (required for R release / oldrel macOS builds)
+        curl -sSL "https://mac.r-project.org/tools/gfortran-14.2-darwin20-${ARCH}.tar.gz" -o /tmp/gfortran.tar.gz || true
+        if [ -s /tmp/gfortran.tar.gz ]; then
+          sudo tar -xzf /tmp/gfortran.tar.gz -C / || true
+          rm -f /tmp/gfortran.tar.gz
+        fi
+
+        # Fallback to Homebrew gfortran with matching FLIBS if CRAN tools are absent
+        if [ ! -d /opt/R/flang-23 ] && [ ! -d /opt/gfortran ]; then
+          brew install gcc || true
+          FC_BIN="$(which gfortran || true)"
+          if [ -n "$FC_BIN" ]; then
+            GFORTRAN_LIBDIR="$(dirname $($FC_BIN -print-file-name=libgfortran.dylib))"
+            echo "FC = ${FC_BIN}" >> ~/.R/Makevars
+            echo "F77 = ${FC_BIN}" >> ~/.R/Makevars
+            echo "FLIBS = -L${GFORTRAN_LIBDIR} -lgfortran" >> ~/.R/Makevars
+          fi
         fi
 
     - name: Configure Windows compilation flags
