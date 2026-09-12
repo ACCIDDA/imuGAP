@@ -129,7 +129,7 @@ test_that("unrolled_dose matches exact continuous-time Markov transition propaga
   # Year 1: only dose 1 active
   # p_state(1) = [exp(-0.8), 1 - exp(-0.8), 0]
   p0 <- c(1, 0, 0)
-  Q1 <- matrix(
+  q1 <- matrix(
     c(
       -lambdas[1],
       lambdas[1],
@@ -144,12 +144,12 @@ test_that("unrolled_dose matches exact continuous-time Markov transition propaga
     nrow = 3,
     byrow = TRUE
   )
-  p1 <- p0 %*% expm::expm(Q1)
+  p1 <- p0 %*% expm::expm(q1)
   expect_equal(cov_mat[1, 1], sum(p1[2:3]), tolerance = 1e-10)
   expect_equal(cov_mat[1, 2], p1[3], tolerance = 1e-10)
 
   # Year 2: both doses active
-  Q2 <- matrix(
+  q2 <- matrix(
     c(
       -lambdas[1],
       lambdas[1],
@@ -164,12 +164,12 @@ test_that("unrolled_dose matches exact continuous-time Markov transition propaga
     nrow = 3,
     byrow = TRUE
   )
-  p2 <- p1 %*% expm::expm(Q2)
+  p2 <- p1 %*% expm::expm(q2)
   expect_equal(cov_mat[2, 1], sum(p2[2:3]), tolerance = 1e-10)
   expect_equal(cov_mat[2, 2], p2[3], tolerance = 1e-10)
 
   # Year 3: both doses active
-  p3 <- p2 %*% expm::expm(Q2)
+  p3 <- p2 %*% expm::expm(q2)
   expect_equal(cov_mat[3, 1], sum(p3[2:3]), tolerance = 1e-10)
   expect_equal(cov_mat[3, 2], p3[3], tolerance = 1e-10)
 })

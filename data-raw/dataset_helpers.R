@@ -23,7 +23,12 @@ p_to_odds <- function(p) p / (1 - p)
 odds_to_p <- function(odds) odds / (1 + odds)
 
 #' Construct simulation setup containing population structure and pre-drawn random values
-get_simulation_setup <- function(seed = 93254) {
+get_simulation_setup <- function(
+  seed = 93254,
+  sigma_sch = 0.8,
+  sigma_cnty = 0.4,
+  other_vax_reduction = 0.95
+) {
   set.seed(seed)
 
   n_yr <- 33L
@@ -54,41 +59,13 @@ get_simulation_setup <- function(seed = 93254) {
   grade6_max_cohort <- n_cohort + cvv_max_age - grade6_start
   grade6_cohorts <- seq_len(grade6_max_cohort)
 
-  # True state-level lifetime NON-uptake proportion (phi) across cohorts.
-  # (1 - phi_st_target) gives the vaccinating population uptake propensity (~84% - 94%).
-  phi_st_target <- 1 -
-    c(
-      0.8401733,
-      0.8458791,
-      0.8515769,
-      0.8572586,
-      0.8629160,
-      0.8685411,
-      0.8741259,
-      0.8796623,
-      0.8851422,
-      0.8905575,
-      0.8958959,
-      0.9011275,
-      0.9062182,
-      0.9111339,
-      0.9158404,
-      0.9203035,
-      0.9244892,
-      0.9283632,
-      0.9318916,
-      0.9350400,
-      0.9377351,
-      0.9397467,
-      0.9408054,
-      0.9407130,
-      0.9395576,
-      0.9375024,
-      0.9347246,
-      0.9314054,
-      0.9277256,
-      0.9298663
-    )
+  # True state-level lifetime NON-uptake proportion (phi) across cohorts generated via B-spline.
+  # Model parameterization: logit(phi_st) = bs * beta_bs, where phi represents non-uptake
+  # and (1 - phi_st_target) gives the vaccinating population uptake propensity (~84% - 94%).
+  df_bs <- 5L
+  bsp <- splines::bs(seq_len(n_cohort), df = df_bs, intercept = TRUE)
+  beta_bs <- c(-1.67, -1.82, -2.47, -2.94, -2.51)
+  phi_st_target <- stats::plogis(as.vector(bsp %*% beta_bs))
 
   lambda <- c(2.8, 3.0)
   n_doses <- length(lambda)
@@ -98,12 +75,42 @@ get_simulation_setup <- function(seed = 93254) {
     doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
   }
 
-  cov <- matrix(data = 0, nrow = n_yr, ncol = n_doses)
-  for (d in seq_len(n_doses)) {
-    ref <- if (d == 1L) rep(1, n_yr) else cov[, d - 1L]
-    survival <- (1 - exp(-lambda[d] * doses[, d]))
-    for (i in 2:n_yr) {
-      cov[i, d] <- cov[i - 1, d] + (ref[i] - cov[i - 1, d]) * survival[i]
+  # Continuous-time Markov multi-state transition matrix exponential
+  n_states <- n_doses + 1L
+  p_state <- c(1, rep(0, n_states - 1L))
+  cov <- matrix(0, nrow = n_yr, ncol = n_doses)
+  for (y in 1:n_yr) {
+    r1 <- doses[y, 1] * lambda[1]
+    r2 <- doses[y, 2] * lambda[2]
+    P <- matrix(0, 3, 3)
+    P[3, 3] <- 1
+    if (r1 == 0 && r2 == 0) {
+      P[1, 1] <- 1
+      P[2, 2] <- 1
+    } else if (r1 > 0 && r2 == 0) {
+      P[1, 1] <- exp(-r1)
+      P[1, 2] <- 1 - exp(-r1)
+      P[2, 2] <- 1
+    } else if (r1 == 0 && r2 > 0) {
+      P[1, 1] <- 1
+      P[2, 2] <- exp(-r2)
+      P[2, 3] <- 1 - exp(-r2)
+    } else if (abs(r1 - r2) < 1e-12) {
+      P[1, 1] <- exp(-r1)
+      P[1, 2] <- r1 * exp(-r1)
+      P[1, 3] <- 1 - (1 + r1) * exp(-r1)
+      P[2, 2] <- exp(-r2)
+      P[2, 3] <- 1 - exp(-r2)
+    } else {
+      P[1, 1] <- exp(-r1)
+      P[1, 2] <- r1 / (r2 - r1) * (exp(-r1) - exp(-r2))
+      P[1, 3] <- 1 - P[1, 1] - P[1, 2]
+      P[2, 2] <- exp(-r2)
+      P[2, 3] <- 1 - exp(-r2)
+    }
+    p_state <- as.vector(p_state %*% P)
+    for (k in 1:n_doses) {
+      cov[y, k] <- sum(p_state[(k + 1L):n_states])
     }
   }
 
@@ -141,10 +148,6 @@ get_simulation_setup <- function(seed = 93254) {
   )[, ul := cumsum(n_sch)][, ll := c(0L, head(ul, -1L)) + 1L]
   tot_sch <- sum(sch_per_cnty$n_sch)
   cnty_ids <- with(sch_per_cnty, rep(parent_id, times = n_sch))
-
-  sigma_sch <- 0.8
-  sigma_cnty <- 0.4
-  other_vax_reduction <- 0.95
 
   # Initial enrollment sampling
   nsch_start <- rlnorm(tot_sch, log(75), log(2.5))
@@ -247,6 +250,7 @@ get_simulation_setup <- function(seed = 93254) {
     nsch_base = nsch_base,
     nsch_matrix = nsch_matrix,
     other_vax_reduction = other_vax_reduction,
+    beta_bs = beta_bs,
     phi_st_target = phi_st_target,
     sch_per_cnty = sch_per_cnty,
     sch_start = sch_start,
@@ -276,10 +280,20 @@ get_simulation_setup <- function(seed = 93254) {
 #' Generate latent probability matrices under current logit offset model
 generate_latent_current <- function(setup) {
   sch_per_cnty <- copy(setup$sch_per_cnty)
-  delta_cnty <- setup$z_raw_cnty * setup$sigma_cnty
+
+  # Enforce zero-centering on county offsets
+  z_raw_cnty <- setup$z_raw_cnty - mean(setup$z_raw_cnty)
+  delta_cnty <- z_raw_cnty * setup$sigma_cnty
   names(delta_cnty) <- setup$county_names
 
-  delta_sch <- setup$z_raw_sch * setup$sigma_sch
+  # Enforce zero-centering on school offsets within each parent county
+  z_raw_sch <- setup$z_raw_sch
+  for (c_idx in seq_along(setup$county_names)) {
+    ll <- sch_per_cnty$ll[c_idx]
+    ul <- sch_per_cnty$ul[c_idx]
+    z_raw_sch[ll:ul] <- z_raw_sch[ll:ul] - mean(z_raw_sch[ll:ul])
+  }
+  delta_sch <- z_raw_sch * setup$sigma_sch
   names(delta_sch) <- setup$school_names
 
   state_logit <- qlogis(setup$phi_st_target)
@@ -331,7 +345,6 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
   skv_cohorts <- setup$skv_cohorts
   sch_start <- setup$sch_start
   tot_sch <- setup$tot_sch
-  sch_per_cnty <- setup$sch_per_cnty
   school_names <- setup$school_names
   county_names <- setup$county_names
   nsch_base <- setup$nsch_base
@@ -374,25 +387,25 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
     )
   )[, dose := 1L][, censored := NA_real_]
 
-  # 2. TeenVaxView using pre-drawn uniform quantiles
+  # 2. TeenVaxView using equal cohort sample sizes and pre-drawn uniform quantiles
+  n_teen_per_age <- 50L
+  total_teen_samp <- n_teen_per_age * length(study_ages)
   sim_teen <- data.table(
     loc_id = "State",
     parent_id = NA_character_,
     cohort = tvv_cohorts,
     positive = numeric(length(tvv_cohorts)),
-    sample_n = numeric(length(tvv_cohorts)),
+    sample_n = total_teen_samp,
     age_min = min(study_ages),
     age_max = max(study_ages) + 1L
   )
 
   for (i in seq_len(nrow(sim_teen))) {
-    samp_size <- setup$teen_samp_sizes[i, ]
     u_slice <- setup$u_teen[i, ]
     phi_slice <- tvv_cohorts[i] + max(study_ages) - study_ages
     p_slice <- pmin(pmax((1 - phi_st[phi_slice]) * cov[study_ages, 2], 0), 1)
 
-    sim_teen$sample_n[i] <- sum(samp_size)
-    sim_teen$positive[i] <- sum(qbinom(u_slice, samp_size, p_slice))
+    sim_teen$positive[i] <- sum(qbinom(u_slice, n_teen_per_age, p_slice))
   }
   sim_teen$dose <- 2L
 
@@ -418,31 +431,25 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
   }
   kg_sim <- rbindlist(kg_sim_full)
 
-  # 4. Aggregate school data into SchoolVaxView (State-level kindergarten entry)
-  sim_school <- kg_sim[
-    age_min == sch_start & dose == 2L,
-    {
-      tot_vax <- sum(positive)
-      .(tot_vax = tot_vax, tot_non = sum(sample_n) - tot_vax)
-    },
-    by = cohort
-  ][, {
-    npos <- qbinom(setup$u_sch_agg_pos[skv_cohorts], tot_vax, 0.9)
-    tot_non_pos <- qbinom(
-      setup$u_sch_agg_non[skv_cohorts],
-      pmax(tot_non, 0L),
-      0.9
-    )
-    .(
-      loc_id = "State",
-      parent_id = NA_character_,
-      sample_n = npos + tot_non_pos,
-      positive = npos,
-      cohort = cohort,
-      age_min = sch_start,
-      dose = 2L
-    )
-  }]
+  # 4. SchoolVaxView (State-level kindergarten entry) directly from state-level parameter
+  n_skv_state <- as.integer(round(mean(colSums(nsch_matrix)) * 0.9))
+  p_skv_state <- pmin(
+    pmax((1 - phi_st[skv_cohorts]) * cov[sch_start, 2L], 0),
+    1
+  )
+  sim_school <- data.table(
+    loc_id = "State",
+    parent_id = NA_character_,
+    sample_n = n_skv_state,
+    positive = qbinom(
+      setup$u_sch_agg_pos[skv_cohorts],
+      n_skv_state,
+      p_skv_state
+    ),
+    cohort = skv_cohorts,
+    age_min = sch_start,
+    dose = 2L
+  )
 
   # 5. County-level 6th grade survey (age 11, dose 2, censored)
   sim_county_full <- list()
@@ -553,6 +560,249 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
   ]
 
   latent_params_sim <- list(
+    beta_bs = setup$beta_bs,
+    phi_state = phi_st,
+    lambda = setup$lambda,
+    sigma_sch = setup$sigma_sch,
+    sigma_cnty = setup$sigma_cnty,
+    off_sch = latent$delta_sch,
+    off_cnty = latent$delta_cnty,
+    censor_reduction = other_vax_reduction,
+    uptake = cov,
+    coverage = coverage
+  )
+
+  list(
+    latent = latent,
+    observations_sim = observations_sim,
+    populations_sim = populations_sim,
+    locations_sim = locations_sim,
+    latent_params_sim = latent_params_sim,
+    sim_internals = sim_internals,
+    target_sim = target_grid
+  )
+}
+
+#' Simulate observations with minimum noise (expected values) from setup and latent objects
+simulate_observations_from_latent_min_noise <- function(
+  setup,
+  latent,
+  uncensored = TRUE
+) {
+  n_cohort <- setup$n_cohort
+  cov <- setup$cov
+  phi_st <- latent$phi_st
+  cnty_prob_matrix <- latent$cnty_prob_matrix
+  schl_prob_matrix <- latent$schl_prob_matrix
+  other_vax_reduction <- if (uncensored) 1.0 else setup$other_vax_reduction
+  study_ages <- setup$study_ages
+  tvv_cohorts <- setup$tvv_cohorts
+  skv_cohorts <- setup$skv_cohorts
+  sch_start <- setup$sch_start
+  tot_sch <- setup$tot_sch
+  school_names <- setup$school_names
+  county_names <- setup$county_names
+  nsch_base <- setup$nsch_base
+  nsch_matrix <- setup$nsch_matrix
+  ncty_base <- setup$ncty_base
+  grade6_start <- setup$grade6_start
+  grade6_cohorts <- setup$grade6_cohorts
+  cnty_ids <- setup$cnty_ids
+
+  # 1. ChildVaxView using expected values
+  n_cvv <- setup$n_cvv
+  p_24 <- pmin(pmax((1 - phi_st) * cov[2, 1], 0), 1)
+  p_36 <- pmin(pmax((1 - phi_st) * cov[3, 1], 0), 1)
+
+  at_24 <- as.integer(round(n_cvv * p_24))
+  at_36 <- as.integer(round(n_cvv * p_36))
+
+  sim_child <- rbind(
+    data.table(
+      loc_id = "State",
+      parent_id = NA_character_,
+      cohort = seq_len(n_cohort),
+      age_min = 2L,
+      positive = at_24,
+      sample_n = n_cvv
+    ),
+    data.table(
+      loc_id = "State",
+      parent_id = NA_character_,
+      cohort = seq_len(n_cohort),
+      age_min = 3L,
+      positive = at_36,
+      sample_n = n_cvv
+    )
+  )[, dose := 1L][, censored := NA_real_]
+
+  # 2. TeenVaxView using expected values and equal cohort sample sizes
+  n_teen_per_age <- 50L
+  total_teen_samp <- n_teen_per_age * length(study_ages)
+  sim_teen <- data.table(
+    loc_id = "State",
+    parent_id = NA_character_,
+    cohort = tvv_cohorts,
+    positive = numeric(length(tvv_cohorts)),
+    sample_n = total_teen_samp,
+    age_min = min(study_ages),
+    age_max = max(study_ages) + 1L
+  )
+
+  for (i in seq_len(nrow(sim_teen))) {
+    phi_slice <- tvv_cohorts[i] + max(study_ages) - study_ages
+    p_slice <- pmin(pmax((1 - phi_st[phi_slice]) * cov[study_ages, 2], 0), 1)
+
+    sim_teen$positive[i] <- as.integer(round(sum(n_teen_per_age * p_slice)))
+  }
+  sim_teen$dose <- 2L
+
+  # 3. School kindergarten entry data using expected values
+  kg_sim_full <- list()
+  for (s in seq_len(tot_sch)) {
+    nsch <- nsch_matrix[skv_cohorts, s]
+    p_vector <- pmin(
+      pmax((1 - schl_prob_matrix[skv_cohorts, s]) * cov[sch_start, 2L], 0),
+      1
+    )
+
+    kg_sim_full[[s]] <- data.table(
+      cohort = skv_cohorts,
+      parent_id = cnty_ids[s],
+      loc_id = school_names[s],
+      positive = as.integer(round(nsch * p_vector)),
+      sample_n = nsch,
+      age_min = sch_start,
+      dose = 2L
+    )
+  }
+  kg_sim <- rbindlist(kg_sim_full)
+
+  # 4. SchoolVaxView (State-level kindergarten entry) directly from state-level parameter
+  n_skv_state <- as.integer(round(mean(colSums(nsch_matrix)) * 0.9))
+  p_skv_state <- pmin(
+    pmax((1 - phi_st[skv_cohorts]) * cov[sch_start, 2L], 0),
+    1
+  )
+  sim_school <- data.table(
+    loc_id = "State",
+    parent_id = NA_character_,
+    sample_n = n_skv_state,
+    positive = as.integer(round(n_skv_state * p_skv_state)),
+    cohort = skv_cohorts,
+    age_min = sch_start,
+    dose = 2L
+  )
+
+  # 5. County-level 6th grade survey (age 11, dose 2) using expected values
+  sim_county_full <- list()
+  for (c in seq_along(county_names)) {
+    ncnty <- setup$n_grade6_matrix[, c]
+    p_vector <- pmin(
+      pmax(
+        (1 - cnty_prob_matrix[grade6_cohorts, c]) *
+          cov[grade6_start, 2L] *
+          other_vax_reduction,
+        0
+      ),
+      1
+    )
+
+    sim_county_full[[c]] <- data.table(
+      loc_id = county_names[c],
+      parent_id = "State",
+      cohort = grade6_cohorts,
+      age_min = grade6_start,
+      positive = as.integer(round(ncnty * p_vector)),
+      sample_n = ncnty,
+      dose = 2L,
+      censored = if (uncensored) NA_real_ else 1.0
+    )
+  }
+  sim_county <- rbindlist(sim_county_full)
+
+  vv_sim <- rbindlist(
+    list(sim_child, sim_school, sim_teen, sim_county),
+    use.names = TRUE,
+    fill = TRUE
+  )
+
+  observations_sim <- rbindlist(
+    list(kg_sim, vv_sim),
+    use.names = TRUE,
+    fill = TRUE
+  )
+  observations_sim$obs_id <- seq_len(nrow(observations_sim))
+  observations_sim$cohort_min <- observations_sim$cohort
+
+  obs_for_pop <- copy(observations_sim)
+  populations_sim <- imuGAP:::create_observation_populations(
+    obs_for_pop,
+    mode = "snapshot"
+  )
+
+  school_pops <- data.table(
+    loc_id = school_names,
+    population = as.numeric(nsch_base)
+  )
+  county_pops <- data.table(
+    loc_id = county_names,
+    population = as.numeric(ncty_base)
+  )
+  state_pop <- data.table(
+    loc_id = "State",
+    population = as.numeric(sum(ncty_base))
+  )
+  pop_dt <- rbind(state_pop, county_pops, school_pops)
+
+  locs_raw <- unique(rbindlist(
+    list(
+      data.table(loc_id = "State", parent_id = NA_character_),
+      data.table(loc_id = county_names, parent_id = "State"),
+      data.table(loc_id = school_names, parent_id = cnty_ids)
+    ),
+    use.names = TRUE,
+    fill = TRUE
+  ))
+  locations_sim <- pop_dt[locs_raw, on = "loc_id"]
+
+  sim_internals <- list(
+    phi_st = phi_st,
+    lambda = setup$lambda,
+    sigma_sch = setup$sigma_sch,
+    sigma_cnty = setup$sigma_cnty,
+    off_sch = latent$delta_sch,
+    off_cnty = latent$delta_cnty,
+    censor_reduction = other_vax_reduction,
+    uptake = cov,
+    county_names = county_names,
+    school_names = school_names,
+    cnty_ids = cnty_ids
+  )
+
+  target_grid <- imuGAP:::create_target(
+    location = unique(locations_sim$loc_id),
+    age = 1:18,
+    cohort = max(populations_sim$cohort) - 18,
+    dose = c(1, 2),
+    mode = "snapshot"
+  )
+
+  coverage <- target_grid[,
+    (1 -
+      fcase(
+        loc_id == "State"                                            ,
+        phi_st[cohort]                                               ,
+        loc_id %in% county_names                                     ,
+        cnty_prob_matrix[cbind(cohort, match(loc_id, county_names))] ,
+        loc_id %in% school_names                                     ,
+        schl_prob_matrix[cbind(cohort, match(loc_id, school_names))]
+      )) *
+      cov[cbind(age, dose)]
+  ]
+
+  latent_params_sim <- list(
+    beta_bs = setup$beta_bs,
     phi_state = phi_st,
     lambda = setup$lambda,
     sigma_sch = setup$sigma_sch,

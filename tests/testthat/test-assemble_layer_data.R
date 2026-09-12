@@ -71,4 +71,14 @@ test_that("assemble_layer_data handles 4-layer deep hierarchy", {
     ]
   )
   expect_equal(as.integer(d4$parent_child_starts), c(2L, 4L, 6L))
+  expect_equal(d4$sigma_layer_scale, 2.5)
+})
+
+test_that("assemble_layer_data respects custom sigma_layer_scale", {
+  locs <- canonicalize_locations(data.frame(
+    loc_id = c("state", "cnty1", "cnty2"),
+    parent_id = c(NA, "state", "state")
+  ))
+  d <- assemble_layer_data(locs, sigma_layer_scale = 1.2)
+  expect_equal(d$sigma_layer_scale, 1.2)
 })

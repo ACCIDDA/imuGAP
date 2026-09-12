@@ -167,13 +167,48 @@ site-full: bootstrap-namespace install docs
 	pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
 
 [group('site')]
-[doc('Preview the pkgdown documentation site on localhost using httpuv')]
-site-preview port="8000": site
+[doc('Preview pkgdown documentation on localhost; optionally specify a vignette/article item to re-render (e.g. just site-preview imuGAP)')]
+site-preview item="" port="8000": bootstrap-namespace docs
 	#!/usr/bin/env Rscript
+	if (!requireNamespace("pkgdown", quietly = TRUE)) stop("missing 'pkgdown'")
 	if (!requireNamespace("httpuv", quietly = TRUE)) stop("missing 'httpuv'")
+
+	item <- trimws("{{ item }}")
 	port_num <- as.integer("{{ port }}")
-	message(sprintf("Serving pkgdown site at http://127.0.0.1:%d/ (Ctrl+C to stop)", port_num))
-	httpuv::runStaticServer(dir = "docs", host = "127.0.0.1", port = port_num, browse = TRUE)
+	url_path <- ""
+
+	if (nzchar(item)) {
+	  clean_item <- tools::file_path_sans_ext(basename(item))
+
+	  if (identical(clean_item, "all")) {
+	    message("Re-building entire pkgdown site...")
+	    pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+	  } else if (identical(clean_item, "reference")) {
+	    message("Re-building reference index and documentation...")
+	    pkgdown::build_reference()
+	    url_path <- "reference/index.html"
+	  } else if (clean_item %in% c("home", "index", "readme")) {
+	    message("Re-building home page...")
+	    pkgdown::build_home()
+	    url_path <- "index.html"
+	  } else {
+	    message(sprintf("Targeted build for article '%s'...", clean_item))
+	    pkgdown::build_article(clean_item)
+	    url_path <- sprintf("articles/%s.html", clean_item)
+	  }
+	} else {
+	  message("Re-building entire pkgdown site...")
+	  pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+	}
+
+	target_url <- sprintf("http://127.0.0.1:%d/%s", port_num, url_path)
+	message(sprintf("Serving pkgdown site at %s (Ctrl+C to stop)", target_url))
+	httpuv::runStaticServer(
+	  dir = "docs",
+	  host = "127.0.0.1",
+	  port = port_num,
+	  browse = interactive() || nzchar(Sys.getenv("BROWSER"))
+	)
 
 
 

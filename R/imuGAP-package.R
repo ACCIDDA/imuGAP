@@ -113,7 +113,9 @@ NULL
 #' A list containing the true/latent parameter values used to simulate the
 #' example datasets (`locations_sim`, `populations_sim`, `observations_sim`).
 #'
-#' @format A list with 8 components:
+#' @format A list with 9 components:
+#'  - `beta_bs`, a numeric vector of length 5 containing the true state-level
+#'    B-spline coefficients for baseline non-uptake propensity (`phi_state`).
 #'  - `phi_state`, a numeric vector of length 30 representing the state-specific
 #'    baseline vaccine uptake propensity over cohorts.
 #'  - `lambda`, a numeric vector of length 2 representing the rate parameters

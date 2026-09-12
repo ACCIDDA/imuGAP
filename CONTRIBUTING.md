@@ -35,7 +35,7 @@ We use [`just`](https://github.com/casey/just) to automate development tasks. Al
 | `just render` | Render all vignettes to HTML and PDF | `Rscript -e "rmarkdown::render(...)"` |
 | `just site` / `just site-quick` | Fast build of `pkgdown` documentation site (no package reinstall) | `Rscript -e "pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)"` |
 | `just site-full` | Full build of `pkgdown` site with package reinstallation (for updated data) | *(compound: install + site)* |
-| `just site-preview [port=8000]` | Build and preview pkgdown documentation site on localhost | `Rscript -e "httpuv::runStaticServer(dir = 'docs', port = 8000)"` |
+| `just site-preview [item=""] [port=8000]` | Preview pkgdown site on localhost (supports targeted item, e.g. `just site-preview imuGAP`) | `httpuv::runStaticServer(...)` |
 | `just data-inputs` | Regenerate `*_sim` input datasets from raw simulation | `Rscript data-raw/DATASET.R` |
 | `just data-fit` | Regenerate pre-computed Stan fits (`fit_sim`, `target_sim`, etc.) | `Rscript data-raw/fit_data.R` |
 | `just data` | Regenerate all package data (`data-inputs` + `data-fit`) | *(compound command)* |
