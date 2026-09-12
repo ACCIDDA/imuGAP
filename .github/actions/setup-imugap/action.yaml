@@ -41,11 +41,29 @@ runs:
       if: runner.os == 'macOS'
       shell: bash
       run: |
-        brew install gettext
+        brew install gettext gcc || true
         GETTEXT_PREFIX="$(brew --prefix gettext)"
         mkdir -p ~/.R
         echo "CPPFLAGS += -I${GETTEXT_PREFIX}/include" >> ~/.R/Makevars
         echo "LDFLAGS += -L${GETTEXT_PREFIX}/lib" >> ~/.R/Makevars
+
+        # Map Fortran compiler to Homebrew's gfortran and create symlinks for CRAN paths
+        FC_BIN="$(which gfortran || true)"
+        if [ -n "$FC_BIN" ]; then
+          echo "FC = ${FC_BIN}" >> ~/.R/Makevars
+          echo "F77 = ${FC_BIN}" >> ~/.R/Makevars
+          sudo mkdir -p /opt/R/flang-23/bin /opt/gfortran/bin
+          sudo ln -sf "$FC_BIN" /opt/R/flang-23/bin/flang
+          sudo ln -sf "$FC_BIN" /opt/gfortran/bin/gfortran
+        fi
+
+    - name: Configure Windows compilation flags
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        mkdir -p ~/.R
+        echo "CXX17FLAGS += -Wa,-mbig-obj -O2" >> ~/.R/Makevars.win64
+        echo "CXX14FLAGS += -Wa,-mbig-obj -O2" >> ~/.R/Makevars.win64
 
     - name: Setup R
       uses: r-lib/actions/setup-r@v2
