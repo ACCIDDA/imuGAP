@@ -344,10 +344,11 @@ create_target <- function(
 #'   - `n_parent_locs`: integer count of parent locations that have children
 #'   - `parent_loc_id`: integer array (length `n_parent_locs`) of canonical IDs of parent locations
 #'   - `parent_child_starts`: integer array (length `n_parent_locs`) of starting child location IDs
+#'   - `sigma_layer_scale`: single numeric scale for Cauchy prior on layer standard deviations
 #'
 #' @keywords internal
 #' @autoglobal
-assemble_layer_data <- function(loc_info) {
+assemble_layer_data <- function(loc_info, sigma_layer_scale = 2.5) {
   n_locs <- nrow(loc_info)
   n_layers <- max(loc_info$layer)
   layer_starts <- loc_info[, min(loc_c_id), by = layer]$V1
@@ -378,6 +379,7 @@ assemble_layer_data <- function(loc_info) {
     layer_starts = as.array(as.integer(layer_starts)),
     n_parent_locs = n_parent_locs,
     parent_loc_id = as.array(as.integer(parent_loc_id)),
-    parent_child_starts = as.array(as.integer(parent_child_starts))
+    parent_child_starts = as.array(as.integer(parent_child_starts)),
+    sigma_layer_scale = as.numeric(sigma_layer_scale)
   )
 }

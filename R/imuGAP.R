@@ -111,7 +111,14 @@ sampling <- function(
   loc_info <- canonicalize_locations(locations)
   n_layers <- max(loc_info$layer)
   is_multilayer <- n_layers > 1L
-  layer_data <- if (is_multilayer) assemble_layer_data(loc_info) else NULL
+  layer_data <- if (is_multilayer) {
+    assemble_layer_data(
+      loc_info,
+      sigma_layer_scale = imugap_opts$sigma_layer_scale %||% 2.5
+    )
+  } else {
+    NULL
+  }
 
   # check observations argument
   obs <- canonicalize_observations(observations)

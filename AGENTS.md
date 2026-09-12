@@ -83,6 +83,6 @@ just render        # Render HTML and PDF vignettes
 just site          # Fast build of pkgdown site into docs/ (no reinstall)
 just site-quick    # Alias for fast site build
 just site-full     # Full build of pkgdown site with package reinstall
-just site-preview  # Preview pkgdown site on localhost:8000
-just check-cran    # Run R CMD check --as-cran
+just site-preview [item]  # Preview site on localhost:8000 (targeted re-render: e.g. just site-preview imuGAP)
+just check-cran           # Run R CMD check --as-cran
 ```

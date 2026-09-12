@@ -104,6 +104,7 @@ test_that("structural data and transformed indices create compliant lookup and r
     n_parent_locs = n_parent_locs,
     parent_loc_id = as.array(parent_loc_id),
     parent_child_starts = as.array(parent_child_starts),
+    sigma_layer_scale = 2.5,
     # Uncensored data
     n_obs_uncensored = length(obs_bounds_unc),
     y_obs_uncensored = rep(10L, length(obs_bounds_unc)),

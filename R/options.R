@@ -2,6 +2,7 @@
 ERR_OPT_DF_SINGLE <- "`df` must be a single positive integer"
 ERR_OPT_DOSE_SCHEDULE <- "`dose_schedule` must be an ascending vector of positive integers"
 ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
+ERR_OPT_SIGMA_LAYER_SCALE <- "`sigma_layer_scale` must be a single positive number"
 
 #' @title imuGAP Model Options
 #'
@@ -14,17 +15,21 @@ ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
 #'   becomes eligible (default: `c(1, 4)` for 2-dose vaccines).
 #' @param model character string specifying the model formulation. Defaults to `"default"`,
 #'   with dispatch to optimized single versus multilayer versions within `[sampling()]`
+#' @param sigma_layer_scale single positive numeric; scale parameter for the Cauchy prior
+#'   on layer standard deviations `sigma_layer` (default: 2.5).
 #'
 #' @examples
 #' imugap_options()
 #' imugap_options(dose_schedule = c(1, 3))
+#' imugap_options(sigma_layer_scale = 1.0)
 #'
 #' @return a list of imuGAP model options
 #' @export
 imugap_options <- function(
   df = 5L,
   dose_schedule = c(1, 4),
-  model = c("default")
+  model = c("default"),
+  sigma_layer_scale = 2.5
 ) {
   model <- match.arg(model)
 
@@ -37,9 +42,18 @@ imugap_options <- function(
     ERR_OPT_DOSE_SCHEDULE
   )
 
+  stop_fmt_if(
+    !is.numeric(sigma_layer_scale) ||
+      length(sigma_layer_scale) != 1L ||
+      is.na(sigma_layer_scale) ||
+      sigma_layer_scale <= 0,
+    ERR_OPT_SIGMA_LAYER_SCALE
+  )
+
   list(
     df = df,
     dose_schedule = dose_schedule,
-    model = model
+    model = model,
+    sigma_layer_scale = as.numeric(sigma_layer_scale)
   )
 }
