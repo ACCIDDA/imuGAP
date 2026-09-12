@@ -125,6 +125,22 @@ test_that("unrolled_dose matches exact continuous-time Markov transition propaga
 
   cov_mat <- matrix(cdf, nrow = n_yr, ncol = n_doses)
 
+  mat_exp <- function(q_mat) {
+    norm_q <- max(rowSums(abs(q_mat)))
+    k <- max(0L, ceiling(log2(norm_q + 1e-12)))
+    q_scaled <- q_mat / (2^k)
+    res <- diag(nrow(q_mat))
+    term <- diag(nrow(q_mat))
+    for (i in seq_len(20L)) {
+      term <- (term %*% q_scaled) / i
+      res <- res + term
+    }
+    for (i in seq_len(k)) {
+      res <- res %*% res
+    }
+    res
+  }
+
   # Hand-compute exact state distribution over 3 years:
   # Year 1: only dose 1 active
   # p_state(1) = [exp(-0.8), 1 - exp(-0.8), 0]
@@ -144,7 +160,7 @@ test_that("unrolled_dose matches exact continuous-time Markov transition propaga
     nrow = 3,
     byrow = TRUE
   )
-  p1 <- p0 %*% expm::expm(q1)
+  p1 <- p0 %*% mat_exp(q1)
   expect_equal(cov_mat[1, 1], sum(p1[2:3]), tolerance = 1e-10)
   expect_equal(cov_mat[1, 2], p1[3], tolerance = 1e-10)
 
@@ -164,12 +180,12 @@ test_that("unrolled_dose matches exact continuous-time Markov transition propaga
     nrow = 3,
     byrow = TRUE
   )
-  p2 <- p1 %*% expm::expm(q2)
+  p2 <- p1 %*% mat_exp(q2)
   expect_equal(cov_mat[2, 1], sum(p2[2:3]), tolerance = 1e-10)
   expect_equal(cov_mat[2, 2], p2[3], tolerance = 1e-10)
 
   # Year 3: both doses active
-  p3 <- p2 %*% expm::expm(q2)
+  p3 <- p2 %*% mat_exp(q2)
   expect_equal(cov_mat[3, 1], sum(p3[2:3]), tolerance = 1e-10)
   expect_equal(cov_mat[3, 2], p3[3], tolerance = 1e-10)
 })
