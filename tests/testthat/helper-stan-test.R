@@ -99,12 +99,26 @@ compile_stan_harness <- function(stan_code) {
   on.exit(unlink(tmp_stan), add = TRUE)
   writeLines(stan_code, tmp_stan)
 
-  suppressWarnings(suppressMessages(rstan::stan_model(
-    file = tmp_stan,
-    isystem = stan_dir,
-    auto_write = FALSE,
-    save_dso = FALSE
-  )))
+  # Setting verbose = TRUE bypasses rstan:::cxxfunctionplus internal sink() usage,
+  # preventing "Error in sink(type = 'output'): invalid connection" in testthat / CI.
+  # We wrap in nested capture.output and suppressMessages to cleanly absorb compilation output.
+  model <- NULL
+  suppressMessages(
+    utils::capture.output(
+      utils::capture.output(
+        model <- suppressWarnings(rstan::stan_model(
+          file = tmp_stan,
+          isystem = stan_dir,
+          auto_write = FALSE,
+          save_dso = FALSE,
+          verbose = TRUE
+        )),
+        type = "message"
+      ),
+      type = "output"
+    )
+  )
+  model
 }
 
 run_stan_harness <- function(
