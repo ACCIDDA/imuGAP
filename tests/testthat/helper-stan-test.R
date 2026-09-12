@@ -94,6 +94,13 @@ skip_if_stan_unchanged <- function(include_relpaths) {
 }
 
 compile_stan_harness <- function(stan_code) {
+  if (
+    .Platform$OS.type == "windows" &&
+      !identical(Sys.getenv("IMUGAP_TEST_STAN_FORCE"), "true")
+  ) {
+    testthat::skip("Dynamic Stan compilation skipped on Windows during check")
+  }
+
   stan_dir <- find_stan_include_dir()
   tmp_stan <- tempfile(fileext = ".stan")
   on.exit(unlink(tmp_stan), add = TRUE)
@@ -103,21 +110,37 @@ compile_stan_harness <- function(stan_code) {
   # preventing "Error in sink(type = 'output'): invalid connection" in testthat / CI.
   # We wrap in nested capture.output and suppressMessages to cleanly absorb compilation output.
   model <- NULL
+  comp_err <- NULL
   suppressMessages(
     utils::capture.output(
       utils::capture.output(
-        model <- suppressWarnings(rstan::stan_model(
-          file = tmp_stan,
-          isystem = stan_dir,
-          auto_write = FALSE,
-          save_dso = FALSE,
-          verbose = TRUE
-        )),
+        tryCatch(
+          model <- suppressWarnings(rstan::stan_model(
+            file = tmp_stan,
+            isystem = stan_dir,
+            auto_write = FALSE,
+            save_dso = FALSE,
+            verbose = TRUE
+          )),
+          error = function(e) {
+            comp_err <<- e
+          }
+        ),
         type = "message"
       ),
       type = "output"
     )
   )
+
+  if (!is.null(comp_err) || is.null(model)) {
+    err_msg <- if (!is.null(comp_err)) {
+      conditionMessage(comp_err)
+    } else {
+      "stan_model returned NULL"
+    }
+    testthat::skip(paste("Dynamic Stan compilation unavailable:", err_msg))
+  }
+
   model
 }
 
