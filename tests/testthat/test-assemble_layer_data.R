@@ -82,3 +82,16 @@ test_that("assemble_layer_data respects custom sigma_layer_scale", {
   d <- assemble_layer_data(locs, sigma_layer_scale = 1.2)
   expect_equal(d$sigma_layer_scale, 1.2)
 })
+
+test_that("assemble_layer_data handles 1-layer (root-only) hierarchy", {
+  locs1 <- canonicalize_locations(data.frame(
+    loc_id = "state",
+    parent_id = NA_character_
+  ))
+  d1 <- assemble_layer_data(locs1)
+  expect_equal(d1$n_locs, 1L)
+  expect_equal(d1$n_layers, 1L)
+  expect_equal(d1$n_parent_locs, 0L)
+  expect_equal(length(d1$parent_loc_id), 0L)
+  expect_equal(length(d1$parent_child_starts), 0L)
+})
