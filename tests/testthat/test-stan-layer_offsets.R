@@ -23,6 +23,14 @@ data {
 
   int n_cohort;
   vector[n_cohort] logit_phi_st;
+
+  int n_unconstrained;
+  int n_layers;
+  matrix[n_locs - 1, n_unconstrained] qr_basis;
+  vector[n_unconstrained] z_layer;
+  vector[n_locs - 1] loc_pop_scale;
+  vector[n_layers - 1] sigma_layer;
+  array[n_locs - 1] int loc_layer_idx;
 }
 parameters {
   real dummy;
@@ -36,6 +44,10 @@ generated quantities {
   );
   vector[n_cohort * n_locs] out_phi = compute_hierarchical_phi(
     logit_phi_st, out_logit_phi_loc, n_cohort, n_locs
+  );
+  matrix[3, 2] out_qr_test = get_weighted_qr_basis([0.2, 0.3, 0.5]');
+  vector[n_locs - 1] out_computed_offsets = compute_layer_offsets(
+    qr_basis, z_layer, loc_pop_scale, sigma_layer, loc_layer_idx
   );
 }
 ",
@@ -67,13 +79,30 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
     byrow = TRUE
   )
 
+  n_unconstrained <- 2L
+  qr_basis <- matrix(
+    rnorm((ld_sim$n_locs - 1L) * n_unconstrained),
+    nrow = ld_sim$n_locs - 1L,
+    ncol = n_unconstrained
+  )
+  z_layer <- rnorm(n_unconstrained)
+  loc_pop_scale <- runif(ld_sim$n_locs - 1L, 0.5, 2.0)
+  sigma_layer <- c(0.4, 0.8)
+  loc_layer_idx <- as.integer(rep(1:2, length.out = ld_sim$n_locs - 1L))
+
   data_list <- c(
     ld_sim,
     list(
       parent_child_bounds = parent_child_bounds,
       off_layer = off_layer,
       n_cohort = length(logit_phi_st),
-      logit_phi_st = logit_phi_st
+      logit_phi_st = logit_phi_st,
+      n_unconstrained = n_unconstrained,
+      qr_basis = qr_basis,
+      z_layer = z_layer,
+      loc_pop_scale = loc_pop_scale,
+      sigma_layer = sigma_layer,
+      loc_layer_idx = loc_layer_idx
     )
   )
 
@@ -87,6 +116,12 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
     model_layer_offsets,
     data = data_list,
     out_phi
+  )
+
+  computed_offsets <- run_stan_harness(
+    model_layer_offsets,
+    data = data_list,
+    out_computed_offsets
   )
 
   # Check logit_phi_loc manual accumulation
@@ -108,4 +143,25 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
   expected_phi <- as.vector(stats::plogis(expected_mat))
 
   expect_equal(phi, expected_phi, tolerance = 1e-6)
+
+  # Check compute_layer_offsets scaling
+  expected_computed_offsets <- as.vector(
+    ((qr_basis %*% z_layer) * loc_pop_scale) * sigma_layer[loc_layer_idx]
+  )
+  expect_equal(
+    as.numeric(computed_offsets),
+    expected_computed_offsets,
+    tolerance = 1e-6
+  )
+
+  # Check get_weighted_qr_basis orthogonality and orthonormality
+  qr_test <- run_stan_harness(
+    model_layer_offsets,
+    data = data_list,
+    out_qr_test
+  )
+  w <- c(0.2, 0.3, 0.5)
+  w_norm <- w / sqrt(sum(w^2))
+  expect_equal(as.numeric(t(qr_test) %*% w_norm), c(0, 0), tolerance = 1e-6)
+  expect_equal(t(qr_test) %*% qr_test, diag(2), tolerance = 1e-6)
 })

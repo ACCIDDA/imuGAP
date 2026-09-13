@@ -112,10 +112,7 @@ sampling <- function(
   n_layers <- max(loc_info$layer)
   is_multilayer <- n_layers > 1L
   layer_data <- if (is_multilayer) {
-    assemble_layer_data(
-      loc_info,
-      sigma_layer_scale = imugap_opts$sigma_layer_scale %||% 2.5
-    )
+    assemble_layer_data(loc_info)
   } else {
     NULL
   }
@@ -187,10 +184,40 @@ sampling <- function(
     stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model)
   }
 
+  init_fn <- function() {
+    y_all <- c(dat_stan$y_obs_uncensored, dat_stan$y_obs_right)
+    smp_all <- c(dat_stan$y_smp_uncensored, dat_stan$y_smp_right)
+    mean_cov <- if (length(y_all) > 0L && sum(smp_all) > 0) {
+      sum(y_all) / sum(smp_all)
+    } else {
+      0.85
+    }
+    if (is.na(mean_cov) || is.nan(mean_cov)) {
+      mean_cov <- 0.85
+    }
+    baseline_phi <- pmax(0.01, pmin(0.5, 1 - mean_cov))
+    init_beta <- rep(stats::qlogis(baseline_phi), dat_stan$k_bs) +
+      stats::rnorm(dat_stan$k_bs, 0, 0.05)
+    init_lambda <- log(rep(3, dat_stan$n_doses)) +
+      stats::rnorm(dat_stan$n_doses, 0, 0.05)
+    inits <- list(
+      beta_bs = array(init_beta, dim = dat_stan$k_bs),
+      lambda_raw = array(init_lambda, dim = dat_stan$n_doses)
+    )
+    if (is_multilayer && layer_data$n_layers >= 2L) {
+      n_unconstrained <- (dat_stan$n_locs - 1L) - dat_stan$n_parent_locs
+      sig <- abs(stats::rnorm(layer_data$n_layers - 1L, 0.5, 0.1))
+      z <- stats::rnorm(n_unconstrained, 0, 0.05)
+      inits$sigma_layer <- array(sig, dim = layer_data$n_layers - 1L)
+      inits$z_layer <- array(z, dim = n_unconstrained)
+    }
+    inits
+  }
+
   raw_fit <- fit_model(
     model_name,
     dat_stan,
-    init = NULL,
+    init = init_fn,
     stan_opts,
     drop_pars = NULL,
     package = "imuGAP"

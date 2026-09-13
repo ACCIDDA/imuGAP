@@ -757,10 +757,93 @@ bayesplot::mcmc_trace(
 Trace plots for the county-level location offsets $\delta_{\text{county}}$ (`off_layer[1]` through `off_layer[3]`) showing individual chain medians and true simulation offsets (dashed red lines and annotated values):
 
 ```{r trace-plot-county-offsets, fold = TRUE, code_summary = "Show plot code"}
+# Reconstruct location offsets from standard normal deviations z_layer,
+# layer standard deviations sigma_layer, and the hierarchical basis/scaling.
+get_weighted_qr_basis <- function(w) {
+  n_w <- length(w)
+  v1 <- w / sqrt(sum(w^2))
+  mat_m <- matrix(0, nrow = n_w, ncol = n_w)
+  mat_m[, 1] <- v1
+  for (j in seq_len(n_w - 1L)) {
+    for (i in seq_len(n_w)) {
+      mat_m[i, j + 1L] <- if (i == j) 1.0 else 0.0
+    }
+  }
+  q_star <- qr.Q(qr(mat_m))[, 2:n_w, drop = FALSE]
+  for (j in seq_len(ncol(q_star))) {
+    nz <- which(abs(q_star[, j]) > 1e-10)[1]
+    if (!is.na(nz) && q_star[nz, j] < 0) {
+      q_star[, j] <- -q_star[, j]
+    }
+  }
+  q_star
+}
+
+loc_info <- canonicalize_locations(locations_sim)
+ld <- imuGAP:::assemble_layer_data(loc_info)
+
+bounds_to_range <- function(starts, total) {
+  rbind(starts, c(tail(starts, -1L) - 1L, total))
+}
+
+layer_bounds <- bounds_to_range(ld$layer_starts, ld$n_locs)
+parent_child_bounds <- bounds_to_range(ld$parent_child_starts, ld$n_locs)
+
+loc_layer_idx <- integer(ld$n_locs - 1L)
+for (k in seq_len(ld$n_layers - 1L)) {
+  st <- layer_bounds[1, k + 1L] - 1L
+  en <- layer_bounds[2, k + 1L] - 1L
+  loc_layer_idx[st:en] <- k
+}
+
+loc_pop_scale <- numeric(ld$n_locs - 1L)
+for (k in seq_len(ld$n_layers - 1L)) {
+  st <- layer_bounds[1, k + 1L]
+  en <- layer_bounds[2, k + 1L]
+  layer_pop <- ld$loc_population[st:en]
+  mean_layer_pop <- mean(layer_pop)
+  loc_pop_scale[(st - 1L):(en - 1L)] <- sqrt(mean_layer_pop / layer_pop)
+}
+
+n_unconstrained <- (ld$n_locs - 1L) - ld$n_parent_locs
+qr_basis <- matrix(0, nrow = ld$n_locs - 1L, ncol = n_unconstrained)
+col_offset <- 0L
+for (p in seq_len(ld$n_parent_locs)) {
+  st <- parent_child_bounds[1, p]
+  en <- parent_child_bounds[2, p]
+  n_child <- en - st + 1L
+  pop_slice <- ld$loc_population[st:en]
+  w <- pop_slice / sum(pop_slice)
+  w_prime <- sqrt(w)
+  q_star <- get_weighted_qr_basis(w_prime)
+  qr_basis[(st - 1L):(en - 1L), (col_offset + 1L):(col_offset + n_child - 1L)] <- q_star
+  col_offset <- col_offset + (n_child - 1L)
+}
+
+z_arr <- as.array(fit_sim$stanfit, pars = "z_layer")
+sigma_arr <- as.array(fit_sim$stanfit, pars = "sigma_layer")
+n_iter <- dim(z_arr)[1]
+n_chains <- dim(z_arr)[2]
+
+off_layer_arr <- array(0, dim = c(n_iter, n_chains, ld$n_locs - 1L))
+for (iter in seq_len(n_iter)) {
+  for (chain in seq_len(n_chains)) {
+    z_vec <- z_arr[iter, chain, ]
+    sigma_vec <- sigma_arr[iter, chain, ]
+    off_vec <- as.vector(((qr_basis %*% z_vec) * loc_pop_scale) * sigma_vec[loc_layer_idx])
+    off_layer_arr[iter, chain, ] <- off_vec
+  }
+}
+dimnames(off_layer_arr) <- list(
+  iterations = NULL,
+  chains = paste0("chain:", seq_len(n_chains)),
+  parameters = paste0("off_layer[", seq_len(ld$n_locs - 1L), "]")
+)
+
 county_names <- names(latent_params_sim$off_cnty)
-non_root_locs <- canonicalize_locations(locations_sim)$loc_id[-1]
+non_root_locs <- loc_info$loc_id[-1]
 county_pars <- paste0("off_layer[", match(county_names, non_root_locs), "]")
-county_arr <- as.array(fit_sim$stanfit, pars = county_pars)
+county_arr <- off_layer_arr[, , county_pars, drop = FALSE]
 county_chain_meds <- rbindlist(lapply(county_pars, function(p) {
   data.table(
     parameter = p,
@@ -822,7 +905,7 @@ Trace plots for school-level location offsets $\delta_{\text{school}}$ divided b
 for (cnty in county_names) {
   sch_in_c <- locations_sim[parent_id == cnty, loc_id]
   sch_pars <- paste0("off_layer[", match(sch_in_c, non_root_locs), "]")
-  sch_arr <- as.array(fit_sim$stanfit, pars = sch_pars)
+  sch_arr <- off_layer_arr[, , sch_pars, drop = FALSE]
 
   sch_chain_meds <- rbindlist(lapply(sch_pars, function(p) {
     data.table(

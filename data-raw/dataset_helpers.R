@@ -281,19 +281,29 @@ get_simulation_setup <- function(
 generate_latent_current <- function(setup) {
   sch_per_cnty <- copy(setup$sch_per_cnty)
 
-  # Enforce zero-centering on county offsets
-  z_raw_cnty <- setup$z_raw_cnty - mean(setup$z_raw_cnty)
-  delta_cnty <- z_raw_cnty * setup$sigma_cnty
+  # Enforce per-parent weighted balanced offsets and full-layer population scaling on county offsets
+  w_cnty <- setup$ncty_base / sum(setup$ncty_base)
+  w_prime_cnty <- sqrt(w_cnty)
+  z_proj_cnty <- setup$z_raw_cnty -
+    w_prime_cnty * sum(w_prime_cnty * setup$z_raw_cnty)
+  scale_cnty <- sqrt(mean(setup$ncty_base) / setup$ncty_base)
+  delta_cnty <- z_proj_cnty * scale_cnty * setup$sigma_cnty
   names(delta_cnty) <- setup$county_names
 
-  # Enforce zero-centering on school offsets within each parent county
+  # Enforce per-parent weighted balanced offsets and full-layer population scaling on school offsets
   z_raw_sch <- setup$z_raw_sch
+  z_proj_sch <- numeric(length(z_raw_sch))
   for (c_idx in seq_along(setup$county_names)) {
     ll <- sch_per_cnty$ll[c_idx]
     ul <- sch_per_cnty$ul[c_idx]
-    z_raw_sch[ll:ul] <- z_raw_sch[ll:ul] - mean(z_raw_sch[ll:ul])
+    pop_slice <- setup$nsch_base[ll:ul]
+    w_sch <- pop_slice / sum(pop_slice)
+    w_prime_sch <- sqrt(w_sch)
+    z_slice <- z_raw_sch[ll:ul]
+    z_proj_sch[ll:ul] <- z_slice - w_prime_sch * sum(w_prime_sch * z_slice)
   }
-  delta_sch <- z_raw_sch * setup$sigma_sch
+  scale_sch <- sqrt(mean(setup$nsch_base) / setup$nsch_base)
+  delta_sch <- z_proj_sch * scale_sch * setup$sigma_sch
   names(delta_sch) <- setup$school_names
 
   state_logit <- qlogis(setup$phi_st_target)
