@@ -341,7 +341,12 @@ generate_latent_current <- function(setup) {
 }
 
 #' Simulate observations and construct package fixtures from setup and latent objects
-simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
+simulate_observations_from_latent <- function(
+  setup,
+  latent,
+  obs_seed = 93254,
+  uncensored = TRUE
+) {
   set.seed(obs_seed)
 
   n_cohort <- setup$n_cohort
@@ -349,7 +354,7 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
   phi_st <- latent$phi_st
   cnty_prob_matrix <- latent$cnty_prob_matrix
   schl_prob_matrix <- latent$schl_prob_matrix
-  other_vax_reduction <- setup$other_vax_reduction
+  other_vax_reduction <- if (uncensored) 1.0 else setup$other_vax_reduction
   study_ages <- setup$study_ages
   tvv_cohorts <- setup$tvv_cohorts
   skv_cohorts <- setup$skv_cohorts
@@ -461,7 +466,7 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
     dose = 2L
   )
 
-  # 5. County-level 6th grade survey (age 11, dose 2, censored)
+  # 5. County-level 6th grade survey (age 11, dose 2)
   sim_county_full <- list()
   for (c in seq_along(county_names)) {
     ncnty <- setup$n_grade6_matrix[, c]
@@ -484,7 +489,7 @@ simulate_observations_from_latent <- function(setup, latent, obs_seed = 93254) {
       positive = qbinom(u_vector, ncnty, p_vector),
       sample_n = ncnty,
       dose = 2L,
-      censored = 1.0
+      censored = if (uncensored) NA_real_ else 1.0
     )
   }
   sim_county <- rbindlist(sim_county_full)
