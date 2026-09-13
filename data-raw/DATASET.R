@@ -33,9 +33,10 @@ setup <- get_simulation_setup(
   sigma_cnty = 0.4
 )
 latent <- generate_latent_current(setup)
-sim_data <- simulate_observations_from_latent_min_noise(
+sim_data <- simulate_observations_from_latent(
   setup,
-  latent
+  latent,
+  uncensored = TRUE
 )
 
 
