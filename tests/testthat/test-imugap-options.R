@@ -5,12 +5,11 @@ test_that("imugap_options returns expected structure with defaults", {
   expect_type(defaults, "list")
   expect_setequal(
     names(defaults),
-    c("df", "dose_schedule", "model", "sigma_layer_scale")
+    c("df", "dose_schedule", "model")
   )
   expect_equal(defaults$df, 5L)
   expect_equal(defaults$dose_schedule, c(1, 4))
   expect_equal(defaults$model, "default")
-  expect_equal(defaults$sigma_layer_scale, 2.5)
 })
 
 test_that("imugap_options df can be overridden", {
@@ -29,26 +28,6 @@ test_that("imugap_options dose_schedule can be overridden", {
   expected <- defaults
   expected$dose_schedule <- override_sched
   expect_equal(opts, expected)
-})
-
-test_that("imugap_options sigma_layer_scale can be overridden", {
-  defaults <- imugap_options()
-  override_scale <- 1.0
-  opts <- imugap_options(sigma_layer_scale = override_scale)
-  expected <- defaults
-  expected$sigma_layer_scale <- override_scale
-  expect_equal(opts, expected)
-})
-
-test_that("imugap_options rejects invalid sigma_layer_scale", {
-  expect_error(imugap_options(sigma_layer_scale = -1), "sigma_layer_scale")
-  expect_error(imugap_options(sigma_layer_scale = 0), "sigma_layer_scale")
-  expect_error(imugap_options(sigma_layer_scale = c(1, 2)), "sigma_layer_scale")
-  expect_error(
-    imugap_options(sigma_layer_scale = NA_real_),
-    "sigma_layer_scale"
-  )
-  expect_error(imugap_options(sigma_layer_scale = "2.5"), "sigma_layer_scale")
 })
 
 test_that("imugap_options errors on unknown model", {

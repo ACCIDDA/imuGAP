@@ -71,16 +71,6 @@ test_that("assemble_layer_data handles 4-layer deep hierarchy", {
     ]
   )
   expect_equal(as.integer(d4$parent_child_starts), c(2L, 4L, 6L))
-  expect_equal(d4$sigma_layer_scale, 2.5)
-})
-
-test_that("assemble_layer_data respects custom sigma_layer_scale", {
-  locs <- canonicalize_locations(data.frame(
-    loc_id = c("state", "cnty1", "cnty2"),
-    parent_id = c(NA, "state", "state")
-  ))
-  d <- assemble_layer_data(locs, sigma_layer_scale = 1.2)
-  expect_equal(d$sigma_layer_scale, 1.2)
 })
 
 test_that("assemble_layer_data handles 1-layer (root-only) hierarchy", {
@@ -94,4 +84,34 @@ test_that("assemble_layer_data handles 1-layer (root-only) hierarchy", {
   expect_equal(d1$n_parent_locs, 0L)
   expect_equal(length(d1$parent_loc_id), 0L)
   expect_equal(length(d1$parent_child_starts), 0L)
+  expect_equal(as.numeric(d1$loc_population), 1.0)
+})
+
+test_that("assemble_layer_data extracts population weights correctly", {
+  locs_with_pop <- canonicalize_locations(data.frame(
+    loc_id = c("state", "c1", "c2", "s1", "s2", "s3", "s4"),
+    parent_id = c(NA, "state", "state", "c1", "c1", "c2", "c2"),
+    population = c(100, 40, 60, 10, 30, 20, 40)
+  ))
+  d_pop <- assemble_layer_data(locs_with_pop)
+  expect_equal(as.numeric(d_pop$loc_population), locs_with_pop$population)
+
+  # When population is unsupplied, defaults to 1 at the outermost leaf
+  # and sum of offspring for parent entities
+  locs_no_pop_2 <- canonicalize_locations(data.frame(
+    loc_id = c("state", "c1", "c2"),
+    parent_id = c(NA, "state", "state")
+  ))
+  d_no_pop_2 <- assemble_layer_data(locs_no_pop_2)
+  expect_equal(as.numeric(d_no_pop_2$loc_population), c(2.0, 1.0, 1.0))
+
+  locs_no_pop_3 <- canonicalize_locations(data.frame(
+    loc_id = c("state", "c1", "c2", "s1", "s2", "s3", "s4", "s5"),
+    parent_id = c(NA, "state", "state", "c1", "c1", "c2", "c2", "c2")
+  ))
+  d_no_pop_3 <- assemble_layer_data(locs_no_pop_3)
+  expect_equal(
+    as.numeric(d_no_pop_3$loc_population),
+    c(5.0, 2.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+  )
 })

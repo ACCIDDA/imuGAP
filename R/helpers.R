@@ -344,11 +344,11 @@ create_target <- function(
 #'   - `n_parent_locs`: integer count of parent locations that have children
 #'   - `parent_loc_id`: integer array (length `n_parent_locs`) of canonical IDs of parent locations
 #'   - `parent_child_starts`: integer array (length `n_parent_locs`) of starting child location IDs
-#'   - `sigma_layer_scale`: single numeric scale for Cauchy prior on layer standard deviations
+#'   - `loc_population`: numeric array (length `n_locs`) of population weights
 #'
 #' @keywords internal
 #' @autoglobal
-assemble_layer_data <- function(loc_info, sigma_layer_scale = 2.5) {
+assemble_layer_data <- function(loc_info) {
   n_locs <- nrow(loc_info)
   n_layers <- max(loc_info$layer)
   layer_starts <- loc_info[, min(loc_c_id), by = layer]$V1
@@ -373,6 +373,34 @@ assemble_layer_data <- function(loc_info, sigma_layer_scale = 2.5) {
     integer(0)
   }
 
+  loc_population <- if ("population" %in% names(loc_info)) {
+    as.numeric(loc_info$population)
+  } else {
+    rep(NA_real_, n_locs)
+  }
+
+  parent_ids <- unique(loc_info$parent_id[!is.na(loc_info$parent_id)])
+  is_leaf <- !(loc_info$loc_id %in% parent_ids)
+
+  # Default outermost leaves with NA or <= 0 population to 1.0
+  loc_population[is_leaf & (is.na(loc_population) | loc_population <= 0)] <- 1.0
+
+  # Bottom-up accumulation for parent entities from lowest non-leaf layer to root
+  if (n_layers >= 2L) {
+    for (lyr in seq(n_layers - 1L, 1L, by = -1L)) {
+      parent_rows <- which(loc_info$layer == lyr & !is_leaf)
+      for (p in parent_rows) {
+        pid <- loc_info$loc_id[p]
+        child_rows <- which(loc_info$parent_id == pid)
+        child_sum <- sum(loc_population[child_rows], na.rm = TRUE)
+        if (is.na(loc_population[p]) || loc_population[p] <= 0) {
+          loc_population[p] <- child_sum
+        }
+      }
+    }
+  }
+  loc_population[is.na(loc_population)] <- 1.0
+
   list(
     n_locs = n_locs,
     n_layers = n_layers,
@@ -380,6 +408,6 @@ assemble_layer_data <- function(loc_info, sigma_layer_scale = 2.5) {
     n_parent_locs = n_parent_locs,
     parent_loc_id = as.array(as.integer(parent_loc_id)),
     parent_child_starts = as.array(as.integer(parent_child_starts)),
-    sigma_layer_scale = as.numeric(sigma_layer_scale)
+    loc_population = as.array(as.numeric(loc_population))
   )
 }

@@ -27,3 +27,29 @@ vector compute_hierarchical_phi(
   matrix[n_cohort, n_locs] logit_phi_mat = rep_matrix(logit_phi_st, n_locs) + rep_matrix(to_row_vector(logit_phi_loc), n_cohort);
   return to_vector(inv_logit(logit_phi_mat));
 }
+
+// Compute K x (K-1) orthonormal basis Q* orthogonal to weight vector w
+matrix get_weighted_qr_basis(vector w) {
+  int K = num_elements(w);
+  vector[K] v1 = w / sqrt(sum(square(w)));
+  matrix[K, K] M;
+  M[:, 1] = v1;
+  for (j in 1:(K - 1)) {
+    for (i in 1:K) {
+      M[i, j + 1] = (i == j) ? 1.0 : 0.0;
+    }
+  }
+  matrix[K, K] Q = qr_thin_Q(M);
+  return Q[:, 2:K];
+}
+
+// Compute scaled layer offsets from unconstrained standard normal deviations
+vector compute_layer_offsets(
+  matrix qr_basis,
+  vector z_layer,
+  vector loc_pop_scale,
+  vector sigma_layer,
+  array[] int loc_layer_idx
+) {
+  return ((qr_basis * z_layer) .* loc_pop_scale) .* sigma_layer[loc_layer_idx];
+}

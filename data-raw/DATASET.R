@@ -26,7 +26,7 @@ if (requireNamespace("pkgload", quietly = TRUE)) {
 # Source simulation helper functions
 source("data-raw/dataset_helpers.R")
 
-# Run simulation pipeline under current latent model (min-noise version with standard location dispersion and uncensored observations)
+# Run simulation pipeline under current latent model
 setup <- get_simulation_setup(
   seed = 93254,
   sigma_sch = 0.8,
@@ -35,8 +35,7 @@ setup <- get_simulation_setup(
 latent <- generate_latent_current(setup)
 sim_data <- simulate_observations_from_latent_min_noise(
   setup,
-  latent,
-  uncensored = TRUE
+  latent
 )
 
 
