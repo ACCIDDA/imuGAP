@@ -119,13 +119,13 @@ canonicalize it using
 data("observations_sim", package = "imuGAP")
 head(observations_sim[, .(obs_id, loc_id, positive, sample_n, censored)])
 #>    obs_id               loc_id positive sample_n censored
-#>     <int>               <char>    <num>    <num>    <num>
-#> 1:      1 Chickadee Elementary      111      155       NA
-#> 2:      2 Chickadee Elementary       99      152       NA
-#> 3:      3 Chickadee Elementary      110      156       NA
-#> 4:      4 Chickadee Elementary      104      155       NA
-#> 5:      5 Chickadee Elementary      123      155       NA
-#> 6:      6 Chickadee Elementary      119      158       NA
+#>     <int>               <char>    <num>    <int>    <num>
+#> 1:      1 Chickadee Elementary      132      155       NA
+#> 2:      2 Chickadee Elementary      130      152       NA
+#> 3:      3 Chickadee Elementary      134      156       NA
+#> 4:      4 Chickadee Elementary      134      155       NA
+#> 5:      5 Chickadee Elementary      134      155       NA
+#> 6:      6 Chickadee Elementary      138      158       NA
 
 # Canonicalize and validate
 canonical_observations <- canonicalize_observations(observations_sim)
@@ -133,12 +133,12 @@ head(canonical_observations)
 #> Key: <censored, obs_id>
 #>    obs_c_id positive sample_n censored obs_id
 #>       <int>    <int>    <int>    <num>  <int>
-#> 1:        1      111      155       NA      1
-#> 2:        2       99      152       NA      2
-#> 3:        3      110      156       NA      3
-#> 4:        4      104      155       NA      4
-#> 5:        5      123      155       NA      5
-#> 6:        6      119      158       NA      6
+#> 1:        1      132      155       NA      1
+#> 2:        2      130      152       NA      2
+#> 3:        3      134      156       NA      3
+#> 4:        4      134      155       NA      4
+#> 5:        5      134      155       NA      5
+#> 6:        6      138      158       NA      6
 ```
 
 #### Observation Metadata (`populations_sim`)
@@ -181,8 +181,8 @@ observations_sim[
   .(obs_id, loc_id, positive, sample_n, age_min, age_max, dose)
 ]
 #>    obs_id loc_id positive sample_n age_min age_max  dose
-#>     <int> <char>    <num>    <num>   <int>   <int> <int>
-#> 1:    761  State      224      257      14      19     2
+#>     <int> <char>    <num>    <int>   <int>   <int> <int>
+#> 1:    761  State      213      250      14      19     2
 
 # Corresponding population metadata with distributed weights summing to 1
 populations_sim[obs_id == 761]
@@ -279,7 +279,7 @@ in the simulation:
 
 1.  **State Level (ChildVaxView, SchoolVaxView, TeenVaxView)**:
     Observations across cohorts spanning doses 1 and 2, plotted against
-    the underlying lifetime propensity $`\phi_{st}`$.
+    the underlying lifetime uptake propensity $`1 - \phi_{st}`$.
 2.  **County Level (6th Grade Surveys)**: Right-censored dose 2 coverage
     at age 11 across Scruggs, Simone, and Watson counties, reflecting
     county-specific random offsets.
@@ -318,10 +318,11 @@ single_cohort_obs <- state_obs[is.na(age_max) | age_max == age_min + 1L]
 multi_cohort_obs <- copy(state_obs[!is.na(age_max) & age_max > age_min + 1L])
 multi_cohort_obs[, cohort_max := cohort_min + (age_max - 1L) - age_min]
 
-# True state lifetime propensity across cohorts
+# True state lifetime uptake propensity across cohorts (1 - phi)
+# Note: phi represents the non-uptake rate, so (1 - phi) represents the vaccinating population
 latent_state <- data.table(
   cohort_min = seq_along(latent_params_sim$phi_state),
-  phi = latent_params_sim$phi_state
+  propensity = 1 - latent_params_sim$phi_state
 )
 
 # Latent milestone coverage curves corresponding to each observation source
@@ -329,27 +330,25 @@ n_c <- length(latent_params_sim$phi_state)
 latent_curves <- rbindlist(list(
   data.table(
     cohort_min = seq_len(n_c),
-    latent_cov = latent_params_sim$phi_state *
-      latent_params_sim$uptake[2, 1] *
-      latent_params_sim$censor_reduction,
+    latent_cov = (1 - latent_params_sim$phi_state) *
+      latent_params_sim$uptake[2, 1],
     source = "ChildVaxView (Dose 1, Age 2)"
   ),
   data.table(
     cohort_min = seq_len(n_c),
-    latent_cov = latent_params_sim$phi_state *
-      latent_params_sim$uptake[3, 1] *
-      latent_params_sim$censor_reduction,
+    latent_cov = (1 - latent_params_sim$phi_state) *
+      latent_params_sim$uptake[3, 1],
     source = "ChildVaxView (Dose 1, Age 3)"
   ),
   data.table(
     cohort_min = seq_len(28),
-    latent_cov = latent_params_sim$phi_state[1:28] *
+    latent_cov = (1 - latent_params_sim$phi_state[1:28]) *
       latent_params_sim$uptake[5, 2],
     source = "SchoolVaxView (Dose 2, Age 5)"
   ),
   data.table(
     cohort_min = seq_len(15),
-    latent_cov = latent_params_sim$phi_state[1:15] *
+    latent_cov = (1 - latent_params_sim$phi_state[1:15]) *
       mean(latent_params_sim$uptake[14:18, 2]),
     source = "TeenVaxView (Dose 2, Ages 14-18)"
   )
@@ -359,7 +358,11 @@ latent_curves[, source := factor(source, levels = levels(state_obs$source))]
 ggplot() +
   geom_line(
     data = latent_state,
-    aes(x = cohort_min, y = phi, linetype = "True Lifetime Propensity (phi)"),
+    aes(
+      x = cohort_min,
+      y = propensity,
+      linetype = "True Lifetime Uptake Propensity (1 - phi)"
+    ),
     color = "gray40",
     linewidth = 0.8,
     alpha = 0.5
@@ -398,7 +401,7 @@ ggplot() +
   scale_y_continuous(limits = c(0.4, 1.0)) +
   scale_linetype_manual(
     name = NULL,
-    values = c("True Lifetime Propensity (phi)" = "dashed")
+    values = c("True Lifetime Uptake Propensity (1 - phi)" = "dashed")
   ) +
   scale_color_brewer(name = "Data Source", palette = "Dark2") +
   scale_shape_manual(
@@ -443,15 +446,28 @@ ggplot() +
 county_obs <- copy(observations_sim[loc_id %in% c("Scruggs", "Simone", "Watson")])
 county_obs[, obs_prop := positive / sample_n]
 
+max_obs_cohort <- max(county_obs$cohort_min)
+n_cohorts <- length(latent_params_sim$phi_state)
+
 # Analytical county-level latent curves for 6th grade survey (age 11, dose 2, censored)
+# Note: phi represents non-uptake, so (1 - phi_shifted) represents the vaccinating population
 county_latent <- rbindlist(lapply(names(latent_params_sim$off_cnty), function(cnty) {
-  cohorts <- seq_len(19)
+  cohorts <- seq_len(n_cohorts)
   c_idx <- match(cnty, names(latent_params_sim$off_cnty))
   offset <- latent_params_sim$off_cnty[c_idx]
   phi_shifted <- plogis(qlogis(latent_params_sim$phi_state[cohorts]) + offset)
-  cov_true <- phi_shifted * latent_params_sim$uptake[11, 2] * latent_params_sim$censor_reduction
-  data.table(loc_id = cnty, cohort_min = cohorts, latent_cov = cov_true)
+  cov_true <- (1 - phi_shifted) * latent_params_sim$uptake[11, 2]
+  cov_censored <- cov_true * latent_params_sim$censor_reduction
+  data.table(
+    loc_id = cnty,
+    cohort_min = cohorts,
+    latent_cov = cov_true,
+    latent_cov_censored = cov_censored
+  )
 }))
+
+county_latent_obs <- county_latent[cohort_min <= max_obs_cohort]
+county_latent_unobs <- county_latent[cohort_min >= max_obs_cohort]
 
 ggplot() +
   geom_point(
@@ -460,9 +476,19 @@ ggplot() +
     color = "steelblue", size = 2, alpha = 0.85
   ) +
   geom_line(
-    data = county_latent,
+    data = county_latent_obs,
     aes(x = cohort_min, y = latent_cov, color = "True Latent Coverage"),
     linetype = "dashed", linewidth = 0.9
+  ) +
+  geom_line(
+    data = county_latent_obs,
+    aes(x = cohort_min, y = latent_cov_censored, color = "Censored Latent (0.95x)"),
+    linetype = "dotted", linewidth = 0.9
+  ) +
+  geom_line(
+    data = county_latent_unobs,
+    aes(x = cohort_min, y = latent_cov, color = "True Latent (Unobserved)"),
+    linetype = "dotdash", linewidth = 0.9
   ) +
   facet_wrap(~loc_id) +
   theme_bw() +
@@ -472,7 +498,22 @@ ggplot() +
     minor_breaks = seq(1, 30, by = 1)
   ) +
   scale_y_continuous(limits = c(0.4, 1.0)) +
-  scale_color_manual(name = NULL, values = c("True Latent Coverage" = "firebrick")) +
+  scale_color_manual(
+    name = NULL,
+    values = c(
+      "True Latent Coverage" = "firebrick",
+      "Censored Latent (0.95x)" = "darkorange",
+      "True Latent (Unobserved)" = "firebrick"
+    )
+  ) +
+  guides(
+    color = guide_legend(
+      override.aes = list(
+        linetype = c("dashed", "dotted", "dotdash"),
+        linewidth = c(0.9, 0.9, 0.9)
+      )
+    )
+  ) +
   theme(
     legend.position = "inside",
     legend.position.inside = c(0.85, 0.15),
@@ -519,14 +560,14 @@ school_obs[, obs_prop := positive / sample_n]
 
 sch_cohorts <- 1:28
 
-# 1. State-level lifetime propensity reference
+# 1. State-level lifetime uptake propensity reference (1 - phi)
 state_sch_propensity <- rbindlist(lapply(
   c("Scruggs", "Simone", "Watson"),
   function(cnty) {
     data.table(
       parent_id = cnty,
       cohort_min = sch_cohorts,
-      phi = latent_params_sim$phi_state[sch_cohorts]
+      propensity = 1 - latent_params_sim$phi_state[sch_cohorts]
     )
   }
 ))
@@ -540,7 +581,7 @@ county_sch_latent <- rbindlist(lapply(
     phi_shifted <- plogis(
       qlogis(latent_params_sim$phi_state[sch_cohorts]) + offset
     )
-    cov_true <- phi_shifted * latent_params_sim$uptake[5, 2]
+    cov_true <- (1 - phi_shifted) * latent_params_sim$uptake[5, 2]
     data.table(parent_id = cnty, cohort_min = sch_cohorts, latent_cov = cov_true)
   }
 ))
@@ -558,7 +599,7 @@ school_sch_latent <- rbindlist(lapply(
     phi_sch <- plogis(
       qlogis(latent_params_sim$phi_state[sch_cohorts]) + c_offset + s_offset
     )
-    cov_sch <- phi_sch * latent_params_sim$uptake[5, 2]
+    cov_sch <- (1 - phi_sch) * latent_params_sim$uptake[5, 2]
     data.table(
       parent_id = cnty,
       loc_id = s_name,
@@ -570,10 +611,14 @@ school_sch_latent <- rbindlist(lapply(
 ))
 
 ggplot() +
-  # State lifetime propensity reference
+  # State lifetime uptake propensity reference
   geom_line(
     data = state_sch_propensity,
-    aes(x = cohort_min, y = phi, linetype = "True State Lifetime Propensity (phi)"),
+    aes(
+      x = cohort_min,
+      y = propensity,
+      linetype = "True State Lifetime Uptake Propensity (1 - phi)"
+    ),
     color = "gray40",
     linewidth = 0.8,
     alpha = 0.5
@@ -612,7 +657,7 @@ ggplot() +
   scale_linetype_manual(
     name = "Reference Curves",
     values = c(
-      "True State Lifetime Propensity (phi)" = "dotted",
+      "True State Lifetime Uptake Propensity (1 - phi)" = "dotted",
       "True County Latent Coverage" = "solid"
     )
   ) +
@@ -677,7 +722,7 @@ state-level vaccine uptake baseline:
 beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 #> List of 1
-#>  $ beta_bs: num [1:2000, 1:5] -1.65 -1.59 -1.57 -1.64 -1.68 ...
+#>  $ beta_bs: num [1:2000, 1:5] -1.68 -1.7 -1.58 -1.68 -1.62 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ iterations: NULL
 #>   .. ..$           : NULL
@@ -685,27 +730,75 @@ str(beta_draws)
 
 We can also examine trace plots for key parameters to check MCMC
 convergence and evaluate parameter recovery against the true
-data-generating simulation parameters (`latent_params_sim`).
+data-generating simulation parameters (`latent_params_sim`). In each
+trace plot, the distinct trace colors and corresponding horizontal solid
+lines represent individual MCMC sampling chains (chains 1–4) and their
+within-chain medians, while the dashed red lines and annotated values
+indicate the true simulation parameters.
 
 ##### Basis Spline Coefficients ($`\beta_{\text{bs}}`$)
+
+Trace plots for the B-spline basis coefficients $`\beta_{\text{bs}}`$
+(`beta_bs[1]` through `beta_bs[5]`) showing individual chain medians and
+true simulation parameters (dashed red lines and annotated values):
 
 **Show plot code**
 
 ``` r
 
+beta_pars <- paste0("beta_bs[", seq_along(latent_params_sim$beta_bs), "]")
+beta_arr <- as.array(fit_sim$stanfit, pars = beta_pars)
+beta_chain_meds <- rbindlist(lapply(beta_pars, function(p) {
+  data.table(
+    parameter = p,
+    Chain = factor(seq_len(dim(beta_arr)[2])),
+    med_val = apply(beta_arr[, , p, drop = FALSE], 2, median)
+  )
+}))
+
+beta_ref <- data.frame(
+  parameter = beta_pars,
+  true_val = latent_params_sim$beta_bs,
+  label = sprintf(
+    "True~beta[%d] == %.2f",
+    seq_along(latent_params_sim$beta_bs),
+    latent_params_sim$beta_bs
+  )
+)
+
 bayesplot::mcmc_trace(
-  fit_sim$stanfit,
-  pars = c(
-    "beta_bs[1]", "beta_bs[2]", "beta_bs[3]",
-    "beta_bs[4]", "beta_bs[5]"
-  )
+  beta_arr,
+  facet_args = list(labeller = ggplot2::as_labeller(function(x) {
+    gsub("beta_bs\\[(\\d+)\\]", "beta[\\1]", x)
+  }, default = ggplot2::label_parsed))
 ) +
+  geom_hline(
+    data = beta_chain_meds,
+    aes(yintercept = med_val, color = Chain),
+    linetype = "solid",
+    linewidth = 0.5,
+    alpha = 0.8
+  ) +
+  geom_hline(
+    data = beta_ref,
+    aes(yintercept = true_val),
+    color = "firebrick",
+    linetype = "dashed",
+    linewidth = 0.8
+  ) +
+  geom_label(
+    data = beta_ref,
+    aes(x = 100, y = true_val, label = label),
+    parse = TRUE,
+    color = "firebrick",
+    fill = ggplot2::alpha("white", 0.75),
+    linewidth = NA,
+    vjust = -0.3,
+    hjust = 0,
+    size = 3.2
+  ) +
   theme_bw() +
-  theme(
-    legend.position = "inside",
-    legend.position.inside = c(0.9, 0.1),
-    legend.justification.inside = c(1, 0)
-  )
+  theme(legend.position = "none")
 ```
 
 ![](imuGAP_files/figure-html/trace-plot-beta-1.png)
@@ -715,16 +808,26 @@ bayesplot::mcmc_trace(
 Trace plots for the hierarchy layer standard deviations
 $`\sigma_{\text{county}}`$ (`sigma_layer[1]`) and
 $`\sigma_{\text{school}}`$ (`sigma_layer[2]`) zoomed to the shared range
-$`[0, 2.5]`$ via coordinate clipping (preserving full chains), compared
-against the true simulation standard deviations (dashed red lines and
-annotated values):
+$`[0, 2.5]`$ via coordinate clipping (preserving full chains), showing
+individual chain medians and true simulation standard deviations (dashed
+red lines and annotated values):
 
 **Show plot code**
 
 ``` r
 
+sigma_pars <- c("sigma_layer[1]", "sigma_layer[2]")
+sigma_arr <- as.array(fit_sim$stanfit, pars = sigma_pars)
+sigma_chain_meds <- rbindlist(lapply(sigma_pars, function(p) {
+  data.table(
+    parameter = p,
+    Chain = factor(seq_len(dim(sigma_arr)[2])),
+    med_val = apply(sigma_arr[, , p, drop = FALSE], 2, median)
+  )
+}))
+
 sigma_ref <- data.frame(
-  parameter = c("sigma_layer[1]", "sigma_layer[2]"),
+  parameter = sigma_pars,
   true_val = c(latent_params_sim$sigma_cnty, latent_params_sim$sigma_sch),
   label = sprintf(
     "True~sigma == %.2f",
@@ -733,13 +836,19 @@ sigma_ref <- data.frame(
 )
 
 bayesplot::mcmc_trace(
-  fit_sim$stanfit,
-  pars = c("sigma_layer[1]", "sigma_layer[2]"),
+  sigma_arr,
   facet_args = list(labeller = ggplot2::as_labeller(c(
     "sigma_layer[1]" = "sigma[County]",
     "sigma_layer[2]" = "sigma[School]"
   ), default = ggplot2::label_parsed))
 ) +
+  geom_hline(
+    data = sigma_chain_meds,
+    aes(yintercept = med_val, color = Chain),
+    linetype = "solid",
+    linewidth = 0.5,
+    alpha = 0.8
+  ) +
   geom_hline(
     data = sigma_ref,
     aes(yintercept = true_val),
@@ -760,38 +869,215 @@ bayesplot::mcmc_trace(
   ) +
   coord_cartesian(ylim = c(0, 2.5)) +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "none")
 ```
 
 ![](imuGAP_files/figure-html/trace-plot-sigmas-1.png)
+
+##### County Location Offsets ($`\delta_{\text{county}}`$)
+
+Trace plots for the county-level location offsets
+$`\delta_{\text{county}}`$ (`off_layer[1]` through `off_layer[3]`)
+showing individual chain medians and true simulation offsets (dashed red
+lines and annotated values):
+
+**Show plot code**
+
+``` r
+
+county_names <- names(latent_params_sim$off_cnty)
+non_root_locs <- canonicalize_locations(locations_sim)$loc_id[-1]
+county_pars <- paste0("off_layer[", match(county_names, non_root_locs), "]")
+county_arr <- as.array(fit_sim$stanfit, pars = county_pars)
+county_chain_meds <- rbindlist(lapply(county_pars, function(p) {
+  data.table(
+    parameter = p,
+    Chain = factor(seq_len(dim(county_arr)[2])),
+    med_val = apply(county_arr[, , p, drop = FALSE], 2, median)
+  )
+}))
+
+county_ref <- data.frame(
+  parameter = county_pars,
+  true_val = unname(latent_params_sim$off_cnty[county_names]),
+  label = sprintf(
+    "True~delta == %.2f",
+    latent_params_sim$off_cnty[county_names]
+  )
+)
+
+bayesplot::mcmc_trace(
+  county_arr,
+  facet_args = list(
+    scales = "fixed",
+    labeller = ggplot2::as_labeller(setNames(county_names, county_pars))
+  )
+) +
+  geom_hline(
+    data = county_chain_meds,
+    aes(yintercept = med_val, color = Chain),
+    linetype = "solid",
+    linewidth = 0.5,
+    alpha = 0.8
+  ) +
+  geom_hline(
+    data = county_ref,
+    aes(yintercept = true_val),
+    color = "firebrick",
+    linetype = "dashed",
+    linewidth = 0.8
+  ) +
+  geom_label(
+    data = county_ref,
+    aes(x = 100, y = true_val, label = label),
+    parse = TRUE,
+    color = "firebrick",
+    fill = ggplot2::alpha("white", 0.75),
+    linewidth = NA,
+    vjust = -0.3,
+    hjust = 0,
+    size = 3.2
+  ) +
+  theme_bw() +
+  theme(legend.position = "none")
+```
+
+![](imuGAP_files/figure-html/trace-plot-county-offsets-1.png)
+
+##### School Location Offsets ($`\delta_{\text{school}}`$)
+
+Trace plots for school-level location offsets $`\delta_{\text{school}}`$
+divided by county, showing individual chain medians and true simulation
+offsets (dashed red lines and annotated values) across schools in
+Scruggs, Simone, and Watson counties:
+
+**Show plot code**
+
+``` r
+
+for (cnty in county_names) {
+  sch_in_c <- locations_sim[parent_id == cnty, loc_id]
+  sch_pars <- paste0("off_layer[", match(sch_in_c, non_root_locs), "]")
+  sch_arr <- as.array(fit_sim$stanfit, pars = sch_pars)
+
+  sch_chain_meds <- rbindlist(lapply(sch_pars, function(p) {
+    data.table(
+      parameter = p,
+      Chain = factor(seq_len(dim(sch_arr)[2])),
+      med_val = apply(sch_arr[, , p, drop = FALSE], 2, median)
+    )
+  }))
+
+  sch_ref <- data.frame(
+    parameter = sch_pars,
+    true_val = unname(latent_params_sim$off_sch[sch_in_c]),
+    label = sprintf(
+      "True~delta == %.2f",
+      latent_params_sim$off_sch[sch_in_c]
+    )
+  )
+
+  p <- bayesplot::mcmc_trace(
+    sch_arr,
+    facet_args = list(
+      ncol = 4,
+      scales = "fixed",
+      labeller = ggplot2::as_labeller(setNames(sch_in_c, sch_pars))
+    )
+  ) +
+    geom_hline(
+      data = sch_chain_meds,
+      aes(yintercept = med_val, color = Chain),
+      linetype = "solid",
+      linewidth = 0.5,
+      alpha = 0.8
+    ) +
+    geom_hline(
+      data = sch_ref,
+      aes(yintercept = true_val),
+      color = "firebrick",
+      linetype = "dashed",
+      linewidth = 0.8
+    ) +
+    geom_label(
+      data = sch_ref,
+      aes(x = 100, y = true_val, label = label),
+      parse = TRUE,
+      color = "firebrick",
+      fill = ggplot2::alpha("white", 0.75),
+      linewidth = NA,
+      vjust = -0.3,
+      hjust = 0,
+      size = 2.6
+    ) +
+    labs(title = paste0(cnty, " County — School Location Offsets")) +
+    theme_bw() +
+    theme(
+      legend.position = "none",
+      plot.margin = margin(t = 5, b = 20, unit = "pt")
+    )
+
+  print(p)
+  cat("\n\n<br>\n\n")
+}
+```
+
+![](imuGAP_files/figure-html/trace-plot-school-offsets-1.png)
+
+  
+
+![](imuGAP_files/figure-html/trace-plot-school-offsets-2.png)
+
+  
+
+![](imuGAP_files/figure-html/trace-plot-school-offsets-3.png)
+
+  
 
 ##### Vaccination Uptake Rates ($`\lambda_{\text{raw}}`$)
 
 Trace plots for the unconstrained dose uptake rates
 $`\lambda_{\text{raw}}`$ (`lambda_raw[1]` and `lambda_raw[2]`) zoomed to
 the shared range $`[\exp(0.5), \exp(1.5)]`$ via coordinate clipping
-(preserving full chains), compared against the log-transformed true
-simulation parameters $`\log(\lambda)`$ (dashed red lines and annotated
-values) with an exponentiated y-axis scale and tick labels:
+(preserving full chains), showing individual chain medians and
+log-transformed true simulation parameters $`\log(\lambda)`$ (dashed red
+lines and annotated values) with an exponentiated y-axis scale and tick
+labels:
 
 **Show plot code**
 
 ``` r
 
+lambda_pars <- c("lambda_raw[1]", "lambda_raw[2]")
+lambda_arr <- as.array(fit_sim$stanfit, pars = lambda_pars)
+lambda_chain_meds <- rbindlist(lapply(lambda_pars, function(p) {
+  data.table(
+    parameter = p,
+    Chain = factor(seq_len(dim(lambda_arr)[2])),
+    med_val = apply(lambda_arr[, , p, drop = FALSE], 2, median)
+  )
+}))
+
 lambda_ref <- data.frame(
-  parameter = c("lambda_raw[1]", "lambda_raw[2]"),
+  parameter = lambda_pars,
   true_val = log(latent_params_sim$lambda),
   label = sprintf("True~lambda == %.1f", latent_params_sim$lambda)
 )
 
 bayesplot::mcmc_trace(
-  fit_sim$stanfit,
-  pars = c("lambda_raw[1]", "lambda_raw[2]"),
+  lambda_arr,
   facet_args = list(labeller = ggplot2::as_labeller(c(
     "lambda_raw[1]" = "lambda[1]~(Dose~1)",
     "lambda_raw[2]" = "lambda[2]~(Dose~2)"
   ), default = ggplot2::label_parsed))
 ) +
+  geom_hline(
+    data = lambda_chain_meds,
+    aes(yintercept = med_val, color = Chain),
+    linetype = "solid",
+    linewidth = 0.5,
+    alpha = 0.8
+  ) +
   geom_hline(
     data = lambda_ref,
     aes(yintercept = true_val),
@@ -817,7 +1103,7 @@ bayesplot::mcmc_trace(
   ) +
   labs(y = "Uptake Rate (exponential scale)") +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "none")
 ```
 
 ![](imuGAP_files/figure-html/trace-plot-lambdas-1.png)
@@ -1130,5 +1416,10 @@ ggplot() +
   theme(legend.position = "bottom") +
   labs(color = "School", x = "Age", y = "Two-Dose Coverage")
 ```
+
+    #> Warning: Removed 997 rows containing missing values or values outside the scale range
+    #> (`geom_point()`).
+    #> Warning: Removed 10 rows containing missing values or values outside the scale range
+    #> (`geom_point()`).
 
 ![](imuGAP_files/figure-html/school-viz-1.png)

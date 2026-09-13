@@ -377,18 +377,18 @@ canonicalize_locations(weird_locations)
 data("observations_sim")
 observations_sim
 #>      cohort parent_id               loc_id positive sample_n age_min  dose
-#>       <int>    <char>               <char>    <num>    <num>   <int> <int>
-#>   1:      1   Scruggs Chickadee Elementary      111      155       5     2
-#>   2:      2   Scruggs Chickadee Elementary       99      152       5     2
-#>   3:      3   Scruggs Chickadee Elementary      110      156       5     2
-#>   4:      4   Scruggs Chickadee Elementary      104      155       5     2
-#>   5:      5   Scruggs Chickadee Elementary      123      155       5     2
+#>       <int>    <char>               <char>    <num>    <int>   <int> <int>
+#>   1:      1   Scruggs Chickadee Elementary      132      155       5     2
+#>   2:      2   Scruggs Chickadee Elementary      130      152       5     2
+#>   3:      3   Scruggs Chickadee Elementary      134      156       5     2
+#>   4:      4   Scruggs Chickadee Elementary      134      155       5     2
+#>   5:      5   Scruggs Chickadee Elementary      134      155       5     2
 #>  ---                                                                      
-#> 837:     18     State               Watson      160      184      11     2
-#> 838:     19     State               Watson      195      220      11     2
-#> 839:     20     State               Watson      142      174      11     2
-#> 840:     21     State               Watson      207      228      11     2
-#> 841:     22     State               Watson      171      201      11     2
+#> 837:     18     State               Watson      175      184      11     2
+#> 838:     19     State               Watson      209      220      11     2
+#> 839:     20     State               Watson      166      174      11     2
+#> 840:     21     State               Watson      218      228      11     2
+#> 841:     22     State               Watson      192      201      11     2
 #>      censored age_max obs_id cohort_min
 #>         <num>   <int>  <int>      <int>
 #>   1:       NA      NA      1          1
@@ -397,26 +397,26 @@ observations_sim
 #>   4:       NA      NA      4          4
 #>   5:       NA      NA      5          5
 #>  ---                                   
-#> 837:        1      NA    837         18
-#> 838:        1      NA    838         19
-#> 839:        1      NA    839         20
-#> 840:        1      NA    840         21
-#> 841:        1      NA    841         22
+#> 837:       NA      NA    837         18
+#> 838:       NA      NA    838         19
+#> 839:       NA      NA    839         20
+#> 840:       NA      NA    840         21
+#> 841:       NA      NA    841         22
 canonicalize_observations(observations_sim)
 #> Key: <censored, obs_id>
 #>      obs_c_id positive sample_n censored obs_id
 #>         <int>    <int>    <int>    <num>  <int>
-#>   1:        1      111      155       NA      1
-#>   2:        2       99      152       NA      2
-#>   3:        3      110      156       NA      3
-#>   4:        4      104      155       NA      4
-#>   5:        5      123      155       NA      5
+#>   1:        1      132      155       NA      1
+#>   2:        2      130      152       NA      2
+#>   3:        3      134      156       NA      3
+#>   4:        4      134      155       NA      4
+#>   5:        5      134      155       NA      5
 #>  ---                                           
-#> 837:      837      160      184        1    837
-#> 838:      838      195      220        1    838
-#> 839:      839      142      174        1    839
-#> 840:      840      207      228        1    840
-#> 841:      841      171      201        1    841
+#> 837:      837      175      184       NA    837
+#> 838:      838      209      220       NA    838
+#> 839:      839      166      174       NA    839
+#> 840:      840      218      228       NA    840
+#> 841:      841      192      201       NA    841
 # --- canonicalize_populations ---
 data("populations_sim"); data("locations_sim"); data("observations_sim")
 populations_sim

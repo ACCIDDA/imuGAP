@@ -53,7 +53,9 @@ example datasets (<code>locations_sim</code>, <code>populations_sim</code>, <cod
 
     <div class="section level2">
     <h2 id="format">Format<a class="anchor" aria-label="anchor" href="#format"></a></h2>
-    <p>A list with 8 components:</p><ul><li><p><code>phi_state</code>, a numeric vector of length 30 representing the state-specific
+    <p>A list with 9 components:</p><ul><li><p><code>beta_bs</code>, a numeric vector of length 5 containing the true state-level
+B-spline coefficients for baseline non-uptake propensity (<code>phi_state</code>).</p></li>
+<li><p><code>phi_state</code>, a numeric vector of length 30 representing the state-specific
 baseline vaccine uptake propensity over cohorts.</p></li>
 <li><p><code>lambda</code>, a numeric vector of length 2 representing the rate parameters
 for vaccine doses 1 and 2 respectively.</p></li>

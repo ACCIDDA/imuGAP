@@ -105,9 +105,9 @@
 </tr><tr><td><code>just site-full</code></td>
 <td>Full build of <code>pkgdown</code> site with package reinstallation (for updated data)</td>
 <td><em>(compound: install + site)</em></td>
-</tr><tr><td><code>just site-preview [port=8000]</code></td>
-<td>Build and preview pkgdown documentation site on localhost</td>
-<td><code>Rscript -e "httpuv::runStaticServer(dir = 'docs', port = 8000)"</code></td>
+</tr><tr><td><code>just site-preview [item=""] [port=8000]</code></td>
+<td>Preview pkgdown site on localhost (supports targeted item, e.g. <code>just site-preview imuGAP</code>)</td>
+<td><code>httpuv::runStaticServer(...)</code></td>
 </tr><tr><td><code>just data-inputs</code></td>
 <td>Regenerate <code>*_sim</code> input datasets from raw simulation</td>
 <td><code>Rscript data-raw/DATASET.R</code></td>
@@ -132,7 +132,7 @@
 <div class="section level3">
 <h3 id="id_1-code-coverage-covr">1. Code Coverage (<code>covr</code>)<a class="anchor" aria-label="anchor" href="#id_1-code-coverage-covr"></a></h3>
 <ul><li>Run <code>just coverage</code> to measure package test coverage.</li>
-<li>The CI workflow (<code>.github/workflows/test-coverage.yaml</code>) runs <code><a href="http://covr.r-lib.org/reference/codecov.html" class="external-link">covr::codecov()</a></code> on every pull request and uploads reports to Codecov.</li>
+<li>The CI workflow (<code>.github/workflows/test-coverage.yaml</code>) runs <code>covr::codecov()</code> on every pull request and uploads reports to Codecov.</li>
 <li>Aim to maintain high coverage (&gt;90%, targeting 100%) across all active R source files (<code>R/canonicalize.R</code>, <code>R/checkers.R</code>, <code>R/helpers.R</code>, <code>R/imuGAP.R</code>, <code>R/methods.R</code>, <code>R/options.R</code>).</li>
 <li>
 <strong>Covered vs. Ignored Files (<code>.covrignore</code>)</strong>:
@@ -173,10 +173,15 @@
 <strong>Exported Datasets</strong>: Document datasets with the <code>@name &lt;data&gt;</code> / <code>@docType data</code> idiom in <code>R/imuGAP-package.R</code>.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="id_3-markdown-documentation">3. Markdown Documentation<a class="anchor" aria-label="anchor" href="#id_3-markdown-documentation"></a></h3>
+<h3 id="id_3-roxygen-documentation-conventions">3. Roxygen Documentation Conventions<a class="anchor" aria-label="anchor" href="#id_3-roxygen-documentation-conventions"></a></h3>
 <ul><li>
-<code>roxygen2</code> markdown mode is enabled (<code>Roxygen: list(markdown = TRUE)</code>).</li>
-<li>Prefer standard markdown syntax:
+<strong>Explicit <code>@title</code> and <code>@description</code></strong>: Always provide explicit <code>@title</code> and <code>@description</code> tags in roxygen blocks rather than relying on roxygen2’s automatic inference from the initial paragraphs.</li>
+<li>
+<strong><code>data.table</code> and <code>@autoglobal</code></strong>: Functions performing calculations or non-standard evaluation with <code>data.table</code> should generally be marked with <code>@autoglobal</code> so that <code>roxyglobals</code> automatically registers referenced columns and symbols in <code>R/globals.R</code>.</li>
+<li>
+<strong>Internal Functions</strong>: Unexported helper functions should be tagged with <code>@keywords internal</code> and <code>@noRd</code> so they are fully documented in source code without generating unneeded <code>.Rd</code> manual files.</li>
+<li>
+<strong>Markdown Formatting</strong>: <code>roxygen2</code> markdown mode is enabled (<code>Roxygen: list(markdown = TRUE)</code>). Prefer standard markdown syntax:
 <ul><li>Use backticks for code identifiers, arguments, and return types (e.g. <code>`locations`</code>, <code>`data.table`</code>).</li>
 <li>Use cross-reference markdown links (e.g. <code>[sampling()]</code>, <code>[flexstanr::stan_options()]</code>).</li>
 <li>Use markdown lists, bold text, and tables rather than raw <code>\code{}</code>, <code>\link{}</code>, or <code>\tabular{}</code> Rd tags.</li>
@@ -225,6 +230,103 @@
 <h3 id="id_7-package-reinstallation--vignette-data">7. Package Reinstallation &amp; Vignette Data<a class="anchor" aria-label="anchor" href="#id_7-package-reinstallation--vignette-data"></a></h3>
 <p>Vignette chunks load data using <code>data(..., package = "imuGAP")</code>, which resolves datasets from the <strong>installed package library</strong> rather than the working directory. When troubleshooting vignette (and related <code>pkgdown</code> site) issues associated with rendering package example data, if the fix ends up being in the package data (<code>data-raw/DATASET.R</code> or <code>data-raw/fit_data.R</code>), you must reinstall the package (<code>just install</code> or <code>R CMD INSTALL .</code>) before re-rendering vignettes or rebuilding the site with updated data (or use <code>just site-full</code>).</p>
 <hr></div>
+</div>
+<div class="section level2">
+<h2 id="unit-testing-stan-include-components">Unit Testing Stan Include Components<a class="anchor" aria-label="anchor" href="#unit-testing-stan-include-components"></a></h2>
+<p>Stan code in <code>imuGAP</code> is organized into modular include files in <code>inst/stan/</code> (across <code>functions/</code>, <code>transformed_data/</code>, <code>model/</code>, etc.). To ensure individual Stan elements function as intended in isolation, we maintain a dedicated Stan unit testing suite in <code>tests/testthat/</code>.</p>
+<div class="section level3">
+<h3 id="id_1-authoring-unit-tests-for-new-stan-include-files">1. Authoring Unit Tests for New Stan Include Files<a class="anchor" aria-label="anchor" href="#id_1-authoring-unit-tests-for-new-stan-include-files"></a></h3>
+<p>When adding or refactoring Stan include files, create unit tests following these guidelines:</p>
+<ul><li>
+<strong>Explicit Target Declaration &amp; Pipelined Harness</strong>: Declare <code>target &lt;- "&lt;subpath&gt;.stan"</code> at the top of the test file, pass <code>target</code> to <code>skip_if_stan_unchanged(target)</code>, and assemble the model harness via <code>sprintf(...) |&gt; compile_stan_harness()</code>.</li>
+<li>
+<strong>Dynamic Expectations from Input Relationships</strong>: Express test data dimensions and assertions dynamically using input variables and mathematical relationships (e.g. <code>length(x)</code>, <code>nrow(mat)</code>, <code>c(tail(lbounds, -1) - 1L, ubound)</code>, analytical closed forms) rather than hardcoding magic numbers repeatedly.</li>
+<li>
+<strong>Test via <code>rstan</code> Deterministically</strong>: Use the internal test helper <code>run_stan_harness()</code> (defined in <code>tests/testthat/helper-stan-test.R</code>), which executes <code><a href="https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html" class="external-link">rstan::sampling()</a></code> using <code>algorithm = "Fixed_param"</code>, <code>iter = 1</code>, <code>warmup = 0</code>, <code>chains = 1</code>, and a fixed random seed.</li>
+<li>
+<strong>Direct Parameter Extraction &amp; Auto-Reshaping</strong>: <code>run_stan_harness()</code> optionally receives a parameter symbol/name (e.g. <code>run_stan_harness(model, data = ..., out_bounds)</code>) which extracts and reshapes the single-iteration draw to strip the leading singleton iteration dimension (returning a scalar, vector, matrix, or array directly).</li>
+<li>
+<strong>Deterministic Verification</strong>:
+<ul><li>
+<strong>Functions &amp; Transformed Data</strong>: Pass fixed deterministic test data in <code>data</code> and assign computed values to <code>generated quantities</code> variables for direct extraction and assertion with <code>expect_equal()</code>.</li>
+<li>
+<strong>Likelihood &amp; Model Priors</strong>: For files evaluating <code>target += ...</code> or <code>~</code>, use <code>run_stan_harness(..., return_fit = TRUE)</code> and evaluate <code>rstan::log_prob(fit, upars = c(0.0), adjust_transform = FALSE)</code>. Note that Stan’s sampling statement <code>~</code> drops normalization constants with respect to parameters, so test against unnormalized log-densities (e.g. <code>sum(dbinom(...) - lchoose(...))</code>).</li>
+<li>
+<strong>1D Array Wrapping</strong>: Wrap 1D integer/numeric arrays in <code>data</code> with <code><a href="https://rdrr.io/r/base/array.html" class="external-link">as.array()</a></code> (e.g. <code>obs_to_weights_bounds = as.array(1L)</code>) so Rstan does not collapse them into scalars.</li>
+</ul></li>
+<li>
+<strong>Smart Change-Detection Caching</strong>:
+<ul><li>Guard every Stan test block with <code>skip_if_not_installed("rstan")</code> and <code>skip_if_stan_unchanged(target)</code>.</li>
+<li>In <strong>local development</strong>, <code>skip_if_stan_unchanged()</code> caches MD5 hashes in <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir()</a></code> to skip model recompilation (~20–25s per model) when the tested Stan files have not changed.</li>
+<li>During <strong>full checks</strong> (<code>R CMD check</code>, <code>_R_CHECK_PACKAGE_NAME_</code>, or <code>CI</code>), caching is completely bypassed — tests run unconditionally and do not read or write the local cache.</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_2-stan-include-coverage-mapping">2. Stan Include Coverage Mapping<a class="anchor" aria-label="anchor" href="#id_2-stan-include-coverage-mapping"></a></h3>
+<table class="table"><colgroup><col width="25%"><col width="25%"><col width="25%"><col width="25%"></colgroup><thead><tr><th align="left">Stan Subdirectory</th>
+<th align="left">Stan File / Module</th>
+<th align="left">Test File</th>
+<th align="left">Test Focus &amp; Verification</th>
+</tr></thead><tbody><tr><td align="left"><strong><code>functions/</code></strong></td>
+<td align="left"><code>bounds_to_range.stan</code></td>
+<td align="left"><code>test-stan-bounds_to_range.R</code></td>
+<td align="left">Index segment calculation and validation for cumulative weight bounds</td>
+</tr><tr><td align="left"></td>
+<td align="left"><code>layer_offsets.stan</code></td>
+<td align="left"><code>test-stan-layer_offsets.R</code></td>
+<td align="left">Multi-layer tree offset accumulation and hierarchical phi calculation</td>
+</tr><tr><td align="left"></td>
+<td align="left"><code>lookups.stan</code></td>
+<td align="left"><code>test-stan-lookups.R</code></td>
+<td align="left">Column-major index flattening (<code>compute_cdf_lookup</code>, <code>compute_phi_lookup</code>) and bounds validation</td>
+</tr><tr><td align="left"></td>
+<td align="left"><code>unrolled_dose_static_lambda.stan</code></td>
+<td align="left"><code>test-stan-unrolled_dose.R</code></td>
+<td align="left">Multi-dose CDF unrolling given schedule and rate <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></td>
+</tr><tr><td align="left"></td>
+<td align="left"><code>convenience.stan</code></td>
+<td align="left"><em>(composite include)</em></td>
+<td align="left">Tested via constituent sub-function unit tests</td>
+</tr><tr><td align="left"><strong><code>data/</code></strong></td>
+<td align="left">
+<code>uncensored/</code>, <code>right/</code>, <code>left/</code>
+</td>
+<td align="left"><em>(composite includes)</em></td>
+<td align="left">Modular observation data and weights definitions</td>
+</tr><tr><td align="left"></td>
+<td align="left">
+<code>locations.stan</code>, <code>structural.stan</code>
+</td>
+<td align="left"><em>(composite includes)</em></td>
+<td align="left">Structural indices and location hierarchy data</td>
+</tr><tr><td align="left"><strong><code>transformed_data/</code></strong></td>
+<td align="left">
+<code>common_indices.stan</code>, <code>layer_phi_lookup.stan</code>
+</td>
+<td align="left"><code>test-stan-common_indices.R</code></td>
+<td align="left">Structural integration for precomputed indices (<code>obs_map_*</code>, <code>cdf_lookup_*</code>, <code>phi_lookup_*</code>)</td>
+</tr><tr><td align="left"></td>
+<td align="left"><code>layer_indices.stan</code></td>
+<td align="left"><code>test-stan-layer_indices.R</code></td>
+<td align="left">Multi-layer location bounds: <code>layer_bounds</code>, <code>parent_child_bounds</code>, <code>loc_layer_idx</code>
+</td>
+</tr><tr><td align="left"></td>
+<td align="left"><code>single_phi_lookup.stan</code></td>
+<td align="left"><code>test-stan-single_phi_lookup.R</code></td>
+<td align="left">Single-location phi lookups (<code>phi_lookup_*</code>) via subdirectories</td>
+</tr><tr><td align="left"><strong><code>model/</code></strong></td>
+<td align="left"><code>hierarchical_phi.stan</code></td>
+<td align="left"><code>test-stan-hierarchical_phi.R</code></td>
+<td align="left">Deterministic hierarchical observation probabilities against analytical formula</td>
+</tr><tr><td align="left"></td>
+<td align="left"><code>single_phi.stan</code></td>
+<td align="left"><code>test-stan-single_phi.R</code></td>
+<td align="left">Deterministic single-location observation probabilities against analytical formula</td>
+</tr><tr><td align="left"></td>
+<td align="left"><code>observation_likelihood.stan</code></td>
+<td align="left"><code>test-stan-observation_likelihood.R</code></td>
+<td align="left">Modular observation log-likelihoods (<code>uncensored/</code>, <code>right/</code>, <code>left/</code>)</td>
+</tr></tbody></table><hr></div>
 </div>
 <div class="section level2">
 <h2 id="error-messages-and-signaling-standards">Error Messages and Signaling Standards<a class="anchor" aria-label="anchor" href="#error-messages-and-signaling-standards"></a></h2>

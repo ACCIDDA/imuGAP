@@ -91,6 +91,15 @@
 <strong>Typography</strong>: Use backticks (<code>`code`</code>) for function/argument/symbol names and single quotes (<code>'value'</code>) for user string values, column names, and model names.</li>
 </ul></li>
 <li>
+<strong>Roxygen Documentation Standards</strong>:
+<ul><li>
+<strong>Explicit <code>@title</code> and <code>@description</code></strong>: Roxygen blocks must use explicit <code>@title</code> and <code>@description</code> tags rather than relying on automatic inference.</li>
+<li>
+<strong><code>data.table</code> and <code>@autoglobal</code></strong>: Functions containing <code>data.table</code> calculations or non-standard evaluation expressions should generally be annotated with <code>@autoglobal</code> so <code>roxyglobals</code> generates appropriate symbol declarations in <code>R/globals.R</code>.</li>
+<li>
+<strong>Internal Helper Functions</strong>: Unexported internal functions should be marked with <code>@keywords internal</code> and <code>@noRd</code> to keep code documented in source without generating unused <code>.Rd</code> files.</li>
+</ul></li>
+<li>
 <strong>Roxygen Examples</strong>:
 <ul><li>
 <p>For computationally expensive functions (e.g. <code><a href="reference/sampling.html">sampling()</a></code>, multi-draw <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>), <strong>always combine <code>@examplesIf interactive()</code> with <code>\donttest{ ... }</code></strong>:</p>
@@ -109,6 +118,14 @@
 <li>
 <strong>Vignette Plots &amp; Dark Mode</strong>:
 <ul><li>Vignette plots must enforce a solid white background and black text (<code>dev.args = list(bg = "white")</code>, <code><a href="https://rstudio.github.io/thematic/reference/thematic_on.html" class="external-link">thematic::thematic_off()</a></code>, and <code>ggplot2::theme_set(...)</code>).</li>
+</ul></li>
+<li>
+<strong>Stan Component Unit Testing</strong>:
+<ul><li>Unit tests for Stan include files in <code>inst/stan/</code> live in granular files <code>tests/testthat/test-stan-*.R</code>.</li>
+<li>Explicitly declare <code>target &lt;- "&lt;subpath&gt;.stan"</code> and compile via <code>sprintf(...) |&gt; compile_stan_harness()</code>.</li>
+<li>Extract output variables via <code>run_stan_harness(model, data, out_var)</code> (or <code>out_var</code> symbol), which automatically reshapes 1-iteration draws to remove the leading singleton dimension.</li>
+<li>Express expectations and test data dimensions dynamically from input relationships (e.g. <code>length(x)</code>, <code>nrow(mat)</code>, <code>c(tail(lbounds, -1) - 1L, ubound)</code>, analytical formulas) rather than hardcoding static magic numbers.</li>
+<li>Always guard with <code>skip_if_not_installed("rstan")</code> and <code>skip_if_stan_unchanged(target)</code>.</li>
 </ul></li>
 <li>
 <strong>Test Coverage Expectations (<code>covr</code>)</strong>:
@@ -135,8 +152,8 @@
 <span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="ex">just</span> site          <span class="co"># Fast build of pkgdown site into docs/ (no reinstall)</span></span>
 <span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="ex">just</span> site-quick    <span class="co"># Alias for fast site build</span></span>
 <span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="ex">just</span> site-full     <span class="co"># Full build of pkgdown site with package reinstall</span></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="ex">just</span> site-preview  <span class="co"># Preview pkgdown site on localhost:8000</span></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="ex">just</span> check-cran    <span class="co"># Run R CMD check --as-cran</span></span></code></pre></div>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="ex">just</span> site-preview <span class="pp">[</span><span class="ss">item</span><span class="pp">]</span>  <span class="co"># Preview site on localhost:8000 (targeted re-render: e.g. just site-preview imuGAP)</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="ex">just</span> check-cran           <span class="co"># Run R CMD check --as-cran</span></span></code></pre></div>
 </div>
 </div>
 

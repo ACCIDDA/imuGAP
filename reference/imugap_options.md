@@ -5,7 +5,12 @@ Configures model-side options for `imuGAP` estimation.
 ## Usage
 
 ``` r
-imugap_options(df = 5L, dose_schedule = c(1, 4), model = c("default"))
+imugap_options(
+  df = 5L,
+  dose_schedule = c(1, 4),
+  model = c("default"),
+  sigma_layer_scale = 2.5
+)
 ```
 
 ## Arguments
@@ -26,6 +31,11 @@ imugap_options(df = 5L, dose_schedule = c(1, 4), model = c("default"))
   `"default"`, with dispatch to optimized single versus multilayer
   versions within `[sampling()]`
 
+- sigma_layer_scale:
+
+  single positive numeric; scale parameter for the Cauchy prior on layer
+  standard deviations `sigma_layer` (default: 2.5).
+
 ## Value
 
 a list of imuGAP model options
@@ -43,6 +53,9 @@ imugap_options()
 #> $model
 #> [1] "default"
 #> 
+#> $sigma_layer_scale
+#> [1] 2.5
+#> 
 imugap_options(dose_schedule = c(1, 3))
 #> $df
 #> [1] 5
@@ -52,5 +65,21 @@ imugap_options(dose_schedule = c(1, 3))
 #> 
 #> $model
 #> [1] "default"
+#> 
+#> $sigma_layer_scale
+#> [1] 2.5
+#> 
+imugap_options(sigma_layer_scale = 1.0)
+#> $df
+#> [1] 5
+#> 
+#> $dose_schedule
+#> [1] 1 4
+#> 
+#> $model
+#> [1] "default"
+#> 
+#> $sigma_layer_scale
+#> [1] 1
 #> 
 ```

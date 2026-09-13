@@ -2,6 +2,8 @@
 
 ## imuGAP 0.2.0
 
+CRAN release: 2026-09-02
+
 ### Major Features
 
 - **Arbitrary Hierarchy Layer Depth**:

@@ -59,6 +59,17 @@ documentation and CI architecture, see
   - **Typography**: Use backticks (`` `code` ``) for
     function/argument/symbol names and single quotes (`'value'`) for
     user string values, column names, and model names.
+- **Roxygen Documentation Standards**:
+  - **Explicit `@title` and `@description`**: Roxygen blocks must use
+    explicit `@title` and `@description` tags rather than relying on
+    automatic inference.
+  - **`data.table` and `@autoglobal`**: Functions containing
+    `data.table` calculations or non-standard evaluation expressions
+    should generally be annotated with `@autoglobal` so `roxyglobals`
+    generates appropriate symbol declarations in `R/globals.R`.
+  - **Internal Helper Functions**: Unexported internal functions should
+    be marked with `@keywords internal` and `@noRd` to keep code
+    documented in source without generating unused `.Rd` files.
 - **Roxygen Examples**:
   - For computationally expensive functions
     (e.g. [`sampling()`](https://accidda.github.io/imuGAP/reference/sampling.md),
@@ -85,6 +96,21 @@ documentation and CI architecture, see
     (`dev.args = list(bg = "white")`,
     [`thematic::thematic_off()`](https://rstudio.github.io/thematic/reference/thematic_on.html),
     and `ggplot2::theme_set(...)`).
+- **Stan Component Unit Testing**:
+  - Unit tests for Stan include files in `inst/stan/` live in granular
+    files `tests/testthat/test-stan-*.R`.
+  - Explicitly declare `target <- "<subpath>.stan"` and compile via
+    `sprintf(...) |> compile_stan_harness()`.
+  - Extract output variables via
+    `run_stan_harness(model, data, out_var)` (or `out_var` symbol),
+    which automatically reshapes 1-iteration draws to remove the leading
+    singleton dimension.
+  - Express expectations and test data dimensions dynamically from input
+    relationships (e.g. `length(x)`, `nrow(mat)`,
+    `c(tail(lbounds, -1) - 1L, ubound)`, analytical formulas) rather
+    than hardcoding static magic numbers.
+  - Always guard with `skip_if_not_installed("rstan")` and
+    `skip_if_stan_unchanged(target)`.
 - **Test Coverage Expectations (`covr`)**:
   - All manually authored R files (`R/canonicalize.R`, `R/checkers.R`,
     `R/helpers.R`, `R/imuGAP.R`, `R/methods.R`, `R/options.R`) must
@@ -119,6 +145,6 @@ just render        # Render HTML and PDF vignettes
 just site          # Fast build of pkgdown site into docs/ (no reinstall)
 just site-quick    # Alias for fast site build
 just site-full     # Full build of pkgdown site with package reinstall
-just site-preview  # Preview pkgdown site on localhost:8000
-just check-cran    # Run R CMD check --as-cran
+just site-preview [item]  # Preview site on localhost:8000 (targeted re-render: e.g. just site-preview imuGAP)
+just check-cran           # Run R CMD check --as-cran
 ```

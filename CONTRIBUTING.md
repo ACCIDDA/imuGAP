@@ -49,7 +49,7 @@ automatically:
 | `just render` | Render all vignettes to HTML and PDF | `Rscript -e "rmarkdown::render(...)"` |
 | `just site` / `just site-quick` | Fast build of `pkgdown` documentation site (no package reinstall) | `Rscript -e "pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)"` |
 | `just site-full` | Full build of `pkgdown` site with package reinstallation (for updated data) | *(compound: install + site)* |
-| `just site-preview [port=8000]` | Build and preview pkgdown documentation site on localhost | `Rscript -e "httpuv::runStaticServer(dir = 'docs', port = 8000)"` |
+| `just site-preview [item=""] [port=8000]` | Preview pkgdown site on localhost (supports targeted item, e.g. `just site-preview imuGAP`) | `httpuv::runStaticServer(...)` |
 | `just data-inputs` | Regenerate `*_sim` input datasets from raw simulation | `Rscript data-raw/DATASET.R` |
 | `just data-fit` | Regenerate pre-computed Stan fits (`fit_sim`, `target_sim`, etc.) | `Rscript data-raw/fit_data.R` |
 | `just data` | Regenerate all package data (`data-inputs` + `data-fit`) | *(compound command)* |
@@ -65,8 +65,8 @@ automatically:
 
 - Run `just coverage` to measure package test coverage.
 - The CI workflow (`.github/workflows/test-coverage.yaml`) runs
-  [`covr::codecov()`](http://covr.r-lib.org/reference/codecov.md) on
-  every pull request and uploads reports to Codecov.
+  `covr::codecov()` on every pull request and uploads reports to
+  Codecov.
 - Aim to maintain high coverage (\>90%, targeting 100%) across all
   active R source files (`R/canonicalize.R`, `R/checkers.R`,
   `R/helpers.R`, `R/imuGAP.R`, `R/methods.R`, `R/options.R`).
@@ -118,11 +118,20 @@ automatically:
 - **Exported Datasets**: Document datasets with the `@name <data>` /
   `@docType data` idiom in `R/imuGAP-package.R`.
 
-### 3. Markdown Documentation
+### 3. Roxygen Documentation Conventions
 
-- `roxygen2` markdown mode is enabled
-  (`Roxygen: list(markdown = TRUE)`).
-- Prefer standard markdown syntax:
+- **Explicit `@title` and `@description`**: Always provide explicit
+  `@title` and `@description` tags in roxygen blocks rather than relying
+  on roxygen2’s automatic inference from the initial paragraphs.
+- **`data.table` and `@autoglobal`**: Functions performing calculations
+  or non-standard evaluation with `data.table` should generally be
+  marked with `@autoglobal` so that `roxyglobals` automatically
+  registers referenced columns and symbols in `R/globals.R`.
+- **Internal Functions**: Unexported helper functions should be tagged
+  with `@keywords internal` and `@noRd` so they are fully documented in
+  source code without generating unneeded `.Rd` manual files.
+- **Markdown Formatting**: `roxygen2` markdown mode is enabled
+  (`Roxygen: list(markdown = TRUE)`). Prefer standard markdown syntax:
   - Use backticks for code identifiers, arguments, and return types
     (e.g. `` `locations` ``, `` `data.table` ``).
   - Use cross-reference markdown links (e.g. `[sampling()]`,
@@ -200,6 +209,84 @@ ends up being in the package data (`data-raw/DATASET.R` or
 `data-raw/fit_data.R`), you must reinstall the package (`just install`
 or `R CMD INSTALL .`) before re-rendering vignettes or rebuilding the
 site with updated data (or use `just site-full`).
+
+------------------------------------------------------------------------
+
+## Unit Testing Stan Include Components
+
+Stan code in `imuGAP` is organized into modular include files in
+`inst/stan/` (across `functions/`, `transformed_data/`, `model/`, etc.).
+To ensure individual Stan elements function as intended in isolation, we
+maintain a dedicated Stan unit testing suite in `tests/testthat/`.
+
+### 1. Authoring Unit Tests for New Stan Include Files
+
+When adding or refactoring Stan include files, create unit tests
+following these guidelines:
+
+- **Explicit Target Declaration & Pipelined Harness**: Declare
+  `target <- "<subpath>.stan"` at the top of the test file, pass
+  `target` to `skip_if_stan_unchanged(target)`, and assemble the model
+  harness via `sprintf(...) |> compile_stan_harness()`.
+- **Dynamic Expectations from Input Relationships**: Express test data
+  dimensions and assertions dynamically using input variables and
+  mathematical relationships (e.g. `length(x)`, `nrow(mat)`,
+  `c(tail(lbounds, -1) - 1L, ubound)`, analytical closed forms) rather
+  than hardcoding magic numbers repeatedly.
+- **Test via `rstan` Deterministically**: Use the internal test helper
+  `run_stan_harness()` (defined in `tests/testthat/helper-stan-test.R`),
+  which executes
+  [`rstan::sampling()`](https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html)
+  using `algorithm = "Fixed_param"`, `iter = 1`, `warmup = 0`,
+  `chains = 1`, and a fixed random seed.
+- **Direct Parameter Extraction & Auto-Reshaping**: `run_stan_harness()`
+  optionally receives a parameter symbol/name
+  (e.g. `run_stan_harness(model, data = ..., out_bounds)`) which
+  extracts and reshapes the single-iteration draw to strip the leading
+  singleton iteration dimension (returning a scalar, vector, matrix, or
+  array directly).
+- **Deterministic Verification**:
+  - **Functions & Transformed Data**: Pass fixed deterministic test data
+    in `data` and assign computed values to `generated quantities`
+    variables for direct extraction and assertion with `expect_equal()`.
+  - **Likelihood & Model Priors**: For files evaluating `target += ...`
+    or `~`, use `run_stan_harness(..., return_fit = TRUE)` and evaluate
+    `rstan::log_prob(fit, upars = c(0.0), adjust_transform = FALSE)`.
+    Note that Stan’s sampling statement `~` drops normalization
+    constants with respect to parameters, so test against unnormalized
+    log-densities (e.g. `sum(dbinom(...) - lchoose(...))`).
+  - **1D Array Wrapping**: Wrap 1D integer/numeric arrays in `data` with
+    [`as.array()`](https://rdrr.io/r/base/array.html)
+    (e.g. `obs_to_weights_bounds = as.array(1L)`) so Rstan does not
+    collapse them into scalars.
+- **Smart Change-Detection Caching**:
+  - Guard every Stan test block with `skip_if_not_installed("rstan")`
+    and `skip_if_stan_unchanged(target)`.
+  - In **local development**, `skip_if_stan_unchanged()` caches MD5
+    hashes in [`tempdir()`](https://rdrr.io/r/base/tempfile.html) to
+    skip model recompilation (~20–25s per model) when the tested Stan
+    files have not changed.
+  - During **full checks** (`R CMD check`, `_R_CHECK_PACKAGE_NAME_`, or
+    `CI`), caching is completely bypassed — tests run unconditionally
+    and do not read or write the local cache.
+
+### 2. Stan Include Coverage Mapping
+
+| Stan Subdirectory | Stan File / Module | Test File | Test Focus & Verification |
+|:---|:---|:---|:---|
+| **`functions/`** | `bounds_to_range.stan` | `test-stan-bounds_to_range.R` | Index segment calculation and validation for cumulative weight bounds |
+|  | `layer_offsets.stan` | `test-stan-layer_offsets.R` | Multi-layer tree offset accumulation and hierarchical phi calculation |
+|  | `lookups.stan` | `test-stan-lookups.R` | Column-major index flattening (`compute_cdf_lookup`, `compute_phi_lookup`) and bounds validation |
+|  | `unrolled_dose_static_lambda.stan` | `test-stan-unrolled_dose.R` | Multi-dose CDF unrolling given schedule and rate $`\lambda`$ |
+|  | `convenience.stan` | *(composite include)* | Tested via constituent sub-function unit tests |
+| **`data/`** | `uncensored/`, `right/`, `left/` | *(composite includes)* | Modular observation data and weights definitions |
+|  | `locations.stan`, `structural.stan` | *(composite includes)* | Structural indices and location hierarchy data |
+| **`transformed_data/`** | `common_indices.stan`, `layer_phi_lookup.stan` | `test-stan-common_indices.R` | Structural integration for precomputed indices (`obs_map_*`, `cdf_lookup_*`, `phi_lookup_*`) |
+|  | `layer_indices.stan` | `test-stan-layer_indices.R` | Multi-layer location bounds: `layer_bounds`, `parent_child_bounds`, `loc_layer_idx` |
+|  | `single_phi_lookup.stan` | `test-stan-single_phi_lookup.R` | Single-location phi lookups (`phi_lookup_*`) via subdirectories |
+| **`model/`** | `hierarchical_phi.stan` | `test-stan-hierarchical_phi.R` | Deterministic hierarchical observation probabilities against analytical formula |
+|  | `single_phi.stan` | `test-stan-single_phi.R` | Deterministic single-location observation probabilities against analytical formula |
+|  | `observation_likelihood.stan` | `test-stan-observation_likelihood.R` | Modular observation log-likelihoods (`uncensored/`, `right/`, `left/`) |
 
 ------------------------------------------------------------------------
 
