@@ -36,7 +36,7 @@ latent <- generate_latent_current(setup)
 sim_data <- simulate_observations_from_latent(
   setup,
   latent,
-  uncensored = TRUE
+  uncensored = FALSE
 )
 
 

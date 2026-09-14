@@ -345,7 +345,7 @@ simulate_observations_from_latent <- function(
   setup,
   latent,
   obs_seed = 93254,
-  uncensored = TRUE
+  uncensored = FALSE
 ) {
   set.seed(obs_seed)
 
