@@ -631,163 +631,6 @@ ggplot() +
   )
 ```
 
-### Summary Statistics of Observation Deviations
-
-To evaluate how closely the randomly drawn observation samples match the expected underlying
-coverage for each location and data stream, we can calculate summary statistics on the log-odds
-(logit) scale.
-
-For each observation $i$, the observed proportion is $\hat{p}_i = y_i / n_i$ (with
-Haldane-Anscombe continuity correction $\tilde{p}_i = \frac{y_i + 0.5}{n_i + 1}$ for empirical
-logits), and the expected latent coverage is $\mu_i = \mathbb{E}[Y_i] / n_i$. The log-odds
-residual is defined as:
-
-$$\Delta\text{logit}_i = \text{logit}(\tilde{p}_i) - \text{logit}(\mu_i)$$
-
-Aggregating these residuals across all observations by location type and observation source
-characterizes sampling variation and confirms that the simulated observations are well-calibrated
-(mean log-odds residual $\approx 0$, odds ratio $\approx 1.0$):
-
-```{r observation-summary-table}
-obs <- copy(observations_sim)
-
-# Identify location type and observation stream
-obs[, loc_type := factor(fcase(
-  loc_id == "State", "State",
-  loc_id %in% c("Scruggs", "Simone", "Watson"), "County",
-  default = "School"
-), levels = c("State", "County", "School"))]
-
-obs[, observation := factor(fcase(
-  loc_type == "State" & dose == 1 & age_min == 2, "ChildVaxView (Dose 1, Age 2)",
-  loc_type == "State" & dose == 1 & age_min == 3, "ChildVaxView (Dose 1, Age 3)",
-  loc_type == "State" & dose == 2 & age_min == 5, "SchoolVaxView (Dose 2, Age 5)",
-  loc_type == "State" & dose == 2 & age_min == 14, "TeenVaxView (Dose 2, Ages 14-18)",
-  loc_type == "County" & dose == 2 & age_min == 11, "6th Grade Survey (Dose 2, Age 11)",
-  loc_type == "School" & dose == 2 & age_min == 5, "Kindergarten Entry (Dose 2, Age 5)"
-), levels = c(
-  "ChildVaxView (Dose 1, Age 2)",
-  "ChildVaxView (Dose 1, Age 3)",
-  "SchoolVaxView (Dose 2, Age 5)",
-  "TeenVaxView (Dose 2, Ages 14-18)",
-  "6th Grade Survey (Dose 2, Age 11)",
-  "Kindergarten Entry (Dose 2, Age 5)"
-))]
-
-phi_st <- latent_params_sim$phi_state
-cov <- latent_params_sim$uptake
-off_cnty <- latent_params_sim$off_cnty
-off_sch <- latent_params_sim$off_sch
-censor_red <- latent_params_sim$censor_reduction
-
-# Compute analytical expected coverage mu for each stream
-obs[loc_type == "State" & dose == 1 & age_min == 2, mu := (1 - phi_st[cohort]) * cov[2, 1]]
-obs[loc_type == "State" & dose == 1 & age_min == 3, mu := (1 - phi_st[cohort]) * cov[3, 1]]
-obs[loc_type == "State" & dose == 2 & age_min == 5, mu := (1 - phi_st[cohort]) * cov[5, 2]]
-obs[loc_type == "State" & dose == 2 & age_min == 14, mu := sapply(cohort, function(c) {
-  ages <- 14:18
-  c_slices <- c + max(ages) - ages
-  mean((1 - phi_st[c_slices]) * cov[ages, 2])
-})]
-obs[loc_type == "County", mu := {
-  c_off <- unname(off_cnty[loc_id])
-  phi_c <- plogis(qlogis(phi_st[cohort]) + c_off)
-  (1 - phi_c) * cov[11, 2] * censor_red
-}]
-obs[loc_type == "School", mu := {
-  c_off <- unname(off_cnty[parent_id])
-  s_off <- unname(off_sch[loc_id])
-  phi_s <- plogis(qlogis(phi_st[cohort]) + c_off + s_off)
-  (1 - phi_s) * cov[5, 2]
-}]
-
-obs[, p_obs := positive / sample_n]
-# Haldane-Anscombe continuity correction for empirical logit
-obs[, p_adj := (positive + 0.5) / (sample_n + 1.0)]
-obs[, delta_logit := qlogis(p_adj) - qlogis(mu)]
-
-summary_table <- obs[order(loc_type, observation), .(
-  `Observations` = .N,
-  `Mean Observed` = sprintf("%.3f", mean(p_obs)),
-  `Mean Expected` = sprintf("%.3f", mean(mu)),
-  `Mean Log-Odds Residual` = sprintf("%+.4f", mean(delta_logit)),
-  `SD Log-Odds Residual` = sprintf("%.4f", sd(delta_logit)),
-  `Odds Ratio` = sprintf("%.4f", exp(mean(delta_logit)))
-), by = .(
-  `Location Type` = loc_type,
-  `Observation Stream` = observation
-)]
-
-knitr::kable(
-  summary_table,
-  caption = paste(
-    "Summary statistics of simulated observations compared to expected latent",
-    "coverage by location type and observation stream."
-  )
-)
-```
-
-Additionally, breaking down the county-level and school-level observations by county layer
-membership (Scruggs, Simone, Watson) confirms that the simulation maintains calibration across
-individual geographic sub-hierarchies:
-
-```{r observation-breakdown-table}
-# Layer membership breakdown for County and School layers
-obs[, county_group := fcase(
-  loc_type == "State", "State",
-  loc_type == "County", loc_id,
-  default = parent_id
-)]
-
-breakdown_table <- obs[loc_type %in% c("County", "School"), .(
-  `Observations` = .N,
-  `Mean Observed` = sprintf("%.3f", mean(p_obs)),
-  `Mean Expected` = sprintf("%.3f", mean(mu)),
-  `Mean Log-Odds Residual` = sprintf("%+.4f", mean(delta_logit)),
-  `SD Log-Odds Residual` = sprintf("%.4f", sd(delta_logit)),
-  `Odds Ratio` = sprintf("%.4f", exp(mean(delta_logit)))
-), by = .(
-  `Layer / Level` = loc_type,
-  `County Membership` = county_group,
-  `Observation Stream` = observation
-)][order(`Layer / Level`, `County Membership`)]
-
-knitr::kable(
-  breakdown_table,
-  caption = paste(
-    "Breakdown of simulated observation log-odds residuals by geographic layer membership",
-    "(Scruggs, Simone, Watson)."
-  )
-)
-```
-
-Finally, inspecting the individual school-level observations across all 24 schools illustrates
-local sampling variability around each school's underlying latent trajectory:
-
-```{r observation-school-table}
-# Individual school-level summary statistics
-school_table <- obs[loc_type == "School", .(
-  `Observations` = .N,
-  `Mean Observed` = sprintf("%.3f", mean(p_obs)),
-  `Mean Expected` = sprintf("%.3f", mean(mu)),
-  `Mean Log-Odds Residual` = sprintf("%+.4f", mean(delta_logit)),
-  `SD Log-Odds Residual` = sprintf("%.4f", sd(delta_logit)),
-  `Odds Ratio` = sprintf("%.4f", exp(mean(delta_logit)))
-), by = .(
-  `County` = parent_id,
-  `School` = loc_id
-)][order(`County`, `School`)]
-
-knitr::kable(
-  school_table,
-  caption = paste(
-    "Summary statistics of simulated kindergarten entry observations for all 24 individual",
-    "schools compared to true latent coverage."
-  )
-)
-```
-
-
 ---
 
 ## 3. Fitting the Model
@@ -943,7 +786,11 @@ bayesplot::mcmc_trace(
 
 #### County Location Offsets ($\delta_{\text{county}}$)
 
-Trace plots for the county-level location offsets $\delta_{\text{county}}$ (`off_layer[1]` through `off_layer[3]`) showing individual chain medians and true simulation offsets (dashed red lines and annotated values):
+Trace plots for the county-level location offsets $\delta_{\text{county}}$ (`off_layer[1]` through
+`off_layer[3]`) showing individual chain medians and true simulation offsets (dashed red lines and
+annotated values). Indicator arrows perpendicular to the true latent line show:
+- **Red arrows (left edge, iteration 0)**: Expected error direction and relative magnitude based on observational noise ($\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}$) from finite observation sample draws.
+- **Blue arrows (right edge, iteration 500)**: Realized difference between the posterior median estimate and the true latent offset.
 
 ```{r trace-plot-county-offsets, fold = TRUE, code_summary = "Show plot code"}
 # Reconstruct location offsets from standard normal deviations z_layer,
@@ -1041,14 +888,43 @@ county_chain_meds <- rbindlist(lapply(county_pars, function(p) {
   )
 }))
 
+# Compute expected empirical error for county offsets based on observation sample draws
+obs <- copy(observations_sim)
+phi_st <- latent_params_sim$phi_state
+cov <- latent_params_sim$uptake
+off_cnty <- latent_params_sim$off_cnty
+off_sch <- latent_params_sim$off_sch
+censor_red <- latent_params_sim$censor_reduction
+
+obs_cnty <- obs[loc_id %in% county_names]
+obs_cnty[, mu := {
+  c_off <- unname(off_cnty[loc_id])
+  phi_c <- plogis(qlogis(phi_st[cohort]) + c_off)
+  (1 - phi_c) * cov[11, 2] * censor_red
+}, by = loc_id]
+obs_cnty[, p_adj := (positive + 0.5) / (sample_n + 1.0)]
+obs_cnty[, delta_cov := qlogis(p_adj) - qlogis(mu)]
+
+cnty_errs <- obs_cnty[, .(expected_delta_err = -mean(delta_cov)), by = .(loc_id)]
+county_post_meds <- apply(county_arr, 3, median)
+
 county_ref <- data.frame(
   parameter = county_pars,
+  loc_id = county_names,
   true_val = unname(latent_params_sim$off_cnty[county_names]),
+  post_med = unname(county_post_meds[county_pars]),
   label = sprintf(
     "True~delta == %.2f",
     latent_params_sim$off_cnty[county_names]
   )
 )
+county_ref <- merge(county_ref, cnty_errs, by = "loc_id")
+
+err_scale <- 1.0
+county_ref$red_arrow_x <- 0
+county_ref$red_arrow_yend <- county_ref$true_val + err_scale * county_ref$expected_delta_err
+county_ref$blue_arrow_x <- 500
+county_ref$blue_arrow_yend <- county_ref$post_med
 
 bayesplot::mcmc_trace(
   county_arr,
@@ -1071,9 +947,23 @@ bayesplot::mcmc_trace(
     linetype = "dashed",
     linewidth = 0.8
   ) +
+  geom_segment(
+    data = county_ref,
+    aes(x = red_arrow_x, xend = red_arrow_x, y = true_val, yend = red_arrow_yend),
+    arrow = arrow(length = unit(0.04, "inches"), type = "closed"),
+    color = "firebrick",
+    linewidth = 0.8
+  ) +
+  geom_segment(
+    data = county_ref,
+    aes(x = blue_arrow_x, xend = blue_arrow_x, y = true_val, yend = blue_arrow_yend),
+    arrow = arrow(length = unit(0.04, "inches"), type = "closed"),
+    color = "royalblue",
+    linewidth = 0.8
+  ) +
   geom_label(
     data = county_ref,
-    aes(x = 100, y = true_val, label = label),
+    aes(x = 50, y = true_val, label = label),
     parse = TRUE,
     color = "firebrick",
     fill = ggplot2::alpha("white", 0.75),
@@ -1088,7 +978,11 @@ bayesplot::mcmc_trace(
 
 #### School Location Offsets ($\delta_{\text{school}}$)
 
-Trace plots for school-level location offsets $\delta_{\text{school}}$ divided by county, showing individual chain medians and true simulation offsets (dashed red lines and annotated values) across schools in Scruggs, Simone, and Watson counties:
+Trace plots for school-level location offsets $\delta_{\text{school}}$ divided by county, showing
+individual chain medians and true simulation offsets (dashed red lines and annotated values) across
+schools in Scruggs, Simone, and Watson counties. Indicator arrows perpendicular to the true latent line show:
+- **Red arrows (left edge, iteration 0)**: Expected error direction and relative magnitude based on observational noise ($\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}$) from each school's kindergarten entry observation sample, with length exaggerated (2.5&times;) to highlight the expected error scale across schools.
+- **Blue arrows (right edge, iteration 500)**: Realized difference between the school posterior median estimate and the true latent offset.
 
 ```{r trace-plot-school-offsets, fold = TRUE, code_summary = "Show plot code", results = "asis"}
 for (cnty in county_names) {
@@ -1104,14 +998,36 @@ for (cnty in county_names) {
     )
   }))
 
+  obs_sch <- obs[loc_id %in% sch_in_c]
+  obs_sch[, mu := {
+    c_off <- unname(off_cnty[parent_id])
+    s_off <- unname(off_sch[loc_id])
+    phi_s <- plogis(qlogis(phi_st[cohort]) + c_off + s_off)
+    (1 - phi_s) * cov[5, 2]
+  }, by = .(loc_id, parent_id)]
+  obs_sch[, p_adj := (positive + 0.5) / (sample_n + 1.0)]
+  obs_sch[, delta_cov := qlogis(p_adj) - qlogis(mu)]
+
+  sch_errs <- obs_sch[, .(expected_delta_err = -mean(delta_cov)), by = .(loc_id)]
+  sch_post_meds <- apply(sch_arr, 3, median)
+
   sch_ref <- data.frame(
     parameter = sch_pars,
+    loc_id = sch_in_c,
     true_val = unname(latent_params_sim$off_sch[sch_in_c]),
+    post_med = unname(sch_post_meds[sch_pars]),
     label = sprintf(
       "True~delta == %.2f",
       latent_params_sim$off_sch[sch_in_c]
     )
   )
+  sch_ref <- merge(sch_ref, sch_errs, by = "loc_id")
+
+  err_scale <- 2.5
+  sch_ref$red_arrow_x <- 0
+  sch_ref$red_arrow_yend <- sch_ref$true_val + err_scale * sch_ref$expected_delta_err
+  sch_ref$blue_arrow_x <- 500
+  sch_ref$blue_arrow_yend <- sch_ref$post_med
 
   p <- bayesplot::mcmc_trace(
     sch_arr,
@@ -1135,9 +1051,23 @@ for (cnty in county_names) {
       linetype = "dashed",
       linewidth = 0.8
     ) +
+    geom_segment(
+      data = sch_ref,
+      aes(x = red_arrow_x, xend = red_arrow_x, y = true_val, yend = red_arrow_yend),
+      arrow = arrow(length = unit(0.04, "inches"), type = "closed"),
+      color = "firebrick",
+      linewidth = 0.7
+    ) +
+    geom_segment(
+      data = sch_ref,
+      aes(x = blue_arrow_x, xend = blue_arrow_x, y = true_val, yend = blue_arrow_yend),
+      arrow = arrow(length = unit(0.04, "inches"), type = "closed"),
+      color = "royalblue",
+      linewidth = 0.7
+    ) +
     geom_label(
       data = sch_ref,
-      aes(x = 100, y = true_val, label = label),
+      aes(x = 50, y = true_val, label = label),
       parse = TRUE,
       color = "firebrick",
       fill = ggplot2::alpha("white", 0.75),
