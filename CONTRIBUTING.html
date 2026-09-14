@@ -220,11 +220,13 @@
 <li>Never inline full block contents or raw logic directly into top-level models in <code>inst/stan/</code>; keep component logic encapsulated in dedicated sub-files to facilitate reuse, maintainability, and clean diffs.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="id_6-vignette-plot-styling--dark-mode-compatibility">6. Vignette Plot Styling &amp; Dark Mode Compatibility<a class="anchor" aria-label="anchor" href="#id_6-vignette-plot-styling--dark-mode-compatibility"></a></h3>
-<p>To ensure plots remain clear and readable regardless of whether users view the pkgdown site in light or dark mode:</p>
+<h3 id="id_6-vignette-plot-styling-coordinate-limits--dark-mode-compatibility">6. Vignette Plot Styling, Coordinate Limits &amp; Dark Mode Compatibility<a class="anchor" aria-label="anchor" href="#id_6-vignette-plot-styling-coordinate-limits--dark-mode-compatibility"></a></h3>
+<p>To ensure plots remain clear, readable, and geometrically intact:</p>
 <ul><li>In vignette setup chunks, specify <code>knitr::opts_chunk$set(dev.args = list(bg = "white"))</code>.</li>
 <li>Disable automatic plot theme inversion with <code>if (requireNamespace("thematic", quietly = TRUE)) thematic::thematic_off()</code>.</li>
 <li>Configure <code><a href="https://ggplot2.tidyverse.org/reference/get_theme.html" class="external-link">ggplot2::theme_set()</a></code> with solid white backgrounds (<code>plot.background</code>, <code>panel.background</code>, <code>legend.background</code>) and black text (<code>text</code>, <code>axis.text</code>, <code>axis.title</code>, <code>plot.title</code>).</li>
+<li>
+<strong>Coordinate System vs. Scale Limits</strong>: Prefer ggplot2 coordinate system bounds (<code>coord_cartesian(xlim = ..., ylim = ...)</code>) over scale-based limits (<code>scale_*_continuous(limits = ...)</code>) when zooming or adjusting visible ranges. Scale limits discard data points outside the window (altering summary statistics, regressions, or ribbon clipping), whereas coordinate zooming retains all underlying data.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="id_7-package-reinstallation--vignette-data">7. Package Reinstallation &amp; Vignette Data<a class="anchor" aria-label="anchor" href="#id_7-package-reinstallation--vignette-data"></a></h3>

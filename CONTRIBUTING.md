@@ -184,10 +184,9 @@ or multi-draw [`predict()`](https://rdrr.io/r/stats/predict.html)):
   models in `inst/stan/`; keep component logic encapsulated in dedicated
   sub-files to facilitate reuse, maintainability, and clean diffs.
 
-### 6. Vignette Plot Styling & Dark Mode Compatibility
+### 6. Vignette Plot Styling, Coordinate Limits & Dark Mode Compatibility
 
-To ensure plots remain clear and readable regardless of whether users
-view the pkgdown site in light or dark mode:
+To ensure plots remain clear, readable, and geometrically intact:
 
 - In vignette setup chunks, specify
   `knitr::opts_chunk$set(dev.args = list(bg = "white"))`.
@@ -198,6 +197,12 @@ view the pkgdown site in light or dark mode:
   with solid white backgrounds (`plot.background`, `panel.background`,
   `legend.background`) and black text (`text`, `axis.text`,
   `axis.title`, `plot.title`).
+- **Coordinate System vs. Scale Limits**: Prefer ggplot2 coordinate
+  system bounds (`coord_cartesian(xlim = ..., ylim = ...)`) over
+  scale-based limits (`scale_*_continuous(limits = ...)`) when zooming
+  or adjusting visible ranges. Scale limits discard data points outside
+  the window (altering summary statistics, regressions, or ribbon
+  clipping), whereas coordinate zooming retains all underlying data.
 
 ### 7. Package Reinstallation & Vignette Data
 

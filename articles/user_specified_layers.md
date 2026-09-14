@@ -253,7 +253,7 @@ ggplot() +
   scale_fill_manual(name = "", values = c("Estimated (95% CI)" = "#1b9e77")) +
   theme_bw() +
   scale_x_continuous(breaks = seq(5, 18, by = 3), minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.8, 1.0)) +
+  coord_cartesian(ylim = c(0.8, 1.0)) +
   theme(
     legend.position = "inside",
     legend.position.inside = c(0.02, 0.05),
@@ -339,7 +339,7 @@ ggplot() +
   scale_shape_manual(name = "", values = c("True Coverage" = 18)) +
   scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
   scale_x_continuous(breaks = seq(5, 18, by = 3), minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.8, 1.0)) +
+  coord_cartesian(ylim = c(0.8, 1.0)) +
   theme_bw() +
   theme(
     legend.position = "inside",

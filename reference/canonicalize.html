@@ -393,17 +393,17 @@ estimation will work, and take on the unit meaning you used for input.</p>
 <span class="r-in"><span><span class="va">observations_sim</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      cohort parent_id               loc_id positive sample_n age_min  dose</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;int&gt;    &lt;char&gt;               &lt;char&gt;    &lt;num&gt;    &lt;int&gt;   &lt;int&gt; &lt;int&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1:      1   Scruggs Chickadee Elementary      132      155       5     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2:      2   Scruggs Chickadee Elementary      130      152       5     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3:      3   Scruggs Chickadee Elementary      134      156       5     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   4:      4   Scruggs Chickadee Elementary      134      155       5     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   5:      5   Scruggs Chickadee Elementary      134      155       5     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1:      1   Scruggs Chickadee Elementary      135      155       5     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2:      2   Scruggs Chickadee Elementary      124      152       5     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3:      3   Scruggs Chickadee Elementary      133      156       5     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4:      4   Scruggs Chickadee Elementary      127      155       5     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5:      5   Scruggs Chickadee Elementary      141      155       5     2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 837:     18     State               Watson      175      184      11     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 838:     19     State               Watson      209      220      11     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 839:     20     State               Watson      166      174      11     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 840:     21     State               Watson      218      228      11     2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 841:     22     State               Watson      192      201      11     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 837:     18     State               Watson      167      184      11     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 838:     19     State               Watson      202      220      11     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 839:     20     State               Watson      149      174      11     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 840:     21     State               Watson      213      228      11     2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 841:     22     State               Watson      177      201      11     2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      censored age_max obs_id cohort_min</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;num&gt;   &lt;int&gt;  &lt;int&gt;      &lt;int&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   1:       NA      NA      1          1</span>
@@ -412,26 +412,26 @@ estimation will work, and take on the unit meaning you used for input.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   4:       NA      NA      4          4</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   5:       NA      NA      5          5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 837:       NA      NA    837         18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 838:       NA      NA    838         19</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 839:       NA      NA    839         20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 840:       NA      NA    840         21</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 841:       NA      NA    841         22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 837:        1      NA    837         18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 838:        1      NA    838         19</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 839:        1      NA    839         20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 840:        1      NA    840         21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 841:        1      NA    841         22</span>
 <span class="r-in"><span><span class="fu">canonicalize_observations</span><span class="op">(</span><span class="va">observations_sim</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;censored, obs_id&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      obs_c_id positive sample_n censored obs_id</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;int&gt;    &lt;int&gt;    &lt;int&gt;    &lt;num&gt;  &lt;int&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   1:        1      132      155       NA      1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   2:        2      130      152       NA      2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   3:        3      134      156       NA      3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   4:        4      134      155       NA      4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   5:        5      134      155       NA      5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1:        1      135      155       NA      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2:        2      124      152       NA      2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3:        3      133      156       NA      3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4:        4      127      155       NA      4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5:        5      141      155       NA      5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 837:      837      175      184       NA    837</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 838:      838      209      220       NA    838</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 839:      839      166      174       NA    839</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 840:      840      218      228       NA    840</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 841:      841      192      201       NA    841</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 837:      837      167      184        1    837</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 838:      838      202      220        1    838</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 839:      839      149      174        1    839</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 840:      840      213      228        1    840</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 841:      841      177      201        1    841</span>
 <span class="r-in"><span><span class="co"># --- canonicalize_populations ---</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"populations_sim"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"locations_sim"</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"observations_sim"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">populations_sim</span></span></span>

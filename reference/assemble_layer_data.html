@@ -52,7 +52,7 @@ canonicalized locations table for consumption by Stan multi-layer models.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">assemble_layer_data</span><span class="op">(</span><span class="va">loc_info</span>, sigma_layer_scale <span class="op">=</span> <span class="fl">2.5</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">assemble_layer_data</span><span class="op">(</span><span class="va">loc_info</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -72,7 +72,7 @@ canonicalized locations table for consumption by Stan multi-layer models.</p>
 <li><p><code>n_parent_locs</code>: integer count of parent locations that have children</p></li>
 <li><p><code>parent_loc_id</code>: integer array (length <code>n_parent_locs</code>) of canonical IDs of parent locations</p></li>
 <li><p><code>parent_child_starts</code>: integer array (length <code>n_parent_locs</code>) of starting child location IDs</p></li>
-<li><p><code>sigma_layer_scale</code>: single numeric scale for Cauchy prior on layer standard deviations</p></li>
+<li><p><code>loc_population</code>: numeric array (length <code>n_locs</code>) of population weights</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

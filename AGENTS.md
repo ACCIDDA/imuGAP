@@ -96,6 +96,12 @@ documentation and CI architecture, see
     (`dev.args = list(bg = "white")`,
     [`thematic::thematic_off()`](https://rstudio.github.io/thematic/reference/thematic_on.html),
     and `ggplot2::theme_set(...)`).
+- **Plot Production & Coordinate Limits**:
+  - Prefer the ggplot2 coordinate system
+    (`coord_cartesian(xlim = ..., ylim = ...)`) over scale-based limits
+    (`scale_*_continuous(limits = ...)`) when setting plot axis bounds,
+    to avoid dropping or discarding out-of-bounds data points and ribbon
+    geometries.
 - **Stan Component Unit Testing**:
   - Unit tests for Stan include files in `inst/stan/` live in granular
     files `tests/testthat/test-stan-*.R`.

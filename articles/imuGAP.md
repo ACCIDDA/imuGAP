@@ -120,12 +120,12 @@ data("observations_sim", package = "imuGAP")
 head(observations_sim[, .(obs_id, loc_id, positive, sample_n, censored)])
 #>    obs_id               loc_id positive sample_n censored
 #>     <int>               <char>    <num>    <int>    <num>
-#> 1:      1 Chickadee Elementary      132      155       NA
-#> 2:      2 Chickadee Elementary      130      152       NA
-#> 3:      3 Chickadee Elementary      134      156       NA
-#> 4:      4 Chickadee Elementary      134      155       NA
-#> 5:      5 Chickadee Elementary      134      155       NA
-#> 6:      6 Chickadee Elementary      138      158       NA
+#> 1:      1 Chickadee Elementary      135      155       NA
+#> 2:      2 Chickadee Elementary      124      152       NA
+#> 3:      3 Chickadee Elementary      133      156       NA
+#> 4:      4 Chickadee Elementary      127      155       NA
+#> 5:      5 Chickadee Elementary      141      155       NA
+#> 6:      6 Chickadee Elementary      139      158       NA
 
 # Canonicalize and validate
 canonical_observations <- canonicalize_observations(observations_sim)
@@ -133,12 +133,12 @@ head(canonical_observations)
 #> Key: <censored, obs_id>
 #>    obs_c_id positive sample_n censored obs_id
 #>       <int>    <int>    <int>    <num>  <int>
-#> 1:        1      132      155       NA      1
-#> 2:        2      130      152       NA      2
-#> 3:        3      134      156       NA      3
-#> 4:        4      134      155       NA      4
-#> 5:        5      134      155       NA      5
-#> 6:        6      138      158       NA      6
+#> 1:        1      135      155       NA      1
+#> 2:        2      124      152       NA      2
+#> 3:        3      133      156       NA      3
+#> 4:        4      127      155       NA      4
+#> 5:        5      141      155       NA      5
+#> 6:        6      139      158       NA      6
 ```
 
 #### Observation Metadata (`populations_sim`)
@@ -182,7 +182,7 @@ observations_sim[
 ]
 #>    obs_id loc_id positive sample_n age_min age_max  dose
 #>     <int> <char>    <num>    <int>   <int>   <int> <int>
-#> 1:    761  State      213      250      14      19     2
+#> 1:    761  State      217      250      14      19     2
 
 # Corresponding population metadata with distributed weights summing to 1
 populations_sim[obs_id == 761]
@@ -394,11 +394,10 @@ ggplot() +
   ) +
   theme_bw() +
   scale_x_continuous(
-    limits = c(0, 30),
     breaks = seq(0, 30, by = 5),
     minor_breaks = seq(1, 30, by = 1)
   ) +
-  scale_y_continuous(limits = c(0.4, 1.0)) +
+  coord_cartesian(xlim = c(0, 30), ylim = c(0.4, 1.0)) +
   scale_linetype_manual(
     name = NULL,
     values = c("True Lifetime Uptake Propensity (1 - phi)" = "dashed")
@@ -477,46 +476,79 @@ ggplot() +
   ) +
   geom_line(
     data = county_latent_obs,
-    aes(x = cohort_min, y = latent_cov, color = "True Latent Coverage"),
-    linetype = "dashed", linewidth = 0.9
+    aes(
+      x = cohort_min,
+      y = latent_cov,
+      color = "True Latent Coverage",
+      linetype = "Observed Cohorts"
+    ),
+    linewidth = 0.9
   ) +
   geom_line(
     data = county_latent_obs,
-    aes(x = cohort_min, y = latent_cov_censored, color = "Censored Latent (0.95x)"),
-    linetype = "dotted", linewidth = 0.9
+    aes(
+      x = cohort_min,
+      y = latent_cov_censored,
+      color = "Censored Latent (0.95x)",
+      linetype = "Observed Cohorts"
+    ),
+    linewidth = 0.9
   ) +
   geom_line(
     data = county_latent_unobs,
-    aes(x = cohort_min, y = latent_cov, color = "True Latent (Unobserved)"),
-    linetype = "dotdash", linewidth = 0.9
+    aes(
+      x = cohort_min,
+      y = latent_cov,
+      color = "True Latent Coverage",
+      linetype = "Unobserved Cohorts"
+    ),
+    linewidth = 0.9
+  ) +
+  geom_line(
+    data = county_latent_unobs,
+    aes(
+      x = cohort_min,
+      y = latent_cov_censored,
+      color = "Censored Latent (0.95x)",
+      linetype = "Unobserved Cohorts"
+    ),
+    linewidth = 0.9
   ) +
   facet_wrap(~loc_id) +
   theme_bw() +
   scale_x_continuous(
-    limits = c(0, 30),
     breaks = seq(0, 30, by = 5),
     minor_breaks = seq(1, 30, by = 1)
   ) +
-  scale_y_continuous(limits = c(0.4, 1.0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  coord_cartesian(xlim = c(0, 30), ylim = c(0.6, 1.0)) +
   scale_color_manual(
     name = NULL,
     values = c(
       "True Latent Coverage" = "firebrick",
-      "Censored Latent (0.95x)" = "darkorange",
-      "True Latent (Unobserved)" = "firebrick"
+      "Censored Latent (0.95x)" = "darkorange"
+    )
+  ) +
+  scale_linetype_manual(
+    name = NULL,
+    values = c(
+      "Observed Cohorts" = "dashed",
+      "Unobserved Cohorts" = "dotted"
     )
   ) +
   guides(
     color = guide_legend(
-      override.aes = list(
-        linetype = c("dashed", "dotted", "dotdash"),
-        linewidth = c(0.9, 0.9, 0.9)
-      )
+      order = 1,
+      override.aes = list(linewidth = 0.9, linetype = "solid")
+    ),
+    linetype = guide_legend(
+      order = 2,
+      override.aes = list(linewidth = 0.9, color = "black")
     )
   ) +
   theme(
     legend.position = "inside",
-    legend.position.inside = c(0.85, 0.15),
+    legend.position.inside = c(0.85, 0.12),
     legend.justification.inside = c(1, 0)
   ) +
   labs(
@@ -533,16 +565,18 @@ ggplot() +
 
 ``` r
 
-# Select representative schools at the 0, 0.25, 0.5, 0.75, and 1 quantiles of school offsets
+# Select representative schools at the 0, 0.25, 0.5, 0.75, and 1 quantiles of coverage propensity
 sch_info <- locations_sim[!loc_id %in% c("State", "Scruggs", "Simone", "Watson")]
+# Non-uptake offset off: positive off indicates lower coverage; negate to rank by coverage
 sch_info[, off := latent_params_sim$off_sch[loc_id]]
+sch_info[, cov_offset := -off]
 
 probs <- c(0, 0.25, 0.5, 0.75, 1)
 labels <- c("0% (Min)", "25% (Q1)", "50% (Median)", "75% (Q3)", "100% (Max)")
 
 sel_schools <- sch_info[, {
-  q_vals <- quantile(off, probs = probs, type = 7)
-  chosen_idx <- sapply(q_vals, function(qv) which.min(abs(off - qv)))
+  q_vals <- quantile(cov_offset, probs = probs, type = 7)
+  chosen_idx <- sapply(q_vals, function(qv) which.min(abs(cov_offset - qv)))
   .(
     quantile_label = factor(labels, levels = labels),
     loc_id = loc_id[chosen_idx],
@@ -648,11 +682,10 @@ ggplot() +
   facet_wrap(~parent_id) +
   theme_bw() +
   scale_x_continuous(
-    limits = c(0, 30),
     breaks = seq(0, 30, by = 5),
     minor_breaks = seq(1, 30, by = 1)
   ) +
-  scale_y_continuous(limits = c(0.4, 1.0)) +
+  coord_cartesian(xlim = c(0, 30), ylim = c(0.4, 1.0)) +
   scale_color_viridis_d(name = "School Quantile", option = "plasma", end = 0.9) +
   scale_linetype_manual(
     name = "Reference Curves",
@@ -722,7 +755,7 @@ state-level vaccine uptake baseline:
 beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 #> List of 1
-#>  $ beta_bs: num [1:2000, 1:5] -1.68 -1.7 -1.58 -1.68 -1.62 ...
+#>  $ beta_bs: num [1:2000, 1:5] -1.72 -1.71 -1.75 -1.69 -1.63 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ iterations: NULL
 #>   .. ..$           : NULL
@@ -879,16 +912,105 @@ bayesplot::mcmc_trace(
 Trace plots for the county-level location offsets
 $`\delta_{\text{county}}`$ (`off_layer[1]` through `off_layer[3]`)
 showing individual chain medians and true simulation offsets (dashed red
-lines and annotated values):
+lines and annotated values). Indicator arrows perpendicular to the true
+latent line show: - **Red arrows (left edge, iteration 0)**: Expected
+error direction and relative magnitude based on observational noise
+($`\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}`$) from
+finite observation sample draws. - **Blue arrows (right edge, iteration
+500)**: Realized difference between the posterior median estimate and
+the true latent offset.
 
 **Show plot code**
 
 ``` r
 
+# Reconstruct location offsets from standard normal deviations z_layer,
+# layer standard deviations sigma_layer, and the hierarchical basis/scaling.
+get_weighted_qr_basis <- function(w) {
+  n_w <- length(w)
+  v1 <- w / sqrt(sum(w^2))
+  mat_m <- matrix(0, nrow = n_w, ncol = n_w)
+  mat_m[, 1] <- v1
+  for (j in seq_len(n_w - 1L)) {
+    for (i in seq_len(n_w)) {
+      mat_m[i, j + 1L] <- if (i == j) 1.0 else 0.0
+    }
+  }
+  q_star <- qr.Q(qr(mat_m))[, 2:n_w, drop = FALSE]
+  for (j in seq_len(ncol(q_star))) {
+    nz <- which(abs(q_star[, j]) > 1e-10)[1]
+    if (!is.na(nz) && q_star[nz, j] < 0) {
+      q_star[, j] <- -q_star[, j]
+    }
+  }
+  q_star
+}
+
+loc_info <- canonicalize_locations(locations_sim)
+ld <- imuGAP:::assemble_layer_data(loc_info)
+
+bounds_to_range <- function(starts, total) {
+  rbind(starts, c(tail(starts, -1L) - 1L, total))
+}
+
+layer_bounds <- bounds_to_range(ld$layer_starts, ld$n_locs)
+parent_child_bounds <- bounds_to_range(ld$parent_child_starts, ld$n_locs)
+
+loc_layer_idx <- integer(ld$n_locs - 1L)
+for (k in seq_len(ld$n_layers - 1L)) {
+  st <- layer_bounds[1, k + 1L] - 1L
+  en <- layer_bounds[2, k + 1L] - 1L
+  loc_layer_idx[st:en] <- k
+}
+
+loc_pop_scale <- numeric(ld$n_locs - 1L)
+for (k in seq_len(ld$n_layers - 1L)) {
+  st <- layer_bounds[1, k + 1L]
+  en <- layer_bounds[2, k + 1L]
+  layer_pop <- ld$loc_population[st:en]
+  mean_layer_pop <- mean(layer_pop)
+  loc_pop_scale[(st - 1L):(en - 1L)] <- sqrt(mean_layer_pop / layer_pop)
+}
+
+n_unconstrained <- (ld$n_locs - 1L) - ld$n_parent_locs
+qr_basis <- matrix(0, nrow = ld$n_locs - 1L, ncol = n_unconstrained)
+col_offset <- 0L
+for (p in seq_len(ld$n_parent_locs)) {
+  st <- parent_child_bounds[1, p]
+  en <- parent_child_bounds[2, p]
+  n_child <- en - st + 1L
+  pop_slice <- ld$loc_population[st:en]
+  w <- pop_slice / sum(pop_slice)
+  w_prime <- sqrt(w)
+  q_star <- get_weighted_qr_basis(w_prime)
+  qr_basis[(st - 1L):(en - 1L), (col_offset + 1L):(col_offset + n_child - 1L)] <- q_star
+  col_offset <- col_offset + (n_child - 1L)
+}
+
+z_arr <- as.array(fit_sim$stanfit, pars = "z_layer")
+sigma_arr <- as.array(fit_sim$stanfit, pars = "sigma_layer")
+n_iter <- dim(z_arr)[1]
+n_chains <- dim(z_arr)[2]
+
+off_layer_arr <- array(0, dim = c(n_iter, n_chains, ld$n_locs - 1L))
+for (iter in seq_len(n_iter)) {
+  for (chain in seq_len(n_chains)) {
+    z_vec <- z_arr[iter, chain, ]
+    sigma_vec <- sigma_arr[iter, chain, ]
+    off_vec <- as.vector(((qr_basis %*% z_vec) * loc_pop_scale) * sigma_vec[loc_layer_idx])
+    off_layer_arr[iter, chain, ] <- off_vec
+  }
+}
+dimnames(off_layer_arr) <- list(
+  iterations = NULL,
+  chains = paste0("chain:", seq_len(n_chains)),
+  parameters = paste0("off_layer[", seq_len(ld$n_locs - 1L), "]")
+)
+
 county_names <- names(latent_params_sim$off_cnty)
-non_root_locs <- canonicalize_locations(locations_sim)$loc_id[-1]
+non_root_locs <- loc_info$loc_id[-1]
 county_pars <- paste0("off_layer[", match(county_names, non_root_locs), "]")
-county_arr <- as.array(fit_sim$stanfit, pars = county_pars)
+county_arr <- off_layer_arr[, , county_pars, drop = FALSE]
 county_chain_meds <- rbindlist(lapply(county_pars, function(p) {
   data.table(
     parameter = p,
@@ -897,14 +1019,43 @@ county_chain_meds <- rbindlist(lapply(county_pars, function(p) {
   )
 }))
 
+# Compute expected empirical error for county offsets based on observation sample draws
+obs <- copy(observations_sim)
+phi_st <- latent_params_sim$phi_state
+cov <- latent_params_sim$uptake
+off_cnty <- latent_params_sim$off_cnty
+off_sch <- latent_params_sim$off_sch
+censor_red <- latent_params_sim$censor_reduction
+
+obs_cnty <- obs[loc_id %in% county_names]
+obs_cnty[, mu := {
+  c_off <- unname(off_cnty[loc_id])
+  phi_c <- plogis(qlogis(phi_st[cohort]) + c_off)
+  (1 - phi_c) * cov[11, 2] * censor_red
+}, by = loc_id]
+obs_cnty[, p_adj := (positive + 0.5) / (sample_n + 1.0)]
+obs_cnty[, delta_cov := qlogis(p_adj) - qlogis(mu)]
+
+cnty_errs <- obs_cnty[, .(expected_delta_err = -mean(delta_cov)), by = .(loc_id)]
+county_post_meds <- apply(county_arr, 3, median)
+
 county_ref <- data.frame(
   parameter = county_pars,
+  loc_id = county_names,
   true_val = unname(latent_params_sim$off_cnty[county_names]),
+  post_med = unname(county_post_meds[county_pars]),
   label = sprintf(
     "True~delta == %.2f",
     latent_params_sim$off_cnty[county_names]
   )
 )
+county_ref <- merge(county_ref, cnty_errs, by = "loc_id")
+
+err_scale <- 1.0
+county_ref$red_arrow_x <- 0
+county_ref$red_arrow_yend <- county_ref$true_val + err_scale * county_ref$expected_delta_err
+county_ref$blue_arrow_x <- 500
+county_ref$blue_arrow_yend <- county_ref$post_med
 
 bayesplot::mcmc_trace(
   county_arr,
@@ -927,9 +1078,23 @@ bayesplot::mcmc_trace(
     linetype = "dashed",
     linewidth = 0.8
   ) +
+  geom_segment(
+    data = county_ref,
+    aes(x = red_arrow_x, xend = red_arrow_x, y = true_val, yend = red_arrow_yend),
+    arrow = arrow(length = unit(0.04, "inches"), type = "closed"),
+    color = "firebrick",
+    linewidth = 0.8
+  ) +
+  geom_segment(
+    data = county_ref,
+    aes(x = blue_arrow_x, xend = blue_arrow_x, y = true_val, yend = blue_arrow_yend),
+    arrow = arrow(length = unit(0.04, "inches"), type = "closed"),
+    color = "royalblue",
+    linewidth = 0.8
+  ) +
   geom_label(
     data = county_ref,
-    aes(x = 100, y = true_val, label = label),
+    aes(x = 50, y = true_val, label = label),
     parse = TRUE,
     color = "firebrick",
     fill = ggplot2::alpha("white", 0.75),
@@ -949,7 +1114,16 @@ bayesplot::mcmc_trace(
 Trace plots for school-level location offsets $`\delta_{\text{school}}`$
 divided by county, showing individual chain medians and true simulation
 offsets (dashed red lines and annotated values) across schools in
-Scruggs, Simone, and Watson counties:
+Scruggs, Simone, and Watson counties. Indicator arrows perpendicular to
+the true latent line show: - **Red arrows (left edge, iteration 0)**:
+Expected error direction and relative magnitude based on observational
+noise
+($`\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}`$) from
+each school’s kindergarten entry observation sample, with length
+exaggerated (2.5×) to highlight the expected error scale across
+schools. - **Blue arrows (right edge, iteration 500)**: Realized
+difference between the school posterior median estimate and the true
+latent offset.
 
 **Show plot code**
 
@@ -958,7 +1132,7 @@ Scruggs, Simone, and Watson counties:
 for (cnty in county_names) {
   sch_in_c <- locations_sim[parent_id == cnty, loc_id]
   sch_pars <- paste0("off_layer[", match(sch_in_c, non_root_locs), "]")
-  sch_arr <- as.array(fit_sim$stanfit, pars = sch_pars)
+  sch_arr <- off_layer_arr[, , sch_pars, drop = FALSE]
 
   sch_chain_meds <- rbindlist(lapply(sch_pars, function(p) {
     data.table(
@@ -968,14 +1142,36 @@ for (cnty in county_names) {
     )
   }))
 
+  obs_sch <- obs[loc_id %in% sch_in_c]
+  obs_sch[, mu := {
+    c_off <- unname(off_cnty[parent_id])
+    s_off <- unname(off_sch[loc_id])
+    phi_s <- plogis(qlogis(phi_st[cohort]) + c_off + s_off)
+    (1 - phi_s) * cov[5, 2]
+  }, by = .(loc_id, parent_id)]
+  obs_sch[, p_adj := (positive + 0.5) / (sample_n + 1.0)]
+  obs_sch[, delta_cov := qlogis(p_adj) - qlogis(mu)]
+
+  sch_errs <- obs_sch[, .(expected_delta_err = -mean(delta_cov)), by = .(loc_id)]
+  sch_post_meds <- apply(sch_arr, 3, median)
+
   sch_ref <- data.frame(
     parameter = sch_pars,
+    loc_id = sch_in_c,
     true_val = unname(latent_params_sim$off_sch[sch_in_c]),
+    post_med = unname(sch_post_meds[sch_pars]),
     label = sprintf(
       "True~delta == %.2f",
       latent_params_sim$off_sch[sch_in_c]
     )
   )
+  sch_ref <- merge(sch_ref, sch_errs, by = "loc_id")
+
+  err_scale <- 2.5
+  sch_ref$red_arrow_x <- 0
+  sch_ref$red_arrow_yend <- sch_ref$true_val + err_scale * sch_ref$expected_delta_err
+  sch_ref$blue_arrow_x <- 500
+  sch_ref$blue_arrow_yend <- sch_ref$post_med
 
   p <- bayesplot::mcmc_trace(
     sch_arr,
@@ -999,9 +1195,23 @@ for (cnty in county_names) {
       linetype = "dashed",
       linewidth = 0.8
     ) +
+    geom_segment(
+      data = sch_ref,
+      aes(x = red_arrow_x, xend = red_arrow_x, y = true_val, yend = red_arrow_yend),
+      arrow = arrow(length = unit(0.04, "inches"), type = "closed"),
+      color = "firebrick",
+      linewidth = 0.7
+    ) +
+    geom_segment(
+      data = sch_ref,
+      aes(x = blue_arrow_x, xend = blue_arrow_x, y = true_val, yend = blue_arrow_yend),
+      arrow = arrow(length = unit(0.04, "inches"), type = "closed"),
+      color = "royalblue",
+      linewidth = 0.7
+    ) +
     geom_label(
       data = sch_ref,
-      aes(x = 100, y = true_val, label = label),
+      aes(x = 50, y = true_val, label = label),
       parse = TRUE,
       color = "firebrick",
       fill = ggplot2::alpha("white", 0.75),
@@ -1222,7 +1432,7 @@ ggplot(state_predict) +
   geom_line(aes(y = latent, color = "True Latent"), linetype = "dashed", linewidth = 0.8) +
   theme_bw() +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.8, 1.0)) +
+  coord_cartesian(ylim = c(0.8, 1.0)) +
   scale_color_manual(
     name = NULL,
     values = c("Posterior Median" = "black", "True Latent" = "firebrick")
@@ -1260,7 +1470,7 @@ summary_predict |>
     legend.justification.inside = c(0, 0)
   ) +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.8, 1.0)) +
+  coord_cartesian(ylim = c(0.8, 1.0)) +
   scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
   labs(
     x = "Age", y = "County-Level Two-Dose Coverage"
@@ -1269,118 +1479,26 @@ summary_predict |>
 
 ![](imuGAP_files/figure-html/county-viz-1.png)
 
-Next, we can zoom into school-level coverage estimates. As an example,
-we examine the median (50% quantile) school within Scruggs County from
-the latent data, visualizing individual posterior trajectory draws
-(spaghetti plot) alongside the posterior median and the true underlying
-latent coverage:
+Finally, we can zoom into school-level coverage estimates across an
+entire county. Below, we compare the predicted coverage distributions
+across all schools within Scruggs County against the true underlying
+latent coverage from the simulation process:
 
 **Show plot code**
 
 ``` r
 
 scruggs_schools <- locations_sim[parent_id == "Scruggs", loc_id]
-off_scruggs <- latent_params_sim$off_sch[scruggs_schools]
-med_sch <- names(off_scruggs)[which.min(
-  abs(off_scruggs - stats::quantile(off_scruggs, 0.5))
-)]
-
-predict_sch <- subset(predict_sim, loc_id == med_sch & dose == 2 & age > 4)
-draws_sch <- as.data.frame(predict_sch)
-
-target_idx <- predict_sim$target[
-  loc_id == med_sch & dose == 2 & age > 4,
-  which = TRUE
-]
-summary_sch <- summary(predict_sch)
-summary_sch$latent <- latent_params_sim$coverage[target_idx]
-
-ggplot() +
-  geom_line(
-    data = draws_sch,
-    aes(
-      x = age,
-      y = coverage,
-      group = interaction(chain, iteration),
-      color = "Posterior Draws"
-    ),
-    alpha = 0.12,
-    linewidth = 0.4
-  ) +
-  geom_line(
-    data = summary_sch,
-    aes(x = age, y = q50, color = "Posterior Median"),
-    linewidth = 0.9
-  ) +
-  geom_line(
-    data = summary_sch,
-    aes(x = age, y = latent, color = "True Latent"),
-    linetype = "dashed",
-    linewidth = 0.9
-  ) +
-  theme_bw() +
-  scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.8, 1.0)) +
-  scale_color_manual(
-    name = NULL,
-    values = c(
-      "Posterior Median" = "black",
-      "True Latent" = "firebrick",
-      "Posterior Draws" = "steelblue"
-    ),
-    guide = guide_legend(override.aes = list(
-      linewidth = c(0.9, 0.9, 0.8),
-      linetype = c("solid", "dashed", "solid"),
-      alpha = c(1, 1, 0.6)
-    ))
-  ) +
-  annotate(
-    "text",
-    x = 18, y = 0.99,
-    label = sprintf("%s (50%% Quantile School)", med_sch),
-    hjust = 1, vjust = 1,
-    size = 3.5, fontface = "italic"
-  ) +
-  theme(
-    legend.position = "inside",
-    legend.position.inside = c(0.05, 0.05),
-    legend.justification.inside = c(0, 0)
-  ) +
-  labs(
-    x = "Age",
-    y = "Two-Dose Coverage"
-  )
-```
-
-![](imuGAP_files/figure-html/grade-viz-1.png)
-
-Finally let’s look at some selected schools and see how their predicted
-coverage compares to the true underlying coverage from the data
-simulation process.
-
-Because the model employs hierarchical partial pooling, estimates for
-schools with smaller sample sizes (such as Flycatcher Elementary, ~59
-students per grade) experience stronger shrinkage toward the county mean
-($`\delta_{\text{cnty}} = +0.22`$) than larger schools (such as Towhee
-Children’s Academy, ~207 students per grade), balancing local empirical
-data with group-level priors.
-
-**Show plot code**
-
-``` r
-
-schools <- c(
-  "Towhee Children's Academy", # ~207 per grade
-  "Sparrow School", # ~87 per grade
-  "Flycatcher Elementary" # ~59 per grade
-)
 
 # Subset to targets of interest (all retained posterior draws)
 predict_sub <- predict_sim |>
-  subset(loc_id %in% schools & dose == 2 & age > 4)
+  subset(loc_id %in% scruggs_schools & dose == 2 & age > 4)
 
 # Get the pre-computed background coverage matching the subsetted target
-target_idx <- predict_sim$target[loc_id %in% schools & dose == 2 & age > 4, which = TRUE]
+target_idx <- predict_sim$target[
+  loc_id %in% scruggs_schools & dose == 2 & age > 4,
+  which = TRUE
+]
 latent_ref <- copy(predict_sub$target)
 latent_ref$coverage <- latent_params_sim$coverage[target_idx]
 
@@ -1392,9 +1510,11 @@ ggplot() +
   aes(age, coverage, color = loc_id) +
   geom_point(
     data = draws_df,
-    alpha = 0.15, shape = 16, size = 1.2,
+    alpha = 0.15,
+    shape = 16,
+    size = 1.2,
     position = position_jitterdodge(
-      dodge.width = 0.5,
+      dodge.width = 0.6,
       jitter.width = 0.15
     )
   ) +
@@ -1403,7 +1523,7 @@ ggplot() +
     mapping = aes(shape = "True value"),
     size = 2.5,
     stroke = 1.1,
-    position = position_dodge(width = 0.5)
+    position = position_dodge(width = 0.6)
   ) +
   theme_bw() +
   scale_shape_manual(
@@ -1412,14 +1532,10 @@ ggplot() +
   ) +
   scale_color_discrete(NULL, aesthetics = c("color", "fill")) +
   scale_x_continuous(breaks = 5:18, minor_breaks = NULL) +
-  scale_y_continuous(limits = c(0.8, 1.0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  coord_cartesian(ylim = c(0.75, 1.0)) +
   theme(legend.position = "bottom") +
   labs(color = "School", x = "Age", y = "Two-Dose Coverage")
 ```
-
-    #> Warning: Removed 997 rows containing missing values or values outside the scale range
-    #> (`geom_point()`).
-    #> Warning: Removed 10 rows containing missing values or values outside the scale range
-    #> (`geom_point()`).
 
 ![](imuGAP_files/figure-html/school-viz-1.png)

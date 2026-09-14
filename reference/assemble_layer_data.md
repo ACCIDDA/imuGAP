@@ -7,7 +7,7 @@ models.
 ## Usage
 
 ``` r
-assemble_layer_data(loc_info, sigma_layer_scale = 2.5)
+assemble_layer_data(loc_info)
 ```
 
 ## Arguments
@@ -36,5 +36,5 @@ A named list containing:
 - `parent_child_starts`: integer array (length `n_parent_locs`) of
   starting child location IDs
 
-- `sigma_layer_scale`: single numeric scale for Cauchy prior on layer
-  standard deviations
+- `loc_population`: numeric array (length `n_locs`) of population
+  weights

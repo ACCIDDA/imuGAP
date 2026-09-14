@@ -120,6 +120,10 @@
 <ul><li>Vignette plots must enforce a solid white background and black text (<code>dev.args = list(bg = "white")</code>, <code><a href="https://rstudio.github.io/thematic/reference/thematic_on.html" class="external-link">thematic::thematic_off()</a></code>, and <code>ggplot2::theme_set(...)</code>).</li>
 </ul></li>
 <li>
+<strong>Plot Production &amp; Coordinate Limits</strong>:
+<ul><li>Prefer the ggplot2 coordinate system (<code>coord_cartesian(xlim = ..., ylim = ...)</code>) over scale-based limits (<code>scale_*_continuous(limits = ...)</code>) when setting plot axis bounds, to avoid dropping or discarding out-of-bounds data points and ribbon geometries.</li>
+</ul></li>
+<li>
 <strong>Stan Component Unit Testing</strong>:
 <ul><li>Unit tests for Stan include files in <code>inst/stan/</code> live in granular files <code>tests/testthat/test-stan-*.R</code>.</li>
 <li>Explicitly declare <code>target &lt;- "&lt;subpath&gt;.stan"</code> and compile via <code>sprintf(...) |&gt; compile_stan_harness()</code>.</li>
