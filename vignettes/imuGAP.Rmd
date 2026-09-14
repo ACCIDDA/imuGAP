@@ -727,6 +727,40 @@ knitr::kable(
 )
 ```
 
+Additionally, breaking down the county-level and school-level observations by county layer
+membership (Scruggs, Simone, Watson) confirms that the simulation maintains calibration across
+individual geographic sub-hierarchies:
+
+```{r observation-breakdown-table}
+# Layer membership breakdown for County and School layers
+obs[, county_group := fcase(
+  loc_type == "State", "State",
+  loc_type == "County", loc_id,
+  default = parent_id
+)]
+
+breakdown_table <- obs[loc_type %in% c("County", "School"), .(
+  `Observations` = .N,
+  `Mean Observed` = sprintf("%.3f", mean(p_obs)),
+  `Mean Expected` = sprintf("%.3f", mean(mu)),
+  `Mean Log-Odds Residual` = sprintf("%+.4f", mean(delta_logit)),
+  `SD Log-Odds Residual` = sprintf("%.4f", sd(delta_logit)),
+  `Odds Ratio` = sprintf("%.4f", exp(mean(delta_logit)))
+), by = .(
+  `Layer / Level` = loc_type,
+  `County Membership` = county_group,
+  `Observation Stream` = observation
+)][order(`Layer / Level`, `County Membership`)]
+
+knitr::kable(
+  breakdown_table,
+  caption = paste(
+    "Breakdown of simulated observation log-odds residuals by geographic layer membership",
+    "(Scruggs, Simone, Watson)."
+  )
+)
+```
+
 
 ---
 
