@@ -52,6 +52,82 @@ slice_weights <- function(wts_dt, obs_dt, suffix) {
   stats::setNames(res, paste0(names(res), "_", suffix))
 }
 
+#' @title Generate initial values for Stan sampling
+#'
+#' @description
+#' Generates a named list of initial parameter values for Stan chains based on
+#' empirical survey observations, dose schedule, and location hierarchy.
+#'
+#' @param dat_stan Named list of data formatted for Stan input.
+#' @param model Character string specifying the model formulation (default: `"default"`).
+#'
+#' @return A named list of initial parameter arrays for Stan.
+#'
+#' @keywords internal
+#' @noRd
+generate_inits <- function(dat_stan, model = "default") {
+  y_all <- c(dat_stan$y_obs_uncensored, dat_stan$y_obs_right)
+  smp_all <- c(dat_stan$y_smp_uncensored, dat_stan$y_smp_right)
+
+  mean_cov <- if (length(y_all) > 0L && sum(smp_all) > 0) {
+    sum(y_all) / sum(smp_all)
+  } else {
+    0.85
+  }
+  if (is.na(mean_cov) || is.nan(mean_cov)) {
+    mean_cov <- 0.85
+  }
+  baseline_phi <- pmax(0.01, pmin(0.5, 1 - mean_cov))
+
+  inits <- list(
+    lambda_raw = array(
+      log(rep(3, dat_stan$n_doses)) + stats::rnorm(dat_stan$n_doses, 0, 0.05),
+      dim = dat_stan$n_doses
+    )
+  )
+
+  # Multilayer spatial hierarchy parameters (if present in dat_stan)
+  if (isTRUE(dat_stan$n_layers >= 2L)) {
+    n_unconstrained <- (dat_stan$n_locs - 1L) - dat_stan$n_parent_locs
+    inits$sigma_layer <- array(
+      abs(stats::rnorm(dat_stan$n_layers - 1L, 0.5, 0.1)),
+      dim = dat_stan$n_layers - 1L
+    )
+    inits$z_layer <- array(
+      stats::rnorm(n_unconstrained, 0, 0.05),
+      dim = n_unconstrained
+    )
+  }
+
+  model_inits <- if (identical(model, "default")) {
+    init_beta <- rep(stats::qlogis(baseline_phi), dat_stan$k_bs) +
+      stats::rnorm(dat_stan$k_bs, 0, 0.05)
+    list(beta_bs = array(init_beta, dim = dat_stan$k_bs))
+  } else {
+    stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model)
+  }
+
+  c(inits, model_inits)
+}
+
+#' @title Make Stan initialization function
+#'
+#' @description
+#' Returns a 0-argument function suitable for passing to `fit_model(init = ...)`.
+#'
+#' @param dat_stan Named list of data formatted for Stan input.
+#' @param model Character string specifying the model formulation (default: `"default"`).
+#'
+#' @return A 0-argument function that returns a list of initial parameter values.
+#'
+#' @keywords internal
+#' @noRd
+make_init_fn <- function(dat_stan, model = "default") {
+  function() {
+    generate_inits(dat_stan, model = model)
+  }
+}
+
 #' @title Immunity: Geographic & Age-based Projection, `imuGAP`
 #'
 #' @description
@@ -184,40 +260,10 @@ sampling <- function(
     stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model)
   }
 
-  init_fn <- function() {
-    y_all <- c(dat_stan$y_obs_uncensored, dat_stan$y_obs_right)
-    smp_all <- c(dat_stan$y_smp_uncensored, dat_stan$y_smp_right)
-    mean_cov <- if (length(y_all) > 0L && sum(smp_all) > 0) {
-      sum(y_all) / sum(smp_all)
-    } else {
-      0.85
-    }
-    if (is.na(mean_cov) || is.nan(mean_cov)) {
-      mean_cov <- 0.85
-    }
-    baseline_phi <- pmax(0.01, pmin(0.5, 1 - mean_cov))
-    init_beta <- rep(stats::qlogis(baseline_phi), dat_stan$k_bs) +
-      stats::rnorm(dat_stan$k_bs, 0, 0.05)
-    init_lambda <- log(rep(3, dat_stan$n_doses)) +
-      stats::rnorm(dat_stan$n_doses, 0, 0.05)
-    inits <- list(
-      beta_bs = array(init_beta, dim = dat_stan$k_bs),
-      lambda_raw = array(init_lambda, dim = dat_stan$n_doses)
-    )
-    if (is_multilayer && layer_data$n_layers >= 2L) {
-      n_unconstrained <- (dat_stan$n_locs - 1L) - dat_stan$n_parent_locs
-      sig <- abs(stats::rnorm(layer_data$n_layers - 1L, 0.5, 0.1))
-      z <- stats::rnorm(n_unconstrained, 0, 0.05)
-      inits$sigma_layer <- array(sig, dim = layer_data$n_layers - 1L)
-      inits$z_layer <- array(z, dim = n_unconstrained)
-    }
-    inits
-  }
-
   raw_fit <- fit_model(
     model_name,
     dat_stan,
-    init = init_fn,
+    init = make_init_fn(dat_stan, model = model),
     stan_opts,
     drop_pars = NULL,
     package = "imuGAP"
