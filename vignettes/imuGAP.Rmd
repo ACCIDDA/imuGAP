@@ -761,6 +761,32 @@ knitr::kable(
 )
 ```
 
+Finally, inspecting the individual school-level observations across all 24 schools illustrates
+local sampling variability around each school's underlying latent trajectory:
+
+```{r observation-school-table}
+# Individual school-level summary statistics
+school_table <- obs[loc_type == "School", .(
+  `Observations` = .N,
+  `Mean Observed` = sprintf("%.3f", mean(p_obs)),
+  `Mean Expected` = sprintf("%.3f", mean(mu)),
+  `Mean Log-Odds Residual` = sprintf("%+.4f", mean(delta_logit)),
+  `SD Log-Odds Residual` = sprintf("%.4f", sd(delta_logit)),
+  `Odds Ratio` = sprintf("%.4f", exp(mean(delta_logit)))
+), by = .(
+  `County` = parent_id,
+  `School` = loc_id
+)][order(`County`, `School`)]
+
+knitr::kable(
+  school_table,
+  caption = paste(
+    "Summary statistics of simulated kindergarten entry observations for all 24 individual",
+    "schools compared to true latent coverage."
+  )
+)
+```
+
 
 ---
 
