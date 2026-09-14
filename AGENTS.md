@@ -52,6 +52,8 @@ This document provides concise instructions and rules for AI coding assistants w
   * This ensures fast `pkgdown` site builds (~35s) while passing CRAN `--as-cran` checks and remaining runnable for interactive users.
 * **Vignette Plots & Dark Mode**:
   * Vignette plots must enforce a solid white background and black text (`dev.args = list(bg = "white")`, `thematic::thematic_off()`, and `ggplot2::theme_set(...)`).
+* **Plot Production & Coordinate Limits**:
+  * Prefer the ggplot2 coordinate system (`coord_cartesian(xlim = ..., ylim = ...)`) over scale-based limits (`scale_*_continuous(limits = ...)`) when setting plot axis bounds, to avoid dropping or discarding out-of-bounds data points and ribbon geometries.
 * **Stan Component Unit Testing**:
   * Unit tests for Stan include files in `inst/stan/` live in granular files `tests/testthat/test-stan-*.R`.
   * Explicitly declare `target <- "<subpath>.stan"` and compile via `sprintf(...) |> compile_stan_harness()`.

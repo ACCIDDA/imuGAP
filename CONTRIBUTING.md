@@ -121,13 +121,14 @@ For computationally heavy functions (such as `sampling()` or multi-draw `predict
 * Top-level Stan models directly in `inst/stan/` (and not Stan code in subdirectories) must remain concise assembly skeletons composed of `#include <subpath>.stan` directives for particular modular elements (`functions/`, `data/`, `transformed_data/`, `parameters/`, `model/`, `generated_quantities/`).
 * Never inline full block contents or raw logic directly into top-level models in `inst/stan/`; keep component logic encapsulated in dedicated sub-files to facilitate reuse, maintainability, and clean diffs.
 
-### 6. Vignette Plot Styling & Dark Mode Compatibility
+### 6. Vignette Plot Styling, Coordinate Limits & Dark Mode Compatibility
 
-To ensure plots remain clear and readable regardless of whether users view the pkgdown site in light or dark mode:
+To ensure plots remain clear, readable, and geometrically intact:
 
 * In vignette setup chunks, specify `knitr::opts_chunk$set(dev.args = list(bg = "white"))`.
 * Disable automatic plot theme inversion with `if (requireNamespace("thematic", quietly = TRUE)) thematic::thematic_off()`.
 * Configure `ggplot2::theme_set()` with solid white backgrounds (`plot.background`, `panel.background`, `legend.background`) and black text (`text`, `axis.text`, `axis.title`, `plot.title`).
+* **Coordinate System vs. Scale Limits**: Prefer ggplot2 coordinate system bounds (`coord_cartesian(xlim = ..., ylim = ...)`) over scale-based limits (`scale_*_continuous(limits = ...)`) when zooming or adjusting visible ranges. Scale limits discard data points outside the window (altering summary statistics, regressions, or ribbon clipping), whereas coordinate zooming retains all underlying data.
 
 ### 7. Package Reinstallation & Vignette Data
 
