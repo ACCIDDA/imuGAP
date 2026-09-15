@@ -17,20 +17,35 @@ skip_if_stan_unchanged(c(
 model_likelihood <- sprintf(
   "
 data {
-  int<lower=0> n_obs_uncensored;
-  array[n_obs_uncensored] int y_obs_uncensored;
-  array[n_obs_uncensored] int y_smp_uncensored;
-  vector[n_obs_uncensored] p_obs_uncensored_in;
+  int<lower=0> n_obs_unmixed_uncensored;
+  array[n_obs_unmixed_uncensored] int y_obs_unmixed_uncensored;
+  array[n_obs_unmixed_uncensored] int y_smp_unmixed_uncensored;
+  vector[n_obs_unmixed_uncensored] p_obs_unmixed_uncensored_in;
 
-  int<lower=0> n_obs_left;
-  array[n_obs_left] int y_obs_left;
-  array[n_obs_left] int y_smp_left;
-  vector[n_obs_left] p_obs_left_in;
+  int<lower=0> n_obs_mixed_uncensored;
+  array[n_obs_mixed_uncensored] int y_obs_mixed_uncensored;
+  array[n_obs_mixed_uncensored] int y_smp_mixed_uncensored;
+  vector[n_obs_mixed_uncensored] p_obs_mixed_uncensored_in;
 
-  int<lower=0> n_obs_right;
-  array[n_obs_right] int y_obs_right;
-  array[n_obs_right] int y_smp_right;
-  vector[n_obs_right] p_obs_right_in;
+  int<lower=0> n_obs_unmixed_left;
+  array[n_obs_unmixed_left] int y_obs_unmixed_left;
+  array[n_obs_unmixed_left] int y_smp_unmixed_left;
+  vector[n_obs_unmixed_left] p_obs_unmixed_left_in;
+
+  int<lower=0> n_obs_mixed_left;
+  array[n_obs_mixed_left] int y_obs_mixed_left;
+  array[n_obs_mixed_left] int y_smp_mixed_left;
+  vector[n_obs_mixed_left] p_obs_mixed_left_in;
+
+  int<lower=0> n_obs_unmixed_right;
+  array[n_obs_unmixed_right] int y_obs_unmixed_right;
+  array[n_obs_unmixed_right] int y_smp_unmixed_right;
+  vector[n_obs_unmixed_right] p_obs_unmixed_right_in;
+
+  int<lower=0> n_obs_mixed_right;
+  array[n_obs_mixed_right] int y_obs_mixed_right;
+  array[n_obs_mixed_right] int y_smp_mixed_right;
+  vector[n_obs_mixed_right] p_obs_mixed_right_in;
 }
 transformed data {
   #include transformed_data/right/observations.stan
@@ -39,9 +54,12 @@ parameters {
   real dummy;
 }
 transformed parameters {
-  vector[n_obs_uncensored] p_obs_uncensored = p_obs_uncensored_in + dummy;
-  vector[n_obs_left] p_obs_left = p_obs_left_in + dummy;
-  vector[n_obs_right] p_obs_right = p_obs_right_in + dummy;
+  vector[n_obs_unmixed_uncensored] p_obs_unmixed_uncensored = p_obs_unmixed_uncensored_in + dummy;
+  vector[n_obs_mixed_uncensored] p_obs_mixed_uncensored = p_obs_mixed_uncensored_in + dummy;
+  vector[n_obs_unmixed_left] p_obs_unmixed_left = p_obs_unmixed_left_in + dummy;
+  vector[n_obs_mixed_left] p_obs_mixed_left = p_obs_mixed_left_in + dummy;
+  vector[n_obs_unmixed_right] p_obs_unmixed_right = p_obs_unmixed_right_in + dummy;
+  vector[n_obs_mixed_right] p_obs_mixed_right = p_obs_mixed_right_in + dummy;
 }
 model {
   dummy ~ normal(0, 1);
@@ -51,6 +69,36 @@ model {
   target
 ) |>
   compile_stan_harness()
+
+empty_stream_in <- function(tag = c("uncensored", "right", "left")) {
+  tag <- match.arg(tag)
+  setNames(
+    list(
+      0L,
+      integer(0),
+      integer(0),
+      numeric(0),
+      0L,
+      integer(0),
+      integer(0),
+      numeric(0)
+    ),
+    paste0(
+      c(
+        "n_obs_unmixed_",
+        "y_obs_unmixed_",
+        "y_smp_unmixed_",
+        "p_obs_unmixed_",
+        "n_obs_mixed_",
+        "y_obs_mixed_",
+        "y_smp_mixed_",
+        "p_obs_mixed_"
+      ),
+      tag,
+      c("", "", "", "_in", "", "", "", "_in")
+    )
+  )
+}
 
 unc_data <- list(
   y_obs = c(10L, 20L),
@@ -71,24 +119,19 @@ lt_data <- list(
 )
 
 test_that("uncensored likelihood accumulates binomial log-probabilities", {
-  d_list <- list(
-    n_obs_uncensored = length(unc_data$y_obs),
-    y_obs_uncensored = unc_data$y_obs,
-    y_smp_uncensored = unc_data$y_smp,
-    p_obs_uncensored_in = unc_data$p_obs,
-    n_obs_left = 0L,
-    y_obs_left = integer(0),
-    y_smp_left = integer(0),
-    p_obs_left_in = numeric(0),
-    n_obs_right = 0L,
-    y_obs_right = integer(0),
-    y_smp_right = integer(0),
-    n_weights_right = 0L,
-    obs_to_weights_bounds_right = integer(0),
-    weights_life_year_right = integer(0),
-    weights_dose_right = integer(0),
-    n_yr = 1L,
-    p_obs_right_in = numeric(0)
+  d_list <- c(
+    list(
+      n_obs_unmixed_uncensored = 1L,
+      y_obs_unmixed_uncensored = as.array(unc_data$y_obs[1]),
+      y_smp_unmixed_uncensored = as.array(unc_data$y_smp[1]),
+      p_obs_unmixed_uncensored_in = as.array(unc_data$p_obs[1]),
+      n_obs_mixed_uncensored = 1L,
+      y_obs_mixed_uncensored = as.array(unc_data$y_obs[2]),
+      y_smp_mixed_uncensored = as.array(unc_data$y_smp[2]),
+      p_obs_mixed_uncensored_in = as.array(unc_data$p_obs[2])
+    ),
+    empty_stream_in("left"),
+    empty_stream_in("right")
   )
 
   lp <- run_stan_harness(
@@ -108,24 +151,19 @@ test_that("uncensored likelihood accumulates binomial log-probabilities", {
 })
 
 test_that("left-censored likelihood accumulates binomial LCDF values", {
-  d_list <- list(
-    n_obs_uncensored = 0L,
-    y_obs_uncensored = integer(0),
-    y_smp_uncensored = integer(0),
-    p_obs_uncensored_in = numeric(0),
-    n_obs_left = length(lt_data$y_obs),
-    y_obs_left = lt_data$y_obs,
-    y_smp_left = lt_data$y_smp,
-    p_obs_left_in = lt_data$p_obs,
-    n_obs_right = 0L,
-    y_obs_right = integer(0),
-    y_smp_right = integer(0),
-    n_weights_right = 0L,
-    obs_to_weights_bounds_right = integer(0),
-    weights_life_year_right = integer(0),
-    weights_dose_right = integer(0),
-    n_yr = 1L,
-    p_obs_right_in = numeric(0)
+  d_list <- c(
+    empty_stream_in("uncensored"),
+    list(
+      n_obs_unmixed_left = 1L,
+      y_obs_unmixed_left = as.array(lt_data$y_obs[1]),
+      y_smp_unmixed_left = as.array(lt_data$y_smp[1]),
+      p_obs_unmixed_left_in = as.array(lt_data$p_obs[1]),
+      n_obs_mixed_left = 1L,
+      y_obs_mixed_left = as.array(lt_data$y_obs[2]),
+      y_smp_mixed_left = as.array(lt_data$y_smp[2]),
+      p_obs_mixed_left_in = as.array(lt_data$p_obs[2])
+    ),
+    empty_stream_in("right")
   )
 
   lp <- run_stan_harness(
@@ -145,24 +183,19 @@ test_that("left-censored likelihood accumulates binomial LCDF values", {
 })
 
 test_that("right-censored likelihood accumulates failure binomial LCDF values", {
-  d_list <- list(
-    n_obs_uncensored = 0L,
-    y_obs_uncensored = integer(0),
-    y_smp_uncensored = integer(0),
-    p_obs_uncensored_in = numeric(0),
-    n_obs_left = 0L,
-    y_obs_left = integer(0),
-    y_smp_left = integer(0),
-    p_obs_left_in = numeric(0),
-    n_obs_right = length(rt_data$y_obs),
-    y_obs_right = rt_data$y_obs,
-    y_smp_right = rt_data$y_smp,
-    n_weights_right = length(rt_data$y_obs),
-    obs_to_weights_bounds_right = seq_along(rt_data$y_obs),
-    weights_life_year_right = rep(1L, length(rt_data$y_obs)),
-    weights_dose_right = rep(1L, length(rt_data$y_obs)),
-    n_yr = 1L,
-    p_obs_right_in = rt_data$p_obs
+  d_list <- c(
+    empty_stream_in("uncensored"),
+    empty_stream_in("left"),
+    list(
+      n_obs_unmixed_right = 1L,
+      y_obs_unmixed_right = as.array(rt_data$y_obs[1]),
+      y_smp_unmixed_right = as.array(rt_data$y_smp[1]),
+      p_obs_unmixed_right_in = as.array(rt_data$p_obs[1]),
+      n_obs_mixed_right = 1L,
+      y_obs_mixed_right = as.array(rt_data$y_obs[2]),
+      y_smp_mixed_right = as.array(rt_data$y_smp[2]),
+      p_obs_mixed_right_in = as.array(rt_data$p_obs[2])
+    )
   )
 
   lp <- run_stan_harness(

@@ -1,6 +1,8 @@
 skip_if_not_installed("rstan")
 #' "functions/lookups.stan" defines
-#' `array[] int compute_cdf_lookup(array[] int life_year, array[] int dose, int n_yr, int n_doses)`
+#' `array[] int compute_cdf_lookup(
+#'   array[] int life_year, array[] int dose, int n_intervals, array[] int age_to_interval_map
+#' )`
 #' and `array[] int compute_phi_lookup(
 #'   array[] int cohort, array[] int location, int n_cohort, int n_locs
 #' )`
@@ -23,8 +25,9 @@ data {
   int N_cdf;
   array[N_cdf] int life_year;
   array[N_cdf] int dose;
-  int n_yr;
-  int n_doses;
+  int n_intervals;
+  int n_ages_map;
+  array[n_ages_map] int age_to_interval_map;
 
   int N_phi;
   array[N_phi] int cohort;
@@ -50,7 +53,9 @@ model {
   dummy ~ normal(0, 1);
 }
 generated quantities {
-  array[N_cdf] int out_cdf_lookup = compute_cdf_lookup(life_year, dose, n_yr, n_doses);
+  array[N_cdf] int out_cdf_lookup = compute_cdf_lookup(
+    life_year, dose, n_intervals, age_to_interval_map
+  );
   array[N_phi] int out_phi_lookup = compute_phi_lookup(cohort, location, n_cohort, n_locs);
   vector[n_obs_p] out_p_obs = compute_p_obs(
     n_obs_p,
@@ -71,8 +76,8 @@ generated quantities {
 test_that("compute_cdf_lookup maps (life_year, dose) pairs to 1D column-major indices", {
   life_year <- c(1L, 2L, 5L, 3L)
   dose <- c(1L, 1L, 2L, 3L)
-  n_yr <- 10L
-  n_doses <- 3L
+  age_map <- seq_len(10L)
+  n_intervals <- length(age_map)
 
   cdf_lookup <- run_stan_harness(
     model_lookups,
@@ -80,8 +85,9 @@ test_that("compute_cdf_lookup maps (life_year, dose) pairs to 1D column-major in
       N_cdf = length(life_year),
       life_year = life_year,
       dose = dose,
-      n_yr = n_yr,
-      n_doses = n_doses,
+      n_intervals = n_intervals,
+      n_ages_map = length(age_map),
+      age_to_interval_map = age_map,
       N_phi = 0L,
       cohort = integer(0),
       location = integer(0),
@@ -103,7 +109,7 @@ test_that("compute_cdf_lookup maps (life_year, dose) pairs to 1D column-major in
 
   expect_equal(
     as.numeric(cdf_lookup),
-    life_year + (dose - 1L) * n_yr
+    age_map[life_year] + (dose - 1L) * n_intervals
   )
 })
 
@@ -115,8 +121,9 @@ test_that("compute_cdf_lookup errors on out of bounds life_year", {
         N_cdf = 2L,
         life_year = c(0L, 2L),
         dose = c(1L, 1L),
-        n_yr = 5L,
-        n_doses = 3L,
+        n_intervals = 5L,
+        n_ages_map = 5L,
+        age_to_interval_map = seq_len(5L),
         N_phi = 0L,
         cohort = integer(0),
         location = integer(0),
@@ -145,8 +152,9 @@ test_that("compute_cdf_lookup errors on out of bounds life_year", {
         N_cdf = 2L,
         life_year = c(1L, 6L),
         dose = c(1L, 1L),
-        n_yr = 5L,
-        n_doses = 3L,
+        n_intervals = 5L,
+        n_ages_map = 5L,
+        age_to_interval_map = seq_len(5L),
         N_phi = 0L,
         cohort = integer(0),
         location = integer(0),
@@ -177,38 +185,9 @@ test_that("compute_cdf_lookup errors on out of bounds dose", {
         N_cdf = 2L,
         life_year = c(1L, 2L),
         dose = c(0L, 1L),
-        n_yr = 5L,
-        n_doses = 3L,
-        N_phi = 0L,
-        cohort = integer(0),
-        location = integer(0),
-        n_cohort = 1L,
-        n_locs = 1L,
-        n_obs_p = 0L,
-        n_weights_p = 0L,
-        n_phi_vec = 1L,
-        phi = as.array(0.2),
-        phi_lookup = integer(0),
-        n_unrolled_vec = 1L,
-        unrolled_dose_probs = as.array(0.8),
-        cdf_lookup = integer(0),
-        weights = numeric(0),
-        obs_map = matrix(integer(0), nrow = 2, ncol = 0)
-      ),
-      out_cdf_lookup
-    ),
-    "out of bounds"
-  )
-
-  expect_error(
-    run_stan_harness(
-      model_lookups,
-      data = list(
-        N_cdf = 2L,
-        life_year = c(1L, 2L),
-        dose = c(1L, 4L),
-        n_yr = 5L,
-        n_doses = 3L,
+        n_intervals = 5L,
+        n_ages_map = 5L,
+        age_to_interval_map = seq_len(5L),
         N_phi = 0L,
         cohort = integer(0),
         location = integer(0),
@@ -231,7 +210,7 @@ test_that("compute_cdf_lookup errors on out of bounds dose", {
   )
 })
 
-test_that("compute_cdf_lookup errors if n_yr or n_doses is less than 1", {
+test_that("compute_cdf_lookup errors if n_intervals is less than 1", {
   expect_error(
     run_stan_harness(
       model_lookups,
@@ -239,8 +218,9 @@ test_that("compute_cdf_lookup errors if n_yr or n_doses is less than 1", {
         N_cdf = 1L,
         life_year = as.array(1L),
         dose = as.array(1L),
-        n_yr = 0L,
-        n_doses = 3L,
+        n_intervals = 0L,
+        n_ages_map = 1L,
+        age_to_interval_map = as.array(1L),
         N_phi = 0L,
         cohort = integer(0),
         location = integer(0),
@@ -259,37 +239,7 @@ test_that("compute_cdf_lookup errors if n_yr or n_doses is less than 1", {
       ),
       out_cdf_lookup
     ),
-    "n_yr must be >= 1"
-  )
-
-  expect_error(
-    run_stan_harness(
-      model_lookups,
-      data = list(
-        N_cdf = 1L,
-        life_year = as.array(1L),
-        dose = as.array(1L),
-        n_yr = 5L,
-        n_doses = 0L,
-        N_phi = 0L,
-        cohort = integer(0),
-        location = integer(0),
-        n_cohort = 1L,
-        n_locs = 1L,
-        n_obs_p = 0L,
-        n_weights_p = 0L,
-        n_phi_vec = 1L,
-        phi = as.array(0.2),
-        phi_lookup = integer(0),
-        n_unrolled_vec = 1L,
-        unrolled_dose_probs = as.array(0.8),
-        cdf_lookup = integer(0),
-        weights = numeric(0),
-        obs_map = matrix(integer(0), nrow = 2, ncol = 0)
-      ),
-      out_cdf_lookup
-    ),
-    "n_doses must be >= 1"
+    "n_intervals must be >= 1"
   )
 })
 
@@ -305,8 +255,9 @@ test_that("compute_phi_lookup maps (cohort, location) pairs to 1D column-major i
       N_cdf = 0L,
       life_year = integer(0),
       dose = integer(0),
-      n_yr = 1L,
-      n_doses = 1L,
+      n_intervals = 1L,
+      n_ages_map = 1L,
+      age_to_interval_map = as.array(1L),
       N_phi = length(cohort),
       cohort = cohort,
       location = location,
@@ -340,8 +291,9 @@ test_that("compute_phi_lookup errors on out of bounds cohort", {
         N_cdf = 0L,
         life_year = integer(0),
         dose = integer(0),
-        n_yr = 1L,
-        n_doses = 1L,
+        n_intervals = 1L,
+        n_ages_map = 1L,
+        age_to_interval_map = as.array(1L),
         N_phi = 2L,
         cohort = c(0L, 2L),
         location = c(1L, 1L),
@@ -370,8 +322,9 @@ test_that("compute_phi_lookup errors on out of bounds cohort", {
         N_cdf = 0L,
         life_year = integer(0),
         dose = integer(0),
-        n_yr = 1L,
-        n_doses = 1L,
+        n_intervals = 1L,
+        n_ages_map = 1L,
+        age_to_interval_map = as.array(1L),
         N_phi = 2L,
         cohort = c(1L, 6L),
         location = c(1L, 1L),
@@ -402,8 +355,9 @@ test_that("compute_phi_lookup errors on out of bounds location", {
         N_cdf = 0L,
         life_year = integer(0),
         dose = integer(0),
-        n_yr = 1L,
-        n_doses = 1L,
+        n_intervals = 1L,
+        n_ages_map = 1L,
+        age_to_interval_map = as.array(1L),
         N_phi = 2L,
         cohort = c(1L, 2L),
         location = c(0L, 1L),
@@ -432,8 +386,9 @@ test_that("compute_phi_lookup errors on out of bounds location", {
         N_cdf = 0L,
         life_year = integer(0),
         dose = integer(0),
-        n_yr = 1L,
-        n_doses = 1L,
+        n_intervals = 1L,
+        n_ages_map = 1L,
+        age_to_interval_map = as.array(1L),
         N_phi = 2L,
         cohort = c(1L, 2L),
         location = c(1L, 4L),
@@ -464,8 +419,9 @@ test_that("compute_phi_lookup errors if n_cohort or n_locs is less than 1", {
         N_cdf = 0L,
         life_year = integer(0),
         dose = integer(0),
-        n_yr = 1L,
-        n_doses = 1L,
+        n_intervals = 1L,
+        n_ages_map = 1L,
+        age_to_interval_map = as.array(1L),
         N_phi = 1L,
         cohort = as.array(1L),
         location = as.array(1L),
@@ -494,8 +450,9 @@ test_that("compute_phi_lookup errors if n_cohort or n_locs is less than 1", {
         N_cdf = 0L,
         life_year = integer(0),
         dose = integer(0),
-        n_yr = 1L,
-        n_doses = 1L,
+        n_intervals = 1L,
+        n_ages_map = 1L,
+        age_to_interval_map = as.array(1L),
         N_phi = 1L,
         cohort = as.array(1L),
         location = as.array(1L),
@@ -546,8 +503,9 @@ test_that("compute_p_obs computes segmented weighted observation probabilities",
       N_cdf = 0L,
       life_year = integer(0),
       dose = integer(0),
-      n_yr = 1L,
-      n_doses = 1L,
+      n_intervals = 1L,
+      n_ages_map = 1L,
+      age_to_interval_map = as.array(1L),
       N_phi = 0L,
       cohort = integer(0),
       location = integer(0),
@@ -584,8 +542,9 @@ test_that("compute_p_obs handles empty observation segments (n_obs = 0)", {
       N_cdf = 0L,
       life_year = integer(0),
       dose = integer(0),
-      n_yr = 1L,
-      n_doses = 1L,
+      n_intervals = 1L,
+      n_ages_map = 1L,
+      age_to_interval_map = as.array(1L),
       N_phi = 0L,
       cohort = integer(0),
       location = integer(0),

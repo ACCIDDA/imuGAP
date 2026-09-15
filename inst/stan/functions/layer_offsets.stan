@@ -24,7 +24,10 @@ vector compute_hierarchical_phi(
   int n_cohort,
   int n_locs
 ) {
-  matrix[n_cohort, n_locs] logit_phi_mat = rep_matrix(logit_phi_st, n_locs) + rep_matrix(to_row_vector(logit_phi_loc), n_cohort);
+  matrix[n_cohort, n_locs] logit_phi_mat;
+  for (l in 1:n_locs) {
+    logit_phi_mat[:, l] = logit_phi_st + logit_phi_loc[l];
+  }
   return to_vector(inv_logit(logit_phi_mat));
 }
 
@@ -43,13 +46,34 @@ matrix get_weighted_qr_basis(vector w) {
   return Q[:, 2:K];
 }
 
-// Compute scaled layer offsets from unconstrained standard normal deviations
+// Compute scaled layer offsets from unconstrained deviations using block QR basis
 vector compute_layer_offsets(
-  matrix qr_basis,
+  int n_locs,
+  int n_parent_locs,
+  array[,] int parent_child_bounds,
+  array[,] int z_bounds,
+  array[,] int qr_bounds,
+  vector qr_entries,
   vector z_layer,
   vector loc_pop_scale,
   vector sigma_layer,
   array[] int loc_layer_idx
 ) {
-  return ((qr_basis * z_layer) .* loc_pop_scale) .* sigma_layer[loc_layer_idx];
+  vector[n_locs - 1] off_layer;
+  for (p in 1:n_parent_locs) {
+    int st = parent_child_bounds[1, p];
+    int en = parent_child_bounds[2, p];
+    int K = en - st + 1;
+    int z_st = z_bounds[1, p];
+    int z_en = z_bounds[2, p];
+    int q_st = qr_bounds[1, p];
+    int q_en = qr_bounds[2, p];
+
+    matrix[K, K - 1] Q_star = to_matrix(qr_entries[q_st:q_en], K, K - 1);
+    vector[K] raw_off = Q_star * z_layer[z_st:z_en];
+    int l_st = st - 1;
+    int l_en = en - 1;
+    off_layer[l_st:l_en] = (raw_off .* loc_pop_scale[l_st:l_en]) * sigma_layer[loc_layer_idx[l_st]];
+  }
+  return off_layer;
 }

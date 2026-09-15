@@ -6,18 +6,26 @@ make_test_stan_data <- function(
   n_layers = 1L,
   n_locs = 1L,
   n_parent_locs = 0L,
-  y_obs_uncensored = c(10L, 15L),
-  y_smp_uncensored = c(20L, 20L),
-  y_obs_right = integer(0),
-  y_smp_right = integer(0)
+  y_obs_unmixed_uncensored = c(10L, 15L),
+  y_smp_unmixed_uncensored = c(20L, 20L),
+  y_obs_mixed_uncensored = integer(0),
+  y_smp_mixed_uncensored = integer(0),
+  y_obs_unmixed_right = integer(0),
+  y_smp_unmixed_right = integer(0),
+  y_obs_mixed_right = integer(0),
+  y_smp_mixed_right = integer(0)
 ) {
   dat <- list(
     n_doses = n_doses,
     k_bs = k_bs,
-    y_obs_uncensored = y_obs_uncensored,
-    y_smp_uncensored = y_smp_uncensored,
-    y_obs_right = y_obs_right,
-    y_smp_right = y_smp_right
+    y_obs_unmixed_uncensored = y_obs_unmixed_uncensored,
+    y_smp_unmixed_uncensored = y_smp_unmixed_uncensored,
+    y_obs_mixed_uncensored = y_obs_mixed_uncensored,
+    y_smp_mixed_uncensored = y_smp_mixed_uncensored,
+    y_obs_unmixed_right = y_obs_unmixed_right,
+    y_smp_unmixed_right = y_smp_unmixed_right,
+    y_obs_mixed_right = y_obs_mixed_right,
+    y_smp_mixed_right = y_smp_mixed_right
   )
   if (n_layers >= 2L) {
     dat$n_layers <- n_layers
@@ -78,10 +86,10 @@ test_that("generate_inits handles multilayer hierarchy parameters", {
 
 test_that("generate_inits falls back to default coverage when observations are empty", {
   dat <- make_test_stan_data(
-    y_obs_uncensored = integer(0),
-    y_smp_uncensored = integer(0),
-    y_obs_right = integer(0),
-    y_smp_right = integer(0)
+    y_obs_unmixed_uncensored = integer(0),
+    y_smp_unmixed_uncensored = integer(0),
+    y_obs_unmixed_right = integer(0),
+    y_smp_unmixed_right = integer(0)
   )
   inits <- generate_inits(dat)
   expect_length(inits$beta_bs, dat$k_bs)
@@ -92,16 +100,16 @@ test_that("generate_inits falls back to default coverage when observations are e
 
 test_that("generate_inits falls back when total sample size is zero or results in NA/NaN", {
   dat_zero <- make_test_stan_data(
-    y_obs_uncensored = 0L,
-    y_smp_uncensored = 0L
+    y_obs_unmixed_uncensored = 0L,
+    y_smp_unmixed_uncensored = 0L
   )
   inits_zero <- generate_inits(dat_zero)
   expected_center <- stats::qlogis(0.15)
   expect_true(all(abs(inits_zero$beta_bs - expected_center) < 0.5))
 
   dat_na <- make_test_stan_data(
-    y_obs_uncensored = as.integer(NA),
-    y_smp_uncensored = 10L
+    y_obs_unmixed_uncensored = as.integer(NA),
+    y_smp_unmixed_uncensored = 10L
   )
   inits_na <- generate_inits(dat_na)
   expect_true(all(abs(inits_na$beta_bs - expected_center) < 0.5))
@@ -110,24 +118,27 @@ test_that("generate_inits falls back when total sample size is zero or results i
 test_that("generate_inits clamps baseline phi to [0.01, 0.5] for extreme coverage", {
   # High coverage (100%) maps to phi clamped to lower bound 0.01
   dat_high <- make_test_stan_data(
-    y_obs_uncensored = 100L,
-    y_smp_uncensored = 100L
+    y_obs_unmixed_uncensored = 100L,
+    y_smp_unmixed_uncensored = 100L
   )
   inits_high <- generate_inits(dat_high)
   expect_true(all(abs(inits_high$beta_bs - stats::qlogis(0.01)) < 0.5))
 
   # Low coverage (0%) maps to phi clamped to upper bound 0.5
-  dat_low <- make_test_stan_data(y_obs_uncensored = 0L, y_smp_uncensored = 100L)
+  dat_low <- make_test_stan_data(
+    y_obs_unmixed_uncensored = 0L,
+    y_smp_unmixed_uncensored = 100L
+  )
   inits_low <- generate_inits(dat_low)
   expect_true(all(abs(inits_low$beta_bs - stats::qlogis(0.5)) < 0.5))
 })
 
 test_that("generate_inits combines uncensored and right-censored observation data", {
   dat <- make_test_stan_data(
-    y_obs_uncensored = c(20L),
-    y_smp_uncensored = c(50L),
-    y_obs_right = c(40L),
-    y_smp_right = c(50L)
+    y_obs_unmixed_uncensored = c(20L),
+    y_smp_unmixed_uncensored = c(50L),
+    y_obs_unmixed_right = c(40L),
+    y_smp_unmixed_right = c(50L)
   )
   inits <- generate_inits(dat)
   # Combined sample gives 60% coverage, corresponding to phi of 0.40

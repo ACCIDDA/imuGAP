@@ -128,6 +128,13 @@ predict.imugap_fit <- function(
         0L,
         integer(0),
         integer(0),
+        integer(0),
+        integer(0),
+        integer(0),
+        integer(0),
+        0L,
+        integer(0),
+        integer(0),
         0L,
         integer(0),
         integer(0),
@@ -138,16 +145,23 @@ predict.imugap_fit <- function(
       ),
       paste0(
         c(
-          "n_obs",
-          "y_obs",
-          "y_smp",
-          "n_weights",
-          "obs_to_weights_bounds",
-          "weights_location",
-          "weights_cohort",
-          "weights_life_year",
-          "weights_dose",
-          "weights"
+          "n_obs_unmixed",
+          "y_obs_unmixed",
+          "y_smp_unmixed",
+          "w_cohort_unmixed",
+          "w_age_unmixed",
+          "w_dose_unmixed",
+          "w_loc_unmixed",
+          "n_obs_mixed",
+          "y_obs_mixed",
+          "y_smp_mixed",
+          "n_weights_mixed",
+          "obs_bounds_mixed",
+          "w_cohort_mixed",
+          "w_age_mixed",
+          "w_dose_mixed",
+          "w_loc_mixed",
+          "weights_mixed"
         ),
         "_",
         suffix
@@ -160,34 +174,56 @@ predict.imugap_fit <- function(
       nrow(target),
       rep(0L, nrow(target)),
       rep(1L, nrow(target)),
-      nrow(target),
-      seq_len(nrow(target)),
-      target$loc_c_id,
       target$cohort,
       target$age,
       target$dose,
-      target$weight
+      target$loc_c_id,
+      0L,
+      integer(0),
+      integer(0),
+      0L,
+      integer(0),
+      integer(0),
+      integer(0),
+      integer(0),
+      integer(0),
+      numeric(0)
     ),
     paste0(
       c(
-        "n_obs",
-        "y_obs",
-        "y_smp",
-        "n_weights",
-        "obs_to_weights_bounds",
-        "weights_location",
-        "weights_cohort",
-        "weights_life_year",
-        "weights_dose",
-        "weights"
+        "n_obs_unmixed",
+        "y_obs_unmixed",
+        "y_smp_unmixed",
+        "w_cohort_unmixed",
+        "w_age_unmixed",
+        "w_dose_unmixed",
+        "w_loc_unmixed",
+        "n_obs_mixed",
+        "y_obs_mixed",
+        "y_smp_mixed",
+        "n_weights_mixed",
+        "obs_bounds_mixed",
+        "w_cohort_mixed",
+        "w_age_mixed",
+        "w_dose_mixed",
+        "w_loc_mixed",
+        "weights_mixed"
       ),
       "_uncensored"
     )
   )
 
+  dose_schedule <- fit$settings$imugap_opts$dose_schedule
+  target_sched <- build_interval_schedule(
+    dose_schedule,
+    target$age,
+    fit$data$n_yr
+  )
+
   # Update the data object for prediction mode
   dat_stan <- fit$data
   updates <- c(
+    target_sched,
     target_stream,
     empty_stream("right"),
     empty_stream("left"),

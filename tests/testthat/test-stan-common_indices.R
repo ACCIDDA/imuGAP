@@ -40,17 +40,19 @@ model {
   dummy ~ normal(0, 1);
 }
 generated quantities {
-  array[2, n_obs_uncensored] int out_obs_map_unc = obs_map_uncensored;
-  array[n_weights_uncensored] int out_cdf_lookup_unc = cdf_lookup_uncensored;
-  array[n_weights_uncensored] int out_phi_lookup_unc = phi_lookup_uncensored;
+  array[2, n_obs_mixed_uncensored] int out_obs_map_unc = obs_map_mixed_uncensored;
+  array[n_obs_unmixed_uncensored] int out_cdf_lookup_unmix_unc = cdf_lookup_unmixed_uncensored;
+  array[n_weights_mixed_uncensored] int out_cdf_lookup_mix_unc = cdf_lookup_mixed_uncensored;
+  array[n_obs_unmixed_uncensored] int out_phi_lookup_unmix_unc = phi_lookup_unmixed_uncensored;
+  array[n_weights_mixed_uncensored] int out_phi_lookup_mix_unc = phi_lookup_mixed_uncensored;
 
-  array[2, n_obs_right] int out_obs_map_right = obs_map_right;
-  array[n_weights_right] int out_cdf_lookup_right = cdf_lookup_right;
-  array[n_weights_right] int out_phi_lookup_right = phi_lookup_right;
+  array[2, n_obs_mixed_right] int out_obs_map_right = obs_map_mixed_right;
+  array[n_obs_unmixed_right] int out_cdf_lookup_unmix_right = cdf_lookup_unmixed_right;
+  array[n_weights_mixed_right] int out_cdf_lookup_mix_right = cdf_lookup_mixed_right;
 
-  array[2, n_obs_left] int out_obs_map_left = obs_map_left;
-  array[n_weights_left] int out_cdf_lookup_left = cdf_lookup_left;
-  array[n_weights_left] int out_phi_lookup_left = phi_lookup_left;
+  array[2, n_obs_mixed_left] int out_obs_map_left = obs_map_mixed_left;
+  array[n_obs_unmixed_left] int out_cdf_lookup_unmix_left = cdf_lookup_unmixed_left;
+  array[n_weights_mixed_left] int out_cdf_lookup_mix_left = cdf_lookup_mixed_left;
 }
 "
 ) |>
@@ -61,6 +63,8 @@ test_that("structural data and transformed indices create compliant lookup and r
   n_cohort <- 4L
   n_doses <- 2L
   n_locs <- 6L
+  n_intervals <- 5L
+  age_to_interval_map <- seq_len(n_yr)
 
   # Structural location hierarchy data
   n_layers <- 2L
@@ -69,33 +73,28 @@ test_that("structural data and transformed indices create compliant lookup and r
   parent_loc_id <- 1L
   parent_child_starts <- 2L
 
-  # Uncensored subset
-  obs_bounds_unc <- c(1L, 3L)
-  w_cohort_unc <- c(1L, 2L, 3L, 4L)
-  w_dose_unc <- c(1L, 1L, 2L, 2L)
-  w_life_year_unc <- c(1L, 2L, 1L, 3L)
-  w_loc_unc <- c(1L, 2L, 3L, 4L)
+  # Uncensored subset: 1 unmixed observation and 1 mixed observation (2 weights)
+  obs_unmix_unc <- 1L
+  w_cohort_unmix_unc <- 1L
+  w_dose_unmix_unc <- 1L
+  w_age_unmix_unc <- 1L
+  w_loc_unmix_unc <- 1L
 
-  # Right-censored subset
-  obs_bounds_right <- 1L
-  w_cohort_right <- c(2L, 3L)
-  w_dose_right <- c(1L, 2L)
-  w_life_year_right <- c(2L, 4L)
-  w_loc_right <- c(2L, 5L)
-
-  # Left-censored subset
-  obs_bounds_left <- 1L
-  w_cohort_left <- c(1L, 4L)
-  w_dose_left <- c(2L, 2L)
-  w_life_year_left <- c(3L, 5L)
-  w_loc_left <- c(3L, 6L)
+  obs_bounds_mix_unc <- 1L
+  w_cohort_mix_unc <- c(2L, 3L)
+  w_dose_mix_unc <- c(1L, 2L)
+  w_age_mix_unc <- c(2L, 1L)
+  w_loc_mix_unc <- c(2L, 3L)
 
   data_list <- list(
     # Structural parameters
     n_yr = n_yr,
     n_cohort = n_cohort,
     n_doses = n_doses,
-    dose_sched = matrix(1, nrow = n_yr, ncol = n_doses),
+    n_intervals = n_intervals,
+    dt_vec = rep(1.0, n_intervals),
+    dose_sched = matrix(1, nrow = n_intervals, ncol = n_doses),
+    age_to_interval_map = age_to_interval_map,
     predict_mode = 0L,
     # Locations
     n_locs = n_locs,
@@ -106,38 +105,60 @@ test_that("structural data and transformed indices create compliant lookup and r
     parent_child_starts = as.array(parent_child_starts),
     loc_population = rep(1.0, n_locs),
     # Uncensored data
-    n_obs_uncensored = length(obs_bounds_unc),
-    y_obs_uncensored = rep(10L, length(obs_bounds_unc)),
-    y_smp_uncensored = rep(20L, length(obs_bounds_unc)),
-    n_weights_uncensored = length(w_dose_unc),
-    obs_to_weights_bounds_uncensored = obs_bounds_unc,
-    weights_cohort_uncensored = w_cohort_unc,
-    weights_life_year_uncensored = w_life_year_unc,
-    weights_dose_uncensored = w_dose_unc,
-    weights_uncensored = rep(0.5, length(w_dose_unc)),
-    weights_location_uncensored = w_loc_unc,
-    # Right-censored data
-    n_obs_right = length(obs_bounds_right),
-    y_obs_right = as.array(rep(5L, length(obs_bounds_right))),
-    y_smp_right = as.array(rep(15L, length(obs_bounds_right))),
-    n_weights_right = length(w_dose_right),
-    obs_to_weights_bounds_right = as.array(obs_bounds_right),
-    weights_cohort_right = w_cohort_right,
-    weights_life_year_right = w_life_year_right,
-    weights_dose_right = w_dose_right,
-    weights_right = rep(0.5, length(w_dose_right)),
-    weights_location_right = w_loc_right,
-    # Left-censored data
-    n_obs_left = length(obs_bounds_left),
-    y_obs_left = as.array(rep(3L, length(obs_bounds_left))),
-    y_smp_left = as.array(rep(12L, length(obs_bounds_left))),
-    n_weights_left = length(w_dose_left),
-    obs_to_weights_bounds_left = as.array(obs_bounds_left),
-    weights_cohort_left = w_cohort_left,
-    weights_life_year_left = w_life_year_left,
-    weights_dose_left = w_dose_left,
-    weights_left = rep(0.5, length(w_dose_left)),
-    weights_location_left = w_loc_left
+    n_obs_unmixed_uncensored = 1L,
+    y_obs_unmixed_uncensored = as.array(10L),
+    y_smp_unmixed_uncensored = as.array(20L),
+    w_cohort_unmixed_uncensored = as.array(w_cohort_unmix_unc),
+    w_age_unmixed_uncensored = as.array(w_age_unmix_unc),
+    w_dose_unmixed_uncensored = as.array(w_dose_unmix_unc),
+    w_loc_unmixed_uncensored = as.array(w_loc_unmix_unc),
+    n_obs_mixed_uncensored = 1L,
+    y_obs_mixed_uncensored = as.array(10L),
+    y_smp_mixed_uncensored = as.array(20L),
+    n_weights_mixed_uncensored = length(w_cohort_mix_unc),
+    obs_bounds_mixed_uncensored = as.array(obs_bounds_mix_unc),
+    w_cohort_mixed_uncensored = w_cohort_mix_unc,
+    w_age_mixed_uncensored = w_age_mix_unc,
+    w_dose_mixed_uncensored = w_dose_mix_unc,
+    w_loc_mixed_uncensored = w_loc_mix_unc,
+    weights_mixed_uncensored = rep(0.5, length(w_cohort_mix_unc)),
+    # Right-censored data (empty)
+    n_obs_unmixed_right = 0L,
+    y_obs_unmixed_right = integer(0),
+    y_smp_unmixed_right = integer(0),
+    w_cohort_unmixed_right = integer(0),
+    w_age_unmixed_right = integer(0),
+    w_dose_unmixed_right = integer(0),
+    w_loc_unmixed_right = integer(0),
+    n_obs_mixed_right = 0L,
+    y_obs_mixed_right = integer(0),
+    y_smp_mixed_right = integer(0),
+    n_weights_mixed_right = 0L,
+    obs_bounds_mixed_right = integer(0),
+    w_cohort_mixed_right = integer(0),
+    w_age_mixed_right = integer(0),
+    w_dose_mixed_right = integer(0),
+    w_loc_mixed_right = integer(0),
+    weights_mixed_right = numeric(0),
+    # Left-censored data (empty)
+    n_obs_unmixed_left = 0L,
+    y_obs_unmixed_left = integer(0),
+    y_smp_unmixed_left = integer(0),
+    w_cohort_unmixed_left = integer(0),
+    w_age_unmixed_left = integer(0),
+    w_dose_unmixed_left = integer(0),
+    w_loc_unmixed_left = integer(0),
+    n_obs_mixed_left = 0L,
+    y_obs_mixed_left = integer(0),
+    y_smp_mixed_left = integer(0),
+    n_weights_left = 0L,
+    n_weights_mixed_left = 0L,
+    obs_bounds_mixed_left = integer(0),
+    w_cohort_mixed_left = integer(0),
+    w_age_mixed_left = integer(0),
+    w_dose_mixed_left = integer(0),
+    w_loc_mixed_left = integer(0),
+    weights_mixed_left = numeric(0)
   )
 
   results <- run_stan_harness(
@@ -146,47 +167,25 @@ test_that("structural data and transformed indices create compliant lookup and r
   )
 
   # Uncensored range and lookups
-  expect_equal(results$out_obs_map_unc[1, ], obs_bounds_unc)
+  expect_equal(results$out_obs_map_unc[1, ], obs_bounds_mix_unc)
   expect_equal(
     results$out_obs_map_unc[2, ],
-    c(tail(obs_bounds_unc, -1) - 1L, length(w_dose_unc))
+    c(tail(obs_bounds_mix_unc, -1) - 1L, length(w_cohort_mix_unc))
   )
   expect_equal(
-    as.numeric(results$out_cdf_lookup_unc),
-    w_life_year_unc + (w_dose_unc - 1L) * n_yr
+    as.numeric(results$out_cdf_lookup_unmix_unc),
+    age_to_interval_map[w_age_unmix_unc] + (w_dose_unmix_unc - 1L) * n_intervals
   )
   expect_equal(
-    as.numeric(results$out_phi_lookup_unc),
-    w_cohort_unc + (w_loc_unc - 1L) * n_cohort
-  )
-
-  # Right-censored range and lookups
-  expect_equal(results$out_obs_map_right[1, ], obs_bounds_right)
-  expect_equal(
-    results$out_obs_map_right[2, ],
-    c(tail(obs_bounds_right, -1) - 1L, length(w_dose_right))
+    as.numeric(results$out_phi_lookup_unmix_unc),
+    w_cohort_unmix_unc + (w_loc_unmix_unc - 1L) * n_cohort
   )
   expect_equal(
-    as.numeric(results$out_cdf_lookup_right),
-    w_life_year_right + (w_dose_right - 1L) * n_yr
+    as.numeric(results$out_cdf_lookup_mix_unc),
+    age_to_interval_map[w_age_mix_unc] + (w_dose_mix_unc - 1L) * n_intervals
   )
   expect_equal(
-    as.numeric(results$out_phi_lookup_right),
-    w_cohort_right + (w_loc_right - 1L) * n_cohort
-  )
-
-  # Left-censored range and lookups
-  expect_equal(results$out_obs_map_left[1, ], obs_bounds_left)
-  expect_equal(
-    results$out_obs_map_left[2, ],
-    c(tail(obs_bounds_left, -1) - 1L, length(w_dose_left))
-  )
-  expect_equal(
-    as.numeric(results$out_cdf_lookup_left),
-    w_life_year_left + (w_dose_left - 1L) * n_yr
-  )
-  expect_equal(
-    as.numeric(results$out_phi_lookup_left),
-    w_cohort_left + (w_loc_left - 1L) * n_cohort
+    as.numeric(results$out_phi_lookup_mix_unc),
+    w_cohort_mix_unc + (w_loc_mix_unc - 1L) * n_cohort
   )
 })

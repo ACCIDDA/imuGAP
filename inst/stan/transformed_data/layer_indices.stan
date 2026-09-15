@@ -22,14 +22,32 @@ for (k in 1:(n_layers - 1)) {
   }
 }
 
-// Precomputed block-diagonal QR basis for per-parent weighted balanced offsets
+// Precomputed per-parent block QR basis for weighted balanced offsets
 int n_unconstrained_offsets = (n_locs - 1) - n_parent_locs;
-matrix[n_locs - 1, n_unconstrained_offsets] qr_basis = rep_matrix(0.0, n_locs - 1, n_unconstrained_offsets);
-int col_offset = 0;
+
+int n_qr_entries = 0;
+for (p in 1:n_parent_locs) {
+  int K = parent_child_bounds[2, p] - parent_child_bounds[1, p] + 1;
+  n_qr_entries += K * (K - 1);
+}
+
+array[2, n_parent_locs] int z_bounds;
+array[2, n_parent_locs] int qr_bounds;
+vector[n_qr_entries] qr_entries;
+
+int cur_z = 1;
+int cur_qr = 1;
 for (p in 1:n_parent_locs) {
   int st = parent_child_bounds[1, p];
   int en = parent_child_bounds[2, p];
   int K = en - st + 1;
+
+  z_bounds[1, p] = cur_z;
+  z_bounds[2, p] = cur_z + K - 2;
+
+  qr_bounds[1, p] = cur_qr;
+  qr_bounds[2, p] = cur_qr + K * (K - 1) - 1;
+
   vector[K] pop_slice = loc_population[st:en];
   real sum_pop = sum(pop_slice);
   vector[K] w;
@@ -40,6 +58,8 @@ for (p in 1:n_parent_locs) {
   }
   vector[K] w_prime = sqrt(w);
   matrix[K, K - 1] Q_star = get_weighted_qr_basis(w_prime);
-  qr_basis[(st - 1):(en - 1), (col_offset + 1):(col_offset + K - 1)] = Q_star;
-  col_offset += (K - 1);
+  qr_entries[cur_qr:(cur_qr + K * (K - 1) - 1)] = to_vector(Q_star);
+
+  cur_z += (K - 1);
+  cur_qr += K * (K - 1);
 }

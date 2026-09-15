@@ -51,14 +51,14 @@ generated quantities {
   compile_stan_harness()
 
 test_that("single_phi.stan computes observation probabilities accurately", {
-  obs_bounds <- as.array(1L)
   w_cohort <- c(1L, 2L)
   w_dose <- c(1L, 1L)
-  w_life_year <- c(1L, 2L)
+  w_age <- c(1L, 2L)
   weights <- c(0.5, 0.5)
 
   bs <- matrix(c(1.0, 0.0, 0.0, 1.0), nrow = 2L, ncol = 2L)
   dose_sched <- matrix(c(1.0, 1.0), nrow = 2L, ncol = 1L)
+  n_intervals <- nrow(dose_sched)
   beta_bs <- c(0.0, 0.0)
   lambda_val <- 1.0
 
@@ -67,17 +67,26 @@ test_that("single_phi.stan computes observation probabilities accurately", {
       n_yr = nrow(dose_sched),
       n_cohort = nrow(bs),
       n_doses = ncol(dose_sched),
+      n_intervals = n_intervals,
+      dt_vec = rep(1.0, n_intervals),
       dose_sched = dose_sched,
+      age_to_interval_map = seq_len(nrow(dose_sched)),
       predict_mode = 0L,
-      n_obs_uncensored = length(obs_bounds),
-      y_obs_uncensored = as.array(rep(10L, length(obs_bounds))),
-      y_smp_uncensored = as.array(rep(20L, length(obs_bounds))),
-      n_weights_uncensored = length(w_cohort),
-      obs_to_weights_bounds_uncensored = obs_bounds,
-      weights_cohort_uncensored = w_cohort,
-      weights_dose_uncensored = w_dose,
-      weights_life_year_uncensored = w_life_year,
-      weights_uncensored = weights
+      n_obs_unmixed_uncensored = 1L,
+      y_obs_unmixed_uncensored = as.array(10L),
+      y_smp_unmixed_uncensored = as.array(20L),
+      w_cohort_unmixed_uncensored = as.array(1L),
+      w_age_unmixed_uncensored = as.array(1L),
+      w_dose_unmixed_uncensored = as.array(1L),
+      n_obs_mixed_uncensored = 1L,
+      y_obs_mixed_uncensored = as.array(10L),
+      y_smp_mixed_uncensored = as.array(20L),
+      n_weights_mixed_uncensored = length(w_cohort),
+      obs_bounds_mixed_uncensored = as.array(1L),
+      w_cohort_mixed_uncensored = w_cohort,
+      w_age_mixed_uncensored = w_age,
+      w_dose_mixed_uncensored = w_dose,
+      weights_mixed_uncensored = weights
     ),
     empty_obs_stream("right"),
     empty_obs_stream("left"),
@@ -89,15 +98,23 @@ test_that("single_phi.stan computes observation probabilities accurately", {
     )
   )
 
-  p_obs <- run_stan_harness(
+  p_mix <- run_stan_harness(
     model_single_phi,
     data = data_list,
-    p_obs_uncensored
+    p_obs_mixed_uncensored
+  )
+  p_unmix <- run_stan_harness(
+    model_single_phi,
+    data = data_list,
+    p_obs_unmixed_uncensored
   )
 
   # Analytical closed form expectation:
   phi_inv <- 1.0 - stats::plogis(0)
-  cdfs <- 1.0 - exp(-lambda_val * w_life_year)
-  expected_p <- sum(weights * phi_inv * cdfs)
-  expect_equal(p_obs, expected_p, tolerance = 1e-6)
+  cdfs <- 1.0 - exp(-lambda_val * w_age)
+  expected_p_mix <- sum(weights * phi_inv * cdfs)
+  expect_equal(p_mix, expected_p_mix, tolerance = 1e-6)
+
+  expected_p_unmix <- phi_inv * (1.0 - exp(-lambda_val * 1.0))
+  expect_equal(p_unmix, expected_p_unmix, tolerance = 1e-6)
 })
