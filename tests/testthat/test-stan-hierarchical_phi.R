@@ -102,19 +102,18 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
       dose_sched = dose_sched,
       age_to_interval_map = seq_len(nrow(dose_sched)),
       predict_mode = 0L,
-      n_obs_uncensored = length(obs_bounds),
-      y_obs_uncensored = rep(10L, length(obs_bounds)),
-      y_smp_uncensored = rep(20L, length(obs_bounds)),
       # Unmixed subset (observation 3)
       n_obs_unmixed_uncensored = 1L,
-      unmixed_orig_order_uncensored = as.array(3L),
+      y_obs_unmixed_uncensored = as.array(10L),
+      y_smp_unmixed_uncensored = as.array(20L),
       w_cohort_unmixed_uncensored = as.array(2L),
       w_age_unmixed_uncensored = as.array(2L),
       w_dose_unmixed_uncensored = as.array(1L),
       w_loc_unmixed_uncensored = as.array(5L),
       # Mixed subset (observations 1 & 2)
       n_obs_mixed_uncensored = 2L,
-      mixed_orig_order_uncensored = c(1L, 2L),
+      y_obs_mixed_uncensored = c(10L, 10L),
+      y_smp_mixed_uncensored = c(20L, 20L),
       n_weights_mixed_uncensored = 4L,
       obs_bounds_mixed_uncensored = c(1L, 3L),
       w_cohort_mixed_uncensored = c(1L, 2L, 1L, 2L),
@@ -136,14 +135,21 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
     )
   )
 
-  p_obs <- run_stan_harness(
+  p_unmix <- run_stan_harness(
     model_hierarchical_phi,
     data = data_list,
-    p_obs_uncensored
+    p_obs_unmixed_uncensored
+  )
+  p_mix <- run_stan_harness(
+    model_hierarchical_phi,
+    data = data_list,
+    p_obs_mixed_uncensored
   )
 
-  expect_length(p_obs, length(obs_bounds))
-  expect_true(all(p_obs > 0 & p_obs < 1))
+  expect_length(p_unmix, 1L)
+  expect_length(p_mix, 2L)
+  expect_true(all(p_unmix > 0 & p_unmix < 1))
+  expect_true(all(p_mix > 0 & p_mix < 1))
 
   # Analytical closed-form expectation:
   # 1. Accumulate spatial offsets across layers
@@ -222,5 +228,6 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
     numeric(1)
   )
 
-  expect_equal(as.numeric(p_obs), expected_p, tolerance = 1e-6)
+  expect_equal(as.numeric(p_mix), expected_p[1:2], tolerance = 1e-6)
+  expect_equal(as.numeric(p_unmix), expected_p[3], tolerance = 1e-6)
 })

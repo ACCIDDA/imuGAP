@@ -1,3 +1,11 @@
+real exp_diff_div(real r1, real r2) {
+  real delta = r1 - r2;
+  if (abs(delta) < 1e-5) {
+    return exp(-r1) * (1.0 + delta * (0.5 + delta * ((1.0 / 6.0) + delta * ((1.0 / 24.0) + delta * (1.0 / 120.0)))));
+  }
+  return exp(-r1) * expm1(delta) / delta;
+}
+
 vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sched, vector lambda_raw) {
   int n_states = n_doses + 1;
   vector[n_doses] lambda = exp(lambda_raw);
@@ -30,10 +38,8 @@ vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sc
         p12 = 0.0;
       } else if (r2 == 0.0) {
         p12 = 1.0 - e1;
-      } else if (abs(r1 - r2) < 1e-7) {
-        p12 = r1 * e1;
       } else {
-        p12 = (r1 / (r2 - r1)) * (e1 - e2);
+        p12 = r1 * exp_diff_div(r1, r2);
       }
       real p13 = 1.0 - p11 - p12;
       real p22 = e2;
@@ -56,10 +62,8 @@ vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sc
         p12 = 0.0;
       } else if (r2 == 0.0) {
         p12 = 1.0 - e1;
-      } else if (abs(r1 - r2) < 1e-7) {
-        p12 = r1 * e1;
       } else {
-        p12 = (r1 / (r2 - r1)) * (e1 - e2);
+        p12 = r1 * exp_diff_div(r1, r2);
       }
 
       real p13;
@@ -68,13 +72,13 @@ vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sc
       } else if (r3 == 0.0) {
         p13 = 1.0 - p11 - p12;
       } else {
-        real d12 = r2 - r1;
+        real diff12 = exp_diff_div(r1, r2);
+        real diff23 = exp_diff_div(r2, r3);
         real d13 = r3 - r1;
-        real d23 = r3 - r2;
-        if (abs(d12) > 1e-7 && abs(d13) > 1e-7 && abs(d23) > 1e-7) {
-          p13 = r1 * r2 * (e1 / (d12 * d13) - e2 / (d12 * d23) + e3 / (d13 * d23));
+        if (abs(d13) < 1e-5) {
+          p13 = 0.5 * r1 * r2 * e1;
         } else {
-          p13 = 0.5 * r1 * r1 * e1;
+          p13 = r1 * r2 * (diff12 - diff23) / d13;
         }
       }
       real p14 = 1.0 - p11 - p12 - p13;
@@ -85,10 +89,8 @@ vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sc
         p23 = 0.0;
       } else if (r3 == 0.0) {
         p23 = 1.0 - e2;
-      } else if (abs(r2 - r3) < 1e-7) {
-        p23 = r2 * e2;
       } else {
-        p23 = (r2 / (r3 - r2)) * (e2 - e3);
+        p23 = r2 * exp_diff_div(r2, r3);
       }
       real p24 = 1.0 - p22 - p23;
 
