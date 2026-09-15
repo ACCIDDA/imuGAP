@@ -1,10 +1,17 @@
-vector[n_obs_left] p_obs_left = compute_p_obs(
-  n_obs_left,
-  n_weights_left,
-  phi,
-  phi_lookup_left,
-  unrolled_dose_probs,
-  cdf_lookup_left,
-  weights_left,
-  obs_map_left
-);
+vector[n_obs_left] p_obs_left;
+if (n_obs_unmixed_left > 0) {
+  p_obs_left[unmixed_orig_order_left] =
+    (1.0 - phi[phi_lookup_unmixed_left]) .* unrolled_dose_probs[cdf_lookup_unmixed_left];
+}
+if (n_obs_mixed_left > 0) {
+  p_obs_left[mixed_orig_order_left] = compute_p_obs(
+    n_obs_mixed_left,
+    n_weights_mixed_left,
+    phi,
+    phi_lookup_mixed_left,
+    unrolled_dose_probs,
+    cdf_lookup_mixed_left,
+    weights_mixed_left,
+    obs_map_mixed_left
+  );
+}

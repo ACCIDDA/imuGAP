@@ -1,27 +1,35 @@
 // The unrolled dose CDF vector is arranged in column-major order:
-// all life years for dose 1 (1:n_yr), then all life years for dose 2, up to dose n_doses.
-// This function maps (life_year, dose) pairs to their 1D index: life_year + (dose - 1) * n_yr.
-array[] int compute_cdf_lookup(array[] int life_year, array[] int dose, int n_yr, int n_doses) {
+// all interval endpoints for dose 1 (1:n_intervals), then all for dose 2, up to dose n_doses.
+// This function maps (life_year, dose) pairs to their 1D index:
+// age_to_interval_map[life_year] + (dose - 1) * n_intervals.
+array[] int compute_cdf_lookup(
+  array[] int life_year,
+  array[] int dose,
+  int n_intervals,
+  array[] int age_to_interval_map
+) {
   int n_ly = size(life_year);
   int n_d = size(dose);
+  int n_ages = size(age_to_interval_map);
   if (n_ly != n_d) {
     reject("Array size mismatch: size(life_year) = ", n_ly, " != size(dose) = ", n_d);
   }
-  if (n_yr < 1) {
-    reject("n_yr must be >= 1, but found n_yr = ", n_yr);
-  }
-  if (n_doses < 1) {
-    reject("n_doses must be >= 1, but found n_doses = ", n_doses);
+  if (n_intervals < 1) {
+    reject("n_intervals must be >= 1, but found n_intervals = ", n_intervals);
   }
   array[n_ly] int cdf_lookup;
   for (i in 1:n_ly) {
-    if (life_year[i] < 1 || life_year[i] > n_yr) {
-      reject("life_year[", i, "] = ", life_year[i], " is out of bounds [1, ", n_yr, "]");
+    if (life_year[i] < 1 || life_year[i] > n_ages) {
+      reject("life_year[", i, "] = ", life_year[i], " is out of bounds [1, ", n_ages, "]");
     }
-    if (dose[i] < 1 || dose[i] > n_doses) {
-      reject("dose[", i, "] = ", dose[i], " is out of bounds [1, ", n_doses, "]");
+    if (dose[i] < 1) {
+      reject("dose[", i, "] = ", dose[i], " is out of bounds (< 1)");
     }
-    cdf_lookup[i] = life_year[i] + (dose[i] - 1) * n_yr;
+    int interval_idx = age_to_interval_map[life_year[i]];
+    if (interval_idx < 1 || interval_idx > n_intervals) {
+      reject("Mapped interval index ", interval_idx, " out of bounds [1, ", n_intervals, "]");
+    }
+    cdf_lookup[i] = interval_idx + (dose[i] - 1) * n_intervals;
   }
   return cdf_lookup;
 }
@@ -70,8 +78,14 @@ vector compute_p_obs(
   vector[n_obs] p;
   if (n_obs > 0) {
     vector[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
-    for (i in 1:n_obs) {
-      p[i] = sum(weighted[obs_map[1, i]:obs_map[2, i]]);
+    if (n_obs == n_weights) {
+      p = weighted;
+    } else {
+      for (i in 1:n_obs) {
+        int st = obs_map[1, i];
+        int en = obs_map[2, i];
+        p[i] = (st == en) ? weighted[st] : sum(weighted[st:en]);
+      }
     }
   }
   return p;
