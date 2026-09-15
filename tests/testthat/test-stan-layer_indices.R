@@ -40,7 +40,10 @@ generated quantities {
   array[2, n_parent_locs] int out_parent_child_bounds = parent_child_bounds;
   array[n_locs - 1] int out_loc_layer_idx = loc_layer_idx;
   int out_n_unconstrained_offsets = n_unconstrained_offsets;
-  matrix[n_locs - 1, n_unconstrained_offsets] out_qr_basis = qr_basis;
+  int out_n_qr_entries = n_qr_entries;
+  array[2, n_parent_locs] int out_z_bounds = z_bounds;
+  array[2, n_parent_locs] int out_qr_bounds = qr_bounds;
+  vector[n_qr_entries] out_qr_entries = qr_entries;
   vector[n_locs - 1] out_loc_pop_scale = loc_pop_scale;
 }
 ",
@@ -50,8 +53,8 @@ generated quantities {
 
 test_that("layer_indices.stan constructs multi-layer mappings with canonical hierarchy", {
   data("locations_sim", package = "imuGAP")
-  locs_sim <- canonicalize_locations(locations_sim)
-  ld_sim <- assemble_layer_data(locs_sim)
+  locs_sim <- imuGAP:::canonicalize_locations(locations_sim)
+  ld_sim <- imuGAP:::assemble_layer_data(locs_sim)
 
   layer_bounds <- run_stan_harness(
     model_layer_indices,
@@ -92,13 +95,28 @@ test_that("layer_indices.stan constructs multi-layer mappings with canonical hie
     c(rep(1L, layer_sizes[2]), rep(2L, layer_sizes[3]))
   )
 
-  qr_basis <- run_stan_harness(
+  n_unconstrained <- run_stan_harness(
     model_layer_indices,
     data = ld_sim,
-    out_qr_basis
+    out_n_unconstrained_offsets
   )
-  expect_equal(nrow(qr_basis), ld_sim$n_locs - 1L)
-  expect_equal(ncol(qr_basis), (ld_sim$n_locs - 1L) - ld_sim$n_parent_locs)
+  expect_equal(n_unconstrained, (ld_sim$n_locs - 1L) - ld_sim$n_parent_locs)
+
+  z_bounds <- run_stan_harness(
+    model_layer_indices,
+    data = ld_sim,
+    out_z_bounds
+  )
+  qr_bounds <- run_stan_harness(
+    model_layer_indices,
+    data = ld_sim,
+    out_qr_bounds
+  )
+  qr_entries <- run_stan_harness(
+    model_layer_indices,
+    data = ld_sim,
+    out_qr_entries
+  )
 
   loc_pop_scale <- run_stan_harness(
     model_layer_indices,
@@ -121,11 +139,66 @@ test_that("layer_indices.stan constructs multi-layer mappings with canonical hie
     )
   }
 
-  # Verify per-parent balanced delta: sum_{i in children(p)} N_i * off_layer_i == 0
+  # 1. Verify orthonormal nullspace basis properties for every parent block
+  for (p in seq_len(ld_sim$n_parent_locs)) {
+    st <- parent_child_bounds[1, p]
+    en <- parent_child_bounds[2, p]
+    k_len <- en - st + 1L
+    q_st <- qr_bounds[1, p]
+    q_en <- qr_bounds[2, p]
+    q_star <- matrix(qr_entries[q_st:q_en], nrow = k_len, ncol = k_len - 1L)
+
+    # Orthonormality: Q*^T Q* = I
+    expect_equal(t(q_star) %*% q_star, diag(k_len - 1L), tolerance = 1e-6)
+
+    # Orthogonality to sqrt(population weights): v1^T Q* = 0
+    pop_slice <- ld_sim$loc_population[st:en]
+    w_sqrt <- sqrt(pop_slice / sum(pop_slice))
+    expect_equal(
+      as.numeric(t(q_star) %*% w_sqrt),
+      rep(0, k_len - 1L),
+      tolerance = 1e-6
+    )
+  }
+
+  # 2. Compare block QR transformation directly against full-matrix formulation
+  qr_basis_dense <- matrix(0, nrow = ld_sim$n_locs - 1L, ncol = n_unconstrained)
+  for (p in seq_len(ld_sim$n_parent_locs)) {
+    st <- parent_child_bounds[1, p]
+    en <- parent_child_bounds[2, p]
+    k_len <- en - st + 1L
+    z_st <- z_bounds[1, p]
+    z_en <- z_bounds[2, p]
+    q_st <- qr_bounds[1, p]
+    q_en <- qr_bounds[2, p]
+    q_star <- matrix(qr_entries[q_st:q_en], nrow = k_len, ncol = k_len - 1L)
+    qr_basis_dense[(st - 1L):(en - 1L), z_st:z_en] <- q_star
+  }
+
   set.seed(123)
-  n_unconstrained <- (ld_sim$n_locs - 1L) - ld_sim$n_parent_locs
   z_draw <- rnorm(n_unconstrained)
-  off_layer <- as.vector((qr_basis %*% z_draw) * loc_pop_scale)
+  raw_off_stan <- numeric(ld_sim$n_locs - 1L)
+  for (p in seq_len(ld_sim$n_parent_locs)) {
+    st <- parent_child_bounds[1, p]
+    en <- parent_child_bounds[2, p]
+    k_len <- en - st + 1L
+    z_st <- z_bounds[1, p]
+    z_en <- z_bounds[2, p]
+    q_st <- qr_bounds[1, p]
+    q_en <- qr_bounds[2, p]
+    q_star <- matrix(qr_entries[q_st:q_en], nrow = k_len, ncol = k_len - 1L)
+    raw_off_stan[(st - 1L):(en - 1L)] <- as.vector(q_star %*% z_draw[z_st:z_en])
+  }
+
+  # Confirm exact equality with original full-matrix multiplication
+  expect_equal(
+    raw_off_stan,
+    as.vector(qr_basis_dense %*% z_draw),
+    tolerance = 1e-6
+  )
+
+  # Verify per-parent balanced delta: sum_{i in children(p)} N_i * off_layer_i == 0
+  off_layer <- raw_off_stan * loc_pop_scale
   for (p in seq_len(ld_sim$n_parent_locs)) {
     st <- parent_child_bounds[1, p]
     en <- parent_child_bounds[2, p]
