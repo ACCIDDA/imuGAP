@@ -5,7 +5,7 @@ ERR_EXTRACT_RSTAN_ONLY <- paste0(
   "refit with stan_options(backend = 'rstan')"
 )
 ERR_DOSE_SCHEDULE_EMPTY <- "`dose_schedule` must not be empty"
-ERR_DOSE_SCHEDULE_OUT_OF_BOUNDS <- "`dose_schedule` contains no changepoints within 1..%d"
+ERR_DOSE_SCHED_OOB <- "`dose_schedule` contains no changepoints within 1..%d"
 ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
 
 #' @title Build sparse interval evaluation schedule
@@ -24,7 +24,7 @@ build_interval_schedule <- function(dose_schedule, ages, max_age) {
   valid_sched <- dose_schedule[dose_schedule >= 1L & dose_schedule <= max_age]
   stop_fmt_if(
     length(valid_sched) == 0L,
-    ERR_DOSE_SCHEDULE_OUT_OF_BOUNDS,
+    ERR_DOSE_SCHED_OOB,
     max_age
   )
   valid_ages <- ages[ages >= 1L & ages <= max_age]
