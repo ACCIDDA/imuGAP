@@ -123,6 +123,11 @@ data-inputs:
 data-fit:
 	Rscript data-raw/fit_data.R
 
+[group('perf')]
+[doc('Run integrated performance test comparing current branch against main (e.g. just benchmark "--quick" or just benchmark "--models=all --iter=500")')]
+benchmark args="":
+	Rscript data-raw/benchmark_runtime_improvements.R {{ args }}
+
 [doc('Build a tar.gz artifact')]
 build: bootstrap-namespace
 	R CMD build .

@@ -4,6 +4,8 @@ ERR_EXTRACT_RSTAN_ONLY <- paste0(
   "extract_imugap() currently supports only the 'rstan' backend; ",
   "refit with stan_options(backend = 'rstan')"
 )
+ERR_DOSE_SCHEDULE_EMPTY <- "`dose_schedule` must not be empty"
+ERR_DOSE_SCHEDULE_OUT_OF_BOUNDS <- "`dose_schedule` contains no changepoints within 1..%d"
 
 #' @title Build sparse interval evaluation schedule
 #'
@@ -17,12 +19,15 @@ ERR_EXTRACT_RSTAN_ONLY <- paste0(
 #' @keywords internal
 #' @noRd
 build_interval_schedule <- function(dose_schedule, ages, max_age) {
+  stop_fmt_if(length(dose_schedule) == 0L, ERR_DOSE_SCHEDULE_EMPTY)
   valid_sched <- dose_schedule[dose_schedule >= 1L & dose_schedule <= max_age]
+  stop_fmt_if(
+    length(valid_sched) == 0L,
+    ERR_DOSE_SCHEDULE_OUT_OF_BOUNDS,
+    max_age
+  )
   valid_ages <- ages[ages >= 1L & ages <= max_age]
   eval_ages <- sort(unique(c(valid_sched, valid_ages, max_age)))
-  if (length(eval_ages) == 0L || eval_ages[1] < 1L) {
-    eval_ages <- seq_len(max_age)
-  }
   t_points <- c(0L, eval_ages)
   dt_vec <- as.numeric(diff(t_points))
   n_intervals <- length(eval_ages)
