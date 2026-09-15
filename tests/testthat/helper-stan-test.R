@@ -236,6 +236,14 @@ empty_obs_stream <- function(tag = c("uncensored", "right", "left")) {
       integer(0),
       integer(0),
       integer(0),
+      0L,
+      integer(0),
+      0L,
+      integer(0),
+      integer(0),
+      integer(0),
+      integer(0),
+      integer(0),
       numeric(0)
     ),
     paste0(
@@ -243,13 +251,21 @@ empty_obs_stream <- function(tag = c("uncensored", "right", "left")) {
         "n_obs_",
         "y_obs_",
         "y_smp_",
-        "n_weights_",
-        "obs_to_weights_bounds_",
-        "weights_cohort_",
-        "weights_location_",
-        "weights_dose_",
-        "weights_life_year_",
-        "weights_"
+        "n_obs_unmixed_",
+        "unmixed_orig_order_",
+        "w_cohort_unmixed_",
+        "w_age_unmixed_",
+        "w_dose_unmixed_",
+        "w_loc_unmixed_",
+        "n_obs_mixed_",
+        "mixed_orig_order_",
+        "n_weights_mixed_",
+        "obs_bounds_mixed_",
+        "w_cohort_mixed_",
+        "w_age_mixed_",
+        "w_dose_mixed_",
+        "w_loc_mixed_",
+        "weights_mixed_"
       ),
       tag
     )

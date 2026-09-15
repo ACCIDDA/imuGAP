@@ -5,6 +5,53 @@ ERR_EXTRACT_RSTAN_ONLY <- paste0(
   "refit with stan_options(backend = 'rstan')"
 )
 
+#' @title Build sparse interval evaluation schedule
+#'
+#' @param dose_schedule Integer vector of dose eligibility changepoints.
+#' @param ages Integer vector of observed ages.
+#' @param max_age Single integer, maximum age considered.
+#'
+#' @return A named list containing `n_intervals`, `dt_vec`, `dose_sched`, and
+#'   `age_to_interval_map`.
+#'
+#' @keywords internal
+#' @noRd
+build_interval_schedule <- function(dose_schedule, ages, max_age) {
+  valid_sched <- dose_schedule[dose_schedule >= 1L & dose_schedule <= max_age]
+  valid_ages <- ages[ages >= 1L & ages <= max_age]
+  eval_ages <- sort(unique(c(valid_sched, valid_ages, max_age)))
+  if (length(eval_ages) == 0L || eval_ages[1] < 1L) {
+    eval_ages <- seq_len(max_age)
+  }
+  t_points <- c(0L, eval_ages)
+  dt_vec <- as.numeric(diff(t_points))
+  n_intervals <- length(eval_ages)
+
+  dose_sched_mat <- matrix(
+    0.0,
+    nrow = n_intervals,
+    ncol = length(dose_schedule)
+  )
+  for (k in seq_along(dose_schedule)) {
+    dose_sched_mat[, k] <- as.numeric(eval_ages > dose_schedule[k])
+  }
+
+  matched <- match(seq_len(max_age), eval_ages)
+  if (anyNA(matched)) {
+    idx <- findInterval(seq_len(max_age), t_points, left.open = TRUE)
+    idx[idx < 1L] <- 1L
+    idx[idx > n_intervals] <- n_intervals
+    matched[is.na(matched)] <- idx[is.na(matched)]
+  }
+
+  list(
+    n_intervals = n_intervals,
+    dt_vec = dt_vec,
+    dose_sched = dose_sched_mat,
+    age_to_interval_map = matched
+  )
+}
+
 #' @title Slice weights data.table for Stan input
 #'
 #' @param wts_dt Canonicalized `[data.table()]` of weights mapping, corresponding
@@ -24,29 +71,70 @@ slice_weights <- function(wts_dt, obs_dt, suffix) {
       n_obs = 0L,
       y_obs = integer(0),
       y_smp = integer(0),
-      n_weights = 0L,
-      obs_to_weights_bounds = integer(0),
-      weights_location = integer(0),
-      weights_cohort = integer(0),
-      weights_life_year = integer(0),
-      weights_dose = integer(0),
-      weights = numeric(0)
+      n_obs_unmixed = 0L,
+      unmixed_orig_order = integer(0),
+      w_cohort_unmixed = integer(0),
+      w_age_unmixed = integer(0),
+      w_dose_unmixed = integer(0),
+      w_loc_unmixed = integer(0),
+      n_obs_mixed = 0L,
+      mixed_orig_order = integer(0),
+      n_weights_mixed = 0L,
+      obs_bounds_mixed = integer(0),
+      w_cohort_mixed = integer(0),
+      w_age_mixed = integer(0),
+      w_dose_mixed = integer(0),
+      w_loc_mixed = integer(0),
+      weights_mixed = numeric(0)
     )
   } else {
     w <- wts_dt[obs_dt, on = .(obs_c_id), nomatch = NULL]
-    w[, range_start := seq_len(.N)]
-    w[, range_start := min(range_start), by = obs_c_id]
+    w_counts <- w[, .(n_w = .N), by = obs_c_id]
+    unmixed_c_ids <- w_counts[n_w == 1L, obs_c_id]
+    mixed_c_ids <- w_counts[n_w > 1L, obs_c_id]
+
+    obs_unmixed_idx <- which(obs_dt$obs_c_id %in% unmixed_c_ids)
+    obs_mixed_idx <- which(obs_dt$obs_c_id %in% mixed_c_ids)
+
+    w_unmixed <- w[obs_c_id %in% unmixed_c_ids]
+    if (nrow(w_unmixed) > 0L) {
+      unmixed_order <- match(
+        obs_dt$obs_c_id[obs_unmixed_idx],
+        w_unmixed$obs_c_id
+      )
+      w_unmixed <- w_unmixed[unmixed_order]
+    }
+
+    w_mixed <- w[obs_c_id %in% mixed_c_ids]
+    if (nrow(w_mixed) > 0L) {
+      mixed_order <- match(w_mixed$obs_c_id, obs_dt$obs_c_id[obs_mixed_idx])
+      w_mixed <- w_mixed[order(mixed_order)]
+      w_mixed[, range_start := seq_len(.N)]
+      w_mixed[, range_start := min(range_start), by = obs_c_id]
+      obs_bounds_mixed <- unique(w_mixed$range_start)
+    } else {
+      obs_bounds_mixed <- integer(0)
+    }
+
     list(
       n_obs = nrow(obs_dt),
       y_obs = obs_dt$positive,
       y_smp = obs_dt$sample_n,
-      n_weights = nrow(w),
-      obs_to_weights_bounds = unique(w$range_start),
-      weights_location = w$loc_c_id,
-      weights_cohort = w$cohort,
-      weights_life_year = w$age,
-      weights_dose = w$dose,
-      weights = w$weight
+      n_obs_unmixed = length(obs_unmixed_idx),
+      unmixed_orig_order = obs_unmixed_idx,
+      w_cohort_unmixed = w_unmixed$cohort,
+      w_age_unmixed = w_unmixed$age,
+      w_dose_unmixed = w_unmixed$dose,
+      w_loc_unmixed = w_unmixed$loc_c_id,
+      n_obs_mixed = length(obs_mixed_idx),
+      mixed_orig_order = obs_mixed_idx,
+      n_weights_mixed = nrow(w_mixed),
+      obs_bounds_mixed = obs_bounds_mixed,
+      w_cohort_mixed = w_mixed$cohort,
+      w_age_mixed = w_mixed$age,
+      w_dose_mixed = w_mixed$dose,
+      w_loc_mixed = w_mixed$loc_c_id,
+      weights_mixed = w_mixed$weight
     )
   }
   stats::setNames(res, paste0(names(res), "_", suffix))
@@ -209,12 +297,11 @@ sampling <- function(
     intercept = TRUE
   )
 
-  dose_schedule <- imugap_opts$dose_schedule
-
-  doses <- matrix(0, ncol = length(dose_schedule), nrow = max(wts$age))
-  for (i in seq_along(dose_schedule)) {
-    doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
-  }
+  sched_info <- build_interval_schedule(
+    imugap_opts$dose_schedule,
+    obs$age,
+    max(wts$age)
+  )
 
   st_uncensored <- slice_weights(wts, obs[is.na(censored)], "uncensored")
   st_right <- slice_weights(wts, obs[censored == 1], "right")
@@ -228,8 +315,11 @@ sampling <- function(
     ),
     if (is_multilayer) layer_data,
     list(
-      n_doses = length(dose_schedule),
-      dose_sched = doses,
+      n_doses = length(imugap_opts$dose_schedule),
+      n_intervals = sched_info$n_intervals,
+      dt_vec = sched_info$dt_vec,
+      dose_sched = sched_info$dose_sched,
+      age_to_interval_map = sched_info$age_to_interval_map,
       k_bs = ncol(bsp),
       bs = bsp
     ),

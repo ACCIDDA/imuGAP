@@ -1,25 +1,26 @@
-vector unrolled_dose(int n_yr, int n_doses, matrix dose_sched, vector lambda_raw) {
+vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sched, vector lambda_raw) {
   int n_states = n_doses + 1;
   vector[n_doses] lambda = exp(lambda_raw);
 
-  // Matrix to store cumulative probabilities: rows = years, cols = doses
-  matrix[n_yr, n_doses] conditional_dXcdf;
+  // Matrix to store cumulative probabilities: rows = intervals, cols = doses
+  matrix[n_intervals, n_doses] conditional_dXcdf;
 
   // Initial state distribution at t=0: 100% of population in state 1 (0 doses)
   row_vector[n_states] p_state = rep_row_vector(0.0, n_states);
   p_state[1] = 1.0;
 
-  for (y in 1:n_yr) {
+  for (m in 1:n_intervals) {
+    real dt = dt_vec[m];
     row_vector[n_states] p_next = rep_row_vector(0.0, n_states);
 
     if (n_doses == 1) {
-      real r1 = dose_sched[y, 1] * lambda[1];
+      real r1 = dose_sched[m, 1] * lambda[1] * dt;
       real e1 = exp(-r1);
       p_next[1] = p_state[1] * e1;
       p_next[2] = p_state[2] + p_state[1] * (1.0 - e1);
     } else if (n_doses == 2) {
-      real r1 = dose_sched[y, 1] * lambda[1];
-      real r2 = dose_sched[y, 2] * lambda[2];
+      real r1 = dose_sched[m, 1] * lambda[1] * dt;
+      real r2 = dose_sched[m, 2] * lambda[2] * dt;
       real e1 = exp(-r1);
       real e2 = exp(-r2);
 
@@ -42,9 +43,9 @@ vector unrolled_dose(int n_yr, int n_doses, matrix dose_sched, vector lambda_raw
       p_next[2] = p_state[1] * p12 + p_state[2] * p22;
       p_next[3] = p_state[1] * p13 + p_state[2] * p23 + p_state[3];
     } else if (n_doses == 3) {
-      real r1 = dose_sched[y, 1] * lambda[1];
-      real r2 = dose_sched[y, 2] * lambda[2];
-      real r3 = dose_sched[y, 3] * lambda[3];
+      real r1 = dose_sched[m, 1] * lambda[1] * dt;
+      real r2 = dose_sched[m, 2] * lambda[2] * dt;
+      real r3 = dose_sched[m, 3] * lambda[3] * dt;
       real e1 = exp(-r1);
       real e2 = exp(-r2);
       real e3 = exp(-r3);
@@ -102,7 +103,7 @@ vector unrolled_dose(int n_yr, int n_doses, matrix dose_sched, vector lambda_raw
       // General D > 3 fallback using matrix_exp
       matrix[n_states, n_states] Q = rep_matrix(0.0, n_states, n_states);
       for (k in 1:n_doses) {
-        real rate = dose_sched[y, k] * lambda[k];
+        real rate = dose_sched[m, k] * lambda[k] * dt;
         Q[k, k]     = -rate;
         Q[k, k + 1] =  rate;
       }
@@ -111,13 +112,13 @@ vector unrolled_dose(int n_yr, int n_doses, matrix dose_sched, vector lambda_raw
 
     p_state = p_next;
 
-    // Cumulative probability of having received at least dose k by end of year y
+    // Cumulative probability of having received at least dose k by end of interval m
     for (k in 1:n_doses) {
-      conditional_dXcdf[y, k] = sum(p_state[(k + 1):n_states]);
+      conditional_dXcdf[m, k] = sum(p_state[(k + 1):n_states]);
     }
   }
 
   // to_vector() flattens column-by-column:
-  // [dose 1 year 1..N, dose 2 year 1..N, ..., dose D year 1..N]
+  // [dose 1 intervals 1..M, dose 2 intervals 1..M, ..., dose D intervals 1..M]
   return to_vector(conditional_dXcdf);
 }

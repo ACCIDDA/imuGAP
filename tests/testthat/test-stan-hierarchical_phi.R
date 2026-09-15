@@ -71,9 +71,9 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
   ld_sim <- imuGAP:::assemble_layer_data(locs_sim)
 
   # Three uncensored observations at different hierarchy depths:
-  # 1. State level (loc 1, 2 contributing weights)
-  # 2. County level (loc 2, 2 contributing weights)
-  # 3. School level (loc 5, 1 contributing weight)
+  # 1. State level (loc 1, 2 contributing weights) - mixed
+  # 2. County level (loc 2, 2 contributing weights) - mixed
+  # 3. School level (loc 5, 1 contributing weight) - unmixed
   obs_bounds <- c(1L, 3L, 5L)
   w_cohort <- c(1L, 2L, 1L, 2L, 2L)
   w_loc <- c(1L, 1L, 2L, 2L, 5L)
@@ -83,6 +83,7 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
 
   bs <- matrix(c(1.0, 0.0, 0.0, 1.0), nrow = 2L, ncol = 2L)
   dose_sched <- matrix(1.0, nrow = 3L, ncol = 1L)
+  n_intervals <- nrow(dose_sched)
   beta_bs <- c(-0.2, 0.3)
   lambda_val <- 1.2
 
@@ -96,18 +97,31 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
       n_yr = nrow(dose_sched),
       n_cohort = nrow(bs),
       n_doses = ncol(dose_sched),
+      n_intervals = n_intervals,
+      dt_vec = rep(1.0, n_intervals),
       dose_sched = dose_sched,
+      age_to_interval_map = seq_len(nrow(dose_sched)),
       predict_mode = 0L,
       n_obs_uncensored = length(obs_bounds),
       y_obs_uncensored = rep(10L, length(obs_bounds)),
       y_smp_uncensored = rep(20L, length(obs_bounds)),
-      n_weights_uncensored = length(w_cohort),
-      obs_to_weights_bounds_uncensored = obs_bounds,
-      weights_cohort_uncensored = w_cohort,
-      weights_location_uncensored = w_loc,
-      weights_dose_uncensored = w_dose,
-      weights_life_year_uncensored = w_life_year,
-      weights_uncensored = weights
+      # Unmixed subset (observation 3)
+      n_obs_unmixed_uncensored = 1L,
+      unmixed_orig_order_uncensored = as.array(3L),
+      w_cohort_unmixed_uncensored = as.array(2L),
+      w_age_unmixed_uncensored = as.array(2L),
+      w_dose_unmixed_uncensored = as.array(1L),
+      w_loc_unmixed_uncensored = as.array(5L),
+      # Mixed subset (observations 1 & 2)
+      n_obs_mixed_uncensored = 2L,
+      mixed_orig_order_uncensored = c(1L, 2L),
+      n_weights_mixed_uncensored = 4L,
+      obs_bounds_mixed_uncensored = c(1L, 3L),
+      w_cohort_mixed_uncensored = c(1L, 2L, 1L, 2L),
+      w_age_mixed_uncensored = c(1L, 2L, 2L, 3L),
+      w_dose_mixed_uncensored = c(1L, 1L, 1L, 1L),
+      w_loc_mixed_uncensored = c(1L, 1L, 2L, 2L),
+      weights_mixed_uncensored = c(0.4, 0.6, 0.5, 0.5)
     ),
     empty_obs_stream("right"),
     empty_obs_stream("left"),
