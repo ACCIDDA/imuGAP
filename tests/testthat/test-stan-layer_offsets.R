@@ -25,8 +25,11 @@ data {
   vector[n_cohort] logit_phi_st;
 
   int n_unconstrained;
+  int n_qr_entries;
   int n_layers;
-  matrix[n_locs - 1, n_unconstrained] qr_basis;
+  array[2, n_parent_locs] int z_bounds;
+  array[2, n_parent_locs] int qr_bounds;
+  vector[n_qr_entries] qr_entries;
   vector[n_unconstrained] z_layer;
   vector[n_locs - 1] loc_pop_scale;
   vector[n_layers - 1] sigma_layer;
@@ -47,7 +50,8 @@ generated quantities {
   );
   matrix[3, 2] out_qr_test = get_weighted_qr_basis([0.2, 0.3, 0.5]');
   vector[n_locs - 1] out_computed_offsets = compute_layer_offsets(
-    qr_basis, z_layer, loc_pop_scale, sigma_layer, loc_layer_idx
+    n_locs, n_parent_locs, parent_child_bounds, z_bounds, qr_bounds, qr_entries,
+    z_layer, loc_pop_scale, sigma_layer, loc_layer_idx
   );
 }
 ",
@@ -57,8 +61,8 @@ generated quantities {
 
 test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correctly", {
   data("locations_sim", package = "imuGAP")
-  locs_sim <- canonicalize_locations(locations_sim)
-  ld_sim <- assemble_layer_data(locs_sim)
+  locs_sim <- imuGAP:::canonicalize_locations(locations_sim)
+  ld_sim <- imuGAP:::assemble_layer_data(locs_sim)
 
   set.seed(42)
   off_layer <- rnorm(ld_sim$n_locs - 1L)
@@ -79,16 +83,47 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
     byrow = TRUE
   )
 
-  n_unconstrained <- 2L
-  qr_basis <- matrix(
-    rnorm((ld_sim$n_locs - 1L) * n_unconstrained),
-    nrow = ld_sim$n_locs - 1L,
-    ncol = n_unconstrained
-  )
+  n_unconstrained <- (ld_sim$n_locs - 1L) - ld_sim$n_parent_locs
   z_layer <- rnorm(n_unconstrained)
   loc_pop_scale <- runif(ld_sim$n_locs - 1L, 0.5, 2.0)
   sigma_layer <- c(0.4, 0.8)
-  loc_layer_idx <- as.integer(rep(1:2, length.out = ld_sim$n_locs - 1L))
+  loc_layer_idx <- rep(
+    seq_len(ld_sim$n_layers - 1L),
+    times = diff(c(ld_sim$layer_starts, ld_sim$n_locs + 1L))[-1L]
+  )
+
+  z_bounds <- matrix(0L, nrow = 2, ncol = ld_sim$n_parent_locs)
+  qr_bounds <- matrix(0L, nrow = 2, ncol = ld_sim$n_parent_locs)
+  cur_z <- 1L
+  cur_qr <- 1L
+  qr_list <- vector("list", ld_sim$n_parent_locs)
+
+  for (p in seq_len(ld_sim$n_parent_locs)) {
+    k_len <- parent_child_bounds[2, p] - parent_child_bounds[1, p] + 1L
+    z_bounds[1, p] <- cur_z
+    z_bounds[2, p] <- cur_z + k_len - 2L
+    qr_bounds[1, p] <- cur_qr
+    qr_bounds[2, p] <- cur_qr + k_len * (k_len - 1L) - 1L
+
+    pop_slice <- ld_sim$loc_population[
+      parent_child_bounds[1, p]:parent_child_bounds[2, p]
+    ]
+    w <- if (sum(pop_slice) > 0) {
+      pop_slice / sum(pop_slice)
+    } else {
+      rep(1 / k_len, k_len)
+    }
+    mat_m <- cbind(
+      sqrt(w) / sqrt(sum(w)),
+      diag(k_len)[, seq_len(k_len - 1L), drop = FALSE]
+    )
+    q_star <- qr.Q(qr(mat_m))[, -1L, drop = FALSE]
+    qr_list[[p]] <- as.vector(q_star)
+
+    cur_z <- cur_z + k_len - 1L
+    cur_qr <- cur_qr + k_len * (k_len - 1L)
+  }
+  qr_entries <- unlist(qr_list)
 
   data_list <- c(
     ld_sim,
@@ -98,7 +133,10 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
       n_cohort = length(logit_phi_st),
       logit_phi_st = logit_phi_st,
       n_unconstrained = n_unconstrained,
-      qr_basis = qr_basis,
+      n_qr_entries = length(qr_entries),
+      z_bounds = z_bounds,
+      qr_bounds = qr_bounds,
+      qr_entries = qr_entries,
       z_layer = z_layer,
       loc_pop_scale = loc_pop_scale,
       sigma_layer = sigma_layer,
@@ -144,10 +182,25 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
 
   expect_equal(phi, expected_phi, tolerance = 1e-6)
 
-  # Check compute_layer_offsets scaling
+  # Check compute_layer_offsets against original full-matrix formulation
+  # using dense qr_basis multiplied by z_layer and scaling factors
+  qr_basis_dense <- matrix(0, nrow = ld_sim$n_locs - 1L, ncol = n_unconstrained)
+  for (p in seq_len(ld_sim$n_parent_locs)) {
+    st <- parent_child_bounds[1, p]
+    en <- parent_child_bounds[2, p]
+    k_len <- en - st + 1L
+    z_st <- z_bounds[1, p]
+    z_en <- z_bounds[2, p]
+    q_st <- qr_bounds[1, p]
+    q_en <- qr_bounds[2, p]
+    q_star <- matrix(qr_entries[q_st:q_en], nrow = k_len, ncol = k_len - 1L)
+    qr_basis_dense[(st - 1L):(en - 1L), z_st:z_en] <- q_star
+  }
+
   expected_computed_offsets <- as.vector(
-    ((qr_basis %*% z_layer) * loc_pop_scale) * sigma_layer[loc_layer_idx]
+    (qr_basis_dense %*% z_layer) * loc_pop_scale * sigma_layer[loc_layer_idx]
   )
+
   expect_equal(
     as.numeric(computed_offsets),
     expected_computed_offsets,

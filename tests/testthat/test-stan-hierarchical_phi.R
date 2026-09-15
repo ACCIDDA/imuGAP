@@ -43,7 +43,8 @@ data {
   // Deterministic parameter inputs passed via data for exact testing
   vector[k_bs] beta_bs;
   vector[n_doses] lambda_raw;
-  vector[n_locs - 1] off_layer;
+  vector[(n_locs - 1) - n_parent_locs] z_layer;
+  vector[n_layers - 1] sigma_layer;
 }
 transformed data {
   #include transformed_data/common_indices.stan
@@ -66,8 +67,8 @@ generated quantities {
 
 test_that("hierarchical_phi.stan computes observation probabilities across hierarchy layers", {
   data("locations_sim", package = "imuGAP")
-  locs_sim <- canonicalize_locations(locations_sim)
-  ld_sim <- assemble_layer_data(locs_sim)
+  locs_sim <- imuGAP:::canonicalize_locations(locations_sim)
+  ld_sim <- imuGAP:::assemble_layer_data(locs_sim)
 
   # Three uncensored observations at different hierarchy depths:
   # 1. State level (loc 1, 2 contributing weights)
@@ -86,7 +87,9 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
   lambda_val <- 1.2
 
   set.seed(42)
-  off_layer <- rnorm(ld_sim$n_locs - 1L, mean = 0, sd = 0.5)
+  n_unc <- (ld_sim$n_locs - 1L) - ld_sim$n_parent_locs
+  z_layer <- rnorm(n_unc, mean = 0, sd = 1)
+  sigma_layer <- rep(0.5, ld_sim$n_layers - 1L)
 
   data_list <- c(
     list(
@@ -114,7 +117,8 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
       bs = bs,
       beta_bs = beta_bs,
       lambda_raw = as.array(log(lambda_val)),
-      off_layer = off_layer
+      z_layer = z_layer,
+      sigma_layer = sigma_layer
     )
   )
 
@@ -129,6 +133,51 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
 
   # Analytical closed-form expectation:
   # 1. Accumulate spatial offsets across layers
+  qr_basis <- matrix(0, nrow = ld_sim$n_locs - 1L, ncol = n_unc)
+  col_off <- 0L
+  for (p in seq_len(ld_sim$n_parent_locs)) {
+    st <- ld_sim$parent_child_starts[p]
+    en <- if (p < ld_sim$n_parent_locs) {
+      ld_sim$parent_child_starts[p + 1L] - 1L
+    } else {
+      ld_sim$n_locs
+    }
+    k_len <- en - st + 1L
+    pop_slice <- ld_sim$loc_population[st:en]
+    w <- if (sum(pop_slice) > 0) {
+      pop_slice / sum(pop_slice)
+    } else {
+      rep(1 / k_len, k_len)
+    }
+    mat_m <- cbind(
+      sqrt(w) / sqrt(sum(w)),
+      diag(k_len)[, seq_len(k_len - 1L), drop = FALSE]
+    )
+    q_star <- qr.Q(qr(mat_m))[, -1L, drop = FALSE]
+    qr_basis[
+      (st - 1L):(en - 1L),
+      (col_off + 1L):(col_off + k_len - 1L)
+    ] <- q_star
+    col_off <- col_off + k_len - 1L
+  }
+  loc_pop_scale <- numeric(ld_sim$n_locs - 1L)
+  for (k in seq_len(ld_sim$n_layers - 1L)) {
+    st <- ld_sim$layer_starts[k + 1L]
+    en <- if (k + 1L < ld_sim$n_layers) {
+      ld_sim$layer_starts[k + 2L] - 1L
+    } else {
+      ld_sim$n_locs
+    }
+    lp <- ld_sim$loc_population[st:en]
+    loc_pop_scale[(st - 1L):(en - 1L)] <- sqrt(mean(lp) / lp)
+  }
+  loc_layer_idx <- rep(
+    seq_len(ld_sim$n_layers - 1L),
+    times = diff(c(ld_sim$layer_starts, ld_sim$n_locs + 1L))[-1L]
+  )
+  off_layer <- as.vector((qr_basis %*% z_layer) * loc_pop_scale) *
+    sigma_layer[loc_layer_idx]
+
   expected_logit_phi_loc <- numeric(ld_sim$n_locs)
   expected_logit_phi_loc[1] <- 0.0
   for (p in seq_len(ld_sim$n_parent_locs)) {
