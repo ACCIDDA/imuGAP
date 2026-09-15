@@ -118,12 +118,13 @@ test_that("slice_weights handles empty canonical observation slices", {
   res <- slice_weights(can_wts, can_obs_empty, "uncensored")
 
   expect_type(res, "list")
-  expect_equal(res$n_obs_uncensored, nrow(can_obs_empty))
   expect_equal(res$n_obs_unmixed_uncensored, 0L)
   expect_equal(res$n_obs_mixed_uncensored, 0L)
   expect_equal(res$n_weights_mixed_uncensored, 0L)
-  expect_length(res$y_obs_uncensored, nrow(can_obs_empty))
-  expect_length(res$y_smp_uncensored, nrow(can_obs_empty))
+  expect_length(res$y_obs_unmixed_uncensored, 0L)
+  expect_length(res$y_smp_unmixed_uncensored, 0L)
+  expect_length(res$y_obs_mixed_uncensored, 0L)
+  expect_length(res$y_smp_mixed_uncensored, 0L)
   expect_length(res$w_cohort_unmixed_uncensored, 0L)
   expect_length(res$weights_mixed_uncensored, 0L)
 })
@@ -156,15 +157,13 @@ test_that("slice_weights partitions pure unmixed canonical observations accurate
   res <- slice_weights(can_wts, can_obs, "uncensored")
 
   order_map <- match(can_obs$obs_c_id, can_wts$obs_c_id)
-  expected_unmixed_order <- seq_len(nrow(can_obs))
 
-  expect_equal(res$n_obs_uncensored, nrow(can_obs))
   expect_equal(res$n_obs_unmixed_uncensored, nrow(can_obs))
   expect_equal(res$n_obs_mixed_uncensored, 0L)
   expect_equal(res$n_weights_mixed_uncensored, 0L)
 
-  # Check that unmixed weights are dynamically aligned with can_obs order
-  expect_equal(res$unmixed_orig_order_uncensored, expected_unmixed_order)
+  expect_equal(res$y_obs_unmixed_uncensored, can_obs$positive)
+  expect_equal(res$y_smp_unmixed_uncensored, can_obs$sample_n)
   expect_equal(res$w_loc_unmixed_uncensored, can_wts$loc_c_id[order_map])
   expect_equal(res$w_cohort_unmixed_uncensored, can_wts$cohort[order_map])
   expect_equal(res$w_age_unmixed_uncensored, can_wts$age[order_map])
@@ -202,11 +201,11 @@ test_that("slice_weights partitions pure mixed canonical observations with corre
   w_counts <- can_wts[, .N, by = obs_c_id]
   expected_bounds <- cumsum(c(1L, head(w_counts$N, -1L)))
 
-  expect_equal(res$n_obs_right, nrow(can_obs))
   expect_equal(res$n_obs_unmixed_right, 0L)
   expect_equal(res$n_obs_mixed_right, nrow(can_obs))
+  expect_equal(res$y_obs_mixed_right, can_obs$positive)
+  expect_equal(res$y_smp_mixed_right, can_obs$sample_n)
   expect_equal(res$n_weights_mixed_right, nrow(can_wts))
-  expect_equal(res$mixed_orig_order_right, seq_len(nrow(can_obs)))
   expect_equal(res$obs_bounds_mixed_right, expected_bounds)
   expect_equal(res$weights_mixed_right, can_wts$weight)
 })
@@ -249,12 +248,14 @@ test_that("slice_weights partitions combined unmixed and mixed canonical observa
   w_mixed <- can_wts[obs_c_id %in% expected_mixed_ids]
 
   expect_equal(res$n_obs_unmixed_left, length(expected_unmixed_idx))
-  expect_equal(res$unmixed_orig_order_left, expected_unmixed_idx)
+  expect_equal(res$y_obs_unmixed_left, can_obs$positive[expected_unmixed_idx])
+  expect_equal(res$y_smp_unmixed_left, can_obs$sample_n[expected_unmixed_idx])
   expect_equal(res$w_loc_unmixed_left, can_wts$loc_c_id[unmixed_map])
   expect_equal(res$w_cohort_unmixed_left, can_wts$cohort[unmixed_map])
 
   expect_equal(res$n_obs_mixed_left, length(expected_mixed_idx))
-  expect_equal(res$mixed_orig_order_left, expected_mixed_idx)
+  expect_equal(res$y_obs_mixed_left, can_obs$positive[expected_mixed_idx])
+  expect_equal(res$y_smp_mixed_left, can_obs$sample_n[expected_mixed_idx])
   expect_equal(res$n_weights_mixed_left, nrow(w_mixed))
   expect_equal(res$weights_mixed_left, w_mixed$weight)
 })

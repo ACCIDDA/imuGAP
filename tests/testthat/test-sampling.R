@@ -132,17 +132,16 @@ test_that("sampling assembles stan_opts$data with all expected fields", {
     "age_to_interval_map",
     "k_bs",
     "bs",
-    "n_obs_uncensored",
-    "y_obs_uncensored",
-    "y_smp_uncensored",
     "n_obs_unmixed_uncensored",
-    "unmixed_orig_order_uncensored",
+    "y_obs_unmixed_uncensored",
+    "y_smp_unmixed_uncensored",
     "w_cohort_unmixed_uncensored",
     "w_age_unmixed_uncensored",
     "w_dose_unmixed_uncensored",
     "w_loc_unmixed_uncensored",
     "n_obs_mixed_uncensored",
-    "mixed_orig_order_uncensored",
+    "y_obs_mixed_uncensored",
+    "y_smp_mixed_uncensored",
     "n_weights_mixed_uncensored",
     "obs_bounds_mixed_uncensored",
     "w_cohort_mixed_uncensored",
@@ -150,17 +149,16 @@ test_that("sampling assembles stan_opts$data with all expected fields", {
     "w_dose_mixed_uncensored",
     "w_loc_mixed_uncensored",
     "weights_mixed_uncensored",
-    "n_obs_right",
-    "y_obs_right",
-    "y_smp_right",
     "n_obs_unmixed_right",
-    "unmixed_orig_order_right",
+    "y_obs_unmixed_right",
+    "y_smp_unmixed_right",
     "w_cohort_unmixed_right",
     "w_age_unmixed_right",
     "w_dose_unmixed_right",
     "w_loc_unmixed_right",
     "n_obs_mixed_right",
-    "mixed_orig_order_right",
+    "y_obs_mixed_right",
+    "y_smp_mixed_right",
     "n_weights_mixed_right",
     "obs_bounds_mixed_right",
     "w_cohort_mixed_right",
@@ -168,17 +166,16 @@ test_that("sampling assembles stan_opts$data with all expected fields", {
     "w_dose_mixed_right",
     "w_loc_mixed_right",
     "weights_mixed_right",
-    "n_obs_left",
-    "y_obs_left",
-    "y_smp_left",
     "n_obs_unmixed_left",
-    "unmixed_orig_order_left",
+    "y_obs_unmixed_left",
+    "y_smp_unmixed_left",
     "w_cohort_unmixed_left",
     "w_age_unmixed_left",
     "w_dose_unmixed_left",
     "w_loc_unmixed_left",
     "n_obs_mixed_left",
-    "mixed_orig_order_left",
+    "y_obs_mixed_left",
+    "y_smp_mixed_left",
     "n_weights_mixed_left",
     "obs_bounds_mixed_left",
     "w_cohort_mixed_left",
@@ -200,9 +197,9 @@ test_that("sampling data assembly produces sane derived values", {
     imuGAP::sampling(observations = obs, populations = pops, locations = locs)
   ))
   d <- out$captured$data
-  expect_equal(d$n_obs_uncensored, nrow(obs))
-  expect_equal(d$n_obs_right, 0L)
-  expect_equal(d$n_obs_left, 0L)
+  expect_equal(d$n_obs_unmixed_uncensored + d$n_obs_mixed_uncensored, nrow(obs))
+  expect_equal(d$n_obs_unmixed_right + d$n_obs_mixed_right, 0L)
+  expect_equal(d$n_obs_unmixed_left + d$n_obs_mixed_left, 0L)
   expect_equal(d$n_doses, length(opts$dose_schedule))
   expect_equal(d$predict_mode, 0)
   expect_equal(d$n_locs, 5L)
@@ -223,8 +220,14 @@ test_that("sampling forwards observation positive/sample_n into stan data", {
     )
   ))
   d <- out$captured$data
-  expect_setequal(d$y_obs_uncensored, obs$positive)
-  expect_setequal(d$y_smp_uncensored, obs$sample_n)
+  expect_setequal(
+    c(d$y_obs_unmixed_uncensored, d$y_obs_mixed_uncensored),
+    obs$positive
+  )
+  expect_setequal(
+    c(d$y_smp_unmixed_uncensored, d$y_smp_mixed_uncensored),
+    obs$sample_n
+  )
 })
 
 test_that("sampling translates model from imugap_opts and hierarchy depth to stan model", {

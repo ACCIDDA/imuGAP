@@ -6,6 +6,7 @@ ERR_EXTRACT_RSTAN_ONLY <- paste0(
 )
 ERR_DOSE_SCHEDULE_EMPTY <- "`dose_schedule` must not be empty"
 ERR_DOSE_SCHEDULE_OUT_OF_BOUNDS <- "`dose_schedule` contains no changepoints within 1..%d"
+ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
 
 #' @title Build sparse interval evaluation schedule
 #'
@@ -73,17 +74,16 @@ build_interval_schedule <- function(dose_schedule, ages, max_age) {
 slice_weights <- function(wts_dt, obs_dt, suffix) {
   res <- if (nrow(obs_dt) == 0L) {
     list(
-      n_obs = 0L,
-      y_obs = integer(0),
-      y_smp = integer(0),
       n_obs_unmixed = 0L,
-      unmixed_orig_order = integer(0),
+      y_obs_unmixed = integer(0),
+      y_smp_unmixed = integer(0),
       w_cohort_unmixed = integer(0),
       w_age_unmixed = integer(0),
       w_dose_unmixed = integer(0),
       w_loc_unmixed = integer(0),
       n_obs_mixed = 0L,
-      mixed_orig_order = integer(0),
+      y_obs_mixed = integer(0),
+      y_smp_mixed = integer(0),
       n_weights_mixed = 0L,
       obs_bounds_mixed = integer(0),
       w_cohort_mixed = integer(0),
@@ -122,17 +122,16 @@ slice_weights <- function(wts_dt, obs_dt, suffix) {
     }
 
     list(
-      n_obs = nrow(obs_dt),
-      y_obs = obs_dt$positive,
-      y_smp = obs_dt$sample_n,
       n_obs_unmixed = length(obs_unmixed_idx),
-      unmixed_orig_order = obs_unmixed_idx,
+      y_obs_unmixed = obs_dt$positive[obs_unmixed_idx],
+      y_smp_unmixed = obs_dt$sample_n[obs_unmixed_idx],
       w_cohort_unmixed = w_unmixed$cohort,
       w_age_unmixed = w_unmixed$age,
       w_dose_unmixed = w_unmixed$dose,
       w_loc_unmixed = w_unmixed$loc_c_id,
       n_obs_mixed = length(obs_mixed_idx),
-      mixed_orig_order = obs_mixed_idx,
+      y_obs_mixed = obs_dt$positive[obs_mixed_idx],
+      y_smp_mixed = obs_dt$sample_n[obs_mixed_idx],
       n_weights_mixed = nrow(w_mixed),
       obs_bounds_mixed = obs_bounds_mixed,
       w_cohort_mixed = w_mixed$cohort,
@@ -159,8 +158,18 @@ slice_weights <- function(wts_dt, obs_dt, suffix) {
 #' @keywords internal
 #' @noRd
 generate_inits <- function(dat_stan, model = "default") {
-  y_all <- c(dat_stan$y_obs_uncensored, dat_stan$y_obs_right)
-  smp_all <- c(dat_stan$y_smp_uncensored, dat_stan$y_smp_right)
+  y_all <- c(
+    dat_stan$y_obs_unmixed_uncensored,
+    dat_stan$y_obs_mixed_uncensored,
+    dat_stan$y_obs_unmixed_right,
+    dat_stan$y_obs_mixed_right
+  )
+  smp_all <- c(
+    dat_stan$y_smp_unmixed_uncensored,
+    dat_stan$y_smp_mixed_uncensored,
+    dat_stan$y_smp_unmixed_right,
+    dat_stan$y_smp_mixed_right
+  )
 
   mean_cov <- if (length(y_all) > 0L && sum(smp_all) > 0) {
     sum(y_all) / sum(smp_all)
@@ -276,6 +285,12 @@ sampling <- function(
   imugap_opts = imugap_options(),
   stan_opts = stan_options()
 ) {
+  # check imugap_opts
+  model <- imugap_opts$model %||% "default"
+  stop_fmt_if(!identical(model, "default"), ERR_OPT_UNKNOWN_MODEL, model)
+  dose_sched_opts <- imugap_opts$dose_schedule %||% c(1L, 4L)
+  df_opts <- imugap_opts$df %||% 5L
+
   # check location argument
   loc_info <- canonicalize_locations(locations)
   n_layers <- max(loc_info$layer)
@@ -298,12 +313,12 @@ sampling <- function(
 
   bsp <- splines::bs(
     seq_len(wts[, diff(range(cohort)) + 1L]),
-    df = imugap_opts$df,
+    df = df_opts,
     intercept = TRUE
   )
 
   sched_info <- build_interval_schedule(
-    imugap_opts$dose_schedule,
+    dose_sched_opts,
     obs$age,
     max(wts$age)
   )
@@ -320,7 +335,7 @@ sampling <- function(
     ),
     if (is_multilayer) layer_data,
     list(
-      n_doses = length(imugap_opts$dose_schedule),
+      n_doses = length(dose_sched_opts),
       n_intervals = sched_info$n_intervals,
       dt_vec = sched_info$dt_vec,
       dose_sched = sched_info$dose_sched,
@@ -344,7 +359,6 @@ sampling <- function(
   # Select specialized Stan model based on model and hierarchy depth:
   # 1-layer uses the streamlined single-location model; >= 2 layers uses the full
   # hierarchical model.
-  model <- imugap_opts$model %||% "default"
   model_name <- if (identical(model, "default")) {
     if (is_multilayer) {
       "impute_school_coverage_process_v6"

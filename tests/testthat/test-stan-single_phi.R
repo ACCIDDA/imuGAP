@@ -72,16 +72,15 @@ test_that("single_phi.stan computes observation probabilities accurately", {
       dose_sched = dose_sched,
       age_to_interval_map = seq_len(nrow(dose_sched)),
       predict_mode = 0L,
-      n_obs_uncensored = 1L,
-      y_obs_uncensored = as.array(10L),
-      y_smp_uncensored = as.array(20L),
-      n_obs_unmixed_uncensored = 0L,
-      unmixed_orig_order_uncensored = integer(0),
-      w_cohort_unmixed_uncensored = integer(0),
-      w_age_unmixed_uncensored = integer(0),
-      w_dose_unmixed_uncensored = integer(0),
+      n_obs_unmixed_uncensored = 1L,
+      y_obs_unmixed_uncensored = as.array(10L),
+      y_smp_unmixed_uncensored = as.array(20L),
+      w_cohort_unmixed_uncensored = as.array(1L),
+      w_age_unmixed_uncensored = as.array(1L),
+      w_dose_unmixed_uncensored = as.array(1L),
       n_obs_mixed_uncensored = 1L,
-      mixed_orig_order_uncensored = as.array(1L),
+      y_obs_mixed_uncensored = as.array(10L),
+      y_smp_mixed_uncensored = as.array(20L),
       n_weights_mixed_uncensored = length(w_cohort),
       obs_bounds_mixed_uncensored = as.array(1L),
       w_cohort_mixed_uncensored = w_cohort,
@@ -99,15 +98,23 @@ test_that("single_phi.stan computes observation probabilities accurately", {
     )
   )
 
-  p_obs <- run_stan_harness(
+  p_mix <- run_stan_harness(
     model_single_phi,
     data = data_list,
-    p_obs_uncensored
+    p_obs_mixed_uncensored
+  )
+  p_unmix <- run_stan_harness(
+    model_single_phi,
+    data = data_list,
+    p_obs_unmixed_uncensored
   )
 
   # Analytical closed form expectation:
   phi_inv <- 1.0 - stats::plogis(0)
   cdfs <- 1.0 - exp(-lambda_val * w_age)
-  expected_p <- sum(weights * phi_inv * cdfs)
-  expect_equal(p_obs, expected_p, tolerance = 1e-6)
+  expected_p_mix <- sum(weights * phi_inv * cdfs)
+  expect_equal(p_mix, expected_p_mix, tolerance = 1e-6)
+
+  expected_p_unmix <- phi_inv * (1.0 - exp(-lambda_val * 1.0))
+  expect_equal(p_unmix, expected_p_unmix, tolerance = 1e-6)
 })
