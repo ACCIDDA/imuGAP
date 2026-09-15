@@ -1,11 +1,37 @@
-real exp_diff_div(real r1, real r2) {
-  real delta = r1 - r2;
-  if (abs(delta) < 1e-5) {
-    return exp(-r1) * (1.0 + delta * (0.5 + delta * ((1.0 / 6.0) + delta * ((1.0 / 24.0) + delta * (1.0 / 120.0)))));
+/**
+ * Stably compute the divided difference (exp(-r1) - exp(-r2)) / (r2 - r1)
+ *
+ * Used for off-diagonal transition probabilities in continuous-time Markov chains
+ * with non-zero interval transitions between dose states.
+ *
+ * @param delta Difference in cumulative rates (r2 - r1)
+ * @param e1    Precomputed exponential decay exp(-r1)
+ * @param e2    Precomputed exponential decay exp(-r2)
+ *
+ * @return Value of (exp(-r1) - exp(-r2)) / (r2 - r1)
+ */
+real exp_diff_div(real delta, real e1, real e2) {
+  if (abs(delta) < 1e-4) {
+    // 4th-order Horner form of Taylor expansion around delta = 0 (where limit is exp(-r1))
+    return e1 * (1.0 - delta * (0.5 - delta * ((1.0 / 6.0) - delta * ((1.0 / 24.0) - delta * (1.0 / 120.0)))));
   }
-  return exp(-r1) * expm1(delta) / delta;
+  return (e1 - e2) / delta;
 }
 
+/**
+ * Compute cumulative vaccination dose probabilities across discrete age/time intervals.
+ *
+ * Simulates a continuous-time Markov chain transition matrix P = exp(Q) for each interval m
+ * under piecewise-constant transition hazards lambda_raw.
+ *
+ * @param n_intervals Number of time/age intervals (M)
+ * @param n_doses     Maximum number of doses (D)
+ * @param dt_vec      Vector of interval widths in time/age units (length M)
+ * @param dose_sched  Binary schedule matrix (M x D), where dose_sched[m, k] = 1 if dose k is active
+ * @param lambda_raw  Log-scale transition hazard rates (length D)
+ *
+ * @return Flattened vector of length M * D containing cumulative dose probabilities (P(Dose >= k))
+ */
 vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sched, vector lambda_raw) {
   int n_states = n_doses + 1;
   vector[n_doses] lambda = exp(lambda_raw);
@@ -18,96 +44,54 @@ vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sc
   p_state[1] = 1.0;
 
   for (m in 1:n_intervals) {
-    real dt = dt_vec[m];
-    row_vector[n_states] p_next = rep_row_vector(0.0, n_states);
+    vector[n_doses] r = (dose_sched[m]' .* lambda) * dt_vec[m];
+    vector[n_doses] e = exp(-r);
+    row_vector[n_states] p_next;
 
-    if (n_doses == 1) {
-      real r1 = dose_sched[m, 1] * lambda[1] * dt;
-      real e1 = exp(-r1);
-      p_next[1] = p_state[1] * e1;
-      p_next[2] = p_state[2] + p_state[1] * (1.0 - e1);
-    } else if (n_doses == 2) {
-      real r1 = dose_sched[m, 1] * lambda[1] * dt;
-      real r2 = dose_sched[m, 2] * lambda[2] * dt;
-      real e1 = exp(-r1);
-      real e2 = exp(-r2);
+    if (n_doses <= 3) {
+      // Analytical upper-triangular transition matrix P = exp(Q)
+      matrix[n_states, n_states] P = rep_matrix(0.0, n_states, n_states);
 
-      real p11 = e1;
-      real p12;
-      if (r1 == 0.0) {
-        p12 = 0.0;
-      } else if (r2 == 0.0) {
-        p12 = 1.0 - e1;
-      } else {
-        p12 = r1 * exp_diff_div(r1, r2);
+      for (k in 1:n_doses) {
+        P[k, k] = e[k];
       }
-      real p13 = 1.0 - p11 - p12;
-      real p22 = e2;
-      real p23 = 1.0 - e2;
+      P[n_states, n_states] = 1.0;
 
-      p_next[1] = p_state[1] * p11;
-      p_next[2] = p_state[1] * p12 + p_state[2] * p22;
-      p_next[3] = p_state[1] * p13 + p_state[2] * p23 + p_state[3];
-    } else if (n_doses == 3) {
-      real r1 = dose_sched[m, 1] * lambda[1] * dt;
-      real r2 = dose_sched[m, 2] * lambda[2] * dt;
-      real r3 = dose_sched[m, 3] * lambda[3] * dt;
-      real e1 = exp(-r1);
-      real e2 = exp(-r2);
-      real e3 = exp(-r3);
+      // First sub-diagonal transitions (k -> k + 1)
+      if (n_doses >= 2) {
+        real diff12 = exp_diff_div(r[2] - r[1], e[1], e[2]);
+        P[1, 2] = r[1] * diff12;
+        if (n_doses == 3) {
+          real diff23 = exp_diff_div(r[3] - r[2], e[2], e[3]);
+          P[2, 3] = r[2] * diff23;
 
-      real p11 = e1;
-      real p12;
-      if (r1 == 0.0) {
-        p12 = 0.0;
-      } else if (r2 == 0.0) {
-        p12 = 1.0 - e1;
-      } else {
-        p12 = r1 * exp_diff_div(r1, r2);
-      }
-
-      real p13;
-      if (r1 == 0.0 || r2 == 0.0) {
-        p13 = 0.0;
-      } else if (r3 == 0.0) {
-        p13 = 1.0 - p11 - p12;
-      } else {
-        real diff12 = exp_diff_div(r1, r2);
-        real diff23 = exp_diff_div(r2, r3);
-        real d13 = r3 - r1;
-        if (abs(d13) < 1e-5) {
-          p13 = 0.5 * r1 * r2 * e1;
-        } else {
-          p13 = r1 * r2 * (diff12 - diff23) / d13;
+          // Second sub-diagonal transition (1 -> 3)
+          real d13 = r[3] - r[1];
+          if (abs(d13) < 1e-4) {
+            real d12 = r[2] - r[1];
+            if (abs(d12) < 1e-4) {
+              P[1, 3] = 0.5 * r[1] * r[2] * e[1];
+            } else {
+              P[1, 3] = r[1] * r[2] * (e[1] - diff12) / d12;
+            }
+          } else {
+            P[1, 3] = r[1] * r[2] * (diff12 - diff23) / d13;
+          }
         }
       }
-      real p14 = 1.0 - p11 - p12 - p13;
 
-      real p22 = e2;
-      real p23;
-      if (r2 == 0.0) {
-        p23 = 0.0;
-      } else if (r3 == 0.0) {
-        p23 = 1.0 - e2;
-      } else {
-        p23 = r2 * exp_diff_div(r2, r3);
+      // Absorbing column probabilities via conservation of probability
+      for (k in 1:n_doses) {
+        P[k, n_states] = 1.0 - sum(P[k, 1:n_doses]);
       }
-      real p24 = 1.0 - p22 - p23;
 
-      real p33 = e3;
-      real p34 = 1.0 - e3;
-
-      p_next[1] = p_state[1] * p11;
-      p_next[2] = p_state[1] * p12 + p_state[2] * p22;
-      p_next[3] = p_state[1] * p13 + p_state[2] * p23 + p_state[3] * p33;
-      p_next[4] = p_state[1] * p14 + p_state[2] * p24 + p_state[3] * p34 + p_state[4];
+      p_next = p_state * P;
     } else {
       // General D > 3 fallback using matrix_exp
       matrix[n_states, n_states] Q = rep_matrix(0.0, n_states, n_states);
       for (k in 1:n_doses) {
-        real rate = dose_sched[m, k] * lambda[k] * dt;
-        Q[k, k]     = -rate;
-        Q[k, k + 1] =  rate;
+        Q[k, k]     = -r[k];
+        Q[k, k + 1] =  r[k];
       }
       p_next = p_state * matrix_exp(Q);
     }
