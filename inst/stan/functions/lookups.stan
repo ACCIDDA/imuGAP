@@ -78,14 +78,10 @@ vector compute_p_obs(
   vector[n_obs] p;
   if (n_obs > 0) {
     vector[n_weights] weighted = (1 - phi[phi_lookup]) .* unrolled_dose_probs[cdf_lookup] .* weights;
-    if (n_obs == n_weights) {
-      p = weighted;
-    } else {
-      for (i in 1:n_obs) {
-        int st = obs_map[1, i];
-        int en = obs_map[2, i];
-        p[i] = (st == en) ? weighted[st] : sum(weighted[st:en]);
-      }
+    for (i in 1:n_obs) {
+      int st = obs_map[1, i];
+      int en = obs_map[2, i];
+      p[i] = sum(segment(weighted, st, en - st + 1));
     }
   }
   return p;
