@@ -183,7 +183,8 @@ test_that("sampling assembles stan_opts$data with all expected fields", {
     "w_dose_mixed_left",
     "w_loc_mixed_left",
     "weights_mixed_left",
-    "predict_mode"
+    "predict_mode",
+    "num_threads"
   )
   expect_true(all(expected_fields %in% names(d)))
 })
@@ -202,6 +203,7 @@ test_that("sampling data assembly produces sane derived values", {
   expect_equal(d$n_obs_unmixed_left + d$n_obs_mixed_left, 0L)
   expect_equal(d$n_doses, length(opts$dose_schedule))
   expect_equal(d$predict_mode, 0)
+  expect_equal(d$num_threads, 1L)
   expect_equal(d$n_locs, 5L)
   expect_equal(d$n_layers, 3L)
   expect_equal(as.integer(d$layer_starts), c(1L, 2L, 4L))

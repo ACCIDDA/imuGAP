@@ -96,6 +96,7 @@ test_that("structural data and transformed indices create compliant lookup and r
     dose_sched = matrix(1, nrow = n_intervals, ncol = n_doses),
     age_to_interval_map = age_to_interval_map,
     predict_mode = 0L,
+    num_threads = 1L,
     # Locations
     n_locs = n_locs,
     n_layers = n_layers,
