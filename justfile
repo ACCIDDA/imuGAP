@@ -47,11 +47,16 @@ test: bootstrap-namespace
 	library(devtools)
 	devtools::test()
 
-[doc('Run unit tests using devtools, stopping on first failure')]
-test-fast: bootstrap-namespace
+[doc('Run unit tests using devtools (excluding dynamic Stan compilation by default), stopping on first failure')]
+test-fast filter="": bootstrap-namespace
 	#!/usr/bin/env Rscript
 	library(devtools)
-	devtools::test(stop_on_failure=TRUE)
+	filter_arg <- trimws("{{ filter }}")
+	if (nzchar(filter_arg)) {
+	  devtools::test(filter = filter_arg, stop_on_failure = TRUE)
+	} else {
+	  devtools::test(filter = "^stan-", invert = TRUE, stop_on_failure = TRUE)
+	}
 
 [doc('Check test coverage using covr')]
 coverage: bootstrap-namespace

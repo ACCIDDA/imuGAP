@@ -184,7 +184,8 @@ test_that("uncensored likelihood accumulates binomial log-probabilities via redu
   )
   lp_val <- rstan::log_prob(lp, 0.0, adjust_transform = FALSE)
   expected_lp <- sum(
-    unc_data$y_obs * log(unc_data$p_obs) +
+    unc_data$y_obs *
+      log(unc_data$p_obs) +
       (unc_data$y_smp - unc_data$y_obs) * log(1.0 - unc_data$p_obs)
   )
   expect_equal(lp_val, expected_lp, tolerance = 1e-6)

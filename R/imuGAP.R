@@ -6,20 +6,81 @@ ERR_EXTRACT_RSTAN_ONLY <- paste0(
 )
 ERR_DOSE_SCHEDULE_EMPTY <- "`dose_schedule` must not be empty"
 ERR_DOSE_SCHED_OOB <- "`dose_schedule` contains no changepoints within 1..%d"
+ERR_AGES_EMPTY <- "`ages` must not be empty"
+ERR_AGES_OOB <- "`ages` contains no valid ages within 1..%d"
+ERR_POP_DOSE_EXCEEDS_SCHED <- paste0(
+  "`populations` contains dose (%d) exceeding `dose_schedule` length (%d)"
+)
+ERR_POP_DOSE_INCOMPATIBLE <- paste0(
+  "`populations` contains %d observation(s) where all ages are younger than ",
+  "permitted by `dose_schedule` for dose %d: %s"
+)
+ERR_DOSE_FINAL_OLDER_THAN_POP <- paste0(
+  "Final `dose_schedule` changepoint (%d) must be strictly less than ",
+  "the maximum population age (%d)"
+)
 ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
+
+#' @title Validate consistency between dose schedule and population metadata
+#'
+#' @param dose_schedule Integer vector of dose eligibility changepoints.
+#' @param wts Canonicalized `populations` `[data.table()]`.
+#'
+#' @keywords internal
+#' @noRd
+validate_dose_schedule <- function(dose_schedule, wts) {
+  n_doses <- length(dose_schedule)
+  max_pop_age <- max(wts$age)
+
+  stop_fmt_if(
+    any(wts$dose > n_doses),
+    ERR_POP_DOSE_EXCEEDS_SCHED,
+    max(wts$dose),
+    n_doses
+  )
+
+  # Final dose changepoint must be strictly less than maximum population age
+  stop_fmt_if(
+    dose_schedule[n_doses] >= max_pop_age,
+    ERR_DOSE_FINAL_OLDER_THAN_POP,
+    dose_schedule[n_doses],
+    max_pop_age
+  )
+
+  # Check that every observation has at least one age strictly greater than dose changepoint
+  obs_summary <- wts[, .(dose = dose[1L], max_obs_age = max(age)), by = obs_id]
+  for (k in seq_len(n_doses)) {
+    k_obs <- obs_summary[dose == k]
+    if (nrow(k_obs) > 0L) {
+      invalid_obs <- k_obs[get("max_obs_age") <= dose_schedule[k], obs_id]
+      stop_fmt_if(
+        length(invalid_obs) > 0L,
+        ERR_POP_DOSE_INCOMPATIBLE,
+        length(invalid_obs),
+        k,
+        toString(invalid_obs, width = 80)
+      )
+    }
+  }
+  invisible(TRUE)
+}
 
 #' @title Build sparse interval evaluation schedule
 #'
 #' @param dose_schedule Integer vector of dose eligibility changepoints.
 #' @param ages Integer vector of observed ages.
-#' @param max_age Single integer, maximum age considered.
 #'
 #' @return A named list containing `n_intervals`, `dt_vec`, `dose_sched`, and
 #'   `age_to_interval_map`.
 #'
 #' @keywords internal
 #' @noRd
-build_interval_schedule <- function(dose_schedule, ages, max_age) {
+build_interval_schedule <- function(dose_schedule, ages) {
+  stop_fmt_if(
+    is.null(ages) || length(ages) == 0L || all(is.na(ages)),
+    ERR_AGES_EMPTY
+  )
+  max_age <- max(ages, na.rm = TRUE)
   stop_fmt_if(length(dose_schedule) == 0L, ERR_DOSE_SCHEDULE_EMPTY)
   valid_sched <- dose_schedule[dose_schedule >= 1L & dose_schedule <= max_age]
   stop_fmt_if(
@@ -28,6 +89,11 @@ build_interval_schedule <- function(dose_schedule, ages, max_age) {
     max_age
   )
   valid_ages <- ages[ages >= 1L & ages <= max_age]
+  stop_fmt_if(
+    length(valid_ages) == 0L,
+    ERR_AGES_OOB,
+    max_age
+  )
   eval_ages <- sort(unique(c(valid_sched, valid_ages, max_age)))
   t_points <- c(0L, eval_ages)
   dt_vec <- as.numeric(diff(t_points))
@@ -244,6 +310,8 @@ make_init_fn <- function(dat_stan, model = "default") {
 #' @param stan_opts sampler configuration created by `[stan_options()]`
 #'   (see `[flexstanr::stan_options()]` for details on supported sampler arguments,
 #'   including `iter`, `chains`, `cores`, `seed`, and `backend`).
+#'   The `{imuGAP}` models support multicore calculation, so the default invocation
+#'   uses `threading = TRUE`.
 #'
 #' @return An object of class `imugap_fit` wrapping the raw `stanfit` (or
 #'   `CmdStanMCMC`) object along with model settings and dataset metadata.
@@ -283,7 +351,7 @@ sampling <- function(
   populations,
   locations,
   imugap_opts = imugap_options(),
-  stan_opts = stan_options()
+  stan_opts = stan_options(threading = TRUE)
 ) {
   # check imugap_opts
   model <- imugap_opts$model %||% "default"
@@ -311,6 +379,8 @@ sampling <- function(
     loc_info
   )
 
+  validate_dose_schedule(dose_sched_opts, wts)
+
   bsp <- splines::bs(
     seq_len(wts[, diff(range(cohort)) + 1L]),
     df = df_opts,
@@ -319,8 +389,7 @@ sampling <- function(
 
   sched_info <- build_interval_schedule(
     dose_sched_opts,
-    obs$age,
-    max(wts$age)
+    wts$age
   )
 
   st_uncensored <- slice_weights(wts, obs[is.na(censored)], "uncensored")
