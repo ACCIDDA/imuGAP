@@ -24,10 +24,8 @@ vector compute_hierarchical_phi(
   int n_cohort,
   int n_locs
 ) {
-  matrix[n_cohort, n_locs] logit_phi_mat;
-  for (l in 1:n_locs) {
-    logit_phi_mat[:, l] = logit_phi_st + logit_phi_loc[l];
-  }
+  matrix[n_cohort, n_locs] logit_phi_mat =
+    rep_matrix(logit_phi_st, n_locs) + rep_matrix(logit_phi_loc', n_cohort);
   return to_vector(inv_logit(logit_phi_mat));
 }
 
