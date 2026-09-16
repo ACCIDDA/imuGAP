@@ -1,8 +1,8 @@
 functions {
   #include functions/convenience.stan
-  #include functions/lookups.stan
   #include functions/layer_offsets.stan
   #include functions/unrolled_dose_static_lambda.stan
+  #include functions/observation_likelihood_reduce.stan
 }
 data {
   #include data/shared.stan

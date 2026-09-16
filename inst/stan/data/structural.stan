@@ -10,3 +10,6 @@ array[n_yr] int<lower=1, upper=n_intervals> age_to_interval_map;
 
 // run mode: 0 = estimation, 1 = prediction
 int<lower=0, upper=1> predict_mode;
+
+// number of worker threads per chain available for reduce_sum parallelization
+int<lower=1> num_threads;
