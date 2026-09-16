@@ -9,10 +9,10 @@ library(data.table)
 
 test_that("build_interval_schedule constructs valid interval schedules for standard inputs", {
   dose_sched <- c(1L, 4L, 11L)
-  ages <- c(4L, 5L, 12L)
-  max_age <- 18L
+  ages <- c(4L, 5L, 12L, 18L)
+  max_age <- max(ages)
 
-  res <- build_interval_schedule(dose_sched, ages, max_age)
+  res <- build_interval_schedule(dose_sched, ages)
 
   valid_sched <- dose_sched[dose_sched >= 1L & dose_sched <= max_age]
   valid_ages <- ages[ages >= 1L & ages <= max_age]
@@ -47,9 +47,9 @@ test_that("build_interval_schedule constructs valid interval schedules for stand
 test_that("build_interval_schedule handles sparse observed ages and interpolates unobserved ages", {
   dose_sched <- c(2L, 7L)
   ages <- c(7L, 15L)
-  max_age <- 15L
+  max_age <- max(ages)
 
-  res <- build_interval_schedule(dose_sched, ages, max_age)
+  res <- build_interval_schedule(dose_sched, ages)
 
   valid_sched <- dose_sched[dose_sched >= 1L & dose_sched <= max_age]
   valid_ages <- ages[ages >= 1L & ages <= max_age]
@@ -69,23 +69,41 @@ test_that("build_interval_schedule handles sparse observed ages and interpolates
   expect_equal(res$age_to_interval_map, expected_age_map)
 })
 
+test_that("build_interval_schedule rejects empty or invalid ages", {
+  # NULL ages
+  expect_error(
+    build_interval_schedule(c(1L, 4L), ages = NULL),
+    "`ages` must not be empty"
+  )
+
+  # Empty ages vector
+  expect_error(
+    build_interval_schedule(c(1L, 4L), ages = integer(0)),
+    "`ages` must not be empty"
+  )
+
+  # All NA ages
+  expect_error(
+    build_interval_schedule(c(1L, 4L), ages = c(NA_integer_, NA_integer_)),
+    "`ages` must not be empty"
+  )
+})
+
 test_that("build_interval_schedule rejects empty or out-of-bound dose schedules", {
   # Empty dose schedule
   expect_error(
-    build_interval_schedule(integer(0), ages = c(1L, 2L), max_age = 5L),
+    build_interval_schedule(integer(0), ages = c(1L, 2L, 5L)),
     "`dose_schedule` must not be empty"
   )
 
-  # Entirely out of bounds dose schedule
+  # Entirely out of bounds dose schedule relative to max(ages)
   dose_sched_out <- c(99L, 100L)
-  max_age <- 5L
   expect_error(
     build_interval_schedule(
       dose_sched_out,
-      ages = c(1L, 2L),
-      max_age = max_age
+      ages = c(1L, 2L, 5L)
     ),
-    sprintf("`dose_schedule` contains no changepoints within 1..%d", max_age)
+    "`dose_schedule` contains no changepoints within 1..5"
   )
 })
 
@@ -93,12 +111,93 @@ test_that("build_interval_schedule handles minimal valid age 1 boundary", {
   single_age <- 1L
   res_single <- build_interval_schedule(
     single_age,
-    single_age,
-    max_age = single_age
+    single_age
   )
   expect_equal(res_single$n_intervals, length(single_age))
   expect_equal(res_single$dt_vec, as.numeric(single_age))
   expect_equal(res_single$age_to_interval_map, single_age)
+})
+
+# ==============================================================================
+# 1b. validate_dose_schedule Tests
+# ==============================================================================
+
+test_that("validate_dose_schedule accepts valid population metadata", {
+  wts <- data.table(
+    obs_id = c("obs1", "obs2", "obs3", "obs3"),
+    dose = c(1L, 2L, 2L, 2L),
+    age = c(2L, 5L, 4L, 6L)
+  )
+  expect_invisible(validate_dose_schedule(c(1L, 4L), wts))
+})
+
+test_that("validate_dose_schedule rejects doses exceeding schedule length", {
+  wts <- data.table(
+    obs_id = c("obs1", "obs2"),
+    dose = c(1L, 3L),
+    age = c(2L, 10L)
+  )
+  expect_error(
+    validate_dose_schedule(c(1L, 4L), wts),
+    "`populations` contains dose \\(3\\) exceeding `dose_schedule` length \\(2\\)"
+  )
+})
+
+test_that("validate_dose_schedule rejects final dose starting age >= max pop age", {
+  wts <- data.table(
+    obs_id = c("obs1", "obs2"),
+    dose = c(1L, 2L),
+    age = c(2L, 5L)
+  )
+  # Final dose changepoint 5 >= max population age 5
+  expect_error(
+    validate_dose_schedule(c(1L, 5L), wts),
+    paste0(
+      "Final `dose_schedule` changepoint \\(5\\) must be strictly less than ",
+      "the maximum population age \\(5\\)"
+    )
+  )
+})
+
+test_that("validate_dose_schedule rejects observations younger than schedule", {
+  # Unmixed observation with age <= dose changepoint (obs2 age 4 <= dose 2 changepoint 4)
+  wts_unmixed <- data.table(
+    obs_id = c("obs1", "obs2", "obs3"),
+    dose = c(1L, 2L, 1L),
+    age = c(2L, 4L, 10L)
+  )
+  expect_error(
+    validate_dose_schedule(c(1L, 4L), wts_unmixed),
+    paste0(
+      "`populations` contains 1 observation\\(s\\) where all ages are younger ",
+      "than permitted by `dose_schedule` for dose 2: obs2"
+    )
+  )
+
+  # Mixed observation where ALL contributing ages are <= dose changepoint
+  wts_mixed_bad <- data.table(
+    obs_id = c("obs1", "obs2", "obs2", "obs3"),
+    dose = c(1L, 2L, 2L, 1L),
+    age = c(2L, 3L, 4L, 10L)
+  )
+  expect_error(
+    validate_dose_schedule(c(1L, 4L), wts_mixed_bad),
+    paste0(
+      "`populations` contains 1 observation\\(s\\) where all ages are younger ",
+      "than permitted by `dose_schedule` for dose 2: obs2"
+    )
+  )
+
+  # Mixed observation where at least ONE age is > dose changepoint (valid)
+  wts_mixed_good <- data.table(
+    obs_id = c("obs1", "obs2", "obs2"),
+    dose = c(1L, 2L, 2L),
+    age = c(2L, 4L, 5L)
+  )
+  expect_invisible(validate_dose_schedule(
+    c(1L, 4L),
+    wts_mixed_good
+  ))
 })
 
 # ==============================================================================

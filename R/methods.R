@@ -216,13 +216,13 @@ predict.imugap_fit <- function(
   dose_schedule <- fit$settings$imugap_opts$dose_schedule
   target_sched <- build_interval_schedule(
     dose_schedule,
-    target$age,
-    fit$data$n_yr
+    target$age
   )
 
   # Update the data object for prediction mode
   dat_stan <- fit$data
   updates <- c(
+    list(n_yr = length(target_sched$age_to_interval_map)),
     target_sched,
     target_stream,
     empty_stream("right"),
