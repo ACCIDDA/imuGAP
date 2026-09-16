@@ -347,7 +347,8 @@ sampling <- function(
     st_right,
     st_left,
     list(
-      predict_mode = 0
+      predict_mode = 0L,
+      num_threads = as.integer(stan_opts$threads_per_chain %||% 1L)
     )
   )
 

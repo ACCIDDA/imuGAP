@@ -102,6 +102,7 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
       dose_sched = dose_sched,
       age_to_interval_map = seq_len(nrow(dose_sched)),
       predict_mode = 0L,
+      num_threads = 1L,
       # Unmixed subset (observation 3)
       n_obs_unmixed_uncensored = 1L,
       y_obs_unmixed_uncensored = as.array(10L),
