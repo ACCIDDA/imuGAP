@@ -789,8 +789,12 @@ bayesplot::mcmc_trace(
 Trace plots for the county-level location offsets $\delta_{\text{county}}$ (`off_layer[1]` through
 `off_layer[3]`) showing individual chain medians and true simulation offsets (dashed red lines and
 annotated values). Indicator arrows perpendicular to the true latent line show:
-- **Red arrows (left edge, iteration 0)**: Expected error direction and relative magnitude based on observational noise ($\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}$) from finite observation sample draws.
-- **Blue arrows (right edge, iteration 500)**: Realized difference between the posterior median estimate and the true latent offset.
+
+- **Red arrows (left edge, iteration 0)**: Expected error direction and relative magnitude
+  based on observational noise ($\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}$)
+  from finite observation sample draws.
+- **Blue arrows (right edge, iteration 500)**: Realized difference between the posterior median
+  estimate and the true latent offset.
 
 ```{r trace-plot-county-offsets, fold = TRUE, code_summary = "Show plot code"}
 # Reconstruct location offsets from standard normal deviations z_layer,
@@ -980,9 +984,15 @@ bayesplot::mcmc_trace(
 
 Trace plots for school-level location offsets $\delta_{\text{school}}$ divided by county, showing
 individual chain medians and true simulation offsets (dashed red lines and annotated values) across
-schools in Scruggs, Simone, and Watson counties. Indicator arrows perpendicular to the true latent line show:
-- **Red arrows (left edge, iteration 0)**: Expected error direction and relative magnitude based on observational noise ($\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}$) from each school's kindergarten entry observation sample, with length exaggerated (2.5&times;) to highlight the expected error scale across schools.
-- **Blue arrows (right edge, iteration 500)**: Realized difference between the school posterior median estimate and the true latent offset.
+schools in Scruggs, Simone, and Watson counties. Indicator arrows perpendicular to the true
+latent line show:
+
+- **Red arrows (left edge, iteration 0)**: Expected error direction and relative magnitude
+  based on observational noise ($\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}$)
+  from each school's kindergarten entry observation sample, with length exaggerated (2.5&times;)
+  to highlight the expected error scale across schools.
+- **Blue arrows (right edge, iteration 500)**: Realized difference between the school posterior
+  median estimate and the true latent offset.
 
 ```{r trace-plot-school-offsets, fold = TRUE, code_summary = "Show plot code", results = "asis"}
 for (cnty in county_names) {

@@ -193,7 +193,11 @@ test_that("sampling data assembly produces sane derived values", {
   obs <- make_minimal_obs()
   pops <- make_minimal_pops()
   locs <- make_3layer_locs()
-  opts <- imugap_options()
+  opts <- imuGAP::imugap_options()
+  default_threads <- flexstanr::stan_options(
+    threading = TRUE
+  )$threads_per_chain %||%
+    1L
   out <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(observations = obs, populations = pops, locations = locs)
   ))
@@ -203,13 +207,30 @@ test_that("sampling data assembly produces sane derived values", {
   expect_equal(d$n_obs_unmixed_left + d$n_obs_mixed_left, 0L)
   expect_equal(d$n_doses, length(opts$dose_schedule))
   expect_equal(d$predict_mode, 0)
-  expect_equal(d$num_threads, 1L)
+  expect_equal(d$num_threads, default_threads)
+  expect_gte(d$num_threads, 1L)
   expect_equal(d$n_locs, 5L)
   expect_equal(d$n_layers, 3L)
   expect_equal(as.integer(d$layer_starts), c(1L, 2L, 4L))
   expect_equal(as.integer(d$parent_child_starts), c(2L, 4L))
   expect_equal(nrow(d$dose_sched), d$n_intervals)
   expect_equal(ncol(d$dose_sched), d$n_doses)
+})
+
+test_that("sampling respects explicit single-threaded and multi-threaded options", {
+  obs <- make_minimal_obs()
+  pops <- make_minimal_pops()
+  locs <- make_3layer_locs()
+
+  out_single <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = obs,
+      populations = pops,
+      locations = locs,
+      stan_opts = flexstanr::stan_options(threading = FALSE)
+    )
+  ))
+  expect_equal(out_single$captured$data$num_threads, 1L)
 })
 
 test_that("sampling forwards observation positive/sample_n into stan data", {
@@ -277,7 +298,7 @@ test_that("sampling forwards extra stan_opts (e.g. iter, chains)", {
       observations = make_minimal_obs(),
       populations = make_minimal_pops(),
       locations = make_3layer_locs(),
-      stan_opts = stan_options(iter = 100, chains = 1, refresh = 0)
+      stan_opts = flexstanr::stan_options(iter = 100, chains = 1, refresh = 0)
     )
   ))
   expect_equal(out$captured$iter, 100)
