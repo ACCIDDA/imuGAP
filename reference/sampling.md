@@ -12,7 +12,7 @@ sampling(
   populations,
   locations,
   imugap_opts = imugap_options(),
-  stan_opts = stan_options()
+  stan_opts = stan_options(threading = TRUE)
 )
 ```
 
@@ -69,7 +69,8 @@ sampling(
   sampler configuration created by `[stan_options()]` (see
   `[flexstanr::stan_options()]` for details on supported sampler
   arguments, including `iter`, `chains`, `cores`, `seed`, and
-  `backend`).
+  `backend`). The `{imuGAP}` models support multicore calculation, so
+  the default invocation uses `threading = TRUE`.
 
 ## Value
 

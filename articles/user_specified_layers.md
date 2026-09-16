@@ -451,9 +451,11 @@ to true values.
 ## Conclusion
 
 Support for **flexible location layers** allows `imuGAP` to adapt to
-whatever location hierarchy you provide. - If you provide only
-state-level aggregated data (**1 layer**), macro trends are estimated
-accurately. - If you provide sub-populations like counties (**2
-layers**) or sub-sub-populations like schools (**3 layers**), the model
-automatically builds hierarchical random offsets down the location tree
-to capture finer resolution variation.
+whatever location hierarchy you provide:
+
+- If you provide only state-level aggregated data (**1 layer**), macro
+  trends are estimated accurately.
+- If you provide sub-populations like counties (**2 layers**) or
+  sub-sub-populations like schools (**3 layers**), the model
+  automatically builds hierarchical random offsets down the location
+  tree to capture finer resolution variation.

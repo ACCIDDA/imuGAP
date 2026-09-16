@@ -755,7 +755,7 @@ state-level vaccine uptake baseline:
 beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 #> List of 1
-#>  $ beta_bs: num [1:2000, 1:5] -1.72 -1.71 -1.75 -1.69 -1.63 ...
+#>  $ beta_bs: num [1:2000, 1:5] -1.63 -1.72 -1.67 -1.67 -1.68 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ iterations: NULL
 #>   .. ..$           : NULL
@@ -913,12 +913,14 @@ Trace plots for the county-level location offsets
 $`\delta_{\text{county}}`$ (`off_layer[1]` through `off_layer[3]`)
 showing individual chain medians and true simulation offsets (dashed red
 lines and annotated values). Indicator arrows perpendicular to the true
-latent line show: - **Red arrows (left edge, iteration 0)**: Expected
-error direction and relative magnitude based on observational noise
-($`\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}`$) from
-finite observation sample draws. - **Blue arrows (right edge, iteration
-500)**: Realized difference between the posterior median estimate and
-the true latent offset.
+latent line show:
+
+- **Red arrows (left edge, iteration 0)**: Expected error direction and
+  relative magnitude based on observational noise
+  ($`\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}`$)
+  from finite observation sample draws.
+- **Blue arrows (right edge, iteration 500)**: Realized difference
+  between the posterior median estimate and the true latent offset.
 
 **Show plot code**
 
@@ -1115,15 +1117,17 @@ Trace plots for school-level location offsets $`\delta_{\text{school}}`$
 divided by county, showing individual chain medians and true simulation
 offsets (dashed red lines and annotated values) across schools in
 Scruggs, Simone, and Watson counties. Indicator arrows perpendicular to
-the true latent line show: - **Red arrows (left edge, iteration 0)**:
-Expected error direction and relative magnitude based on observational
-noise
-($`\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}`$) from
-each school’s kindergarten entry observation sample, with length
-exaggerated (2.5×) to highlight the expected error scale across
-schools. - **Blue arrows (right edge, iteration 500)**: Realized
-difference between the school posterior median estimate and the true
-latent offset.
+the true latent line show:
+
+- **Red arrows (left edge, iteration 0)**: Expected error direction and
+  relative magnitude based on observational noise
+  ($`\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}`$)
+  from each school’s kindergarten entry observation sample, with length
+  exaggerated (2.5×) to highlight the expected error scale across
+  schools.
+- **Blue arrows (right edge, iteration 500)**: Realized difference
+  between the school posterior median estimate and the true latent
+  offset.
 
 **Show plot code**
 

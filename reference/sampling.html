@@ -60,7 +60,7 @@ doses.</p>
 <span>  <span class="va">populations</span>,</span>
 <span>  <span class="va">locations</span>,</span>
 <span>  imugap_opts <span class="op">=</span> <span class="fu"><a href="imugap_options.html">imugap_options</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  stan_opts <span class="op">=</span> <span class="fu"><a href="https://accidda.github.io/flexstanr/reference/stan_options.html" class="external-link">stan_options</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  stan_opts <span class="op">=</span> <span class="fu"><a href="https://accidda.github.io/flexstanr/reference/stan_options.html" class="external-link">stan_options</a></span><span class="op">(</span>threading <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -106,7 +106,9 @@ of the same type. See Details for restrictions.</p></dd>
 <dt id="arg-stan-opts">stan_opts<a class="anchor" aria-label="anchor" href="#arg-stan-opts"></a></dt>
 <dd><p>sampler configuration created by <code>[stan_options()]</code>
 (see <code>[flexstanr::stan_options()]</code> for details on supported sampler arguments,
-including <code>iter</code>, <code>chains</code>, <code>cores</code>, <code>seed</code>, and <code>backend</code>).</p></dd>
+including <code>iter</code>, <code>chains</code>, <code>cores</code>, <code>seed</code>, and <code>backend</code>).
+The <code>{imuGAP}</code> models support multicore calculation, so the default invocation
+uses <code>threading = TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
