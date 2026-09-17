@@ -23,8 +23,8 @@ ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
 
 #' @title Validate consistency between dose schedule and population metadata
 #'
-#' @param dose_schedule Integer vector of dose eligibility changepoints.
-#' @param wts Canonicalized `populations` `[data.table()]`.
+#' @param dose_schedule integer vector of dose eligibility changepoints.
+#' @param wts canonicalized `populations` `[data.table()]`.
 #'
 #' @keywords internal
 #' @noRd
@@ -67,10 +67,10 @@ validate_dose_schedule <- function(dose_schedule, wts) {
 
 #' @title Build sparse interval evaluation schedule
 #'
-#' @param dose_schedule Integer vector of dose eligibility changepoints.
-#' @param ages Integer vector of observed ages.
+#' @param dose_schedule integer vector of dose eligibility changepoints.
+#' @param ages integer vector of observed ages.
 #'
-#' @return A named list containing `n_intervals`, `dt_vec`, `dose_sched`, and
+#' @return a named list, containing `n_intervals`, `dt_vec`, `dose_sched`, and
 #'   `age_to_interval_map`.
 #'
 #' @keywords internal
@@ -126,13 +126,13 @@ build_interval_schedule <- function(dose_schedule, ages) {
 
 #' @title Slice weights data.table for Stan input
 #'
-#' @param wts_dt Canonicalized `[data.table()]` of weights mapping, corresponding
+#' @param wts_dt canonicalized `[data.table()]` of weights mapping, corresponding
 #'   to the canonicalized `populations` input from `[canonicalize_populations()]`.
-#' @param obs_dt Canonicalized `[data.table()]` of observations slice from
+#' @param obs_dt canonicalized `[data.table()]` of observations slice from
 #'   `[canonicalize_observations()]`.
-#' @param suffix Character suffix appended to output list element names.
+#' @param suffix character suffix appended to output list element names.
 #'
-#' @return A named list formatted for Stan data consumption.
+#' @return a named list, formatted for Stan data consumption.
 #'
 #' @keywords internal
 #' @noRd
@@ -216,10 +216,10 @@ slice_weights <- function(wts_dt, obs_dt, suffix) {
 #' Generates a named list of initial parameter values for Stan chains based on
 #' empirical survey observations, dose schedule, and location hierarchy.
 #'
-#' @param dat_stan Named list of data formatted for Stan input.
-#' @param model Character string specifying the model formulation (default: `"default"`).
+#' @param dat_stan named list of data formatted for Stan input.
+#' @param model character string specifying the model formulation (default: `"default"`).
 #'
-#' @return A named list of initial parameter arrays for Stan.
+#' @return a named list, of initial parameter arrays for Stan.
 #'
 #' @keywords internal
 #' @noRd
@@ -283,10 +283,10 @@ generate_inits <- function(dat_stan, model = "default") {
 #' @description
 #' Returns a 0-argument function suitable for passing to `fit_model(init = ...)`.
 #'
-#' @param dat_stan Named list of data formatted for Stan input.
-#' @param model Character string specifying the model formulation (default: `"default"`).
+#' @param dat_stan named list of data formatted for Stan input.
+#' @param model character string specifying the model formulation (default: `"default"`).
 #'
-#' @return A 0-argument function that returns a list of initial parameter values.
+#' @return a function, 0-argument function returning a list of initial parameter values.
 #'
 #' @keywords internal
 #' @noRd
@@ -313,7 +313,7 @@ make_init_fn <- function(dat_stan, model = "default") {
 #'   The `{imuGAP}` models support multicore calculation, so the default invocation
 #'   uses `threading = TRUE`.
 #'
-#' @return An object of class `imugap_fit` wrapping the raw `stanfit` (or
+#' @return an object of class `imugap_fit`, wrapping the raw `stanfit` (or
 #'   `CmdStanMCMC`) object along with model settings and dataset metadata.
 #'
 #' @details
@@ -483,12 +483,11 @@ sampling <- function(
 #'
 #' @description
 #' Thin wrapper around `rstan::extract` to extract typical imuGAP parameters.
-#' @param fit an `imugap_fit` object returned by `sampling()`
-#' @param pars character vector; parameters to extract. Defaults to
-#'   `"beta_bs"`, the state-level B-spline parameter.
+#' @param fit an object of class `imugap_fit` returned by `[sampling()]`.
+#' @param pars character vector of parameter names to extract (default: `"beta_bs"`).
 #' @param ... additional arguments passed to `[rstan::extract()]`.
 #'
-#' @return a list, as returned by `rstan::extract()`
+#' @return a list, of extracted parameter arrays as returned by `[rstan::extract()]`.
 #'
 #' @examples
 #' data("fit_sim")

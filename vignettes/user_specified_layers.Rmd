@@ -453,3 +453,11 @@ you provide:
 - If you provide sub-populations like counties (**2 layers**) or sub-sub-populations like schools
   (**3 layers**), the model automatically builds hierarchical random offsets down the location tree
   to capture finer resolution variation.
+
+---
+
+# Summary and Related Vignettes
+
+- For an overview of the core model fitting and prediction workflow, see **[Getting Started with imuGAP](imuGAP.html)**.
+- To explore input datasets and validation rules, see **[Included Example Datasets and Data Validation](example_data.html)**.
+- For convergence diagnostics and trace plots, see **[Fit Inspection and Stan Diagnostics](examining_fits.html)**.

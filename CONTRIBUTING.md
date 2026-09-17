@@ -85,6 +85,18 @@ We use [`just`](https://github.com/casey/just) to automate development tasks. Al
 * **Explicit `@title` and `@description`**: Always provide explicit `@title` and `@description` tags in roxygen blocks rather than relying on roxygen2's automatic inference from the initial paragraphs.
 * **`data.table` and `@autoglobal`**: Functions performing calculations or non-standard evaluation with `data.table` should generally be marked with `@autoglobal` so that `roxyglobals` automatically registers referenced columns and symbols in `R/globals.R`.
 * **Internal Functions**: Unexported helper functions should be tagged with `@keywords internal` and `@noRd` so they are fully documented in source code without generating unneeded `.Rd` manual files.
+* **Casing & Punctuation for `@param` and `@return`**:
+  * All `@param` descriptions should lead with a lowercase letter (e.g. `a [data.frame()]`, `integer vector`, `logical scalar; ...`).
+  * Descriptions should end with a terminating period (`.`).
+* **Parameter (`@param`) Formatting**:
+  * **Types**: Explicitly state input types/classes using the minimal type that will work (e.g. `a [data.frame()]` rather than compound `[data.frame()] or [data.table()]`, `integer vector`, `an object of class \`imugap_fit\``).
+  * **Flag Parameters**: Frame descriptions for boolean/logical flags as questions (e.g. `logical scalar; drop extraneous columns? (default: \`TRUE\`).`, `logical; allow \`NA\` values? (default: \`FALSE\`).`).
+  * **Defaults**: Standardize default value notation using `(default: <val>)`, e.g. `(default: 5L)`, `(default: "snapshot")`, `(default: NULL)`.
+  * **Ellipsis (`...`)**: Document `...` explicitly as forwarded (`additional arguments passed to [target_fn()].`) or ignored (`additional arguments (currently ignored).`), or document forwarded dots via `@inheritDotParams <pkg>::<fn>`.
+* **Return Value (`@return`) Formatting**:
+  * Always document the return type and structure leading with `a <type>, ...explanation...` in lowercase (e.g. `a [data.table()], containing...`, `an object of class \`imugap_predict\`, wrapping...`, `a logical scalar, indicating whether...`).
+  * For side-effect or validation functions, state invisible returns explicitly (e.g. `invisibly returns \`TRUE\` on success.`).
+  * For multi-element lists, use an indented markdown bullet list detailing element names in backticks and types.
 * **Markdown Formatting**: `roxygen2` markdown mode is enabled (`Roxygen: list(markdown = TRUE)`). Prefer standard markdown syntax:
   * Use backticks for code identifiers, arguments, and return types (e.g. `` `locations` ``, `` `data.table` ``).
   * Use cross-reference markdown links (e.g. `[sampling()]`, `[flexstanr::stan_options()]`).

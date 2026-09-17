@@ -1,0 +1,442 @@
+---
+title: "Included Example Datasets and Data Validation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Included Example Datasets and Data Validation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  out.width = "100%",
+  dev.args = list(bg = "white")
+)
+```
+
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+if (requireNamespace("thematic", quietly = TRUE)) {
+  thematic::thematic_off()
+}
+
+# Define a knitr hook to fold source code into a <details> block below the plot
+local({
+  hook_source <- knitr::knit_hooks$get("source")
+  knitr::knit_hooks$set(source = function(x, options) {
+    res <- hook_source(x, options)
+    if (isTRUE(options$fold) || !is.null(options$code_summary)) {
+      label <- options$code_summary
+      if (is.null(label)) label <- "Show code"
+      sprintf("\n<details><summary><b>%s</b></summary>\n\n%s\n</details>\n", label, res)
+    } else {
+      res
+    }
+  })
+
+  hook_chunk <- knitr::knit_hooks$get("chunk")
+  knitr::knit_hooks$set(chunk = function(x, options) {
+    res <- hook_chunk(x, options)
+    if (isTRUE(options$fold)) {
+      sprintf("\n<div class=\"chunk-plot-first\">\n%s\n</div>\n", res)
+    } else {
+      res
+    }
+  })
+})
+
+required_pkgs <- c("imuGAP", "data.table", "ggplot2", "tidyr", "dplyr")
+pkgs_available <- all(sapply(required_pkgs, requireNamespace, quietly = TRUE))
+
+if (!pkgs_available) {
+  knitr::opts_chunk$set(eval = FALSE)
+  message("Some suggested packages are missing. Vignette code will not be executed.")
+} else {
+  chk <- suppressPackageStartupMessages(
+    sapply(required_pkgs, require, character.only = TRUE)
+  )
+
+  # Always enforce white background and black text on plots
+  ggplot2::theme_set(
+    ggplot2::theme_bw() +
+      ggplot2::theme(
+        plot.background = ggplot2::element_rect(fill = "white", colour = NA),
+        panel.background = ggplot2::element_rect(fill = "white", colour = NA),
+        legend.background = ggplot2::element_rect(fill = "white", colour = NA),
+        legend.box.background = ggplot2::element_blank(),
+        text = ggplot2::element_text(colour = "black"),
+        axis.text = ggplot2::element_text(colour = "black"),
+        axis.title = ggplot2::element_text(colour = "black"),
+        plot.title = ggplot2::element_text(colour = "black"),
+        plot.subtitle = ggplot2::element_text(colour = "black"),
+        strip.text = ggplot2::element_text(colour = "black"),
+        strip.background = ggplot2::element_rect(fill = "grey90", colour = "grey20")
+      )
+  )
+}
+```
+
+# Overview of the Synthetic Simulation Universe
+
+`imuGAP` provides four bundled datasets (`locations_sim`, `observations_sim`, `populations_sim`, and `target_sim`) alongside latent parameter fixtures (`latent_params_sim`, `fit_sim`, `predict_sim`) that represent a realistic, multi-resolution childhood vaccination monitoring scenario.
+
+In this scenario:
+- A single **State** is partitioned into three **Counties** (Scruggs, Simone, Watson), which each contain 8 elementary **Schools** (24 total schools).
+- The vaccine requires a two-dose sequential regimen (e.g. MMR, with dose 1 recommended at age 1 and dose 2 eligible at age 4).
+- Observations are gathered from diverse empirical surveillance streams:
+  1. **ChildVaxView / NIS-Child**: State-level single-cohort point estimates at ages 2 and 3 for dose 1.
+  2. **SchoolVaxView**: State-level kindergarten entry surveys (dose 2 at age 5).
+  3. **TeenVaxView**: State-level multi-cohort cross-sectional survey snapshots spanning ages 14 to 18 (dose 2).
+  4. **County 6th Grade Surveys**: Right-censored dose 2 coverage at age 11 across all three counties.
+  5. **School Kindergarten Entry Records**: Annual kindergarten entry surveys for dose 2 at age 5 across all 24 individual schools.
+
+---
+
+# 1. Inspecting the Bundled Datasets
+
+### Location Hierarchy (`locations_sim`)
+
+The `locations_sim` dataset defines the spatial tree structure. Every location node must have either 0 offspring (a leaf node, such as a school) or strictly greater than 1 offspring ($\ge 2$ children).
+
+```{r locations}
+data("locations_sim", package = "imuGAP")
+head(locations_sim)
+nrow(locations_sim)
+```
+
+We validate and canonicalize the location tree using `canonicalize_locations()`:
+
+```{r locations-canon}
+canonical_locations <- canonicalize_locations(locations_sim)
+head(canonical_locations)
+```
+
+`canonicalize_locations()` introduces:
+- `loc_c_id` and `loc_cp_id`: 1-based integer continuous indices for the location and its parent.
+- `layer`: 1-based integer tree depth (1 for State, 2 for County, 3 for School).
+- `layer_bound`: Index slicing offsets used internally by Stan to partition the spatial random effect arrays.
+
+---
+
+### Coverage Observations (`observations_sim`)
+
+The `observations_sim` dataset contains the binomial survey outcomes:
+- `obs_id`: Unique identifier for each observation.
+- `loc_id`: Location identifier matching a node in `locations_sim`.
+- `positive`: Count of vaccinated individuals.
+- `sample_n`: Total sample size ($N$).
+- `censored`: `1` for right-censored observations, `NA` for uncensored observations.
+
+```{r observations}
+data("observations_sim", package = "imuGAP")
+head(observations_sim[, .(obs_id, loc_id, positive, sample_n, censored)])
+```
+
+Canonicalizing observations with `canonicalize_observations()` assigns continuous 1-based indices `obs_c_id`, sorting uncensored records before censored records for efficient block execution in Stan:
+
+```{r observations-canon}
+canonical_observations <- canonicalize_observations(observations_sim)
+head(canonical_observations)
+```
+
+---
+
+### Observation Metadata & Weights (`populations_sim`)
+
+When survey observations represent composite population slices (e.g. surveys spanning multiple age groups or cohorts), `populations_sim` provides fractional weights mapping observations to discrete age/cohort slices:
+
+```{r populations}
+data("populations_sim", package = "imuGAP")
+head(populations_sim)
+```
+
+For single-cohort kindergarten surveys, `obs_id` has a 1:1 mapping with `weight = 1.0`. For multi-age surveys (such as TeenVaxView at `obs_id == 761`), multiple rows describe the age distribution:
+
+```{r populations-multi}
+# TeenVaxView-style observation spanning ages 14 to 18
+observations_sim[
+  obs_id == 761,
+  .(obs_id, loc_id, positive, sample_n, age_min, age_max, dose)
+]
+
+# Corresponding population metadata with distributed weights summing to 1.0
+populations_sim[obs_id == 761]
+```
+
+We validate and canonicalize populations using `canonicalize_populations()`:
+
+```{r populations-canon}
+canonical_populations <- canonicalize_populations(
+  populations_sim, observations_sim, locations_sim
+)
+head(canonical_populations)
+```
+
+---
+
+# 2. Canonicalization Rules and Validation Diagnostics
+
+`imuGAP` enforces strict structural assertions to safeguard model fitting against corrupted or incompatible inputs:
+
+### Observation Binomial Count Consistency
+
+If an observation has `positive > sample_n`, `canonicalize_observations()` raises an informative error:
+
+```{r validation-failure-obs}
+invalid_obs <- copy(observations_sim[, .(obs_id, loc_id, positive, sample_n, censored)])
+invalid_obs[1, positive := sample_n + 10]
+
+tryCatch(
+  canonicalize_observations(invalid_obs),
+  error = function(e) message("Caught expected error: ", e$message)
+)
+```
+
+### Hierarchy Invariant Enforcement
+
+If duplicate location IDs exist, or single-child chains are introduced, `canonicalize_locations()` rejects the tree:
+
+```{r validation-failure-locs}
+invalid_locs <- rbind(
+  locations_sim,
+  data.frame(loc_id = "Scruggs", parent_id = "State"),
+  fill = TRUE
+)
+
+tryCatch(
+  canonicalize_locations(invalid_locs),
+  error = function(e) message("Caught expected error: ", e$message)
+)
+```
+
+---
+
+# 3. Visualizing the Synthetic Observation Streams
+
+We can inspect the empirical coverage rates across each observation stream and compare them against the underlying true data-generating parameters (`latent_params_sim`).
+
+### State-Level Observation Streams
+
+```{r synthetic-state-viz, fold = TRUE, code_summary = "Show plot code"}
+data("latent_params_sim", package = "imuGAP")
+
+state_obs <- copy(observations_sim[loc_id == "State"])
+state_obs[, source := factor(
+  fcase(
+    dose == 1 & age_min == 2, "ChildVaxView (Dose 1, Age 2)",
+    dose == 1 & age_min == 3, "ChildVaxView (Dose 1, Age 3)",
+    age_min == 5, "SchoolVaxView (Dose 2, Age 5)",
+    default = "TeenVaxView (Dose 2, Ages 14-18)"
+  ),
+  levels = c(
+    "ChildVaxView (Dose 1, Age 2)",
+    "ChildVaxView (Dose 1, Age 3)",
+    "SchoolVaxView (Dose 2, Age 5)",
+    "TeenVaxView (Dose 2, Ages 14-18)"
+  )
+)]
+state_obs[, obs_prop := positive / sample_n]
+
+single_cohort_obs <- state_obs[is.na(age_max) | age_max == age_min + 1L]
+multi_cohort_obs <- copy(state_obs[!is.na(age_max) & age_max > age_min + 1L])
+multi_cohort_obs[, cohort_max := cohort_min + (age_max - 1L) - age_min]
+
+latent_state <- data.table(
+  cohort_min = seq_along(latent_params_sim$phi_state),
+  propensity = 1 - latent_params_sim$phi_state
+)
+
+n_c <- length(latent_params_sim$phi_state)
+latent_curves <- rbindlist(list(
+  data.table(
+    cohort_min = seq_len(n_c),
+    latent_cov = (1 - latent_params_sim$phi_state) *
+      latent_params_sim$uptake[2, 1],
+    source = "ChildVaxView (Dose 1, Age 2)"
+  ),
+  data.table(
+    cohort_min = seq_len(n_c),
+    latent_cov = (1 - latent_params_sim$phi_state) *
+      latent_params_sim$uptake[3, 1],
+    source = "ChildVaxView (Dose 1, Age 3)"
+  ),
+  data.table(
+    cohort_min = seq_len(28),
+    latent_cov = (1 - latent_params_sim$phi_state[1:28]) *
+      latent_params_sim$uptake[5, 2],
+    source = "SchoolVaxView (Dose 2, Age 5)"
+  ),
+  data.table(
+    cohort_min = seq_len(15),
+    latent_cov = (1 - latent_params_sim$phi_state[1:15]) *
+      mean(latent_params_sim$uptake[14:18, 2]),
+    source = "TeenVaxView (Dose 2, Ages 14-18)"
+  )
+))
+latent_curves[, source := factor(source, levels = levels(state_obs$source))]
+
+ggplot() +
+  geom_line(
+    data = latent_state,
+    aes(x = cohort_min, y = propensity, linetype = "True Lifetime Uptake Propensity (1 - phi)"),
+    color = "gray40", linewidth = 0.8, alpha = 0.5
+  ) +
+  geom_line(
+    data = latent_curves,
+    aes(x = cohort_min, y = latent_cov, color = source),
+    linetype = "dashed", linewidth = 0.7, alpha = 0.4
+  ) +
+  geom_segment(
+    data = multi_cohort_obs,
+    aes(x = cohort_min, xend = cohort_max, y = obs_prop, yend = obs_prop, color = source),
+    linewidth = 1.1, alpha = 0.95
+  ) +
+  geom_point(
+    data = single_cohort_obs,
+    aes(x = cohort_min, y = obs_prop, color = source, shape = source),
+    size = 2.4, alpha = 0.95
+  ) +
+  scale_x_continuous(breaks = seq(0, 30, by = 5), minor_breaks = seq(1, 30, by = 1)) +
+  coord_cartesian(xlim = c(0, 30), ylim = c(0.4, 1.0)) +
+  scale_linetype_manual(
+    name = NULL,
+    values = c("True Lifetime Uptake Propensity (1 - phi)" = "dashed")
+  ) +
+  scale_color_brewer(name = "Data Source", palette = "Dark2") +
+  scale_shape_manual(
+    name = "Data Source",
+    values = c(
+      "ChildVaxView (Dose 1, Age 2)" = 16,
+      "ChildVaxView (Dose 1, Age 3)" = 17,
+      "SchoolVaxView (Dose 2, Age 5)" = 15,
+      "TeenVaxView (Dose 2, Ages 14-18)" = 18
+    )
+  ) +
+  guides(
+    color = guide_legend(
+      override.aes = list(
+        shape = c(16, 17, 15, NA),
+        linetype = c("blank", "blank", "blank", "solid"),
+        linewidth = c(0, 0, 0, 1.1),
+        alpha = 1
+      )
+    ),
+    shape = "none"
+  ) +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.98, 0.02),
+    legend.justification.inside = c(1, 0)
+  ) +
+  labs(x = "Birth Cohort Index", y = "Vaccination Proportion")
+```
+
+---
+
+### County-Level Right-Censored Surveillance
+
+```{r synthetic-county-viz, fold = TRUE, code_summary = "Show plot code"}
+county_obs <- copy(observations_sim[loc_id %in% c("Scruggs", "Simone", "Watson")])
+county_obs[, obs_prop := positive / sample_n]
+
+max_obs_cohort <- max(county_obs$cohort_min)
+n_cohorts <- length(latent_params_sim$phi_state)
+
+county_latent <- rbindlist(lapply(names(latent_params_sim$off_cnty), function(cnty) {
+  cohorts <- seq_len(n_cohorts)
+  c_idx <- match(cnty, names(latent_params_sim$off_cnty))
+  offset <- latent_params_sim$off_cnty[c_idx]
+  phi_shifted <- plogis(qlogis(latent_params_sim$phi_state[cohorts]) + offset)
+  cov_true <- (1 - phi_shifted) * latent_params_sim$uptake[11, 2]
+  cov_censored <- cov_true * latent_params_sim$censor_reduction
+  data.table(
+    loc_id = cnty,
+    cohort_min = cohorts,
+    latent_cov = cov_true,
+    latent_cov_censored = cov_censored
+  )
+}))
+
+county_latent_obs <- county_latent[cohort_min <= max_obs_cohort]
+county_latent_unobs <- county_latent[cohort_min >= max_obs_cohort]
+
+ggplot() +
+  geom_point(
+    data = county_obs,
+    aes(x = cohort_min, y = obs_prop),
+    color = "steelblue", size = 2, alpha = 0.85
+  ) +
+  geom_line(
+    data = county_latent_obs,
+    aes(
+      x = cohort_min,
+      y = latent_cov,
+      color = "True Latent Coverage",
+      linetype = "Observed Cohorts"
+    ),
+    linewidth = 0.9
+  ) +
+  geom_line(
+    data = county_latent_obs,
+    aes(
+      x = cohort_min,
+      y = latent_cov_censored,
+      color = "Censored Latent (0.95x)",
+      linetype = "Observed Cohorts"
+    ),
+    linewidth = 0.9
+  ) +
+  geom_line(
+    data = county_latent_unobs,
+    aes(
+      x = cohort_min,
+      y = latent_cov,
+      color = "True Latent Coverage",
+      linetype = "Unobserved Cohorts"
+    ),
+    linewidth = 0.9
+  ) +
+  geom_line(
+    data = county_latent_unobs,
+    aes(
+      x = cohort_min,
+      y = latent_cov_censored,
+      color = "Censored Latent (0.95x)",
+      linetype = "Unobserved Cohorts"
+    ),
+    linewidth = 0.9
+  ) +
+  facet_wrap(~loc_id) +
+  scale_x_continuous(breaks = seq(0, 30, by = 5), minor_breaks = seq(1, 30, by = 1)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  coord_cartesian(xlim = c(0, 30), ylim = c(0.6, 1.0)) +
+  scale_color_manual(
+    name = NULL,
+    values = c("True Latent Coverage" = "firebrick", "Censored Latent (0.95x)" = "darkorange")
+  ) +
+  scale_linetype_manual(
+    name = NULL,
+    values = c("Observed Cohorts" = "dashed", "Unobserved Cohorts" = "dotted")
+  ) +
+  guides(
+    color = guide_legend(order = 1, override.aes = list(linewidth = 0.9, linetype = "solid")),
+    linetype = guide_legend(order = 2, override.aes = list(linewidth = 0.9, color = "black"))
+  ) +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.85, 0.12),
+    legend.justification.inside = c(1, 0)
+  ) +
+  labs(x = "Birth Cohort Index", y = "6th Grade Survey Coverage (Dose 2, Age 11)")
+```
+
+---
+
+# Summary and Related Vignettes
+
+- To see how these datasets are used in the core model fitting and prediction workflow, see **[Getting Started with imuGAP](imuGAP.html)**.
+- To learn how `imuGAP` configures and estimates parameters across arbitrary spatial depths, see **[Flexible Location Layers in imuGAP](user_specified_layers.html)**.
+- For detailed MCMC convergence checks, trace plots, and parameter inference, see **[Fit Inspection and Stan Diagnostics](examining_fits.html)**.

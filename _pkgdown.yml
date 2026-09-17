@@ -3,6 +3,25 @@ template:
   light-switch: true
   bootstrap: 5
 
+navbar:
+  structure:
+    left: [intro, articles, reference, news]
+    right: [github, lightswitch]
+  components:
+    articles:
+      text: Articles
+      menu:
+        - text: "Getting Started"
+          href: articles/imuGAP.html
+        - text: "---"
+        - text: "User Guides & Deep Dives"
+        - text: "Included Example Data & Validation"
+          href: articles/example_data.html
+        - text: "Flexible Location Layers"
+          href: articles/user_specified_layers.html
+        - text: "Fit Inspection & Stan Diagnostics"
+          href: articles/examining_fits.html
+
 authors:
   sidebar:
     roles: [aut, cre, ctb]

@@ -27,14 +27,14 @@ MSG_POSTERIOR_SUBSAMPLE_WARN <- paste0(
 #' Uses the output of `[sampling()]` and a target grid to generate
 #' predicted coverage probabilities.
 #'
-#' @param object an `imugap_fit` object returned by `sampling()`
-#' @param target a `[data.frame()]` of target populations to predict for
+#' @param object an object of class `imugap_fit` returned by `[sampling()]`.
+#' @param target a `[data.frame()]` of target populations to predict for.
 #' @param posterior_size optional single positive integer. When set, predict
 #'   over only this many draws, taken from the end of each chain (the converged
 #'   tail). Must be a multiple of the number of chains; a value that isn't is
 #'   rounded up to the next multiple, with a warning. Must not exceed the number
-#'   of draws in the fit. Defaults to `NULL`, which uses every draw.
-#' @param ... additional arguments (currently ignored)
+#'   of draws in the fit (default: `NULL`, which uses every draw).
+#' @param ... additional arguments (currently ignored).
 #'
 #' @details
 #' The `[predict()]` method takes an `imugap_fit` object (typically the output of
@@ -54,7 +54,7 @@ MSG_POSTERIOR_SUBSAMPLE_WARN <- paste0(
 #' When a sub-sample is taken `predict()` warns that it has not checked whether
 #' those draws are adequate (chain mixing, effective sample size).
 #'
-#' @return An object of class `imugap_predict` wrapping the 3D array of predicted
+#' @return an object of class `imugap_predict`, wrapping the 3D array of predicted
 #'   draws and the canonical target dataset.
 #'
 #' @examplesIf interactive()
@@ -269,12 +269,12 @@ predict.imugap_fit <- function(
 #' Summarizes predicted coverage probabilities from an `imugap_predict` object
 #' by location, cohort, age, and dose for the requested quantiles.
 #'
-#' @param object an `imugap_predict` object returned by `[predict()]`
-#' @param probs numeric vector of probabilities/quantiles to compute.
-#'   Defaults to `c(0.025, 0.5, 0.975)`.
-#' @param ... additional arguments (currently ignored)
+#' @param object an object of class `imugap_predict` returned by `[predict()]`.
+#' @param probs numeric vector of probabilities/quantiles to compute
+#'   (default: `c(0.025, 0.5, 0.975)`).
+#' @param ... additional arguments (currently ignored).
 #'
-#' @return A `data.table` containing target population parameters, posterior mean
+#' @return a `[data.table()]`, containing target population parameters, posterior mean
 #'   coverage (`mean`), and the requested quantiles (e.g. `q2.5`, `q50`, `q97.5`).
 #'
 #' @examples
@@ -346,14 +346,14 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
 #' Subsets predicted coverage draws by target metadata (variables), iterations,
 #' and chains.
 #'
-#' @param x an `imugap_predict` object returned by `[predict()]`.
+#' @param x an object of class `imugap_predict` returned by `[predict()]`.
 #' @param subset logical expression indicating which target variables to keep.
-#'   Evaluated in the context of the `target` metadata data.table.
-#' @param iteration numeric/integer/logical vector of iterations to keep.
-#' @param chain numeric/integer/logical vector of chains to keep.
+#'   Evaluated in the context of the `target` metadata `[data.table()]`.
+#' @param iteration numeric, integer, or logical vector of iterations to keep.
+#' @param chain numeric, integer, or logical vector of chains to keep.
 #' @param ... additional arguments (currently ignored).
 #'
-#' @return A subsetted `imugap_predict` object with corresponding subsetted `draws`
+#' @return an object of class `imugap_predict`, subsetted with corresponding `draws`
 #'   and `target` metadata.
 #'
 #' @examples
@@ -403,14 +403,14 @@ subset.imugap_predict <- function(x, subset, iteration, chain, ...) {
 #' `data.frame` containing `iteration`, `chain`, target metadata, and a
 #' `coverage` column.
 #'
-#' @param x an `imugap_predict` object returned by `[predict()]`.
+#' @param x an object of class `imugap_predict` returned by `[predict()]`.
 #' @param row.names `NULL` or a character vector giving the row names for the
 #'   data frame.
-#' @param optional logical. If `TRUE`, setting row names and converting column
-#'   names is optional.
+#' @param optional logical scalar; make setting row and column names optional?
+#'   (default: `FALSE`).
 #' @param ... additional arguments (currently ignored).
 #'
-#' @return A `data.table` with columns `iteration`, `chain`, the target metadata
+#' @return a `[data.table()]`, with columns `iteration`, `chain`, the target metadata
 #'   columns, and `coverage`.
 #'
 #' @examples

@@ -71,19 +71,18 @@
 #' months, quarters, years, etc. As long as these are used consistently,
 #' estimation will work, and take on the unit meaning you used for input.
 #'
-#' @param locations a `[data.frame()]`, with columns `loc_id` and `parent_id`,
-#'   of the same type. See Details for restrictions.
-#' @param observations a `[data.frame()]`, the observed data, with at least
+#' @param locations a `[data.frame()]` with columns `loc_id` and `parent_id`
+#'   of matching types. See Details for restrictions.
+#' @param observations a `[data.frame()]` containing observed data, with at least
 #'   three columns:
 #'   - an `obs_id` column; any type, as long as unique, non-NA
 #'   - a `positive` column; non-negative integers, the observed number of
 #'     vaccinated individuals
 #'   - a `sample_n` column; positive integers, the number of individuals
-#'     sampled, must be greater than or equal to "positive"
-#'   - optionally, a `censored` column; numeric, NA (uncensored) or 1
-#'     (right-censored); if not present, will be assumed NA
-#' @param populations a `[data.frame()]`, the observation meta data, with
-#'   columns
+#'     sampled, must be greater than or equal to `positive`
+#'   - optionally, a `censored` column; numeric, `NA` (uncensored) or 1
+#'     (right-censored); if not present, will be assumed `NA`
+#' @param populations a `[data.frame()]` containing observation metadata, with columns:
 #'  - `obs_id`, any type; the observation the row concerns (i.e. id shared with
 #'    an observations data object)
 #'  - `loc_id`, any type; the location the row concerns (i.e. id shared with a
@@ -93,11 +92,10 @@
 #'  - `age`, a positive integer; the age of that cohort row concerns
 #'  - `weight`, a numeric, (0, 1); the relative contribution of this row to an
 #'    observation. Optional if each population row has a unique `obs_id`.
-#' @param drop_extra a logical scalar; drop extraneous columns? (default: yes)
-#' @param max_cohort if present, what is the maximum cohort that should be
-#'   present?
-#' @param max_age if present, what is the maximum age that should be present?
-#' @param max_dose maximum dose number to allow (default: 2L)
+#' @param drop_extra logical scalar; drop extraneous columns? (default: `TRUE`).
+#' @param max_cohort optional integer scalar; maximum birth cohort permitted.
+#' @param max_age optional integer scalar; maximum age permitted.
+#' @param max_dose integer scalar; maximum dose number to allow (default: 2L).
 #'
 #' @name canonicalize
 #' @aliases canonicalize_locations canonicalize_observations canonicalize_populations
@@ -106,8 +104,19 @@
 #' @autoglobal
 NULL
 
+#' @title Mark object as canonicalized
+#'
+#' @description
+#' Attaches internal attribute marking the object as canonical for a target class.
+#'
+#' @param x a `[data.table()]` to mark.
+#' @param target_class string class name ('locations', 'observations', 'populations').
+#'
+#' @return a `[data.table()]`, the modified table with attribute attached.
+#'
 #' @importFrom data.table setattr
 #' @keywords internal
+#' @noRd
 mark_canonical <- function(x, target_class) {
   setattr(x, "imuGAP-canonical", target_class)
   x[]
@@ -115,11 +124,16 @@ mark_canonical <- function(x, target_class) {
 
 #' @title Check if an object is canonical
 #'
-#' @param dt a `[data.table()]` (or compatible object)
-#' @param target_class a string, one of 'locations', 'observations', 'populations'
+#' @description
+#' Verifies whether `dt` has been canonicalized for `target_class`.
+#'
+#' @param dt a `[data.table()]` (or compatible object).
+#' @param target_class a string, one of 'locations', 'observations', 'populations'.
+#'
+#' @return a logical scalar, `TRUE` if `dt` is canonical for `target_class`, `FALSE` otherwise.
 #'
 #' @keywords internal
-#' @return `TRUE` if `dt` is canonical for `target_class`, `FALSE` otherwise.
+#' @noRd
 is_canonical <- function(dt, target_class) {
   canonical <- attr(dt, "imuGAP-canonical", exact = TRUE)
   !is.null(canonical) && (canonical == target_class)
@@ -191,7 +205,7 @@ ERR_TARGET_INVALID_COHORT <- paste0(
 )
 
 #' @rdname canonicalize
-#' @return `canonicalize_locations` returns a `data.table`, with:
+#' @return a `[data.table()]`, with:
 #'  - `loc_id`, `parent_id` columns as originally supplied, possibly reordered
 #'  - `loc_c_id`, `loc_cp_id` columns, canonicalized id/parent_id columns,
 #'    representing the order that will be used in the sampler
@@ -345,13 +359,12 @@ canonicalize_locations <- function(locations) {
 }
 
 #' @rdname canonicalize
-#' @return `canonicalize_observations` returns a canonical observation object,
-#'   a `[data.table()]` with:
+#' @return a `[data.table()]`, canonical observation object with:
 #'  - an `obs_c_id` column, an integer sequence from 1; the order observations
 #'    will be passed to estimation
 #'  - the original `obs_id` column, possibly reordered
 #'  - `positive` and `sample_n` columns, possibly reordered
-#'  - a "censored" column; all NA, if not present in original `observations`
+#'  - a `censored` column; all `NA`, if not present in original `observations`
 #'    argument
 #'
 #' @examples
@@ -427,13 +440,11 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
 }
 
 #' @rdname canonicalize
-#' @return `canonicalize_populations` returns a canonical populations object,
-#'   mirroring the input `populations`,
-#' with the following updates:
-#' - `obs_c_id`, the observation id the row concerns, canonicalized to match
-#'   the canonical observation ids
-#' - `loc_c_id`, the location id the row concerns, canonicalized to match
-#' - reordered to `obs_c_id` order
+#' @return a `[data.table()]`, canonical populations object mirroring the input `populations` with:
+#'  - `obs_c_id`, the observation id the row concerns, canonicalized to match
+#'    the canonical observation ids
+#'  - `loc_c_id`, the location id the row concerns, canonicalized to match
+#'  - reordered to `obs_c_id` order
 #'
 #' @examples
 #' # --- canonicalize_populations ---
@@ -528,10 +539,10 @@ canonicalize_populations <- function(
 #' users do not call it directly.
 #'
 #' @param target a target grid: the output of `[create_target()]`, or a
-#'   `data.frame` / `data.table` with `loc_id`, `age`, `cohort`, and `dose` columns.
-#' @param fit an `imugap_fit` object returned by `[sampling()]`.
+#'   `[data.frame()]` with `loc_id`, `age`, `cohort`, and `dose` columns.
+#' @param fit an object of class `imugap_fit` returned by `[sampling()]`.
 #'
-#' @return the validated `target` (a `data.table`) with `loc_c_id` added.
+#' @return a `[data.table()]`, validated target grid with canonical `loc_c_id` added.
 #'
 #' @seealso `[create_target()]`, `[predict.imugap_fit()]`
 #'
