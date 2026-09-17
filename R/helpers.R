@@ -23,12 +23,13 @@ ERR_HELP_SNAP_COHORT_SINGLE <- "`cohort` must be a single reference value in 'sn
 #' `create_observation_populations` is a convenience function to construct a properly weighted
 #' `populations` object for typical modes of observation.
 #'
-#' @param observations a pre- or post-canonicalization `observations` object.
-#'   Optionally contains additional columns required for the specified `mode` that vary by row.
-#' @param mode character; the mode for populations creation (default: "snapshot").
+#' @param observations a pre- or post-canonicalization `[data.frame()]`.
+#'   Optionally contains additional columns required for the specified `mode` that
+#'   vary by row.
+#' @param mode character string; the mode for populations creation (default: `"snapshot"`).
 #' @param ... additional arguments determined by the specified `mode` requirements
 #'   for values which do not vary by row.
-#
+#'
 #' @details
 #' This function uses a combination of varying information from `observations` and
 #' fixed information from `...` arguments to provide the necessary information
@@ -57,7 +58,7 @@ ERR_HELP_SNAP_COHORT_SINGLE <- "`cohort` must be a single reference value in 'sn
 #' respect to weighting. This assumption may be inadequate when population age
 #' groups contributing to an observation are very differently sized.
 #'
-#' @return A `data.table` representing the populations mapping.
+#' @return a `[data.table()]`, representing the populations mapping.
 #' @autoglobal
 #' @export
 create_observation_populations <- function(
@@ -148,7 +149,18 @@ create_observation_populations <- function(
   }
 }
 
+#' @title Greatest common divisor
+#'
+#' @description
+#' Computes the greatest common divisor of two integers.
+#'
+#' @param a integer value.
+#' @param b integer value.
+#'
+#' @return an integer, the greatest common divisor.
+#'
 #' @keywords internal
+#' @noRd
 gcd <- function(a, b) {
   while (b != 0) {
     temp <- b
@@ -158,12 +170,33 @@ gcd <- function(a, b) {
   a
 }
 
+#' @title Least common multiple
+#'
+#' @description
+#' Computes the least common multiple of two integers.
+#'
+#' @param a integer value.
+#' @param b integer value.
+#'
+#' @return a numeric, the least common multiple.
+#'
 #' @keywords internal
+#' @noRd
 lcm <- function(a, b) {
   (a * b) / gcd(a, b)
 }
 
+#' @title Compute recycled target vector length
+#'
+#' @description
+#' Computes the least common multiple of a vector of integer lengths.
+#'
+#' @param lens integer vector of lengths.
+#'
+#' @return a numeric, the combined recycled length.
+#'
 #' @keywords internal
+#' @noRd
 compute_recycled_target_len <- function(lens) {
   target_len <- lens[1]
   for (len in lens[-1L]) {
@@ -172,7 +205,20 @@ compute_recycled_target_len <- function(lens) {
   target_len
 }
 
+#' @title Validate vector inputs for target creation
+#'
+#' @description
+#' Validates non-missing, non-NA, and non-empty vector arguments for target grid generation.
+#'
+#' @param location vector of location IDs.
+#' @param age vector of ages.
+#' @param cohort vector of cohorts.
+#' @param dose vector of doses.
+#'
+#' @return a named integer vector, of input lengths.
+#'
 #' @keywords internal
+#' @noRd
 validate_vec_inputs <- function(location, age, cohort, dose) {
   stop_fmt_if(
     missing(age) || missing(cohort) || missing(dose),
@@ -226,14 +272,14 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
 #' this for you.
 #'
 #' @param location a vector of location IDs to target.
-#' @param age vector of ages for which to predict coverage, consistent with
+#' @param age integer or numeric vector of ages for which to predict coverage, consistent with
 #'   `[canonicalize_populations()]`.
-#' @param cohort vector of cohorts for which to predict coverage, consistent with
+#' @param cohort integer or numeric vector of cohorts for which to predict coverage, consistent with
 #'   `[canonicalize_populations()]`.
-#' @param dose vector of doses for which to predict coverage, consistent with
+#' @param dose integer vector of doses for which to predict coverage, consistent with
 #'   `[canonicalize_observations()]`.
-#' @param mode one of `"error"` (default), `"enumerate"`, `"recycle"`, or
-#'   `"snapshot"`, controlling how the vector inputs combine:
+#' @param mode character string specifying how vector inputs combine (default: `"error"`).
+#'   One of `"error"`, `"enumerate"`, `"recycle"`, or `"snapshot"`:
 #'
 #'   - `"error"`: all vector inputs must have the same length.
 #'   - `"enumerate"`: all combinations of the inputs.
@@ -244,7 +290,7 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
 #'     `age` to set that constant (`cohort_i = cohort_ref + max(age) - age_i`),
 #'     i.e. a snapshot in time.
 #'
-#' @return a `data.table` target grid with columns `obs_c_id`, `loc_id`, `age`,
+#' @return a `[data.table()]`, target grid with columns `obs_c_id`, `loc_id`, `age`,
 #'   `cohort`, `dose`, and `weight`.
 #'
 #' @seealso `[canonicalize_target()]`, `[predict.imugap_fit()]`
@@ -334,10 +380,10 @@ create_target <- function(
 #' Extracts structural metadata and 1D boundary start indices from a
 #' canonicalized locations table for consumption by Stan multi-layer models.
 #'
-#' @param loc_info A canonicalized locations table (passed to
-#'   [canonicalize_locations()]).
+#' @param loc_info a canonicalized locations table (passed to
+#'   `[canonicalize_locations()]`).
 #'
-#' @return A named list containing:
+#' @return a named list, containing:
 #'   - `n_locs`: integer total count of locations
 #'   - `n_layers`: integer maximum depth / number of layers (>= 2)
 #'   - `layer_starts`: integer array of starting location indices for each layer (length `n_layers`)
@@ -347,6 +393,7 @@ create_target <- function(
 #'   - `loc_population`: numeric array (length `n_locs`) of population weights
 #'
 #' @keywords internal
+#' @noRd
 #' @autoglobal
 assemble_layer_data <- function(loc_info) {
   n_locs <- nrow(loc_info)
