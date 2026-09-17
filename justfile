@@ -8,8 +8,10 @@ default: clean format lint docs test
 [doc('Clean up auxiliary files and directories')]
 clean:
 	rm -f  *.tar.gz
-	rm -rf ..Rcheck/
+	rm -rf *.Rcheck/
 	rm -rf .Rproj.user/
+	rm -rf figure/ figures/ doc/ Meta/
+	rm -f vignettes/*.html vignettes/*.pdf
 
 [doc('Ensure local NAMESPACE exists (bootstrapped if missing, as it is gitignored)')]
 bootstrap-namespace:
@@ -128,10 +130,6 @@ data-inputs:
 data-fit:
 	Rscript data-raw/fit_data.R
 
-[group('perf')]
-[doc('Run integrated performance test comparing current branch against main (e.g. just benchmark "--quick" or just benchmark "--models=all --iter=500")')]
-benchmark args="":
-	Rscript data-raw/benchmark_runtime_improvements.R {{ args }}
 
 [doc('Build a tar.gz artifact')]
 build: bootstrap-namespace
