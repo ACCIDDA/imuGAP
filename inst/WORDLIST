@@ -2,6 +2,7 @@
 3D
 3rds
 5L
+Canonicalization
 Canonicalize
 Canonicalizing
 ChildVaxView
@@ -10,12 +11,11 @@ MMR
 NIS
 ORCID
 RStan
+S3
 SchoolVaxView
 TeenVaxView
-Walkthrough
 arg
 bs
-bspline
 canonicalization
 canonicalize
 canonicalized
@@ -26,11 +26,11 @@ ge
 https
 loc
 mc
-olds
 pkgdown
 pre
 rightarrow
 rstan
+schemas
 stan
 textrm
 toolchain
