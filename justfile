@@ -27,6 +27,10 @@ diagrams:
 	#!/usr/bin/env bash
 	set -euo pipefail
 	if compgen -G "vignettes/figures/*.mmd" > /dev/null; then
+		PUP_CFG=$(mktemp)
+		echo '{"args": ["--no-sandbox", "--disable-setuid-sandbox"]}' > "$PUP_CFG"
+		trap 'rm -f "$PUP_CFG"' EXIT
+
 		if command -v mmdc >/dev/null 2>&1; then
 			CMD="mmdc"
 		elif command -v npx >/dev/null 2>&1; then
@@ -39,7 +43,7 @@ diagrams:
 			[ -f "$mmd" ] || continue
 			svg="${mmd%.mmd}.svg"
 			echo "Compiling $mmd -> $svg..."
-			$CMD -i "$mmd" -o "$svg" -b transparent
+			$CMD -p "$PUP_CFG" -i "$mmd" -o "$svg" -b transparent
 		done
 	fi
 
