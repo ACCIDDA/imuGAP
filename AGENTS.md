@@ -83,6 +83,11 @@ This document provides concise instructions and rules for AI coding assistants w
   * Always guard with `skip_if_not_installed("rstan")` and `skip_if_stan_unchanged(target)`.
 * **Test Coverage Expectations (`covr`)**:
   * All manually authored R files (`R/canonicalize.R`, `R/checkers.R`, `R/helpers.R`, `R/imuGAP.R`, `R/methods.R`, `R/options.R`) must maintain high test coverage (>90%, targeting 100%).
+* **Markdown List Formatting**:
+  * Always precede list blocks with an empty blank line after introductory text.
+  * Use consistent bullet markers (`-`) for unordered lists and (`1.`, `2.`) for top-level ordered sequences.
+  * For sub-lists, use 2-space or 4-space indentation with consistent sub-bullet markers (`-`). Avoid mixing unindented numbered sub-items directly under unordered bullets.
+  * Wrap list item continuations with matching margin indentation (2 spaces for `- `, 3 spaces for `1. `).
 * **Package Reinstallation & Vignette Data**:
   * Vignette chunks use `data(..., package = "imuGAP")`, which resolves datasets from the **installed package library** rather than the working directory.
   * When troubleshooting vignette (and related `pkgdown` site) issues associated with rendering package example data, if the fix ends up being in the package data (`data-raw/DATASET.R` or `data-raw/fit_data.R`), you must reinstall the package (`just install` or `R CMD INSTALL .`) before re-rendering vignettes or rebuilding the site with updated data (or use `just site-full`).

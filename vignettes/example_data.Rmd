@@ -87,14 +87,15 @@ and `target_sim`) alongside latent parameter fixtures (`latent_params_sim`, `fit
 across a multi-resolution hierarchical population structure.
 
 In this scenario:
+
 - A single **State** is partitioned into three **Counties** (Scruggs, Simone, Watson), which each contain 8 elementary **Schools** (24 total schools).
 - The vaccine requires a two-dose sequential regimen (e.g. MMR, with dose 1 recommended at age 1 and dose 2 eligible at age 4).
 - Observations are gathered from diverse empirical surveillance streams:
-  1. **ChildVaxView / NIS-Child**: State-level single-cohort point estimates at ages 2 and 3 for dose 1.
-  2. **SchoolVaxView**: State-level kindergarten entry surveys (dose 2 at age 5).
-  3. **TeenVaxView**: State-level multi-cohort cross-sectional survey snapshots spanning ages 14 to 18 (dose 2).
-  4. **County 6th Grade Surveys**: Right-censored dose 2 coverage at age 11 across all three counties.
-  5. **School Kindergarten Entry Records**: Annual kindergarten entry surveys for dose 2 at age 5 across all 24 individual schools.
+  - **ChildVaxView / NIS-Child**: State-level single-cohort point estimates at ages 2 and 3 for dose 1.
+  - **SchoolVaxView**: State-level kindergarten entry surveys (dose 2 at age 5).
+  - **TeenVaxView**: State-level multi-cohort cross-sectional survey snapshots spanning ages 14 to 18 (dose 2).
+  - **County 6th Grade Surveys**: Right-censored dose 2 coverage at age 11 across all three counties.
+  - **School Kindergarten Entry Records**: Annual kindergarten entry surveys for dose 2 at age 5 across all 24 individual schools.
 
 ---
 
@@ -118,6 +119,7 @@ head(canonical_locations)
 ```
 
 `canonicalize_locations()` introduces:
+
 - `loc_c_id` and `loc_cp_id`: 1-based integer continuous indices for the location and its parent.
 - `layer`: 1-based integer tree depth (1 for State, 2 for County, 3 for School).
 - `layer_bound`: Index slicing offsets used internally by Stan to partition the spatial random effect arrays.
@@ -127,6 +129,7 @@ head(canonical_locations)
 ### Coverage Observations (`observations_sim`)
 
 The `observations_sim` dataset contains the binomial survey outcomes:
+
 - `obs_id`: Unique identifier for each observation.
 - `loc_id`: Location identifier matching a node in `locations_sim`.
 - `positive`: Count of vaccinated individuals.
@@ -147,16 +150,27 @@ head(canonical_observations)
 
 ---
 
-### Observation Metadata & Weights (`populations_sim`)
+### Observation Metadata & Populations (`populations_sim`)
 
-When survey observations represent composite population slices (e.g. surveys spanning multiple age groups or cohorts), `populations_sim` provides fractional weights mapping observations to discrete age/cohort slices:
+The `populations` table provides essential metadata for all observations—defining the discrete
+age, cohort, and dose associated with each survey outcome. Every record in `observations`
+receives one or more entries in `populations`:
+
+- **Direct (1:1) observations**: A single row with `weight = 1.0` maps the observation directly
+  to a discrete population slice (such as a single-cohort kindergarten survey at age 5).
+- **Mixed observations**: When a survey mixes multiple underlying populations (such as
+  cross-sectional surveys spanning multiple age groups or cohorts), `populations` captures this
+  mixture using multiple rows sharing the same `obs_id`, each assigned a fractional weight
+  (e.g. equal weights or demographic population shares summing to 1.0).
 
 ```{r populations}
 data("populations_sim", package = "imuGAP")
 head(populations_sim)
 ```
 
-For single-cohort kindergarten surveys, `obs_id` has a 1:1 mapping with `weight = 1.0`. For multi-age surveys (such as TeenVaxView at `obs_id == 761`), multiple rows describe the age distribution:
+For single-cohort kindergarten surveys, `obs_id` has a 1:1 mapping with `weight = 1.0`. For
+multi-age surveys (such as TeenVaxView at `obs_id == 761`), multiple rows describe the mixture
+across ages:
 
 ```{r populations-multi}
 # TeenVaxView-style observation spanning ages 14 to 18
@@ -341,10 +355,7 @@ ggplot() +
 
 ### County-Level Right-Censored Surveillance
 
-The following plot compares observed 6th grade county survey outcomes against underlying latent ground
-truths. This illustrates how empirical surveillance streams sample discrete slices (subject to
-unobserved cohorts and right-censoring), while the `imuGAP` process model infers continuous
-cohort trajectories across unobserved ages and birth cohorts:
+`imuGAP` supports observations at intermediate resolutions, here illustrated by a routine county-wide tally for entry to middle school:
 
 ```{r synthetic-county-viz, fold = TRUE, code_summary = "Show plot code"}
 county_obs <- copy(observations_sim[loc_id %in% c("Scruggs", "Simone", "Watson")])
@@ -439,6 +450,83 @@ ggplot() +
     legend.justification.inside = c(1, 0)
   ) +
   labs(x = "Birth Cohort Index", y = "6th Grade Survey Coverage (Dose 2, Age 11)")
+```
+
+---
+
+### School Kindergarten Enrollment Records
+
+The following plot illustrates school-level kindergarten entry records (dose 2 at age 5) across
+all 24 elementary schools grouped by county, comparing empirical survey counts against the
+underlying school-specific latent coverage curves:
+
+```{r synthetic-school-viz, fold = TRUE, code_summary = "Show plot code"}
+canonical_locations <- canonicalize_locations(locations_sim)
+sch_locs <- canonical_locations[layer == 3]
+
+n_cohorts <- length(latent_params_sim$phi_state)
+off_c <- latent_params_sim$off_cnty
+off_s <- latent_params_sim$off_sch
+uptake_val <- latent_params_sim$uptake[5, 2]
+
+school_latent <- rbindlist(lapply(seq_len(nrow(sch_locs)), function(i) {
+  sch <- sch_locs$loc_id[i]
+  cnty <- sch_locs$parent_id[i]
+  tot_off <- unname(off_c[cnty]) + unname(off_s[sch])
+  cohorts <- seq_len(n_cohorts)
+  phi_shifted <- plogis(qlogis(latent_params_sim$phi_state[cohorts]) + tot_off)
+  cov_true <- (1 - phi_shifted) * uptake_val
+  data.table(loc_id = sch, county_id = cnty, cohort_min = cohorts, latent_cov = cov_true)
+}))
+
+sch_obs <- copy(observations_sim[loc_id %in% sch_locs$loc_id])
+sch_obs[, obs_prop := positive / sample_n]
+sch_obs <- merge(sch_obs, sch_locs[, .(loc_id, county_id = parent_id)], by = "loc_id")
+
+max_obs_cohort <- max(sch_obs$cohort_min)
+school_latent_obs <- school_latent[cohort_min <= max_obs_cohort]
+school_latent_unobs <- school_latent[cohort_min >= max_obs_cohort]
+
+ggplot() +
+  geom_point(
+    data = sch_obs,
+    aes(x = cohort_min, y = obs_prop, color = loc_id),
+    size = 1.3, alpha = 0.65
+  ) +
+  geom_line(
+    data = school_latent_obs,
+    aes(
+      x = cohort_min,
+      y = latent_cov,
+      group = loc_id,
+      color = loc_id,
+      linetype = "Observed Cohorts"
+    ),
+    linewidth = 0.75, alpha = 0.85
+  ) +
+  geom_line(
+    data = school_latent_unobs,
+    aes(
+      x = cohort_min,
+      y = latent_cov,
+      group = loc_id,
+      color = loc_id,
+      linetype = "Unobserved Cohorts"
+    ),
+    linewidth = 0.75, alpha = 0.85
+  ) +
+  facet_wrap(~county_id) +
+  scale_x_continuous(breaks = seq(0, 30, by = 5), minor_breaks = seq(1, 30, by = 1)) +
+  coord_cartesian(xlim = c(0, 30), ylim = c(0.6, 1.0)) +
+  scale_linetype_manual(
+    name = NULL,
+    values = c("Observed Cohorts" = "solid", "Unobserved Cohorts" = "dotted")
+  ) +
+  theme(legend.position = "none") +
+  labs(
+    x = "Birth Cohort Index",
+    y = "Kindergarten Entry Coverage (Dose 2, Age 5)"
+  )
 ```
 
 ---

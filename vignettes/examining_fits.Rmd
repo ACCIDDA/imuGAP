@@ -88,6 +88,7 @@ MCMC chains converged without pathologies and successfully recovered these laten
 parameters.
 
 This vignette demonstrates how to:
+
 1. Load and extract posterior parameter draws from an `imugap_fit` object using `extract_imugap()`.
 2. Inspect parameter trace plots across multiple chains.
 3. Compare posterior parameter estimates against true data-generating simulation values (`latent_params_sim`).
@@ -234,6 +235,7 @@ bayesplot::mcmc_trace(
 Location offsets represent deviation in vaccination propensity from the parent region. The following trace plots show offset trajectories for Scruggs, Simone, and Watson counties.
 
 Indicator arrows show:
+
 - **Red arrows (left edge, iteration 0)**: Expected error direction based on observational sampling noise from finite sample draws ($\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}$).
 - **Blue arrows (right edge, iteration 500)**: Realized difference between the posterior median estimate and the true latent offset.
 

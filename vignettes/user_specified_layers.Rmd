@@ -71,7 +71,7 @@ ggplot2::theme_set(
 ## Overview
 
 The `imuGAP` package estimates the underlying vaccination process model across nested population
-hierarchies (e.g. a state divided into counties and schools) and uses the fitted model to predict
+hierarchies (e.g. a state divided into counties, counties into schools) and uses the fitted model to predict
 coverage across resolution levels. A key strength of `imuGAP` is support for **flexible location
 layers**: the process model dynamically scales its hierarchical depth to match the population
 structure you provide. If you supply only aggregate state-wide data, the model estimates a 1-layer
@@ -221,7 +221,7 @@ summary_1layer <- summary(predict_sim_1layer)
 
 As seen in previous sections, the actual fitting and prediction steps are identical irrespective of data resolution. Let's see how the different resolutions affect parameter and coverage estimation.
 
-The following plot compares estimated State-level coverage from the 1-layer, 2-layer, and 3-layer model fits against the latent coverage stored in `latent_params_sim$coverage`. Faceting by data resolution (columns) shows that macro State trends are estimated accurately regardless of whether lower-level sub-population data are provided:
+The following plot compares estimated State-level coverage from the 1-layer, 2-layer, and 3-layer model fits against the latent coverage stored in `latent_params_sim$coverage`. Faceting by data resolution (columns) shows that macro State trends are estimated better with more data, essentially because the as-observed state data had a bit of bias (just due to noise) but that noise was dampened by additional independent observations of higher resolution populations:
 
 ```{r state-plot, fold = TRUE, code_summary = "Show plot code", fig.cap = "State-level coverage comparison across 1-layer, 2-layer, and 3-layer model fits against true values.", fig.width = 8, fig.height = 4}
 state_name <- locations_sim[is.na(parent_id), loc_id]
