@@ -3,9 +3,11 @@
 3rds
 5L
 Canonicalize
+Canonicalizing
 ChildVaxView
 DOI
 MMR
+NIS
 ORCID
 RStan
 SchoolVaxView
@@ -19,12 +21,15 @@ canonicalize
 canonicalized
 canonicalizes
 codecov
+cov
 ge
 https
+loc
 mc
 olds
 pkgdown
 pre
+rightarrow
 rstan
 stan
 textrm

@@ -83,9 +83,8 @@ if (!pkgs_available) {
 
 Because `imuGAP` estimates an underlying process model for vaccination (including baseline uptake
 splines $\beta_{\text{bs}}$, force-of-vaccination rates $\lambda$, and hierarchical location
-offsets $\delta$) via Bayesian inference in Stan, evaluating a model fit requires assessing whether
-MCMC chains converged without pathologies and successfully recovered these latent process
-parameters.
+offsets $\delta$) via Bayesian inference in Stan, evaluating a model fit entails assessing whether
+MCMC chains converged without pathologies. Ideally, you would also synthesize data in way you think is representative of your system and attempt to recover the latent process parameters. The example data in the package demonstrates that workflow.
 
 This vignette demonstrates how to:
 
@@ -98,7 +97,8 @@ This vignette demonstrates how to:
 
 # 1. Loading the Model Fit and Extracting Parameters
 
-You can load the bundled `fit_sim` object, which wraps the underlying Stan model fit along with dataset and options metadata:
+You can load the bundled `fit_sim` object, which wraps the underlying Stan model fit along with
+dataset and options metadata:
 
 ```{r load-fit}
 data("fit_sim", package = "imuGAP")
