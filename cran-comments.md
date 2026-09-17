@@ -1,45 +1,39 @@
-## Submission Notes for imuGAP 0.2.0
+## Submission Notes for imuGAP 0.3.0
 
-This is a minor release update of imuGAP (version 0.2.0).
+This is a minor release update of imuGAP (version 0.3.0).
 
-We have addressed issues that led to package size issues (inadvertant inclusion of intermediate vignette elements), as well as conducted additional optimizations (compression of example datasets).
+### Summary of Changes Since Previous Version (0.2.0)
 
-Relative to CRAN response:
-
-"
-Is there some reference about the method you can add in the Description
-field in the form Authors (year) <doi:10.....>?
-"
-
-There is no such reference at this time. We are developing a manuscript for submission, and intend to update the package DESCRIPTION once that manuscript is pre-printed. In the interim, we have documented the method in the vignettes and will continue to expand those as we complete further stages of method exploration, analysis, and refinement.
-
-Reference to `cmdstanr` in Additional_respositories no longer appears.
-
-We have removed the Remotes field and adjusted our internal CI. We continue to support `cmdstanr` as an optional non-CRAN package that users may want to use with `imuGAP`. To support discoverability for internal CI with `pak`, we added
-
-```
-Config/Needs/check:
-    stan-dev/cmdstanr
-```
-
-### Summary of Changes Since Previous Version (0.1.0)
-
-* **Arbitrary Hierarchy Layer Depth**:
-  - `sampling()`, `canonicalize_locations()`, and underlying Stan models now support user-defined hierarchical location partitions of arbitrary depth (1-layer statewide, 2-layer state-county, 3-layer state-county-school, or deeper regional partitions).
-  - Added `assemble_layer_data()` helper to automatically construct and validate hierarchy metadata and parent mappings.
-  - Added dedicated single-layer model `impute_school_coverage_process_v6_single_layer` with automatic dispatch.
-  - Added a new vignette (`user_specified_layers`) demonstrating 1-layer, 2-layer, and 3-layer modeling workflows.
-* **Backend Migration to `flexstanr`**:
-  - Migrated backend abstraction to the CRAN package `flexstanr (>= 0.2.0)`, providing seamless interoperability across `rstan` and `cmdstanr`.
-* **Modular Stan Architecture**:
-  - Refactored top-level Stan models into concise assembly skeletons utilizing modular `#include` directives (`functions/`, `data/`, `transformed_data/`, `parameters/`, `model/`).
-  - Pruned vestigial Stan trial scripts.
-* **Data Pipeline & Target Generation**:
-  - Split target generation into fit-free constructor `create_target()` and validator `canonicalize_target()`.
-  - Added bundled example fitted datasets for single-layer and 2-layer models (`fit_sim_1layer`, `fit_sim_2layer`, `predict_sim_1layer`, `predict_sim_2layer`, `target_sim_1layer`, `target_sim_2layer`).
-* **Validation & Error Handling**:
-  - Enforced structural location invariant (nodes have either 0 or >= 2 offspring).
-  - Standardized assertion messages with module-level `ERR_*` format string constants.
+* **S3 Print Methods**:
+  - Added dedicated S3 `print.imugap_fit()` providing a structured overview of the location
+    hierarchy, observation statistics, and summary of primary non-offset Stan parameters
+    (`beta_bs`, `sigma_layer`, `lambda_raw`, and `lp__`).
+  - Added dedicated S3 `print.imugap_predict()` displaying target population metadata, location
+    counts, dose schedule, and posterior prediction draw dimensions.
+* **Vignette Architecture & Documentation Suite**:
+  - Reorganized vignette documentation into a clean, modular multi-article suite: `imuGAP` (core
+    workflow overview), `example_data` (input data schemas, structure, and visualization),
+    `examining_fits` (posterior model inspection and diagnostics), and `user_specified_layers`
+    (spatial hierarchy configurations).
+  - Added school-level kindergarten entry records visualization distinguishing individual schools
+    by color and illustrating coverage dynamics across cohorts.
+  - Standardized active voice, direct visual presentations, and documentation formatting across
+    all articles.
+* **Diagram Generation Pipeline**:
+  - Added automated Mermaid diagram compilation pipeline generating SVG and PDF visual assets
+    with dark-mode filter compatibility.
+* **Stan Performance & Model Optimizations**:
+  - Optimized dose transition convolutions, linear predictor broadcasting, and blocked QR
+    orthonormal basis calculations.
+  - Decoupled observation likelihood evaluation into uncensored, right-censored, and left-censored
+    streams for vectorized evaluation.
+  - Added population-scaled hierarchical layer offset shrinkage with standardized QR basis
+    orientation.
+  - Refactored Stan initial value generation into static helper `make_stan_inits()`.
+* **Infrastructure & CI**:
+  - Streamlined developer and CI workflows via authoritative `just` recipes (`just lint`,
+    `just docs`, `just diagrams`, `just data-fit`).
+  - Decoupled `lintr` package execution from `devtools` in CI linting workflows.
 
 ## Test environments
 

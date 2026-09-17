@@ -70,8 +70,7 @@ lintair:
 [doc('Check R code using lintr')]
 lintr: bootstrap-namespace
 	#!/usr/bin/env Rscript
-	if (require(devtools)) devtools::load_all() else stop("missing 'devtools'")
-	if (require(lintr))	lintr::lint_package() else stop("missing 'lintr'")
+	if (require(lintr)) lintr::lint_package() else stop("missing 'lintr'")
 	
 
 [doc('Run unit tests using devtools')]
