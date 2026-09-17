@@ -33,6 +33,10 @@ inputs:
     description: 'Regenerate man/*.Rd via roxygen2::roxygenise().'
     required: false
     default: 'true'
+  generate-diagrams:
+    description: 'Compile .mmd mermaid specifications to SVG.'
+    required: false
+    default: 'true'
 
 runs:
   using: 'composite'
@@ -88,6 +92,9 @@ runs:
         r-version: ${{ inputs.r-version }}
         use-public-rspm: true
 
+    - name: Setup just
+      uses: extractions/setup-just@v2
+
     - name: Install dependencies
       uses: r-lib/actions/setup-r-dependencies@v2
       with:
@@ -102,8 +109,8 @@ runs:
     # package itself or the Stan toolchain. Same file the full roxygenise makes.
     - name: Bootstrap NAMESPACE
       if: inputs.bootstrap-namespace == 'true'
-      shell: Rscript {0}
-      run: roxygen2::roxygenise(roclets = "namespace", load_code = "source")
+      shell: bash
+      run: just bootstrap-namespace
 
     - name: Cache Stan compilation objects
       if: inputs.cache-stan == 'true'
@@ -128,7 +135,12 @@ runs:
       shell: bash
       env:
         PKG_BUILD_EXTRA_FLAGS: "false"
-      run: Rscript data-raw/fit_data.R
+      run: just data-fit
+
+    - name: Generate diagram artifacts
+      if: inputs.generate-diagrams == 'true'
+      shell: bash
+      run: just diagrams
 
     # PKG_BUILD_EXTRA_FLAGS=false stops pkgbuild from injecting its debug flags
     # (-g -O0) when pkgload::load_all() recompiles the package under roxygen2.
@@ -136,7 +148,8 @@ runs:
     # even with -Wa,-mbig-obj. See ?pkgbuild::compile_dll.
     - name: Generate documentation
       if: inputs.generate-docs == 'true'
-      shell: Rscript {0}
+      shell: bash
       env:
         PKG_BUILD_EXTRA_FLAGS: "false"
-      run: roxygen2::roxygenise()
+      run: just docs
+

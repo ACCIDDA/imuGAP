@@ -5,6 +5,8 @@ vignette: >
   %\VignetteIndexEntry{Getting Started with imuGAP}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+resource_files:
+  - figures/fit_predict_workflow.svg
 ---
 
 ```{r, include = FALSE}
@@ -81,13 +83,13 @@ if (!pkgs_available) {
 
 # Introduction
 
-`imuGAP` (Immunity: Geographic & Age-based Projection) estimates and predicts vaccination coverage on arbitrary hierarchical location partitions using Bayesian Stan models.
+`imuGAP` (Immunity: Geographic & Age-based Projection) estimates an underlying process model for vaccination on an arbitrary hierarchical population structure, which can then be used to predict vaccination coverage. Internally, `imuGAP` performs Bayesian inference via the Stan probabilistic programming language.
 
 The package enables researchers and public health analysts to synthesize across multiple heterogeneous surveillance streams (such as national surveys, state school entry records, and local coverage censuses) to:
 
 1. **Estimate current vaccination coverage** across arbitrary sub-populations and geographic levels.
-2. **Project lifetime cohort trajectories** (e.g. coverage at each age from birth through adolescence for a given birth cohort).
-3. **Impute missing data gaps** across unobserved years, age groups, or sub-regions by borrowing strength hierarchically.
+2. **Project cohort trajectories** (e.g. coverage at each age from birth through adolescence for a given birth cohort).
+3. **Impute missing data gaps** across unobserved years, age groups, or sub-regions by leveraging inferred relationships via the process model.
 
 ### Core Model Intuition
 
@@ -97,21 +99,28 @@ $$
 P(\ge\textrm{1 dose}) = \left(1 - \phi_{i, a}\right) \left(1 - \exp\left\{-\int_a^{t} \lambda_{i, a}(s)\nu(s) d\textrm{s}\right\}\right)
 $$
 
-This formulation extends sequentially to multiple vaccine doses, conditional on receipt of prior doses.
+This formulation extends sequentially to multiple vaccine doses, conditional on receipt of prior doses. Sequential multi-dose regimens (e.g. Dose 1 at $\ge 12$ months, Dose 2 at $\ge 4$ years) are modeled as a continuous-time Markov transition process.
 
 ---
 
 # The Fit & Predict Loop
 
-This walkthrough presents the end-to-end workflow: **Load Data $\rightarrow$ Configure & Fit $\rightarrow$ Define Target Grid $\rightarrow$ Predict $\rightarrow$ Summarize & Plot**.
+The following diagram shows the end-to-end fit and predict workflow:
+
+```{r workflow-diagram, echo = FALSE, out.width = "100%", fig.align = "center"}
+knitr::include_graphics("figures/fit_predict_workflow.svg")
+```
 
 ---
 
 ## 1. Preparing the Inputs
 
 `imuGAP` requires three core input tables:
-1. `locations`: The nested spatial tree hierarchy (e.g. State $\rightarrow$ County $\rightarrow$ School).
-2. `observations`: Empirical survey binomial counts (`positive` and `sample_n`) and censoring indicators.
+
+1. `locations`: The nested population hierarchy (e.g. State $\rightarrow$ County $\rightarrow$ School).
+   This may optionally include population sizes, which may be necessary to ensure accurate results
+   when entities within the same layer differ substantially in size.
+2. `observations`: Empirical survey counts (`positive` and `sample_n`) and censoring indicators.
 3. `populations`: Metadata and fractional weights mapping observations to discrete age/cohort/dose slices.
 
 ```{r load-data}
@@ -128,13 +137,19 @@ head(observations_sim[, .(obs_id, loc_id, positive, sample_n, censored)])
 head(populations_sim)
 ```
 
-Input datasets are automatically validated and canonicalized during sampling via `canonicalize_locations()`, `canonicalize_observations()`, and `canonicalize_populations()`.
+Input datasets are automatically validated and canonicalized during sampling via
+`canonicalize_locations()`, `canonicalize_observations()`, and `canonicalize_populations()`.
+
+For an in-depth walkthrough of flexible surveillance stream structures—including right-censored
+observations (such as when surveillance reports only complete coverage for a bundle of vaccines,
+not specifically the target vaccine) and composite observations that mix multiple age groups or
+populations—see **[Included Example Datasets and Data Validation](example_data.html)**.
 
 ---
 
 ## 2. Fitting the Model
 
-Model fitting is executed via `sampling()`. Model options (such as B-spline degrees of freedom and dose eligibility ages) are configured with `imugap_options()`, and MCMC sampler settings (chains, iterations, backend) are specified with `stan_options()`:
+You can fit the model to your data by calling `sampling()`. Configure model options (such as B-spline degrees of freedom and dose eligibility ages) with `imugap_options()`, and specify MCMC sampler settings (chains, iterations, backend) with `stan_options()`:
 
 ```{r sampling-code, eval = FALSE}
 # Configure model options
@@ -153,7 +168,7 @@ fit <- sampling(
 )
 ```
 
-For this vignette, we load the pre-computed fit fixture `fit_sim` bundled with the package:
+For this vignette, you can load the pre-computed fit fixture `fit_sim` bundled with the package:
 
 ```{r load-fit}
 data("fit_sim", package = "imuGAP")
@@ -190,7 +205,7 @@ Pass the model fit and target grid to `predict()` to generate posterior draws of
 predict_res <- predict(object = fit_sim, target = target_grid, posterior_size = 100)
 ```
 
-We load the pre-computed prediction fixture `predict_sim`:
+You can load the pre-computed prediction fixture `predict_sim`:
 
 ```{r load-predictions}
 data("predict_sim", package = "imuGAP")
@@ -201,16 +216,18 @@ predict_sim
 
 ## 5. Summarizing and Visualizing Predictions
 
-We compute summary statistics (posterior median, mean, and credible intervals) using `summary()`:
+You can compute vaccination coverage estimate summary statistics (posterior mean, median, standard deviation, and credible intervals) across your prediction targets using `summary()`:
 
 ```{r summarize-predictions}
 summary_predict <- summary(predict_sim)
-head(summary_predict)
+
+# Filter coverage estimate statistics to a specific target slice (e.g. age 4, dose 2)
+summary_predict[age == 4 & dose == 2]
 ```
 
 ### State-Level Coverage Trajectory
 
-Below, we plot the predicted state-level two-dose coverage across ages 5 to 18 against the true simulation baseline:
+The following plot shows predicted state-level two-dose coverage across ages 5 to 18 against the true simulation baseline:
 
 ```{r state-viz, fold = TRUE, code_summary = "Show plot code"}
 data("latent_params_sim", package = "imuGAP")
@@ -243,7 +260,7 @@ ggplot(state_predict) +
 
 ### County-Level Estimates
 
-We can similarly inspect county-level coverage estimates:
+The following plot compares county-level coverage estimates across counties:
 
 ```{r county-viz, fold = TRUE, code_summary = "Show plot code"}
 summary_predict |>
@@ -285,7 +302,11 @@ To explore advanced features and deeper technical details, see the following com
   Detailed documentation of the bundled simulation fixtures, surveillance stream types (ChildVaxView, SchoolVaxView, TeenVaxView), canonicalization rules, and validation error diagnostics.
 
 - **[Flexible Location Layers in imuGAP](user_specified_layers.html)**:
-  Demonstrates how `imuGAP` dynamically adapts to 1-layer, 2-layer, and multi-layer spatial hierarchies, showing how partial pooling enables sub-regional estimation.
+  Demonstrates how `imuGAP` estimates the process model across 1-layer, 2-layer, and multi-layer
+  hierarchical population structures, showing how inferred relationships enable sub-regional
+  estimation and cohort projection.
 
 - **[Fit Inspection and Stan Diagnostics](examining_fits.html)**:
-  Comprehensive guide to MCMC convergence assessment, parameter extraction with `extract_imugap()`, and parameter recovery trace plots for $\beta_{\text{bs}}$, $\sigma_{\text{layer}}$, $\delta_{\text{loc}}$, and $\lambda$.
+  Comprehensive guide to MCMC convergence assessment, parameter extraction with `extract_imugap()`,
+  and parameter recovery trace plots for $\beta_{\text{bs}}$, $\sigma_{\text{layer}}$,
+  $\delta_{\text{loc}}$, and $\lambda$.

@@ -12,6 +12,7 @@ clean:
 	rm -rf .Rproj.user/
 	rm -rf figure/ figures/ doc/ Meta/
 	rm -f vignettes/*.html vignettes/*.pdf
+	rm -f vignettes/figures/*.svg vignettes/figures/*.png
 
 [doc('Ensure local NAMESPACE exists (bootstrapped if missing, as it is gitignored)')]
 bootstrap-namespace:
@@ -20,8 +21,30 @@ bootstrap-namespace:
 		echo "useDynLib(imuGAP, .registration = TRUE)" >> NAMESPACE; \
 	fi
 
+[group('diagrams')]
+[doc('Generate SVG diagrams from .mmd mermaid specifications')]
+diagrams:
+	#!/usr/bin/env bash
+	set -euo pipefail
+	if compgen -G "vignettes/figures/*.mmd" > /dev/null; then
+		if command -v mmdc >/dev/null 2>&1; then
+			CMD="mmdc"
+		elif command -v npx >/dev/null 2>&1; then
+			CMD="npx -p @mermaid-js/mermaid-cli mmdc"
+		else
+			echo "Note: Neither 'mmdc' nor 'npx' found; keeping existing SVG diagrams if present."
+			exit 0
+		fi
+		for mmd in vignettes/figures/*.mmd; do
+			[ -f "$mmd" ] || continue
+			svg="${mmd%.mmd}.svg"
+			echo "Compiling $mmd -> $svg..."
+			$CMD -i "$mmd" -o "$svg" -b transparent
+		done
+	fi
+
 [doc('Regenerate roxygen output: man/*.Rd, NAMESPACE, and R/globals.R (all untracked)')]
-docs: bootstrap-namespace
+docs: bootstrap-namespace diagrams
 	#!/usr/bin/env Rscript
 	if (require(roxygen2)) roxygen2::roxygenize() else stop("missing 'roxygen2'")
 
@@ -34,7 +57,11 @@ lint: lintair lintr
 
 [doc('Check R code using air')]
 lintair:
-	air format . --check
+	@if command -v air >/dev/null 2>&1; then \
+		air format . --check; \
+	else \
+		echo "Note: 'air' not found; skipping air format check."; \
+	fi
 
 [doc('Check R code using lintr')]
 lintr: bootstrap-namespace
@@ -132,7 +159,7 @@ data-fit:
 
 
 [doc('Build a tar.gz artifact')]
-build: bootstrap-namespace
+build: bootstrap-namespace diagrams docs
 	R CMD build .
 
 [doc('Check the built tar.gz artifact')]
@@ -144,7 +171,7 @@ check-cran: build
 	R CMD check {{ TARBALL }} --as-cran
 
 [doc('Render vignettes to PDF and HTML locally')]
-render: bootstrap-namespace
+render: bootstrap-namespace diagrams
 	#!/usr/bin/env Rscript
 	if (!require(rmarkdown)) stop("missing 'rmarkdown'")
 	if (require(devtools)) devtools::load_all(quiet = TRUE)
