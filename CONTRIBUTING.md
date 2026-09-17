@@ -246,6 +246,14 @@ Follow a strict convention when formatting error and warning strings:
   * `` unknown model '%s' ``
   * `` '%s' must be numeric ``
 
+### 4. Markdown List Formatting Standards
+
+To ensure clean rendering across GitHub, `pkgdown`, and Pandoc HTML/PDF engines:
+
+* **Preceding Blank Lines**: Always separate preceding introductory text from lists with an empty blank line (`\n\n`). Never start a list immediately on the line following a colon or text.
+* **Consistent Indentation & Sub-Lists**: Indent sub-lists by 2 or 4 spaces and use consistent bullet styling (`-`). Avoid mixing unindented numbered sequences under unordered list items.
+* **Multi-Line Continuation Margin**: When list items span multiple lines, align continuation lines with the item text margin (e.g. 2 spaces for `- `, 3 spaces for `1. `).
+
 ---
 
 ## Stan Backend and Dependencies
