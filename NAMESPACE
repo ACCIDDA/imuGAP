@@ -2,6 +2,8 @@
 
 S3method(as.data.frame,imugap_predict)
 S3method(predict,imugap_fit)
+S3method(print,imugap_fit)
+S3method(print,imugap_predict)
 S3method(subset,imugap_predict)
 S3method(summary,imugap_predict)
 export(canonicalize_locations)

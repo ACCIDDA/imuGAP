@@ -81,7 +81,10 @@ if (!pkgs_available) {
 
 # Overview of the Synthetic Simulation Universe
 
-`imuGAP` provides four bundled datasets (`locations_sim`, `observations_sim`, `populations_sim`, and `target_sim`) alongside latent parameter fixtures (`latent_params_sim`, `fit_sim`, `predict_sim`) that represent a realistic, multi-resolution childhood vaccination monitoring scenario.
+`imuGAP` provides four bundled datasets (`locations_sim`, `observations_sim`, `populations_sim`,
+and `target_sim`) alongside latent parameter fixtures (`latent_params_sim`, `fit_sim`,
+`predict_sim`) that reflect an underlying vaccination process model and surveillance streams
+across a multi-resolution hierarchical population structure.
 
 In this scenario:
 - A single **State** is partitioned into three **Counties** (Scruggs, Simone, Watson), which each contain 8 elementary **Schools** (24 total schools).
@@ -107,7 +110,7 @@ head(locations_sim)
 nrow(locations_sim)
 ```
 
-We validate and canonicalize the location tree using `canonicalize_locations()`:
+You can validate and canonicalize the location tree using `canonicalize_locations()`:
 
 ```{r locations-canon}
 canonical_locations <- canonicalize_locations(locations_sim)
@@ -166,7 +169,7 @@ observations_sim[
 populations_sim[obs_id == 761]
 ```
 
-We validate and canonicalize populations using `canonicalize_populations()`:
+You can validate and canonicalize populations using `canonicalize_populations()`:
 
 ```{r populations-canon}
 canonical_populations <- canonicalize_populations(
@@ -216,7 +219,7 @@ tryCatch(
 
 # 3. Visualizing the Synthetic Observation Streams
 
-We can inspect the empirical coverage rates across each observation stream and compare them against the underlying true data-generating parameters (`latent_params_sim`).
+The following figures illustrate empirical coverage rates across each observation stream compared against underlying true data-generating parameters (`latent_params_sim`).
 
 ### State-Level Observation Streams
 
@@ -338,6 +341,11 @@ ggplot() +
 
 ### County-Level Right-Censored Surveillance
 
+The following plot compares observed 6th grade county survey outcomes against underlying latent ground
+truths. This illustrates how empirical surveillance streams sample discrete slices (subject to
+unobserved cohorts and right-censoring), while the `imuGAP` process model infers continuous
+cohort trajectories across unobserved ages and birth cohorts:
+
 ```{r synthetic-county-viz, fold = TRUE, code_summary = "Show plot code"}
 county_obs <- copy(observations_sim[loc_id %in% c("Scruggs", "Simone", "Watson")])
 county_obs[, obs_prop := positive / sample_n]
@@ -437,6 +445,6 @@ ggplot() +
 
 # Summary and Related Vignettes
 
-- To see how these datasets are used in the core model fitting and prediction workflow, see **[Getting Started with imuGAP](imuGAP.html)**.
+- For an overview of estimating the underlying process model and predicting coverage, see **[Getting Started with imuGAP](imuGAP.html)**.
 - To learn how `imuGAP` configures and estimates parameters across arbitrary spatial depths, see **[Flexible Location Layers in imuGAP](user_specified_layers.html)**.
 - For detailed MCMC convergence checks, trace plots, and parameter inference, see **[Fit Inspection and Stan Diagnostics](examining_fits.html)**.

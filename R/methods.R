@@ -454,3 +454,196 @@ as.data.frame.imugap_predict <- function(
 
   res[]
 }
+
+#' @title Print an imuGAP model fit
+#'
+#' @description
+#' Prints a concise summary of an `imugap_fit` object, including the location
+#' hierarchy dimensions, observation counts, and MCMC parameter summaries for all
+#' non-offset parameters.
+#'
+#' @param x an object of class `imugap_fit` returned by `[sampling()]`.
+#' @param pars character vector; parameter names to display (default: all
+#'   non-offset parameters, excluding `'z_layer'`).
+#' @param ... additional arguments passed to the underlying backend print method.
+#'
+#' @return invisibly returns `x`.
+#'
+#' @examples
+#' data("fit_sim", package = "imuGAP")
+#' print(fit_sim)
+#'
+#' @export
+#' @autoglobal
+print.imugap_fit <- function(x, pars = NULL, ...) {
+  stop_fmt_if(!inherits(x, "imugap_fit"), ERR_NOT_IMUGAP_FIT)
+
+  n_locs <- if (!is.null(x$locations)) nrow(x$locations) else NA_integer_
+  n_layers <- if (!is.null(x$locations) && "layer" %in% names(x$locations)) {
+    max(x$locations$layer)
+  } else {
+    NA_integer_
+  }
+  root_loc <- if (
+    !is.null(x$locations) && "parent_id" %in% names(x$locations)
+  ) {
+    x$locations[is.na(parent_id), loc_id]
+  } else {
+    NULL
+  }
+
+  u_unmix <- if (is.null(x$data$n_obs_unmixed_uncensored)) {
+    0L
+  } else {
+    x$data$n_obs_unmixed_uncensored
+  }
+  u_mix <- if (is.null(x$data$n_obs_mixed_uncensored)) {
+    0L
+  } else {
+    x$data$n_obs_mixed_uncensored
+  }
+  c_unmix <- if (is.null(x$data$n_obs_unmixed_right)) {
+    0L
+  } else {
+    x$data$n_obs_unmixed_right
+  }
+  c_mix <- if (is.null(x$data$n_obs_mixed_right)) {
+    0L
+  } else {
+    x$data$n_obs_mixed_right
+  }
+
+  n_obs_uncensored <- u_unmix + u_mix
+  n_obs_censored <- c_unmix + c_mix
+  n_obs_total <- n_obs_uncensored + n_obs_censored
+
+  cat("An imuGAP model fit (`imugap_fit`):\n")
+  if (!is.na(n_locs)) {
+    root_str <- if (length(root_loc) == 1L) {
+      sprintf(" (root: '%s')", root_loc)
+    } else {
+      ""
+    }
+    cat(sprintf(
+      "  Hierarchy:    %d locations across %d layer%s%s\n",
+      n_locs,
+      n_layers,
+      if (n_layers == 1L) "" else "s",
+      root_str
+    ))
+  }
+  if (!is.null(x$data)) {
+    cat(sprintf(
+      "  Observations: %d total (%d uncensored, %d right-censored)\n",
+      n_obs_total,
+      n_obs_uncensored,
+      n_obs_censored
+    ))
+  }
+  cat("\n")
+
+  raw_fit <- x$stanfit
+  if (!is.null(raw_fit)) {
+    if (is.null(pars)) {
+      all_pars <- if (inherits(raw_fit, "stanfit")) {
+        raw_fit@model_pars
+      } else {
+        NULL
+      }
+      if (!is.null(all_pars)) {
+        pars <- setdiff(all_pars, c("z_layer", "off_layer", "p_obs"))
+      }
+    }
+    if (inherits(raw_fit, "stanfit")) {
+      if (!is.null(pars) && length(pars) > 0L) {
+        print(raw_fit, pars = pars, ...)
+      } else {
+        print(raw_fit, ...)
+      }
+    } else {
+      print(raw_fit, ...)
+    }
+  }
+
+  invisible(x)
+}
+
+#' @title Print coverage predictions
+#'
+#' @description
+#' Prints a concise summary of an `imugap_predict` object, including target grid
+#' dimensions and posterior draw dimensions.
+#'
+#' @param x an object of class `imugap_predict` returned by `[predict()]`.
+#' @param ... additional arguments (currently ignored).
+#'
+#' @return invisibly returns `x`.
+#'
+#' @examples
+#' data("predict_sim", package = "imuGAP")
+#' print(predict_sim)
+#'
+#' @export
+#' @autoglobal
+print.imugap_predict <- function(x, ...) {
+  stop_fmt_if(!inherits(x, "imugap_predict"), ERR_NOT_IMUGAP_PREDICT, "x")
+
+  dims <- dim(x$draws)
+  n_draws <- if (length(dims) == 3L) {
+    dims[1L] * dims[2L]
+  } else if (length(dims) == 2L) {
+    dims[1L]
+  } else {
+    length(x$draws)
+  }
+  n_chains <- if (length(dims) == 3L) dims[2L] else 1L
+  n_iter <- if (length(dims) == 3L) dims[1L] else n_draws
+  n_targets <- if (!is.null(x$target)) {
+    nrow(x$target)
+  } else if (length(dims) >= 3L) {
+    dims[3L]
+  } else {
+    NA_integer_
+  }
+
+  cat("An imuGAP predictions object (`imugap_predict`):\n")
+  if (!is.na(n_targets)) {
+    n_locs <- if (!is.null(x$target$loc_id)) {
+      data.table::uniqueN(x$target$loc_id)
+    } else {
+      NA_integer_
+    }
+    loc_str <- if (!is.na(n_locs)) {
+      sprintf(" across %d location%s", n_locs, if (n_locs == 1L) "" else "s")
+    } else {
+      ""
+    }
+    cat(sprintf(
+      "  Targets:   %d target population slice%s%s\n",
+      n_targets,
+      if (n_targets == 1L) "" else "s",
+      loc_str
+    ))
+  }
+  if (length(dims) == 3L) {
+    cat(sprintf(
+      "  Posterior: %d draws (%d chain%s x %d iteration%s)\n",
+      n_draws,
+      n_chains,
+      if (n_chains == 1L) "" else "s",
+      n_iter,
+      if (n_iter == 1L) "" else "s"
+    ))
+  } else {
+    cat(sprintf(
+      "  Posterior: %d draw%s\n",
+      n_draws,
+      if (n_draws == 1L) "" else "s"
+    ))
+  }
+  cat(
+    "\nUse summary() to compute quantiles or as.data.frame() to convert to a long table.\n"
+  )
+
+  invisible(x)
+}

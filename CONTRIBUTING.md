@@ -19,7 +19,7 @@ All contributors are expected to be respectful and professional in all interacti
 
 ## Development Workflow & `just` Recipes
 
-We use [`just`](https://github.com/casey/just) to automate development tasks. All recipes handle namespace and environment configuration automatically:
+We use [`just`](https://github.com/casey/just) to automate development tasks. The `justfile` serves as the **single authoritative reference** for repository build, documentation, verification, and diagram actions across both local development and GitHub Actions CI:
 
 | Recipe | Description | Equivalent Base Command |
 |---|---|---|
@@ -33,6 +33,7 @@ We use [`just`](https://github.com/casey/just) to automate development tasks. Al
 | `just coverage` | Measure test coverage via `covr` | `Rscript -e "covr::package_coverage()"` |
 | `just spell` | Check spelling across docs and vignettes via `spelling` | `Rscript -e "spelling::spell_check_package()"` |
 | `just render` | Render all vignettes to HTML and PDF | `Rscript -e "rmarkdown::render(...)"` |
+| `just diagrams` | Compile Mermaid source diagrams (`.mmd` to `.svg`/`.pdf`) | `mmdc -i ... -o ...` |
 | `just site` / `just site-quick` | Fast build of `pkgdown` documentation site (no package reinstall) | `Rscript -e "pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)"` |
 | `just site-full` | Full build of `pkgdown` site with package reinstallation (for updated data) | *(compound: install + site)* |
 | `just site-preview [item=""] [port=8000]` | Preview pkgdown site on localhost (supports targeted item, e.g. `just site-preview imuGAP`) | `httpuv::runStaticServer(...)` |
@@ -133,16 +134,30 @@ For computationally heavy functions (such as `sampling()` or multi-draw `predict
 * Top-level Stan models directly in `inst/stan/` (and not Stan code in subdirectories) must remain concise assembly skeletons composed of `#include <subpath>.stan` directives for particular modular elements (`functions/`, `data/`, `transformed_data/`, `parameters/`, `model/`, `generated_quantities/`).
 * Never inline full block contents or raw logic directly into top-level models in `inst/stan/`; keep component logic encapsulated in dedicated sub-files to facilitate reuse, maintainability, and clean diffs.
 
-### 6. Vignette Plot Styling, Coordinate Limits & Dark Mode Compatibility
+### 6. Vignette Voice, Plot Styling & Dark Mode Compatibility
 
-To ensure plots remain clear, readable, and geometrically intact:
+To ensure vignettes provide clear, engaging, and robust guidance for users:
 
-* In vignette setup chunks, specify `knitr::opts_chunk$set(dev.args = list(bg = "white"))`.
-* Disable automatic plot theme inversion with `if (requireNamespace("thematic", quietly = TRUE)) thematic::thematic_off()`.
-* Configure `ggplot2::theme_set()` with solid white backgrounds (`plot.background`, `panel.background`, `legend.background`) and black text (`text`, `axis.text`, `axis.title`, `plot.title`).
+* **Active Voice & Tone**: Write vignettes directly to the user in the active voice for actions (e.g. "You can fit the model to your data by calling `sampling()`...", "Configure your sampler with `stan_options()`..."). Avoid passive or impersonal constructions (e.g. avoid "Model fitting is executed via...", "Calculations are performed by..."). When introducing visual presentations, diagrams, or rendered plots (describing something to see rather than an action the reader performs), introduce the visual directly (e.g. "The following diagram shows...", "The following plot compares...").
+* **Solid Backgrounds**: In vignette setup chunks, specify `knitr::opts_chunk$set(dev.args = list(bg = "white"))`.
+* **Thematic Inversion**: Disable automatic plot theme inversion with `if (requireNamespace("thematic", quietly = TRUE)) thematic::thematic_off()`.
+* **Theme Styling**: Configure `ggplot2::theme_set()` with solid white backgrounds (`plot.background`, `panel.background`, `legend.background`) and black text (`text`, `axis.text`, `axis.title`, `plot.title`).
 * **Coordinate System vs. Scale Limits**: Prefer ggplot2 coordinate system bounds (`coord_cartesian(xlim = ..., ylim = ...)`) over scale-based limits (`scale_*_continuous(limits = ...)`) when zooming or adjusting visible ranges. Scale limits discard data points outside the window (altering summary statistics, regressions, or ribbon clipping), whereas coordinate zooming retains all underlying data.
 
-### 7. Package Reinstallation & Vignette Data
+### 7. Vignette Mermaid Diagrams & Full PDF Support
+
+Vignettes can include process workflows and structural diagrams defined using Mermaid:
+
+* **Source vs. Untracked Artifacts**: The fundamental tracked source artifact is the Mermaid specification in `vignettes/figures/*.mmd`. Generated image files (`vignettes/figures/*.svg`, `vignettes/figures/*.pdf`, `vignettes/figures/*.png`) are untracked (gitignored).
+* **Automatic Compilation**: The recipe `just diagrams` (invoking `mmdc` / `@mermaid-js/mermaid-cli`) generates both SVG (for HTML/pkgdown) and PDF (for LaTeX pdflatex builds) prior to building docs, running R CMD check, or rendering vignettes.
+* **Embedding**: Include diagrams in vignette `.Rmd` files via `knitr::include_graphics("figures/<name>.svg")`. Always list the SVG file under `resource_files:` in the YAML frontmatter so `pkgdown` copies and discovers the asset.
+* **Dark Mode Styling**: Diagrams are styled independently from statistical plots. In `pkgdown/extra.css`, `html[data-bs-theme="dark"] .figure img[src$=".svg"]` applies a dark-mode filter inversion (`invert(0.88) hue-rotate(180deg)`) allowing the diagram to seamlessly blend with dark themes while maintaining crisp line and text contrast.
+* **Flow Diagram Design Guidelines**:
+  * Exclude step numbers from container box labels; sequential order is conveyed by diagram wiring.
+  * Align primary container labels toward the top of each box.
+  * Keep secondary detail text styling close in weight/color to the container title so that contrast remains clear under color scheme inversions.
+
+### 8. Package Reinstallation & Vignette Data
 
 Vignette chunks load data using `data(..., package = "imuGAP")`, which resolves datasets from the **installed package library** rather than the working directory. When troubleshooting vignette (and related `pkgdown` site) issues associated with rendering package example data, if the fix ends up being in the package data (`data-raw/DATASET.R` or `data-raw/fit_data.R`), you must reinstall the package (`just install` or `R CMD INSTALL .`) before re-rendering vignettes or rebuilding the site with updated data (or use `just site-full`).
 
@@ -243,10 +258,10 @@ Follow a strict convention when formatting error and warning strings:
 
 ## Pull Request and CI Workflows
 
-Every pull request triggers four automated GitHub Actions workflows:
+Every pull request triggers automated GitHub Actions workflows that delegate directly to `justfile` recipes for build, documentation, and validation:
 
-1. **`R-CMD-check`**: Runs `R CMD check --as-cran` across Ubuntu, macOS, and Windows on R release, oldrel, and devel (9 jobs).
-2. **`lint`**: Verifies formatting with `air format . --check` and lint rules with `lintr::lint_package()`.
+1. **`R-CMD-check`**: Runs `R CMD check --as-cran` across Ubuntu, macOS, and Windows on R release, oldrel, and devel (9 jobs), using shared build artifacts from `just data-fit`, `just diagrams`, and `just docs`.
+2. **`lint`**: Runs `just lint` (verifying `air format . --check` and `lintr::lint_package()`).
 3. **`test-coverage`**: Computes code coverage with `covr` and uploads results to Codecov.
 4. **`pkgdown`**: Builds the documentation site and confirms that all vignettes compile cleanly. Deployed to GitHub Pages upon push to `main` and published releases.
 

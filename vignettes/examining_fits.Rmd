@@ -81,7 +81,11 @@ if (!pkgs_available) {
 
 # Introduction
 
-Fitting Bayesian hierarchical models via Stan requires assessing whether MCMC chains have successfully converged, whether the sampler operated without pathologies (such as divergences or energy Bayesian Fraction of Missing Information warnings), and whether the model recovered the underlying epidemiological parameters.
+Because `imuGAP` estimates an underlying process model for vaccination (including baseline uptake
+splines $\beta_{\text{bs}}$, force-of-vaccination rates $\lambda$, and hierarchical location
+offsets $\delta$) via Bayesian inference in Stan, evaluating a model fit requires assessing whether
+MCMC chains converged without pathologies and successfully recovered these latent process
+parameters.
 
 This vignette demonstrates how to:
 1. Load and extract posterior parameter draws from an `imugap_fit` object using `extract_imugap()`.
@@ -93,7 +97,7 @@ This vignette demonstrates how to:
 
 # 1. Loading the Model Fit and Extracting Parameters
 
-We load the bundled `fit_sim` object, which wraps the underlying Stan model fit along with dataset and options metadata:
+You can load the bundled `fit_sim` object, which wraps the underlying Stan model fit along with dataset and options metadata:
 
 ```{r load-fit}
 data("fit_sim", package = "imuGAP")
@@ -122,7 +126,7 @@ str(lambda_draws)
 
 ### State-Level Cohort Uptake: Basis Spline Coefficients ($\beta_{\text{bs}}$)
 
-The state-level baseline propensity curve is parameterized as a B-spline over birth cohorts with coefficients $\beta_{\text{bs}}$. Below, we examine trace plots across all 4 MCMC chains alongside within-chain medians and the true simulation parameters (dashed red lines):
+The state-level baseline propensity curve is parameterized as a B-spline over birth cohorts with coefficients $\beta_{\text{bs}}$. The following trace plots show parameter draws across all 4 MCMC chains alongside within-chain medians and the true simulation parameters (dashed red lines):
 
 ```{r trace-plot-beta, fold = TRUE, code_summary = "Show plot code"}
 beta_pars <- paste0("beta_bs[", seq_along(latent_params_sim$beta_bs), "]")
@@ -227,7 +231,7 @@ bayesplot::mcmc_trace(
 
 ### County Location Offsets ($\delta_{\text{county}}$)
 
-Location offsets represent deviation in vaccination propensity from the parent region. Below, we plot trace lines for Scruggs, Simone, and Watson counties.
+Location offsets represent deviation in vaccination propensity from the parent region. The following trace plots show offset trajectories for Scruggs, Simone, and Watson counties.
 
 Indicator arrows show:
 - **Red arrows (left edge, iteration 0)**: Expected error direction based on observational sampling noise from finite sample draws ($\Delta_{\delta} = -\overline{\Delta\text{logit}}_{\text{cov}}$).
@@ -404,7 +408,7 @@ bayesplot::mcmc_trace(
 
 ### Force of Vaccination Rate ($\lambda$)
 
-The unconstrained rate parameters $\lambda_{\text{raw}}$ govern the speed at which eligible individuals receive vaccine doses once reaching age eligibility. Trace plots on the exponentiated rate scale demonstrate excellent chain mixing:
+The unconstrained rate parameters $\lambda_{\text{raw}}$ govern the speed at which eligible individuals receive vaccine doses once reaching age eligibility. The following trace plots show posterior draws on the exponentiated rate scale:
 
 ```{r trace-plot-lambdas, fold = TRUE, code_summary = "Show plot code"}
 lambda_pars <- c("lambda_raw[1]", "lambda_raw[2]")
@@ -459,6 +463,6 @@ bayesplot::mcmc_trace(
 
 # Summary and Related Vignettes
 
-- For an overview of the core model workflow, see **[Getting Started with imuGAP](imuGAP.html)**.
+- For an overview of estimating the underlying process model and predicting coverage, see **[Getting Started with imuGAP](imuGAP.html)**.
 - To explore input data preparation and surveillance streams, see **[Included Example Datasets and Data Validation](example_data.html)**.
 - To learn how `imuGAP` estimates parameters across arbitrary spatial hierarchy resolutions, see **[Flexible Location Layers in imuGAP](user_specified_layers.html)**.
