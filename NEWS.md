@@ -1,3 +1,45 @@
+# imuGAP 0.3.0
+
+## Major Features
+
+- **S3 Print Methods**:
+  - Added dedicated `print.imugap_fit()` providing a structured summary of the location
+    hierarchy, observation data distribution, and key Stan parameters (`beta_bs`,
+    `sigma_layer`, `lambda_raw`, and `lp__`).
+  - Added `print.imugap_predict()` displaying target coverage metadata, location counts,
+    dose schedule, and posterior prediction draw dimensions.
+
+- **Vignette Architecture & Documentation Overhaul**:
+  - Reorganized the vignette suite into focused modular articles: `imuGAP` (core workflow),
+    `example_data` (input data schemas and structure), `examining_fits` (posterior
+    diagnostics and inspection), and `user_specified_layers` (multi-layer and single-layer
+    spatial partitions).
+  - Added kindergarten entry records visualization distinguishing individual schools by
+    color and illustrating coverage dynamics across cohorts.
+  - Standardized voice, visual presentations, and documentation formatting across all
+    articles.
+
+- **Automated Diagram Pipeline**:
+  - Added automated Mermaid diagram compilation pipeline (`just diagrams`) generating SVG
+    and PDF visual assets with dark-mode compatibility.
+
+## Performance & Stan Model Improvements
+
+- **Stan Computation Optimization**:
+  - Optimized dose transitions, linear predictor broadcasting, and blocked QR orthonormal
+    basis calculations.
+  - Decoupled observation likelihood evaluation into uncensored, right-censored, and
+    left-censored streams for vectorized evaluation.
+  - Added population-scaled hierarchical layer offset shrinkage with standardized QR basis
+    orientation.
+  - Refactored Stan initial value generation into static helper `make_stan_inits()`.
+
+## Infrastructure & Maintenance
+
+- Streamlined developer and CI workflows via authoritative `just` recipes (`just lint`,
+  `just docs`, `just diagrams`, `just data-fit`).
+- Decoupled `lintr` package execution from `devtools` in CI linting workflows.
+
 # imuGAP 0.2.0
 
 ## Major Features
