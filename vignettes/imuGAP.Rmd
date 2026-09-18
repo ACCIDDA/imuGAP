@@ -7,6 +7,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 resource_files:
   - figures/fit_predict_workflow.svg
+  - figures/fit_predict_workflow.pdf
 ---
 
 ```{r, include = FALSE}
@@ -24,6 +25,20 @@ knitr::opts_chunk$set(
 if (requireNamespace("thematic", quietly = TRUE)) {
   thematic::thematic_off()
 }
+
+suppressPackageStartupMessages({
+  suppressWarnings({
+    res <- tryCatch(
+      pkgload::load_all(quiet = TRUE),
+      error = function(e) FALSE
+    )
+    if (inherits(res, "error") || isFALSE(res)) {
+      message("Vignette building without dev tools...")
+    } else {
+      res
+    }
+  })
+})
 
 # Define a knitr hook to fold source code into a <details> block below the plot
 local({
@@ -50,7 +65,7 @@ local({
   })
 })
 
-required_pkgs <- c("imuGAP", "data.table", "ggplot2", "tidyr", "dplyr")
+required_pkgs <- c("imuGAP", "data.table", "ggplot2")
 pkgs_available <- all(sapply(required_pkgs, requireNamespace, quietly = TRUE))
 
 if (!pkgs_available) {
@@ -108,8 +123,10 @@ This formulation extends sequentially to multiple vaccine doses, conditional on 
 The following diagram shows the end-to-end fit and predict workflow:
 
 ```{r workflow-diagram, echo = FALSE, out.width = "100%", fig.align = "center"}
-if (file.exists("figures/fit_predict_workflow.svg")) {
-  knitr::include_graphics("figures/fit_predict_workflow.svg")
+is_html <- knitr::is_html_output()
+diag_file <- if (is_html) "figures/fit_predict_workflow.svg" else "figures/fit_predict_workflow.pdf"
+if (file.exists(diag_file)) {
+  knitr::include_graphics(diag_file)
 }
 ```
 

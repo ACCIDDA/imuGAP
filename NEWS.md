@@ -7,7 +7,7 @@
     hierarchy, observation data distribution, and key Stan parameters (`beta_bs`,
     `sigma_layer`, `lambda_raw`, and `lp__`).
   - Added `print.imugap_predict()` displaying target coverage metadata, location counts,
-    dose schedule, and posterior prediction draw dimensions.
+    and posterior prediction draw dimensions.
 
 - **Vignette Architecture & Documentation Overhaul**:
   - Reorganized the vignette suite into focused modular articles: `imuGAP` (core workflow),
@@ -32,7 +32,7 @@
     left-censored streams for vectorized evaluation.
   - Added population-scaled hierarchical layer offset shrinkage with standardized QR basis
     orientation.
-  - Refactored Stan initial value generation into static helper `make_stan_inits()`.
+  - Refactored Stan initial value generation into static helper `make_init_fn()`.
 
 ## Infrastructure & Maintenance
 

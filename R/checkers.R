@@ -17,6 +17,14 @@ ERR_ARG_CANNOT_HAVE_NA <- "'%s' may not contain NAs"
 ERR_ARG_MUST_BE_INTEGER <- "'%s' must be integers"
 ERR_ARG_MUST_BE_GT_ZERO <- "'%s' must be positive"
 
+# Shared object and option validation format strings
+ERR_NOT_IMUGAP_FIT <- "`%s` must be an object of class 'imugap_fit'"
+ERR_NOT_IMUGAP_PREDICT <- "`%s` must be an object of class 'imugap_predict'"
+ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
+ERR_STAN_OPTS_CLASS <- "`stan_opts` must be created by stan_options()"
+
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
 #' @title Signal an error if a condition is met with formatted message
 #'
 #' @description

@@ -113,7 +113,7 @@ test_that("sampling assembles stan_opts$data with all expected fields", {
     )
   ))
   expect_s3_class(out$result, "imugap_fit")
-  expect_s3_class(out$result$stanfit, "stanfit_mock")
+  expect_s3_class(out$result$raw_fit, "stanfit_mock")
   d <- out$captured$data
   expect_true(is.list(d))
   expected_fields <- c(
@@ -316,10 +316,22 @@ test_that("sampling returns a structured imugap_fit object", {
   ))
   fit <- out$result
   expect_s3_class(fit, "imugap_fit")
-  expect_named(fit, c("stanfit", "settings", "data", "locations"))
+  expect_named(
+    fit,
+    c("raw_fit", "settings", "data", "locations"),
+    ignore.order = TRUE
+  )
   expect_s3_class(fit$locations, "data.table")
-  expect_type(fit$settings, "list")
-  expect_named(fit$settings, c("imugap_opts", "stan_opts"))
+  expect_named(
+    fit$settings,
+    c("imugap_opts", "stan_opts"),
+    ignore.order = TRUE
+  )
+  expect_named(
+    fit$settings$imugap_opts,
+    c("df", "dose_schedule", "model", "model_name"),
+    ignore.order = TRUE
+  )
 })
 
 test_that("sampling errors when stan_opts was not built by stan_options()", {

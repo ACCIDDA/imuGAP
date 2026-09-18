@@ -128,12 +128,12 @@ fit_res <- measure_time(sampling(
 ))
 fit_sim <- fit_res$val
 print_time("Fitting", fit_res$time)
-print_stan_summary(fit_sim$stanfit)
+print_stan_summary(fit_sim$raw_fit)
 
 stopifnot(
-  inherits(fit_sim$stanfit, "stanfit"),
-  all(c("beta_bs", "lambda_raw") %in% fit_sim$stanfit@model_pars),
-  all(is.finite(rstan::extract(fit_sim$stanfit, pars = "beta_bs")$beta_bs))
+  inherits(fit_sim$raw_fit, "stanfit"),
+  all(c("beta_bs", "lambda_raw") %in% fit_sim$raw_fit@model_pars),
+  all(is.finite(rstan::extract(fit_sim$raw_fit, pars = "beta_bs")$beta_bs))
 )
 usethis::use_data(fit_sim, overwrite = TRUE, compress = "xz")
 
@@ -179,9 +179,9 @@ fit_res_2layer <- measure_time(sampling(
 ))
 fit_sim_2layer <- fit_res_2layer$val
 print_time("Fitting", fit_res_2layer$time)
-print_stan_summary(fit_sim_2layer$stanfit)
+print_stan_summary(fit_sim_2layer$raw_fit)
 
-stopifnot(inherits(fit_sim_2layer$stanfit, "stanfit"))
+stopifnot(inherits(fit_sim_2layer$raw_fit, "stanfit"))
 usethis::use_data(fit_sim_2layer, overwrite = TRUE, compress = "xz")
 
 target_sim_2layer <- canonicalize_target(
@@ -227,9 +227,9 @@ fit_res_1layer <- measure_time(sampling(
 ))
 fit_sim_1layer <- fit_res_1layer$val
 print_time("Fitting", fit_res_1layer$time)
-print_stan_summary(fit_sim_1layer$stanfit)
+print_stan_summary(fit_sim_1layer$raw_fit)
 
-stopifnot(inherits(fit_sim_1layer$stanfit, "stanfit"))
+stopifnot(inherits(fit_sim_1layer$raw_fit, "stanfit"))
 usethis::use_data(fit_sim_1layer, overwrite = TRUE, compress = "xz")
 
 target_sim_1layer <- canonicalize_target(

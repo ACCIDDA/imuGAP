@@ -48,7 +48,7 @@ local({
   })
 })
 
-required_pkgs <- c("imuGAP", "data.table", "ggplot2", "tidyr", "dplyr")
+required_pkgs <- c("imuGAP", "data.table", "ggplot2")
 pkgs_available <- all(sapply(required_pkgs, requireNamespace, quietly = TRUE))
 
 if (!pkgs_available) {

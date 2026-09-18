@@ -24,9 +24,9 @@ test_that("imuGAP::sampling() runs end-to-end on bundled *_sim data", {
   ))
 
   expect_s3_class(fit, "imugap_fit")
-  expect_s4_class(fit$stanfit, "stanfit")
+  expect_s4_class(fit$raw_fit, "stanfit")
 
-  fit_pars <- fit$stanfit@model_pars
+  fit_pars <- fit$raw_fit@model_pars
   for (par in c("beta_bs", "lambda_raw")) {
     expect_true(par %in% fit_pars, info = paste("missing parameter:", par))
   }
@@ -61,10 +61,10 @@ test_that("imuGAP::sampling() runs end-to-end with 1-layer location hierarchy", 
   ))
 
   expect_s3_class(fit, "imugap_fit")
-  expect_s4_class(fit$stanfit, "stanfit")
+  expect_s4_class(fit$raw_fit, "stanfit")
   expect_null(fit$data$n_layers)
   expect_null(fit$data$n_locs)
-  expect_true("beta_bs" %in% fit$stanfit@model_pars)
+  expect_true("beta_bs" %in% fit$raw_fit@model_pars)
 })
 
 test_that("imuGAP::sampling() runs end-to-end with 2-layer location hierarchy", {
@@ -89,8 +89,8 @@ test_that("imuGAP::sampling() runs end-to-end with 2-layer location hierarchy", 
   ))
 
   expect_s3_class(fit, "imugap_fit")
-  expect_s4_class(fit$stanfit, "stanfit")
+  expect_s4_class(fit$raw_fit, "stanfit")
   expect_equal(fit$data$n_layers, max(locs_2layer$layer))
   expect_equal(fit$data$n_locs, nrow(locs_2layer))
-  expect_true("beta_bs" %in% fit$stanfit@model_pars)
+  expect_true("beta_bs" %in% fit$raw_fit@model_pars)
 })

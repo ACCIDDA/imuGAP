@@ -17,11 +17,11 @@ test_that("sampling and predict work correctly with simulated data", {
   ))
 
   expect_s3_class(fit, "imugap_fit")
-  expect_s4_class(fit$stanfit, "stanfit")
+  expect_s4_class(fit$raw_fit, "stanfit")
 
   # Verify transformed parameters (like logit_phi_st) are NOT in the fit
   # Since they were removed, they should not be present in the fitted parameters.
-  fit_pars <- names(fit$stanfit)
+  fit_pars <- names(fit$raw_fit)
   expect_false("logit_phi_st" %in% fit_pars)
   expect_false("p_obs" %in% fit_pars)
 
@@ -264,19 +264,41 @@ test_that("predict respects posterior_size and validates it", {
   expect_error(predict(fit, clean_pops, posterior_size = 10000), "exceeds")
 })
 
-# A cmdstanr fit returns a CmdStanMCMC, not a stanfit; predict() is rstan-only
-# and must reject it clearly. Fake the fit so this runs without cmdstanr or a
-# CmdStan toolchain.
-test_that("predict() rejects a cmdstanr (non-stanfit) fit", {
-  fake_fit <- structure(
-    list(
-      stanfit = structure(list(), class = "CmdStanMCMC"),
-      data = list(),
-      locations = data.frame()
-    ),
-    class = "imugap_fit"
+# A cmdstanr fit returns a CmdStanMCMC; predict() supports both rstan and
+# cmdstanr backends via flexstanr::backend_generate_quantities.
+test_that("predict() accommodates cmdstanr (CmdStanMCMC) fits", {
+  data("fit_sim", package = "imuGAP")
+  data("target_sim", package = "imuGAP")
+
+  # Create a fit with CmdStanMCMC raw_fit
+  cmdstan_fit <- fit_sim
+  cmdstan_fit$raw_fit <- structure(list(), class = "CmdStanMCMC")
+  cmdstan_fit$settings$imugap_opts$model_name <- "impute_school_coverage_process_v6"
+
+  # Mock backend_draws_array and backend_generate_quantities
+  fake_draws <- array(rnorm(10 * 2 * 5), dim = c(10, 2, 5))
+  fake_p_obs <- matrix(0.8, nrow = 20, ncol = nrow(target_sim))
+
+  testthat::with_mocked_bindings(
+    {
+      preds <- predict(cmdstan_fit, target = target_sim)
+      expect_s3_class(preds, "imugap_predict")
+      expect_equal(dim(preds$draws), c(10, 2, nrow(target_sim)))
+    },
+    backend_draws_array = function(raw_fit) fake_draws,
+    backend_generate_quantities = function(
+      raw_fit,
+      data,
+      draws_mat,
+      pars,
+      model_name = NULL,
+      package = NULL
+    ) {
+      expect_equal(model_name, "impute_school_coverage_process_v6")
+      fake_p_obs
+    },
+    .package = "imuGAP"
   )
-  expect_error(predict(fake_fit, target = data.frame()), "'rstan' backend")
 })
 
 test_that("predict S3 methods validate input classes and arguments", {
@@ -285,7 +307,7 @@ test_that("predict S3 methods validate input classes and arguments", {
   # 1. predict.imugap_fit class check
   expect_error(
     predict.imugap_fit("not_a_fit", target = data.frame()),
-    "`fit` must be an object of class 'imugap_fit'"
+    "`object` must be an object of class 'imugap_fit'"
   )
 
   # 2. subset.imugap_predict class check
