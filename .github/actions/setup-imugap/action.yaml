@@ -95,17 +95,8 @@ runs:
     - name: Setup just
       uses: extractions/setup-just@v2
 
-    - name: Install air formatter
-      if: runner.os == 'Linux'
-      shell: bash
-      run: |
-        AIR_VERSION="0.11.0"
-        AIR_URL="https://github.com/posit-dev/air/releases/download/v${AIR_VERSION}/air-x86_64-unknown-linux-gnu.tar.gz"
-        curl -sSL "$AIR_URL" -o /tmp/air.tar.gz || true
-        if [ -s /tmp/air.tar.gz ]; then
-          sudo tar -xzf /tmp/air.tar.gz -C /usr/local/bin air || true
-          rm -f /tmp/air.tar.gz
-        fi
+    - name: Setup air
+      uses: posit-dev/setup-air@v1
 
     - name: Install dependencies
       uses: r-lib/actions/setup-r-dependencies@v2
