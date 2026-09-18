@@ -109,32 +109,8 @@ spell: bootstrap-namespace
 	if (require(spelling)) spelling::spell_check_package() else stop("missing 'spelling'")
 
 
-[group('renv')]
-[doc('Install package dependencies using renv')]
-renv-install:
-	#!/usr/bin/env Rscript
-	library(renv)
-	renv::install(dependencies='most')
-
-[group('renv')]
-[doc('Install and update dependencies using renv')]
-renv-update:
-	#!/usr/bin/env Rscript
-	library(renv)
-	renv::install(dependencies='most')
-	renv::update()
-
-[group('renv')]
-[doc('Install, update, and snapshot new updates using renv')]
-renv-snapshot:
-	#!/usr/bin/env Rscript
-	library(renv)
-	renv::install(dependencies='most')
-	renv::update()
-	renv::snapshot()
-
 [doc('Install development version of imuGAP')]
-install: bootstrap-namespace renv-install
+install: bootstrap-namespace
 	R CMD INSTALL .
 
 [doc('Remove development version of imuGAP')]
