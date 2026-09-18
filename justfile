@@ -4,24 +4,10 @@ TARBALL := PKG + "_" + VERSION + ".tar.gz"
 
 default: format lint docs test
 
+[unix]
 [doc('Clean up auxiliary files and directories')]
 clean:
-	#!/usr/bin/env Rscript
-	unlink(c(
-	  Sys.glob("*.tar.gz"),
-	  Sys.glob("*.Rcheck"),
-	  Sys.glob(".Rproj.user"),
-	  Sys.glob("src/*.o"),
-	  Sys.glob("src/*.gcno"),
-	  Sys.glob("src/*.gcda"),
-	  Sys.glob("src/*.so"),
-	  Sys.glob("src/*.dll"),
-	  "figure", "figures", "doc", "Meta",
-	  Sys.glob("vignettes/*.html"),
-	  Sys.glob("vignettes/*.pdf"),
-	  Sys.glob("vignettes/figures/*.svg"),
-	  Sys.glob("vignettes/figures/*.png")
-	), recursive = TRUE, force = TRUE)
+	rm -rf *.tar.gz *.Rcheck .Rproj.user src/*.o src/*.gcno src/*.gcda src/*.so src/*.dll figure figures doc Meta vignettes/*.html vignettes/*.pdf vignettes/figures/*.svg vignettes/figures/*.pdf vignettes/figures/*.png
 
 [doc('Ensure local NAMESPACE exists (bootstrapped if missing)')]
 bootstrap-namespace:
@@ -31,28 +17,45 @@ bootstrap-namespace:
 	}
 
 [group('diagrams')]
-[doc('Generate SVG diagrams from .mmd mermaid specifications')]
+[doc('Generate SVG and PDF diagrams from .mmd mermaid specifications')]
 diagrams:
 	#!/usr/bin/env bash
 	set -euo pipefail
 	if compgen -G "vignettes/figures/*.mmd" > /dev/null; then
+		if command -v mmdc >/dev/null 2>&1; then
+			CMD="mmdc"
+		elif command -v npx >/dev/null 2>&1; then
+			CMD="npx --yes -p @mermaid-js/mermaid-cli@11.17.0 mmdc"
+		else
+			missing=0
+			for mmd in vignettes/figures/*.mmd; do
+				[ -f "$mmd" ] || continue
+				if [ ! -f "${mmd%.mmd}.svg" ] || [ ! -f "${mmd%.mmd}.pdf" ]; then
+					missing=1
+					break
+				fi
+			done
+			if [ "$missing" -eq 1 ]; then
+				echo "Error: Neither 'mmdc' nor 'npx' found and diagrams are missing; mermaid-cli is required." >&2
+				exit 1
+			else
+				echo "Note: Neither 'mmdc' nor 'npx' found; keeping existing SVG/PDF diagrams."
+				exit 0
+			fi
+		fi
+
 		PUP_CFG=$(mktemp)
 		echo '{"args": ["--no-sandbox", "--disable-setuid-sandbox"]}' > "$PUP_CFG"
 		trap 'rm -f "$PUP_CFG"' EXIT
 
-		if command -v mmdc >/dev/null 2>&1; then
-			CMD="mmdc"
-		elif command -v npx >/dev/null 2>&1; then
-			CMD="npx -p @mermaid-js/mermaid-cli mmdc"
-		else
-			echo "Note: Neither 'mmdc' nor 'npx' found; keeping existing SVG diagrams if present."
-			exit 0
-		fi
 		for mmd in vignettes/figures/*.mmd; do
 			[ -f "$mmd" ] || continue
 			svg="${mmd%.mmd}.svg"
+			pdf="${mmd%.mmd}.pdf"
 			echo "Compiling $mmd -> $svg..."
 			$CMD -p "$PUP_CFG" -i "$mmd" -o "$svg" -b transparent
+			echo "Compiling $mmd -> $pdf..."
+			$CMD -p "$PUP_CFG" -i "$mmd" -o "$pdf" -b transparent
 		done
 	fi
 
@@ -70,11 +73,7 @@ lint: lintair lintr
 
 [doc('Check R code using air')]
 lintair:
-	@if command -v air >/dev/null 2>&1; then \
-		air format . --check; \
-	else \
-		echo "Note: 'air' not found; skipping air format check."; \
-	fi
+	air format . --check
 
 [doc('Check R code using lintr')]
 lintr: bootstrap-namespace

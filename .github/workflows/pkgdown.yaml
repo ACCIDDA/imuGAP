@@ -42,8 +42,8 @@ jobs:
       # against a build that has both a valid NAMESPACE and the regenerated data
       # (otherwise it fails with "object 'fit_sim' not found", #64).
       - name: Build site
-        run: pkgdown::build_site_github_pages(new_process = FALSE, install = TRUE)
-        shell: Rscript {0}
+        shell: bash
+        run: just site-full
 
       - name: Deploy to GitHub pages
         if: github.event_name != 'pull_request'

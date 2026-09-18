@@ -389,7 +389,7 @@ The following plot shows force of vaccination parameter estimates ($\lambda$) ac
 
 ```{r lambda-plot, fold = TRUE, code_summary = "Show plot code", fig.cap = "Force of vaccination (lambda) estimates across data resolutions compared to true values.", fig.width = 7, fig.height = 4}
 extract_lambda_summary <- function(fit, label) {
-  draws <- rstan::extract(fit$stanfit, pars = "lambda_raw")$lambda_raw
+  draws <- extract_imugap(fit, pars = "lambda_raw")$lambda_raw
   doses_factor <- factor(c(
     rep("Dose 1", nrow(draws)),
     rep("Dose 2", nrow(draws))

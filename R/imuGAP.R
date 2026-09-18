@@ -1,9 +1,4 @@
 # Internal error message format strings for imuGAP.R
-ERR_STAN_OPTS_CLASS <- "`stan_opts` must be created by stan_options()"
-ERR_EXTRACT_RSTAN_ONLY <- paste0(
-  "extract_imugap() currently supports only the 'rstan' backend; ",
-  "refit with stan_options(backend = 'rstan')"
-)
 ERR_DOSE_SCHEDULE_EMPTY <- "`dose_schedule` must not be empty"
 ERR_DOSE_SCHED_OOB <- "`dose_schedule` contains no changepoints within 1..%d"
 ERR_AGES_EMPTY <- "`ages` must not be empty"
@@ -19,7 +14,6 @@ ERR_DOSE_FINAL_OLDER_THAN_POP <- paste0(
   "Final `dose_schedule` changepoint (%d) must be strictly less than ",
   "the maximum population age (%d)"
 )
-ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
 
 #' @title Validate consistency between dose schedule and population metadata
 #'
@@ -465,9 +459,11 @@ sampling <- function(
     ))
   }
 
+  imugap_opts$model_name <- model_name
+
   structure(
     list(
-      stanfit = raw_fit,
+      raw_fit = raw_fit,
       settings = list(
         imugap_opts = imugap_opts,
         stan_opts = stan_opts
@@ -482,12 +478,12 @@ sampling <- function(
 #' @title Custom imuGAP fit extraction
 #'
 #' @description
-#' Thin wrapper around `rstan::extract` to extract typical imuGAP parameters.
+#' Thin wrapper around backend extract to extract typical imuGAP parameters.
 #' @param fit an object of class `imugap_fit` returned by `[sampling()]`.
 #' @param pars character vector of parameter names to extract (default: `"beta_bs"`).
-#' @param ... additional arguments passed to `[rstan::extract()]`.
+#' @param ... additional arguments passed to the backend extract method.
 #'
-#' @return a list, of extracted parameter arrays as returned by `[rstan::extract()]`.
+#' @return a list, of extracted parameter arrays as returned by the backend.
 #'
 #' @examples
 #' data("fit_sim")
@@ -496,10 +492,6 @@ sampling <- function(
 #'
 #' @export
 extract_imugap <- function(fit, pars = c("beta_bs"), ...) {
-  stop_fmt_if(!inherits(fit, "imugap_fit"), ERR_NOT_IMUGAP_FIT)
-  # Extraction goes through the backend accessor, which only implements the
-  # rstan path today; cmdstanr fits expose draws differently, so fail clearly
-  # here rather than deep inside the accessor.
-  stop_fmt_if(!inherits(fit$stanfit, "stanfit"), ERR_EXTRACT_RSTAN_ONLY)
-  backend_extract(fit$stanfit, pars = pars, ...)
+  stop_fmt_if(!inherits(fit, "imugap_fit"), ERR_NOT_IMUGAP_FIT, "fit")
+  backend_extract(fit$raw_fit, pars = pars, ...)
 }

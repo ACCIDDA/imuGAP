@@ -16,7 +16,7 @@ test_that("extract_imugap extracts from a valid imugap_fit", {
     {
       fit <- structure(
         list(
-          stanfit = raw_fit,
+          raw_fit = raw_fit,
           settings = list(),
           data = list()
         ),
@@ -37,7 +37,7 @@ test_that("extract_imugap extracts from a valid imugap_fit", {
     {
       fit <- structure(
         list(
-          stanfit = raw_fit,
+          raw_fit = raw_fit,
           settings = list(),
           data = list()
         ),
@@ -55,13 +55,21 @@ test_that("extract_imugap extracts from a valid imugap_fit", {
   )
 })
 
-# A cmdstanr fit returns a CmdStanMCMC, not a stanfit; extract_imugap() is
-# rstan-only and must reject it clearly. Fake the fit so this runs without
-# cmdstanr or a CmdStan toolchain.
-test_that("extract_imugap() rejects a cmdstanr (non-stanfit) fit", {
+# CmdStanMCMC fits delegate to backend_extract().
+test_that("extract_imugap() delegates to backend_extract for CmdStanMCMC fit", {
   fake_fit <- structure(
-    list(stanfit = structure(list(), class = "CmdStanMCMC")),
+    list(raw_fit = structure(list(), class = "CmdStanMCMC")),
     class = "imugap_fit"
   )
-  expect_error(extract_imugap(fake_fit), "'rstan' backend")
+  testthat::with_mocked_bindings(
+    {
+      res <- extract_imugap(fake_fit, pars = "beta_bs")
+      expect_equal(res, "mocked_cmdstanr_extracted")
+    },
+    backend_extract = function(raw_fit, pars = NULL, ...) {
+      expect_s3_class(raw_fit, "CmdStanMCMC")
+      expect_equal(pars, "beta_bs")
+      "mocked_cmdstanr_extracted"
+    }
+  )
 })

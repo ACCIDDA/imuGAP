@@ -9,7 +9,7 @@ This is a minor release update of imuGAP (version 0.3.0).
     hierarchy, observation statistics, and summary of primary non-offset Stan parameters
     (`beta_bs`, `sigma_layer`, `lambda_raw`, and `lp__`).
   - Added dedicated S3 `print.imugap_predict()` displaying target population metadata, location
-    counts, dose schedule, and posterior prediction draw dimensions.
+    counts, and posterior prediction draw dimensions.
 * **Vignette Architecture & Documentation Suite**:
   - Reorganized vignette documentation into a clean, modular multi-article suite: `imuGAP` (core
     workflow overview), `example_data` (input data schemas, structure, and visualization),
@@ -29,7 +29,7 @@ This is a minor release update of imuGAP (version 0.3.0).
     streams for vectorized evaluation.
   - Added population-scaled hierarchical layer offset shrinkage with standardized QR basis
     orientation.
-  - Refactored Stan initial value generation into static helper `make_stan_inits()`.
+  - Refactored Stan initial value generation into static helper `make_init_fn()`.
 * **Infrastructure & CI**:
   - Streamlined developer and CI workflows via authoritative `just` recipes (`just lint`,
     `just docs`, `just diagrams`, `just data-fit`).

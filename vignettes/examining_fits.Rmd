@@ -84,7 +84,7 @@ if (!pkgs_available) {
 Because `imuGAP` estimates an underlying process model for vaccination (including baseline uptake
 splines $\beta_{\text{bs}}$, force-of-vaccination rates $\lambda$, and hierarchical location
 offsets $\delta$) via Bayesian inference in Stan, evaluating a model fit entails assessing whether
-MCMC chains converged without pathologies. Ideally, you would also synthesize data in way you think is representative of your system and attempt to recover the latent process parameters. The example data in the package demonstrates that workflow.
+MCMC chains converged without pathologies. Ideally, you would also synthesize data in a way you think is representative of your system and attempt to recover the latent process parameters. The example data in the package demonstrates that workflow.
 
 This vignette demonstrates how to:
 
@@ -131,7 +131,7 @@ The state-level baseline propensity curve is parameterized as a B-spline over bi
 
 ```{r trace-plot-beta, fold = TRUE, code_summary = "Show plot code"}
 beta_pars <- paste0("beta_bs[", seq_along(latent_params_sim$beta_bs), "]")
-beta_arr <- as.array(fit_sim$stanfit, pars = beta_pars)
+beta_arr <- as.array(fit_sim$raw_fit, pars = beta_pars)
 beta_chain_meds <- rbindlist(lapply(beta_pars, function(p) {
   data.table(
     parameter = p,
@@ -183,7 +183,7 @@ In multi-layer models, `sigma_layer` captures the standard deviation of location
 
 ```{r trace-plot-sigmas, fold = TRUE, code_summary = "Show plot code"}
 sigma_pars <- c("sigma_layer[1]", "sigma_layer[2]")
-sigma_arr <- as.array(fit_sim$stanfit, pars = sigma_pars)
+sigma_arr <- as.array(fit_sim$raw_fit, pars = sigma_pars)
 sigma_chain_meds <- rbindlist(lapply(sigma_pars, function(p) {
   data.table(
     parameter = p,
@@ -301,8 +301,8 @@ for (p in seq_len(ld$n_parent_locs)) {
   col_offset <- col_offset + (n_child - 1L)
 }
 
-z_arr <- as.array(fit_sim$stanfit, pars = "z_layer")
-sigma_arr <- as.array(fit_sim$stanfit, pars = "sigma_layer")
+z_arr <- as.array(fit_sim$raw_fit, pars = "z_layer")
+sigma_arr <- as.array(fit_sim$raw_fit, pars = "sigma_layer")
 n_iter <- dim(z_arr)[1]
 n_chains <- dim(z_arr)[2]
 
@@ -414,7 +414,7 @@ The unconstrained rate parameters $\lambda_{\text{raw}}$ govern the speed at whi
 
 ```{r trace-plot-lambdas, fold = TRUE, code_summary = "Show plot code"}
 lambda_pars <- c("lambda_raw[1]", "lambda_raw[2]")
-lambda_arr <- as.array(fit_sim$stanfit, pars = lambda_pars)
+lambda_arr <- as.array(fit_sim$raw_fit, pars = lambda_pars)
 lambda_chain_meds <- rbindlist(lapply(lambda_pars, function(p) {
   data.table(
     parameter = p,

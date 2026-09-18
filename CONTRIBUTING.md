@@ -23,7 +23,8 @@ We use [`just`](https://github.com/casey/just) to automate development tasks. Th
 
 | Recipe | Description | Equivalent Base Command |
 |---|---|---|
-| `just` | Run full validation pipeline: clean, format, lint, docs, test | *(compound command)* |
+| `just` | Run standard validation pipeline: format, lint, docs, test | *(compound command)* |
+| `just clean` | Clean up build, check, and rendered diagram artifacts | *(compound command)* |
 | `just format` | Format R code using `air` | `air format .` |
 | `just lint` | Lint R code using `air` and `lintr` | `air format . --check && Rscript -e "lintr::lint_package()"` |
 | `just docs` | Regenerate roxygen documentation (`man/`, `R/globals.R`) | `Rscript -e "roxygen2::roxygenize()"` |

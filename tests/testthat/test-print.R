@@ -45,7 +45,7 @@ test_that("print.imugap_fit respects custom pars argument", {
 test_that("print.imugap_fit errors on invalid object", {
   expect_error(
     print.imugap_fit(list(a = 1)),
-    "`fit` must be an object of class 'imugap_fit'"
+    "`x` must be an object of class 'imugap_fit'"
   )
 })
 
@@ -78,7 +78,7 @@ test_that("print.imugap_fit handles missing locations, data, and raw_fit variant
 
   # Fit with custom non-stanfit backend object
   mock_raw <- structure(list(), class = "mock_backend_fit")
-  mock_fit2 <- structure(list(stanfit = mock_raw), class = "imugap_fit")
+  mock_fit2 <- structure(list(raw_fit = mock_raw), class = "imugap_fit")
   out2 <- capture.output(print(mock_fit2))
   expect_true(any(grepl("An imuGAP model fit", out2)))
 })
@@ -124,4 +124,27 @@ test_that("subset.imugap_predict validates inputs and expressions", {
     subset(predict_sim, "invalid_non_logical_expression"),
     "must be a logical vector"
   )
+})
+
+test_that("print.imugap_fit dispatches to CmdStanMCMC print with variables", {
+  printed_vars <- NULL
+  mock_cmdstan <- list(
+    metadata = function() {
+      list(stan_variables = c("beta_bs", "z_layer", "lambda_raw"))
+    },
+    print = function(variables = NULL, ...) {
+      printed_vars <<- variables
+      cat("mock CmdStanMCMC print\n")
+    }
+  )
+  class(mock_cmdstan) <- "CmdStanMCMC"
+  fit_mock <- structure(list(raw_fit = mock_cmdstan), class = "imugap_fit")
+
+  out <- capture.output(print(fit_mock))
+  expect_equal(printed_vars, c("beta_bs", "lambda_raw"))
+  expect_true(any(grepl("mock CmdStanMCMC print", out)))
+
+  # Explicit pars
+  capture.output(print(fit_mock, pars = "custom_par"))
+  expect_equal(printed_vars, "custom_par")
 })

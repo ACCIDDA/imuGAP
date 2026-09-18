@@ -1,15 +1,9 @@
 # Internal error message format strings for methods.R
-ERR_NOT_IMUGAP_FIT <- "`fit` must be an object of class 'imugap_fit'"
-ERR_NOT_RSTAN_BACKEND <- paste0(
-  "predict() currently supports only the 'rstan' backend; refit with ",
-  "stan_options(backend = 'rstan')"
-)
 ERR_POSTERIOR_SIZE_SINGLE <- "`posterior_size` must be a single value"
 ERR_POSTERIOR_SIZE_EXCEEDS <- paste0(
   "`posterior_size` (%d) exceeds the %d available posterior ",
-  "draws in `fit`"
+  "draws in `object`"
 )
-ERR_NOT_IMUGAP_PREDICT <- "`%s` must be an object of class 'imugap_predict'"
 ERR_SUBSET_NOT_LOGICAL <- "`subset` must be a logical vector"
 MSG_POSTERIOR_SIZE_ROUNDED <- paste0(
   "`posterior_size` (%d) is not a multiple of the %d chains; ",
@@ -75,15 +69,9 @@ predict.imugap_fit <- function(
   posterior_size = NULL,
   ...
 ) {
-  fit <- object
-  stop_fmt_if(!inherits(fit, "imugap_fit"), ERR_NOT_IMUGAP_FIT)
+  stop_fmt_if(!inherits(object, "imugap_fit"), ERR_NOT_IMUGAP_FIT, "object")
 
-  raw_fit <- fit$stanfit
-  # predict() runs generated quantities through the backend accessors, which
-  # only implement the rstan path today. cmdstanr fits return a CmdStanMCMC;
-  # their generated-quantities support is a separate piece of work, so fail
-  # clearly here rather than deep inside the accessor.
-  stop_fmt_if(!inherits(raw_fit, "stanfit"), ERR_NOT_RSTAN_BACKEND)
+  raw_fit <- object$raw_fit
 
   # Posterior draws as a 3D array: iterations x chains x parameters.
   draws_array <- backend_draws_array(raw_fit)
@@ -120,7 +108,7 @@ predict.imugap_fit <- function(
     )
   }
 
-  target <- canonicalize_target(target, fit)
+  target <- canonicalize_target(target, object)
 
   empty_stream <- function(suffix) {
     stats::setNames(
@@ -213,14 +201,14 @@ predict.imugap_fit <- function(
     )
   )
 
-  dose_schedule <- fit$settings$imugap_opts$dose_schedule
+  dose_schedule <- object$settings$imugap_opts$dose_schedule
   target_sched <- build_interval_schedule(
     dose_schedule,
     target$age
   )
 
   # Update the data object for prediction mode
-  dat_stan <- fit$data
+  dat_stan <- object$data
   updates <- c(
     list(n_yr = length(target_sched$age_to_interval_map)),
     target_sched,
@@ -241,6 +229,9 @@ predict.imugap_fit <- function(
   }
   n_keep <- dim(draws_sub)[1]
 
+  # Stan model name for generated quantities (required by cmdstanr)
+  model_name <- object$settings$imugap_opts$model_name
+
   # Flatten to the 2D draws matrix gqs expects (rows = draws, cols = params).
   draws_mat <- apply(draws_sub, 3L, c)
 
@@ -250,7 +241,8 @@ predict.imugap_fit <- function(
     raw_fit,
     dat_stan,
     draws_mat,
-    "p_obs"
+    "p_obs",
+    model_name = model_name
   )
   p_obs_draws <- array(p_obs_mat, dim = c(n_keep, n_chains, ncol(p_obs_mat)))
 
@@ -476,7 +468,7 @@ as.data.frame.imugap_predict <- function(
 #' @export
 #' @autoglobal
 print.imugap_fit <- function(x, pars = NULL, ...) {
-  stop_fmt_if(!inherits(x, "imugap_fit"), ERR_NOT_IMUGAP_FIT)
+  stop_fmt_if(!inherits(x, "imugap_fit"), ERR_NOT_IMUGAP_FIT, "x")
 
   n_locs <- if (!is.null(x$locations)) nrow(x$locations) else NA_integer_
   n_layers <- if (!is.null(x$locations) && "layer" %in% names(x$locations)) {
@@ -542,11 +534,13 @@ print.imugap_fit <- function(x, pars = NULL, ...) {
   }
   cat("\n")
 
-  raw_fit <- x$stanfit
+  raw_fit <- x$raw_fit
   if (!is.null(raw_fit)) {
     if (is.null(pars)) {
       all_pars <- if (inherits(raw_fit, "stanfit")) {
         raw_fit@model_pars
+      } else if (inherits(raw_fit, "CmdStanMCMC")) {
+        tryCatch(raw_fit$metadata()$stan_variables, error = function(e) NULL)
       } else {
         NULL
       }
@@ -559,6 +553,12 @@ print.imugap_fit <- function(x, pars = NULL, ...) {
         print(raw_fit, pars = pars, ...)
       } else {
         print(raw_fit, ...)
+      }
+    } else if (inherits(raw_fit, "CmdStanMCMC")) {
+      if (!is.null(pars) && length(pars) > 0L) {
+        raw_fit$print(variables = pars, ...)
+      } else {
+        raw_fit$print(...)
       }
     } else {
       print(raw_fit, ...)
