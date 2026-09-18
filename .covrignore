@@ -13,4 +13,5 @@ src/*.cpp
 src/*.h
 R/stanmodels.R
 R/flexstanr.R
+R/globals.R
 

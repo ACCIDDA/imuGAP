@@ -108,7 +108,9 @@ This formulation extends sequentially to multiple vaccine doses, conditional on 
 The following diagram shows the end-to-end fit and predict workflow:
 
 ```{r workflow-diagram, echo = FALSE, out.width = "100%", fig.align = "center"}
-knitr::include_graphics("figures/fit_predict_workflow.svg")
+if (file.exists("figures/fit_predict_workflow.svg")) {
+  knitr::include_graphics("figures/fit_predict_workflow.svg")
+}
 ```
 
 ---
