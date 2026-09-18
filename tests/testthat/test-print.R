@@ -66,3 +66,62 @@ test_that("print.imugap_predict errors on invalid object", {
     "`x` must be an object of class 'imugap_predict'"
   )
 })
+
+test_that("print.imugap_fit handles missing locations, data, and raw_fit variants", {
+  # Fit with NULL locations and data
+  mock_fit1 <- structure(list(), class = "imugap_fit")
+  out1 <- capture.output(res1 <- print(mock_fit1))
+  expect_identical(res1, mock_fit1)
+  expect_true(any(grepl("An imuGAP model fit", out1)))
+  expect_false(any(grepl("Hierarchy:", out1)))
+  expect_false(any(grepl("Observations:", out1)))
+
+  # Fit with custom non-stanfit backend object
+  mock_raw <- structure(list(), class = "mock_backend_fit")
+  mock_fit2 <- structure(list(stanfit = mock_raw), class = "imugap_fit")
+  out2 <- capture.output(print(mock_fit2))
+  expect_true(any(grepl("An imuGAP model fit", out2)))
+})
+
+test_that("print.imugap_predict handles 2D matrix, 1D vector, and missing metadata", {
+  # 2D draws matrix
+  draws_2d <- matrix(runif(50 * 2), nrow = 50, ncol = 2)
+  pred_2d <- structure(list(draws = draws_2d), class = "imugap_predict")
+  out_2d <- capture.output(print(pred_2d))
+  expect_true(any(grepl("Posterior: 50 draws", out_2d)))
+
+  # 1D draws vector
+  draws_1d <- runif(25)
+  pred_1d <- structure(list(draws = draws_1d), class = "imugap_predict")
+  out_1d <- capture.output(print(pred_1d))
+  expect_true(any(grepl("Posterior: 25 draws", out_1d)))
+
+  # Target without loc_id
+  target_noloc <- data.table::data.table(age = 5L, cohort = 1L, dose = 1L)
+  pred_noloc <- structure(
+    list(draws = array(runif(10), dim = c(5, 2, 1)), target = target_noloc),
+    class = "imugap_predict"
+  )
+  out_noloc <- capture.output(print(pred_noloc))
+  expect_true(any(grepl("Targets:   1 target population slice", out_noloc)))
+})
+
+test_that("as.data.frame.imugap_predict errors on non-predict object", {
+  expect_error(
+    as.data.frame.imugap_predict(list(a = 1)),
+    "`x` must be an object of class 'imugap_predict'"
+  )
+})
+
+test_that("subset.imugap_predict validates inputs and expressions", {
+  expect_error(
+    subset.imugap_predict(list(a = 1)),
+    "`x` must be an object of class 'imugap_predict'"
+  )
+
+  data("predict_sim", package = "imuGAP")
+  expect_error(
+    subset(predict_sim, "invalid_non_logical_expression"),
+    "must be a logical vector"
+  )
+})
