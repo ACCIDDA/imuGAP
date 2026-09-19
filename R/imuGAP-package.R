@@ -78,7 +78,7 @@ NULL
 #' @title Example Stan Fit
 #'
 #' @description
-#' A reference `stanfit` object produced by running [imuGAP()] on the bundled
+#' A reference `imugap_fit` object produced by running [sampling()] on the bundled
 #' `locations_sim`, `populations_sim`, and `observations_sim` datasets. Intended
 #' as a lightweight fixture for examples, tests, and downstream tooling that
 #' needs a real fit without paying the cost of recompiling or re-running the
@@ -96,12 +96,12 @@ NULL
 #' git: it is regenerated on build by `data-raw/fit_data.R` (run `just data-fit`
 #' locally, or `just data` for the full pipeline).
 #'
-#' Note that `stanfit` objects bundle references to the compiled Stan model
+#' Note that underlying backend fit objects bundle references to the compiled Stan model
 #' and can be sensitive to major version changes in `rstan` and
 #' `StanHeaders`. If a future install fails to load `fit_sim`, regenerate it
 #' via `data-raw/fit_data.R`.
 #'
-#' @format A `stanfit` object as returned by [rstan::sampling()].
+#' @format An object of class `imugap_fit` as returned by [sampling()].
 #' @name fit_sim
 #' @docType data
 #' @keywords datasets

@@ -7,6 +7,7 @@
 ^\.github$
 ^\.lintr$
 ^\.covrignore$
+^\.codecov\.ya?ml$
 ^air\.toml$
 ^justfile$
 ^[.]?air[.]toml$
@@ -24,8 +25,11 @@
 ^\.cursorrules$
 ^\.cursor$
 ^Rplots\.pdf$
+^\.Rhistory$
 ^vignettes/.*\.html$
 ^vignettes/.*\.pdf$
+^vignettes/figures/.*\.mmd$
+^vignettes/figures/.*\.png$
 ^figure$
 ^figures$
 ^.*\.tar\.gz$

@@ -1,15 +1,9 @@
 # Internal error message format strings for methods.R
-ERR_NOT_IMUGAP_FIT <- "`fit` must be an object of class 'imugap_fit'"
-ERR_NOT_RSTAN_BACKEND <- paste0(
-  "predict() currently supports only the 'rstan' backend; refit with ",
-  "stan_options(backend = 'rstan')"
-)
 ERR_POSTERIOR_SIZE_SINGLE <- "`posterior_size` must be a single value"
 ERR_POSTERIOR_SIZE_EXCEEDS <- paste0(
   "`posterior_size` (%d) exceeds the %d available posterior ",
-  "draws in `fit`"
+  "draws in `object`"
 )
-ERR_NOT_IMUGAP_PREDICT <- "`%s` must be an object of class 'imugap_predict'"
 ERR_SUBSET_NOT_LOGICAL <- "`subset` must be a logical vector"
 MSG_POSTERIOR_SIZE_ROUNDED <- paste0(
   "`posterior_size` (%d) is not a multiple of the %d chains; ",
@@ -27,14 +21,14 @@ MSG_POSTERIOR_SUBSAMPLE_WARN <- paste0(
 #' Uses the output of `[sampling()]` and a target grid to generate
 #' predicted coverage probabilities.
 #'
-#' @param object an `imugap_fit` object returned by `sampling()`
-#' @param target a `[data.frame()]` of target populations to predict for
+#' @param object an object of class `imugap_fit` returned by `[sampling()]`.
+#' @param target a `[data.frame()]` of target populations to predict for.
 #' @param posterior_size optional single positive integer. When set, predict
 #'   over only this many draws, taken from the end of each chain (the converged
 #'   tail). Must be a multiple of the number of chains; a value that isn't is
 #'   rounded up to the next multiple, with a warning. Must not exceed the number
-#'   of draws in the fit. Defaults to `NULL`, which uses every draw.
-#' @param ... additional arguments (currently ignored)
+#'   of draws in the fit (default: `NULL`, which uses every draw).
+#' @param ... additional arguments (currently ignored).
 #'
 #' @details
 #' The `[predict()]` method takes an `imugap_fit` object (typically the output of
@@ -54,7 +48,7 @@ MSG_POSTERIOR_SUBSAMPLE_WARN <- paste0(
 #' When a sub-sample is taken `predict()` warns that it has not checked whether
 #' those draws are adequate (chain mixing, effective sample size).
 #'
-#' @return An object of class `imugap_predict` wrapping the 3D array of predicted
+#' @return an object of class `imugap_predict`, wrapping the 3D array of predicted
 #'   draws and the canonical target dataset.
 #'
 #' @examplesIf interactive()
@@ -75,15 +69,9 @@ predict.imugap_fit <- function(
   posterior_size = NULL,
   ...
 ) {
-  fit <- object
-  stop_fmt_if(!inherits(fit, "imugap_fit"), ERR_NOT_IMUGAP_FIT)
+  stop_fmt_if(!inherits(object, "imugap_fit"), ERR_NOT_IMUGAP_FIT, "object")
 
-  raw_fit <- fit$stanfit
-  # predict() runs generated quantities through the backend accessors, which
-  # only implement the rstan path today. cmdstanr fits return a CmdStanMCMC;
-  # their generated-quantities support is a separate piece of work, so fail
-  # clearly here rather than deep inside the accessor.
-  stop_fmt_if(!inherits(raw_fit, "stanfit"), ERR_NOT_RSTAN_BACKEND)
+  raw_fit <- object$raw_fit
 
   # Posterior draws as a 3D array: iterations x chains x parameters.
   draws_array <- backend_draws_array(raw_fit)
@@ -120,7 +108,7 @@ predict.imugap_fit <- function(
     )
   }
 
-  target <- canonicalize_target(target, fit)
+  target <- canonicalize_target(target, object)
 
   empty_stream <- function(suffix) {
     stats::setNames(
@@ -213,14 +201,14 @@ predict.imugap_fit <- function(
     )
   )
 
-  dose_schedule <- fit$settings$imugap_opts$dose_schedule
+  dose_schedule <- object$settings$imugap_opts$dose_schedule
   target_sched <- build_interval_schedule(
     dose_schedule,
     target$age
   )
 
   # Update the data object for prediction mode
-  dat_stan <- fit$data
+  dat_stan <- object$data
   updates <- c(
     list(n_yr = length(target_sched$age_to_interval_map)),
     target_sched,
@@ -241,6 +229,9 @@ predict.imugap_fit <- function(
   }
   n_keep <- dim(draws_sub)[1]
 
+  # Stan model name for generated quantities (required by cmdstanr)
+  model_name <- object$settings$imugap_opts$model_name
+
   # Flatten to the 2D draws matrix gqs expects (rows = draws, cols = params).
   draws_mat <- apply(draws_sub, 3L, c)
 
@@ -250,7 +241,8 @@ predict.imugap_fit <- function(
     raw_fit,
     dat_stan,
     draws_mat,
-    "p_obs"
+    "p_obs",
+    model_name = model_name
   )
   p_obs_draws <- array(p_obs_mat, dim = c(n_keep, n_chains, ncol(p_obs_mat)))
 
@@ -269,12 +261,12 @@ predict.imugap_fit <- function(
 #' Summarizes predicted coverage probabilities from an `imugap_predict` object
 #' by location, cohort, age, and dose for the requested quantiles.
 #'
-#' @param object an `imugap_predict` object returned by `[predict()]`
-#' @param probs numeric vector of probabilities/quantiles to compute.
-#'   Defaults to `c(0.025, 0.5, 0.975)`.
-#' @param ... additional arguments (currently ignored)
+#' @param object an object of class `imugap_predict` returned by `[predict()]`.
+#' @param probs numeric vector of probabilities/quantiles to compute
+#'   (default: `c(0.025, 0.5, 0.975)`).
+#' @param ... additional arguments (currently ignored).
 #'
-#' @return A `data.table` containing target population parameters, posterior mean
+#' @return a `[data.table()]`, containing target population parameters, posterior mean
 #'   coverage (`mean`), and the requested quantiles (e.g. `q2.5`, `q50`, `q97.5`).
 #'
 #' @examples
@@ -346,14 +338,14 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
 #' Subsets predicted coverage draws by target metadata (variables), iterations,
 #' and chains.
 #'
-#' @param x an `imugap_predict` object returned by `[predict()]`.
+#' @param x an object of class `imugap_predict` returned by `[predict()]`.
 #' @param subset logical expression indicating which target variables to keep.
-#'   Evaluated in the context of the `target` metadata data.table.
-#' @param iteration numeric/integer/logical vector of iterations to keep.
-#' @param chain numeric/integer/logical vector of chains to keep.
+#'   Evaluated in the context of the `target` metadata `[data.table()]`.
+#' @param iteration numeric, integer, or logical vector of iterations to keep.
+#' @param chain numeric, integer, or logical vector of chains to keep.
 #' @param ... additional arguments (currently ignored).
 #'
-#' @return A subsetted `imugap_predict` object with corresponding subsetted `draws`
+#' @return an object of class `imugap_predict`, subsetted with corresponding `draws`
 #'   and `target` metadata.
 #'
 #' @examples
@@ -403,14 +395,14 @@ subset.imugap_predict <- function(x, subset, iteration, chain, ...) {
 #' `data.frame` containing `iteration`, `chain`, target metadata, and a
 #' `coverage` column.
 #'
-#' @param x an `imugap_predict` object returned by `[predict()]`.
+#' @param x an object of class `imugap_predict` returned by `[predict()]`.
 #' @param row.names `NULL` or a character vector giving the row names for the
 #'   data frame.
-#' @param optional logical. If `TRUE`, setting row names and converting column
-#'   names is optional.
+#' @param optional logical scalar; make setting row and column names optional?
+#'   (default: `FALSE`).
 #' @param ... additional arguments (currently ignored).
 #'
-#' @return A `data.table` with columns `iteration`, `chain`, the target metadata
+#' @return a `[data.table()]`, with columns `iteration`, `chain`, the target metadata
 #'   columns, and `coverage`.
 #'
 #' @examples
@@ -453,4 +445,205 @@ as.data.frame.imugap_predict <- function(
   )
 
   res[]
+}
+
+#' @title Print an imuGAP model fit
+#'
+#' @description
+#' Prints a concise summary of an `imugap_fit` object, including the location
+#' hierarchy dimensions, observation counts, and MCMC parameter summaries for all
+#' non-offset parameters.
+#'
+#' @param x an object of class `imugap_fit` returned by `[sampling()]`.
+#' @param pars character vector; parameter names to display (default: all
+#'   non-offset parameters, excluding `'z_layer'`).
+#' @param ... additional arguments passed to the underlying backend print method.
+#'
+#' @return invisibly returns `x`.
+#'
+#' @examples
+#' data("fit_sim", package = "imuGAP")
+#' print(fit_sim)
+#'
+#' @export
+#' @autoglobal
+print.imugap_fit <- function(x, pars = NULL, ...) {
+  stop_fmt_if(!inherits(x, "imugap_fit"), ERR_NOT_IMUGAP_FIT, "x")
+
+  n_locs <- if (!is.null(x$locations)) nrow(x$locations) else NA_integer_
+  n_layers <- if (!is.null(x$locations) && "layer" %in% names(x$locations)) {
+    max(x$locations$layer)
+  } else {
+    NA_integer_
+  }
+  root_loc <- if (
+    !is.null(x$locations) && "parent_id" %in% names(x$locations)
+  ) {
+    x$locations[is.na(parent_id), loc_id]
+  } else {
+    NULL
+  }
+
+  u_unmix <- if (is.null(x$data$n_obs_unmixed_uncensored)) {
+    0L
+  } else {
+    x$data$n_obs_unmixed_uncensored
+  }
+  u_mix <- if (is.null(x$data$n_obs_mixed_uncensored)) {
+    0L
+  } else {
+    x$data$n_obs_mixed_uncensored
+  }
+  c_unmix <- if (is.null(x$data$n_obs_unmixed_right)) {
+    0L
+  } else {
+    x$data$n_obs_unmixed_right
+  }
+  c_mix <- if (is.null(x$data$n_obs_mixed_right)) {
+    0L
+  } else {
+    x$data$n_obs_mixed_right
+  }
+
+  n_obs_uncensored <- u_unmix + u_mix
+  n_obs_censored <- c_unmix + c_mix
+  n_obs_total <- n_obs_uncensored + n_obs_censored
+
+  cat("An imuGAP model fit (`imugap_fit`):\n")
+  if (!is.na(n_locs)) {
+    root_str <- if (length(root_loc) == 1L) {
+      sprintf(" (root: '%s')", root_loc)
+    } else {
+      ""
+    }
+    cat(sprintf(
+      "  Hierarchy:    %d locations across %d layer%s%s\n",
+      n_locs,
+      n_layers,
+      if (n_layers == 1L) "" else "s",
+      root_str
+    ))
+  }
+  if (!is.null(x$data)) {
+    cat(sprintf(
+      "  Observations: %d total (%d uncensored, %d right-censored)\n",
+      n_obs_total,
+      n_obs_uncensored,
+      n_obs_censored
+    ))
+  }
+  cat("\n")
+
+  raw_fit <- x$raw_fit
+  if (!is.null(raw_fit)) {
+    if (is.null(pars)) {
+      all_pars <- if (inherits(raw_fit, "stanfit")) {
+        raw_fit@model_pars
+      } else if (inherits(raw_fit, "CmdStanMCMC")) {
+        tryCatch(raw_fit$metadata()$stan_variables, error = function(e) NULL)
+      } else {
+        NULL
+      }
+      if (!is.null(all_pars)) {
+        pars <- setdiff(all_pars, c("z_layer", "off_layer", "p_obs"))
+      }
+    }
+    if (inherits(raw_fit, "stanfit")) {
+      if (!is.null(pars) && length(pars) > 0L) {
+        print(raw_fit, pars = pars, ...)
+      } else {
+        print(raw_fit, ...)
+      }
+    } else if (inherits(raw_fit, "CmdStanMCMC")) {
+      if (!is.null(pars) && length(pars) > 0L) {
+        raw_fit$print(variables = pars, ...)
+      } else {
+        raw_fit$print(...)
+      }
+    } else {
+      print(raw_fit, ...)
+    }
+  }
+
+  invisible(x)
+}
+
+#' @title Print coverage predictions
+#'
+#' @description
+#' Prints a concise summary of an `imugap_predict` object, including target grid
+#' dimensions and posterior draw dimensions.
+#'
+#' @param x an object of class `imugap_predict` returned by `[predict()]`.
+#' @param ... additional arguments (currently ignored).
+#'
+#' @return invisibly returns `x`.
+#'
+#' @examples
+#' data("predict_sim", package = "imuGAP")
+#' print(predict_sim)
+#'
+#' @export
+#' @autoglobal
+print.imugap_predict <- function(x, ...) {
+  stop_fmt_if(!inherits(x, "imugap_predict"), ERR_NOT_IMUGAP_PREDICT, "x")
+
+  dims <- dim(x$draws)
+  n_draws <- if (length(dims) == 3L) {
+    dims[1L] * dims[2L]
+  } else if (length(dims) == 2L) {
+    dims[1L]
+  } else {
+    length(x$draws)
+  }
+  n_chains <- if (length(dims) == 3L) dims[2L] else 1L
+  n_iter <- if (length(dims) == 3L) dims[1L] else n_draws
+  n_targets <- if (!is.null(x$target)) {
+    nrow(x$target)
+  } else if (length(dims) >= 3L) {
+    dims[3L]
+  } else {
+    NA_integer_
+  }
+
+  cat("An imuGAP predictions object (`imugap_predict`):\n")
+  if (!is.na(n_targets)) {
+    n_locs <- if (!is.null(x$target$loc_id)) {
+      data.table::uniqueN(x$target$loc_id)
+    } else {
+      NA_integer_
+    }
+    loc_str <- if (!is.na(n_locs)) {
+      sprintf(" across %d location%s", n_locs, if (n_locs == 1L) "" else "s")
+    } else {
+      ""
+    }
+    cat(sprintf(
+      "  Targets:   %d target population slice%s%s\n",
+      n_targets,
+      if (n_targets == 1L) "" else "s",
+      loc_str
+    ))
+  }
+  if (length(dims) == 3L) {
+    cat(sprintf(
+      "  Posterior: %d draws (%d chain%s x %d iteration%s)\n",
+      n_draws,
+      n_chains,
+      if (n_chains == 1L) "" else "s",
+      n_iter,
+      if (n_iter == 1L) "" else "s"
+    ))
+  } else {
+    cat(sprintf(
+      "  Posterior: %d draw%s\n",
+      n_draws,
+      if (n_draws == 1L) "" else "s"
+    ))
+  }
+  cat(
+    "\nUse summary() to compute quantiles or as.data.frame() to convert to a long table.\n"
+  )
+
+  invisible(x)
 }

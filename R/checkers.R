@@ -17,15 +17,27 @@ ERR_ARG_CANNOT_HAVE_NA <- "'%s' may not contain NAs"
 ERR_ARG_MUST_BE_INTEGER <- "'%s' must be integers"
 ERR_ARG_MUST_BE_GT_ZERO <- "'%s' must be positive"
 
-#' Signal an error if a condition is met with formatted message
+# Shared object and option validation format strings
+ERR_NOT_IMUGAP_FIT <- "`%s` must be an object of class 'imugap_fit'"
+ERR_NOT_IMUGAP_PREDICT <- "`%s` must be an object of class 'imugap_predict'"
+ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
+ERR_STAN_OPTS_CLASS <- "`stan_opts` must be created by stan_options()"
+
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
+#' @title Signal an error if a condition is met with formatted message
 #'
-#' @param cond Logical expression to evaluate.
-#' @param fmt Character format string for [sprintf()].
-#' @param ... Additional arguments passed to [sprintf()].
-#' @param n Frame offset integer specifying call stack depth for call attribution
-#'   (default `1L`). If `n <= 0L`, call attribution is suppressed (`NULL`).
+#' @description
+#' Evaluates `cond` and if `TRUE`, raises an error formatted with [sprintf()].
+#'
+#' @param cond logical expression to evaluate.
+#' @param fmt character format string for [sprintf()].
+#' @param ... additional arguments passed to [sprintf()].
+#' @param n frame offset integer specifying call stack depth for call attribution
+#'   (default: `1L`). If `n <= 0L`, call attribution is suppressed (`NULL`).
 #'
 #' @keywords internal
+#' @noRd
 stop_fmt_if <- function(cond, fmt, ..., n = 1L) {
   if (isTRUE(cond)) {
     call_obj <- if (n > 0L) sys.call(-n) else NULL
@@ -33,17 +45,21 @@ stop_fmt_if <- function(cond, fmt, ..., n = 1L) {
   }
 }
 
-#' Signal a warning if a condition is met with formatted message
+#' @title Signal a warning if a condition is met with formatted message
 #'
-#' @param cond Logical expression to evaluate.
-#' @param fmt Character format string for [sprintf()].
-#' @param ... Additional arguments passed to [sprintf()].
-#' @param n Frame offset integer specifying call stack depth for call attribution
-#'   (default `1L`). If `n <= 0L`, call attribution is suppressed (`NULL`).
+#' @description
+#' Evaluates `cond` and if `TRUE`, signals a warning formatted with [sprintf()].
 #'
-#' @return Logical scalar indicating whether `cond` evaluated to `TRUE`.
+#' @param cond logical expression to evaluate.
+#' @param fmt character format string for [sprintf()].
+#' @param ... additional arguments passed to [sprintf()].
+#' @param n frame offset integer specifying call stack depth for call attribution
+#'   (default: `1L`). If `n <= 0L`, call attribution is suppressed (`NULL`).
+#'
+#' @return a logical scalar, indicating whether `cond` evaluated to `TRUE`.
 #'
 #' @keywords internal
+#' @noRd
 warn_fmt_if <- function(cond, fmt, ..., n = 1L) {
   cond_val <- isTRUE(cond)
   if (cond_val) {
@@ -53,7 +69,18 @@ warn_fmt_if <- function(cond, fmt, ..., n = 1L) {
   cond_val
 }
 
+#' @title Assert and coerce column to integer
+#'
+#' @description
+#' Verifies that column `x` in `dt` can be represented as integer and coerces if needed.
+#'
+#' @param dt a `[data.table()]`.
+#' @param x column name as character string.
+#' @param na_allowed logical; allow `NA` values? (default: `FALSE`).
+#' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#'
 #' @keywords internal
+#' @noRd
 assert_as_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
   if (dt[, !is.integer(get(x))]) {
     stop_fmt_if(
@@ -76,7 +103,18 @@ assert_as_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
   dt[]
 }
 
+#' @title Assert column contains positive integers
+#'
+#' @description
+#' Verifies that column `x` in `dt` contains integers strictly greater than 0.
+#'
+#' @param dt a `[data.table()]`.
+#' @param x column name as character string.
+#' @param na_allowed logical; allow `NA` values? (default: `FALSE`).
+#' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#'
 #' @keywords internal
+#' @noRd
 assert_positive_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
   stop_fmt_if(
     assert_as_integer(dt, x, na_allowed, n = n + 1L)[, any(get(x) < 1L)],
@@ -88,7 +126,18 @@ assert_positive_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
   dt[]
 }
 
+#' @title Assert column contains non-negative integers
+#'
+#' @description
+#' Verifies that column `x` in `dt` contains integers greater than or equal to 0.
+#'
+#' @param dt a `[data.table()]`.
+#' @param x column name as character string.
+#' @param na_allowed logical; allow `NA` values? (default: `FALSE`).
+#' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#'
 #' @keywords internal
+#' @noRd
 assert_nonneg_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
   stop_fmt_if(
     assert_as_integer(dt, x, na_allowed, n = n + 1L)[, any(get(x) < 0L)],
@@ -100,7 +149,19 @@ assert_nonneg_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
   dt[]
 }
 
+#' @title Assert column contains positive integers with upper bound
+#'
+#' @description
+#' Verifies that column `x` in `dt` contains positive integers less than or equal to `max`.
+#'
+#' @param dt a `[data.table()]`.
+#' @param x column name as character string.
+#' @param max optional maximum integer limit.
+#' @param na_allowed logical; allow `NA` values? (default: `FALSE`).
+#' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#'
 #' @keywords internal
+#' @noRd
 assert_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE, n = 1L) {
   assert_positive_integer(dt, x, na_allowed, n = n + 1L)
   stop_fmt_if(
@@ -114,7 +175,18 @@ assert_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE, n = 1L) {
   dt[]
 }
 
+#' @title Assert column contains exact set equivalence
+#'
+#' @description
+#' Verifies that unique values of column `x` in `dt` exactly match the set `tarset`.
+#'
+#' @param dt a `[data.table()]`.
+#' @param x column name as character string.
+#' @param tarset expected set vector.
+#' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#'
 #' @keywords internal
+#' @noRd
 assert_set_equivalence <- function(dt, x, tarset, n = 1L) {
   tarset <- unique(tarset)
   setlen <- length(tarset)
@@ -135,7 +207,18 @@ assert_set_equivalence <- function(dt, x, tarset, n = 1L) {
   dt[]
 }
 
+#' @title Assert column contains a subset of allowed values
+#'
+#' @description
+#' Verifies that all values of column `x` in `dt` are contained within `tarset`.
+#'
+#' @param dt a `[data.table()]`.
+#' @param x column name as character string.
+#' @param tarset allowed superset vector.
+#' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#'
 #' @keywords internal
+#' @noRd
 assert_subset <- function(dt, x, tarset, n = 1L) {
   checkset <- unique(dt[, get(x)])
   stop_fmt_if(
@@ -149,14 +232,37 @@ assert_subset <- function(dt, x, tarset, n = 1L) {
   dt[]
 }
 
+#' @title Assert object can be converted to data.table
+#'
+#' @description
+#' Converts or checks table conversion to `data.table`.
+#'
+#' @param dt a `[data.frame()]`.
+#' @param copy logical; create a copy via [data.table::as.data.table()]?
+#'   (default: `FALSE`).
+#'
 #' @keywords internal
+#' @noRd
 #' @importFrom data.table setDT
 #' @importFrom data.table as.data.table
 assert_dt_able <- function(dt, copy = FALSE) {
   if (copy) as.data.table(dt) else setDT(dt)
 }
 
+#' @title Assert required columns are present
+#'
+#' @description
+#' Verifies that table `dt` contains all required columns in `cols`.
+#'
+#' @param dt a `[data.table()]`.
+#' @param cols character vector of required column names.
+#' @param warn_extra logical; warn if extra columns are present? (default: `FALSE`).
+#' @param allowed_extra character vector of extra columns exempt from warnings
+#'   (default: `character(0)`).
+#' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#'
 #' @keywords internal
+#' @noRd
 assert_cols <- function(
   dt,
   cols,
@@ -184,7 +290,17 @@ assert_cols <- function(
   dt[]
 }
 
+#' @title Assert column contains positive numeric values
+#'
+#' @description
+#' Verifies that column `x` in `dt` is numeric, non-NA, and strictly greater than 0.
+#'
+#' @param dt a `[data.table()]`.
+#' @param x column name as character string.
+#' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#'
 #' @keywords internal
+#' @noRd
 assert_positive_numeric <- function(dt, x, n = 1L) {
   stop_fmt_if(
     dt[, !is.numeric(get(x))],
@@ -210,7 +326,19 @@ assert_positive_numeric <- function(dt, x, n = 1L) {
   dt[]
 }
 
+#' @title Assert argument is a positive integer vector
+#'
+#' @description
+#' Verifies that `val` is numeric, non-empty, non-NA, integer-valued, and strictly positive.
+#'
+#' @param val numeric vector to validate.
+#' @param name argument name for error messages.
+#' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#'
+#' @return an integer vector, the validated positive integer vector.
+#'
 #' @keywords internal
+#' @noRd
 assert_positive_int <- function(val, name, n = 1L) {
   stop_fmt_if(!is.numeric(val), ERR_ARG_MUST_BE_NUMERIC, name, n = n + 1L)
   stop_fmt_if(length(val) < 1L, ERR_ARG_MIN_LENGTH, name, n = n + 1L)

@@ -36,23 +36,40 @@ html[data-bs-theme="dark"] .accidda-footer-logo-dark { display: inline; }
 }
 
 /* Ensure plots in vignettes/articles remain clearly legible on dark mode */
-html[data-bs-theme="dark"] .figure img,
-html[data-bs-theme="dark"] .r-plot img,
-html[data-bs-theme="dark"] article img,
-html[data-bs-theme="dark"] main img:not(.accidda-footer-logo) {
+html[data-bs-theme="dark"] .figure img:not([src$=".svg"]),
+html[data-bs-theme="dark"] .r-plot img:not([src$=".svg"]),
+html[data-bs-theme="dark"] article img:not([src$=".svg"]),
+html[data-bs-theme="dark"] main img:not(.accidda-footer-logo):not([src$=".svg"]) {
   background-color: #ffffff;
   border-radius: 4px;
   padding: 4px;
 }
 
+/* Treat SVG diagrams with filter inversion for seamless dark mode blending */
+html[data-bs-theme="dark"] .figure img[src$=".svg"],
+html[data-bs-theme="dark"] article img[src$=".svg"],
+html[data-bs-theme="dark"] main img[src$=".svg"]:not(.accidda-footer-logo) {
+  background-color: transparent;
+  filter: invert(0.88) hue-rotate(180deg);
+  border-radius: 4px;
+}
+
 @media (prefers-color-scheme: dark) {
-  html:not([data-bs-theme="light"]) .figure img,
-  html:not([data-bs-theme="light"]) .r-plot img,
-  html:not([data-bs-theme="light"]) article img,
-  html:not([data-bs-theme="light"]) main img:not(.accidda-footer-logo) {
+  html:not([data-bs-theme="light"]) .figure img:not([src$=".svg"]),
+  html:not([data-bs-theme="light"]) .r-plot img:not([src$=".svg"]),
+  html:not([data-bs-theme="light"]) article img:not([src$=".svg"]),
+  html:not([data-bs-theme="light"]) main img:not(.accidda-footer-logo):not([src$=".svg"]) {
     background-color: #ffffff;
     border-radius: 4px;
     padding: 4px;
+  }
+
+  html:not([data-bs-theme="light"]) .figure img[src$=".svg"],
+  html:not([data-bs-theme="light"]) article img[src$=".svg"],
+  html:not([data-bs-theme="light"]) main img[src$=".svg"]:not(.accidda-footer-logo) {
+    background-color: transparent;
+    filter: invert(0.88) hue-rotate(180deg);
+    border-radius: 4px;
   }
 }
 
@@ -88,5 +105,16 @@ details summary {
 
 details summary:hover {
   text-decoration: underline;
+}
+
+/* Mermaid diagram styling */
+.mermaid {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
 }
 

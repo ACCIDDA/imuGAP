@@ -39,9 +39,9 @@ test_that("imuGAP::sampling() fits via the cmdstanr backend", {
   )))
 
   expect_s3_class(fit, "imugap_fit")
-  expect_s3_class(fit$stanfit, "CmdStanMCMC")
+  expect_s3_class(fit$raw_fit, "CmdStanMCMC")
 
-  fit_pars <- fit$stanfit$metadata()$stan_variables
+  fit_pars <- fit$raw_fit$metadata()$stan_variables
   for (par in c("beta_bs", "lambda_raw")) {
     expect_true(par %in% fit_pars, info = paste("missing parameter:", par))
   }
@@ -52,6 +52,13 @@ test_that("imuGAP::sampling() fits via the cmdstanr backend", {
     )
   }
 
-  draws <- fit$stanfit$draws(variables = "beta_bs")
+  draws <- fit$raw_fit$draws(variables = "beta_bs")
   expect_true(all(is.finite(draws)))
+
+  # Verify predict() with cmdstanr fit
+  clean_pops <- canonicalize_populations(populations_sim, obs, locs)
+  preds <- predict(fit, clean_pops, posterior_size = 10)
+  expect_s3_class(preds, "imugap_predict")
+  expect_true(is.array(preds$draws))
+  expect_equal(dim(preds$draws)[2], 1L)
 })

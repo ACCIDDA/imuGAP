@@ -1,0 +1,5 @@
+flowchart LR
+    A["<b>Prepare Inputs</b><br/>locations<br/>observations<br/>populations"] --> B["<b>Configure & Fit</b><br/>imugap_options()<br/>stan_options()<br/>sampling()"]
+    B --> C["<b>Define Target Grid</b><br/>create_target()"]
+    C --> D["<b>Predict</b><br/>predict()"]
+    D --> E["<b>Summarize & Plot</b><br/>summary()<br/>ggplot()"]

@@ -31,7 +31,7 @@ jobs:
           generate-docs: 'false'
 
       - name: Lint
-        run: lintr::lint_package()
-        shell: Rscript {0}
+        shell: bash
+        run: just lint
         env:
           LINTR_ERROR_ON_LINT: true
