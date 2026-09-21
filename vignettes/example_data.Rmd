@@ -76,6 +76,19 @@ if (!pkgs_available) {
         strip.background = ggplot2::element_rect(fill = "grey90", colour = "grey20")
       )
   )
+
+  data("locations_sim", package = "imuGAP")
+  data("observations_sim", package = "imuGAP")
+  data("populations_sim", package = "imuGAP")
+  data("latent_params_sim", package = "imuGAP")
+
+  county_names <- sort(unique(locations_sim$loc_id[
+    locations_sim$parent_id == "State" & !is.na(locations_sim$parent_id)
+  ]))
+  sch_counts <- table(locations_sim$parent_id[locations_sim$parent_id %in% county_names])
+  n_schools <- sum(sch_counts)
+  sch_summary <- paste0(sch_counts[county_names], " in ", county_names, collapse = ", ")
+  dose_sched <- latent_params_sim$dose_schedule %||% c(1L, 4L)
 }
 ```
 
@@ -88,14 +101,14 @@ across a multi-resolution hierarchical population structure.
 
 In this scenario:
 
-- A single **State** is partitioned into three **Counties** (Scruggs, Simone, Watson), which each contain 8 elementary **Schools** (24 total schools).
-- The vaccine requires a two-dose sequential regimen (e.g. MMR, with dose 1 recommended at age 1 and dose 2 eligible at age 4).
+- A single **State** is partitioned into `r length(county_names)` **Counties** (`r paste(county_names, collapse = ", ")`), which contain a total of `r n_schools` elementary **Schools** (`r sch_summary`).
+- The vaccine requires a `r length(dose_sched)`-dose sequential regimen (e.g. MMR, with dose 1 recommended at age `r dose_sched[1]` and dose 2 eligible at age `r dose_sched[2]`).
 - Observations are gathered from diverse empirical surveillance streams:
   - **ChildVaxView / NIS-Child**: State-level single-cohort point estimates at ages 2 and 3 for dose 1.
   - **SchoolVaxView**: State-level kindergarten entry surveys (dose 2 at age 5).
   - **TeenVaxView**: State-level multi-cohort cross-sectional survey snapshots spanning ages 14 to 18 (dose 2).
-  - **County 6th Grade Surveys**: Right-censored dose 2 coverage at age 11 across all three counties.
-  - **School Kindergarten Entry Records**: Annual kindergarten entry surveys for dose 2 at age 5 across all 24 individual schools.
+  - **County 6th Grade Surveys**: Right-censored dose 2 coverage at age 11 across all `r length(county_names)` counties.
+  - **School Kindergarten Entry Records**: Annual kindergarten entry surveys for dose 2 at age 5 across all `r n_schools` individual schools.
 
 ---
 
@@ -153,7 +166,7 @@ head(canonical_observations)
 ### Observation Metadata & Populations (`populations_sim`)
 
 The `populations` table provides essential metadata for all observations—defining the discrete
-age, cohort, and dose associated with each survey outcome. Every record in `observations`
+location, age, cohort, and dose associated with each survey outcome. Every record in `observations`
 receives one or more entries in `populations`:
 
 - **Direct (1:1) observations**: A single row with `weight = 1.0` maps the observation directly
@@ -267,6 +280,9 @@ latent_state <- data.table(
 )
 
 n_c <- length(latent_params_sim$phi_state)
+skv_max_cohort <- max(state_obs[age_min == 5, cohort_min])
+tvv_max_cohort <- max(multi_cohort_obs$cohort_min)
+
 latent_curves <- rbindlist(list(
   data.table(
     cohort_min = seq_len(n_c),
@@ -281,14 +297,14 @@ latent_curves <- rbindlist(list(
     source = "ChildVaxView (Dose 1, Age 3)"
   ),
   data.table(
-    cohort_min = seq_len(28),
-    latent_cov = (1 - latent_params_sim$phi_state[1:28]) *
+    cohort_min = seq_len(skv_max_cohort),
+    latent_cov = (1 - latent_params_sim$phi_state[seq_len(skv_max_cohort)]) *
       latent_params_sim$uptake[5, 2],
     source = "SchoolVaxView (Dose 2, Age 5)"
   ),
   data.table(
-    cohort_min = seq_len(15),
-    latent_cov = (1 - latent_params_sim$phi_state[1:15]) *
+    cohort_min = seq_len(tvv_max_cohort),
+    latent_cov = (1 - latent_params_sim$phi_state[seq_len(tvv_max_cohort)]) *
       mean(latent_params_sim$uptake[14:18, 2]),
     source = "TeenVaxView (Dose 2, Ages 14-18)"
   )
@@ -355,10 +371,20 @@ ggplot() +
 
 ### County-Level Right-Censored Surveillance
 
-`imuGAP` supports observations at intermediate resolutions, here illustrated by a routine county-wide tally for entry to middle school:
+`imuGAP` supports observations at intermediate spatial resolutions as well as right-censored surveillance streams.
+
+In public health surveillance, records often report composite vaccine series completion (for example, whether a student has received all required middle school entry immunizations) rather than tracking a specific vaccine in isolation. Because an individual who completed the full multi-vaccine series has necessarily received the target vaccine, the observed series completion rate acts as a lower bound on the target vaccine's true coverage (true coverage $\ge$ observed proportion).
+
+`imuGAP` natively models right-censored observations:
+
+- In `observations`, you mark right-censored survey records with `censored = 1` (and uncensored records with `NA`).
+- During Bayesian model fitting, the likelihood accounts for the right-censoring mechanism, ensuring that lower-bound surveillance records accurately inform the latent process without downwardly biasing coverage trajectories.
+
+In this simulation universe, routine county-wide middle school entry tallies (dose 2 at age 11) across all three counties represent right-censored surveillance streams:
 
 ```{r synthetic-county-viz, fold = TRUE, code_summary = "Show plot code"}
-county_obs <- copy(observations_sim[loc_id %in% c("Scruggs", "Simone", "Watson")])
+county_names <- names(latent_params_sim$off_cnty)
+county_obs <- copy(observations_sim[loc_id %in% county_names])
 county_obs[, obs_prop := positive / sample_n]
 
 max_obs_cohort <- max(county_obs$cohort_min)
@@ -457,7 +483,7 @@ ggplot() +
 ### School Kindergarten Enrollment Records
 
 The following plot illustrates school-level kindergarten entry records (dose 2 at age 5) across
-all 24 elementary schools grouped by county, comparing empirical survey counts against the
+all elementary schools grouped by county, comparing empirical survey counts against the
 underlying school-specific latent coverage curves:
 
 ```{r synthetic-school-viz, fold = TRUE, code_summary = "Show plot code"}

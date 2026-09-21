@@ -95,9 +95,9 @@
 #' @param drop_extra logical scalar; drop extraneous columns? (default: `TRUE`).
 #' @param max_cohort optional integer scalar; maximum birth cohort permitted.
 #' @param max_age optional integer scalar; maximum age permitted.
-#' @param max_dose integer scalar; maximum dose number to allow (default: 2L).
+#' @param max_dose optional integer scalar; maximum dose number permitted.
 #' @param imugap_opts optional named list of `imuGAP` model options, created by
-#'   [imugap_options()] (default: `NULL`).
+#'   [imugap_options()].
 #'
 #' @name canonicalize
 #' @aliases canonicalize_locations canonicalize_observations canonicalize_populations
@@ -247,7 +247,7 @@ canonicalize_locations <- function(locations) {
     length(single_child_parents) > 0L,
     ERR_LOCATIONS_OFFSPRING_COUNT,
     n_locations = length(single_child_parents),
-    locations = sprintf("'%s'", single_child_parents)
+    locations = single_child_parents
   )
 
   # Validate population hierarchy if population column is present
@@ -446,11 +446,16 @@ canonicalize_populations <- function(
   locations,
   max_cohort,
   max_age,
-  max_dose = 2L,
-  imugap_opts = NULL
+  max_dose,
+  imugap_opts
 ) {
   if (is_canonical(populations, "populations")) {
-    if (!is.null(imugap_opts)) {
+    if (!missing(imugap_opts)) {
+      warn_fmt_if(
+        !missing(max_dose),
+        MSG_POP_OPTS_OVERRIDE_MAX_DOSE,
+        max_dose = max_dose
+      )
       dose_schedule <- imugap_opts$dose_schedule %||% c(1L, 4L)
       validate_dose_schedule(dose_schedule, populations)
     }
@@ -473,18 +478,17 @@ canonicalize_populations <- function(
   observations <- canonicalize_observations(observations)
   locations <- canonicalize_locations(locations)
 
-  if (!is.null(imugap_opts)) {
+  if (!missing(imugap_opts)) {
+    warn_fmt_if(
+      !missing(max_dose),
+      MSG_POP_OPTS_OVERRIDE_MAX_DOSE,
+      max_dose = max_dose
+    )
     dose_schedule <- imugap_opts$dose_schedule %||% c(1L, 4L)
-    if (missing(max_dose)) {
-      max_dose <- length(dose_schedule)
-    }
-  }
-
-  assert_positive_integer(populations, "dose")
-  if (!is.null(imugap_opts)) {
+    assert_positive_integer(populations, "dose")
     validate_dose_schedule(dose_schedule, populations)
   } else {
-    assert_subset(populations, "dose", seq_len(max_dose))
+    assert_maxed_pos_integer(populations, "dose", max_dose)
   }
 
   # check that populations id correspond to all observation ids
