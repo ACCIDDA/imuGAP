@@ -139,23 +139,20 @@ test_that("validate_dose_schedule rejects doses exceeding schedule length", {
   )
   expect_error(
     validate_dose_schedule(c(1L, 4L), wts),
-    "`populations` contains dose \\(3\\) exceeding `dose_schedule` length \\(2\\)"
+    "maximum dose is 2 \\(`dose_schedule` length == 2\\)"
   )
 })
 
-test_that("validate_dose_schedule rejects final dose starting age >= max pop age", {
+test_that("validate_dose_schedule rejects when final dose is not observed in populations", {
   wts <- data.table(
     obs_id = c("obs1", "obs2"),
-    dose = c(1L, 2L),
+    dose = c(1L, 1L),
     age = c(2L, 5L)
   )
-  # Final dose changepoint 5 >= max population age 5
+  # Final dose 2 is not observed in wts
   expect_error(
-    validate_dose_schedule(c(1L, 5L), wts),
-    paste0(
-      "Final `dose_schedule` changepoint \\(5\\) must be strictly less than ",
-      "the maximum population age \\(5\\)"
-    )
+    validate_dose_schedule(c(1L, 4L), wts),
+    "maximum dose \\(2\\) must be observed in `populations`"
   )
 })
 
@@ -168,10 +165,7 @@ test_that("validate_dose_schedule rejects observations younger than schedule", {
   )
   expect_error(
     validate_dose_schedule(c(1L, 4L), wts_unmixed),
-    paste0(
-      "`populations` contains 1 observation\\(s\\) where all ages are younger ",
-      "than permitted by `dose_schedule` for dose 2: obs2"
-    )
+    "dose 2 requires age > 4 \\(`dose_schedule\\[2\\] == 4`\\)"
   )
 
   # Mixed observation where ALL contributing ages are <= dose changepoint
@@ -182,10 +176,7 @@ test_that("validate_dose_schedule rejects observations younger than schedule", {
   )
   expect_error(
     validate_dose_schedule(c(1L, 4L), wts_mixed_bad),
-    paste0(
-      "`populations` contains 1 observation\\(s\\) where all ages are younger ",
-      "than permitted by `dose_schedule` for dose 2: obs2"
-    )
+    "dose 2 requires age > 4 \\(`dose_schedule\\[2\\] == 4`\\)"
   )
 
   # Mixed observation where at least ONE age is > dose changepoint (valid)
