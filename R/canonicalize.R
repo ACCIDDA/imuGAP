@@ -185,7 +185,7 @@ canonicalize_locations <- function(locations) {
     length(dupes) > 0,
     ERR_LOCATIONS_UNIQUE_IDS,
     n_duplicates = length(dupes),
-    duplicates = toString(dupes, width = 80)
+    duplicates = dupes
   )
 
   # Find candidate unique root
@@ -204,7 +204,7 @@ canonicalize_locations <- function(locations) {
     details = if (len_p_root) {
       format_message(
         ERR_LOCATIONS_ROOT_DETAILS,
-        roots = toString(potential_root, width = 80)
+        roots = potential_root
       )
     } else {
       ""
@@ -236,7 +236,7 @@ canonicalize_locations <- function(locations) {
       length(layer_members) == 0L && locations[, any(is.na(layer))],
       ERR_LOCATIONS_NO_CYCLES,
       n_locations = locations[is.na(layer), .N],
-      locations = toString(locations[is.na(layer), loc_id], width = 80)
+      locations = locations[is.na(layer), loc_id]
     )
   }
 
@@ -247,7 +247,7 @@ canonicalize_locations <- function(locations) {
     length(single_child_parents) > 0L,
     ERR_LOCATIONS_OFFSPRING_COUNT,
     n_locations = length(single_child_parents),
-    locations = toString(sprintf("'%s'", single_child_parents), width = 80)
+    locations = sprintf("'%s'", single_child_parents)
   )
 
   # Validate population hierarchy if population column is present
@@ -328,7 +328,7 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
     observations[, any(is.na(obs_id))],
     ERR_OBS_NA_ID,
     n_nas = observations[is.na(obs_id), .N],
-    rows = toString(observations[, which(is.na(obs_id))], width = 80)
+    rows = observations[, which(is.na(obs_id))]
   )
 
   dupes <- observations[, which(duplicated(obs_id))]
@@ -336,7 +336,7 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
     length(dupes) > 0,
     ERR_OBS_DUP_ID,
     n_duplicates = length(dupes),
-    duplicates = toString(dupes, width = 80)
+    duplicates = dupes
   )
 
   # check scientific data validity
@@ -347,7 +347,7 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
     observations[, any(positive > sample_n)],
     ERR_OBS_POS_GT_SAMPLE,
     n_rows = observations[positive > sample_n, .N],
-    obs_ids = toString(observations[positive > sample_n, obs_id], width = 80)
+    obs_ids = observations[positive > sample_n, obs_id]
   )
 
   if ("censored" %in% names(observations)) {
@@ -615,7 +615,7 @@ canonicalize_target <- function(target, fit) {
   stop_fmt_if(
     length(invalid_locs) > 0,
     ERR_TARGET_INVALID_LOCS,
-    invalid_locs = toString(invalid_locs, width = 60),
+    invalid_locs = invalid_locs,
     n = 0L
   )
 
@@ -624,7 +624,7 @@ canonicalize_target <- function(target, fit) {
     length(invalid_dose_rows) > 0,
     ERR_TARGET_INVALID_DOSE,
     n_doses = fit$data$n_doses,
-    rows = toString(invalid_dose_rows, width = 60),
+    rows = invalid_dose_rows,
     n = 0L
   )
 
@@ -633,7 +633,7 @@ canonicalize_target <- function(target, fit) {
     length(invalid_age_rows) > 0,
     ERR_TARGET_INVALID_AGE,
     n_yr = fit$data$n_yr,
-    rows = toString(invalid_age_rows, width = 60),
+    rows = invalid_age_rows,
     n = 0L
   )
 
@@ -644,7 +644,7 @@ canonicalize_target <- function(target, fit) {
     length(invalid_cohort_rows) > 0,
     ERR_TARGET_INVALID_COHORT,
     n_cohort = fit$data$n_cohort,
-    rows = toString(invalid_cohort_rows, width = 60),
+    rows = invalid_cohort_rows,
     n = 0L
   )
 

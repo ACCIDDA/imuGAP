@@ -15,12 +15,13 @@
 #'
 #' @param fmt character template string.
 #' @param ... values to interpolate.
+#' @param width integer maximum width for vector formatting via `toString()` (default: `80L`).
 #'
 #' @return a character scalar, the formatted message.
 #'
 #' @keywords internal
 #' @noRd
-format_message <- function(fmt, ...) {
+format_message <- function(fmt, ..., width = 80L) {
   args <- list(...)
   if (length(args) == 0L) {
     return(fmt)
@@ -32,7 +33,7 @@ format_message <- function(fmt, ...) {
       if (nzchar(nm)) {
         fmt <- gsub(
           paste0("{", nm, "}"),
-          toString(args[[i]]),
+          toString(args[[i]], width = width),
           fmt,
           fixed = TRUE
         )
