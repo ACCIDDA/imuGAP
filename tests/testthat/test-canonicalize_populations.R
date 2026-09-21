@@ -369,3 +369,138 @@ test_that("canonicalize_populations succeeds with max layer and higher layer obs
   expect_s3_class(res, "data.table")
   expect_equal(nrow(res), nrow(mixed_pops))
 })
+
+# --- dose schedule validation via imugap_opts --------------------------------
+
+test_that("canonicalize_populations validates dose schedule when imugap_opts is provided", {
+  locs <- make_test_locs()
+  obs <- make_test_obs()
+  pops <- data.frame(
+    obs_id = c("o1", "o2"),
+    loc_id = c("schl1", "schl2"),
+    cohort = c(1L, 1L),
+    age = c(2L, 5L),
+    dose = c(1L, 2L),
+    weight = c(1.0, 1.0)
+  )
+
+  # Valid dose schedule (c(1, 4))
+  res <- canonicalize_populations(
+    pops,
+    obs,
+    locs,
+    imugap_opts = imugap_options(dose_schedule = c(1, 4))
+  )
+  expect_s3_class(res, "data.table")
+
+  # Dose exceeding schedule length
+  pops_bad_dose <- pops
+  pops_bad_dose$dose <- c(1L, 3L)
+  expect_error(
+    canonicalize_populations(
+      pops_bad_dose,
+      obs,
+      locs,
+      imugap_opts = imugap_options(dose_schedule = c(1, 4))
+    ),
+    "maximum dose is 2 \\(`dose_schedule` length == 2\\)"
+  )
+
+  # Final dose not observed in populations (schedule has 2 doses, but only dose 1 present)
+  pops_no_dose2 <- pops
+  pops_no_dose2$dose <- c(1L, 1L)
+  expect_error(
+    canonicalize_populations(
+      pops_no_dose2,
+      obs,
+      locs,
+      imugap_opts = imugap_options(dose_schedule = c(1, 4))
+    ),
+    "maximum dose \\(2\\) must be observed in `populations`"
+  )
+
+  # Observation younger than dose changepoint (dose 2 changepoint 4, but obs2 age 3 with max age 10)
+  pops_too_young <- pops
+  pops_too_young$age <- c(10L, 3L)
+  expect_error(
+    canonicalize_populations(
+      pops_too_young,
+      obs,
+      locs,
+      imugap_opts = imugap_options(dose_schedule = c(1, 4))
+    ),
+    "dose 2 requires age > 4 \\(`dose_schedule\\[2\\] == 4`\\)"
+  )
+})
+
+test_that("canonicalize_populations expands max_dose from imugap_opts schedule", {
+  locs <- make_test_locs()
+  obs <- data.frame(
+    obs_id = c("o1", "o2", "o3"),
+    positive = c(5L, 10L, 15L),
+    sample_n = c(10L, 20L, 30L)
+  )
+  pops3 <- data.frame(
+    obs_id = c("o1", "o2", "o3"),
+    loc_id = c("schl1", "schl2", "schl1"),
+    cohort = c(1L, 1L, 1L),
+    age = c(2L, 5L, 8L),
+    dose = c(1L, 2L, 3L),
+    weight = c(1.0, 1.0, 1.0)
+  )
+
+  res <- canonicalize_populations(
+    pops3,
+    obs,
+    locs,
+    imugap_opts = imugap_options(dose_schedule = c(1, 4, 7))
+  )
+  expect_s3_class(res, "data.table")
+  expect_equal(max(res$dose), 3L)
+})
+
+test_that("canonicalize_populations validates imugap_opts on already-canonical input", {
+  locs <- make_test_locs()
+  obs <- make_test_obs()
+  pops <- data.frame(
+    obs_id = c("o1", "o2"),
+    loc_id = c("schl1", "schl2"),
+    cohort = c(1L, 1L),
+    age = c(2L, 5L),
+    dose = c(1L, 2L),
+    weight = c(1.0, 1.0)
+  )
+  canon_pops <- canonicalize_populations(pops, obs, locs)
+  expect_true(is_canonical(canon_pops, "populations"))
+
+  # Valid imugap_opts on canonical input
+  res <- canonicalize_populations(
+    canon_pops,
+    obs,
+    locs,
+    imugap_opts = imugap_options(dose_schedule = c(1, 4))
+  )
+  expect_identical(res, canon_pops)
+
+  # Incompatible age schedule on canonical input fails (dose 2 changepoint 5 >= age 5)
+  expect_error(
+    canonicalize_populations(
+      canon_pops,
+      obs,
+      locs,
+      imugap_opts = imugap_options(dose_schedule = c(1, 5))
+    ),
+    "dose 2 requires age > 5 \\(`dose_schedule\\[2\\] == 5`\\)"
+  )
+
+  # Incompatible schedule length on canonical input fails (schedule requires 3 doses)
+  expect_error(
+    canonicalize_populations(
+      canon_pops,
+      obs,
+      locs,
+      imugap_opts = imugap_options(dose_schedule = c(1, 4, 7))
+    ),
+    "maximum dose \\(3\\) must be observed in `populations`"
+  )
+})

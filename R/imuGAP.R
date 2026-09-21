@@ -3,61 +3,6 @@ ERR_DOSE_SCHEDULE_EMPTY <- "`dose_schedule` must not be empty"
 ERR_DOSE_SCHED_OOB <- "`dose_schedule` contains no changepoints within 1..%d"
 ERR_AGES_EMPTY <- "`ages` must not be empty"
 ERR_AGES_OOB <- "`ages` contains no valid ages within 1..%d"
-ERR_POP_DOSE_EXCEEDS_SCHED <- paste0(
-  "`populations` contains dose (%d) exceeding `dose_schedule` length (%d)"
-)
-ERR_POP_DOSE_INCOMPATIBLE <- paste0(
-  "`populations` contains %d observation(s) where all ages are younger than ",
-  "permitted by `dose_schedule` for dose %d: %s"
-)
-ERR_DOSE_FINAL_OLDER_THAN_POP <- paste0(
-  "Final `dose_schedule` changepoint (%d) must be strictly less than ",
-  "the maximum population age (%d)"
-)
-
-#' @title Validate consistency between dose schedule and population metadata
-#'
-#' @param dose_schedule integer vector of dose eligibility changepoints.
-#' @param wts canonicalized `populations` `[data.table()]`.
-#'
-#' @keywords internal
-#' @noRd
-validate_dose_schedule <- function(dose_schedule, wts) {
-  n_doses <- length(dose_schedule)
-  max_pop_age <- max(wts$age)
-
-  stop_fmt_if(
-    any(wts$dose > n_doses),
-    ERR_POP_DOSE_EXCEEDS_SCHED,
-    max(wts$dose),
-    n_doses
-  )
-
-  # Final dose changepoint must be strictly less than maximum population age
-  stop_fmt_if(
-    dose_schedule[n_doses] >= max_pop_age,
-    ERR_DOSE_FINAL_OLDER_THAN_POP,
-    dose_schedule[n_doses],
-    max_pop_age
-  )
-
-  # Check that every observation has at least one age strictly greater than dose changepoint
-  obs_summary <- wts[, .(dose = dose[1L], max_obs_age = max(age)), by = obs_id]
-  for (k in seq_len(n_doses)) {
-    k_obs <- obs_summary[dose == k]
-    if (nrow(k_obs) > 0L) {
-      invalid_obs <- k_obs[get("max_obs_age") <= dose_schedule[k], obs_id]
-      stop_fmt_if(
-        length(invalid_obs) > 0L,
-        ERR_POP_DOSE_INCOMPATIBLE,
-        length(invalid_obs),
-        k,
-        toString(invalid_obs, width = 80)
-      )
-    }
-  }
-  invisible(TRUE)
-}
 
 #' @title Build sparse interval evaluation schedule
 #'
@@ -370,10 +315,9 @@ sampling <- function(
   wts <- canonicalize_populations(
     populations,
     obs,
-    loc_info
+    loc_info,
+    imugap_opts = imugap_opts
   )
-
-  validate_dose_schedule(dose_sched_opts, wts)
 
   bsp <- splines::bs(
     seq_len(wts[, diff(range(cohort)) + 1L]),

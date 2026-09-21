@@ -96,6 +96,8 @@
 #' @param max_cohort optional integer scalar; maximum birth cohort permitted.
 #' @param max_age optional integer scalar; maximum age permitted.
 #' @param max_dose integer scalar; maximum dose number to allow (default: 2L).
+#' @param imugap_opts optional named list of `imuGAP` model options, created by
+#'   [imugap_options()] (default: `NULL`).
 #'
 #' @name canonicalize
 #' @aliases canonicalize_locations canonicalize_observations canonicalize_populations
@@ -178,6 +180,20 @@ ERR_POP_WEIGHT_SUM <- "`populations` column 'weight' must sum to 1 by 'obs_id'"
 ERR_POP_MAX_LAYER_OBS <- paste0(
   "`populations` must contain at least one observation at the ",
   "maximum location layer depth (%d)"
+)
+ERR_POP_DOSE_EXCEEDS_SCHED <- paste0(
+  "maximum dose is %d (`dose_schedule` length == %d), but `populations` contains ",
+  "dose(s) exceeding this limit (found max dose %d); use `subset(populations, dose > %d)` ",
+  "or configure `imugap_options(dose_schedule = ...)` to resolve invalid entries"
+)
+ERR_POP_DOSE_INCOMPATIBLE <- paste0(
+  "dose %d requires age > %d (`dose_schedule[%d] == %d`), but `populations` contains ",
+  "observations where all ages are <= %d; use `subset(populations, dose == %d & age <= %d)` ",
+  "or configure `imugap_options(dose_schedule = ...)` to resolve invalid entries"
+)
+ERR_DOSE_FINAL_NOT_OBSERVED <- paste0(
+  "maximum dose (%d) must be observed in `populations`; ",
+  "configure `imugap_options(dose_schedule = ...)` to match observed doses"
 )
 
 ERR_TARGET_NON_UNIQUE_WEIGHTS <- paste0(
@@ -439,6 +455,60 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
   mark_canonical(observations, "observations")
 }
 
+#' @title Validate consistency between dose schedule and population metadata
+#'
+#' @description
+#' Validates that population metadata doses and ages are consistent with the
+#' configured dose schedule changepoints.
+#'
+#' @param dose_schedule integer vector of dose eligibility changepoints.
+#' @param wts `[data.table()]` containing population metadata with `dose`, `age`, and `obs_id`.
+#'
+#' @return invisibly returns `TRUE` on success.
+#'
+#' @keywords internal
+#' @noRd
+validate_dose_schedule <- function(dose_schedule, wts) {
+  n_doses <- length(dose_schedule)
+
+  stop_fmt_if(
+    any(wts$dose > n_doses),
+    ERR_POP_DOSE_EXCEEDS_SCHED,
+    n_doses,
+    n_doses,
+    max(wts$dose),
+    n_doses
+  )
+
+  # Final dose must be observed in populations
+  stop_fmt_if(
+    !any(wts$dose == n_doses),
+    ERR_DOSE_FINAL_NOT_OBSERVED,
+    n_doses
+  )
+
+  # Check that every observation has at least one age strictly greater than dose changepoint
+  obs_summary <- wts[, .(dose = dose[1L], max_obs_age = max(age)), by = obs_id]
+  for (k in seq_len(n_doses)) {
+    k_obs <- obs_summary[dose == k]
+    if (nrow(k_obs) > 0L) {
+      invalid_obs <- k_obs[get("max_obs_age") <= dose_schedule[k], obs_id]
+      stop_fmt_if(
+        length(invalid_obs) > 0L,
+        ERR_POP_DOSE_INCOMPATIBLE,
+        k,
+        dose_schedule[k],
+        k,
+        dose_schedule[k],
+        dose_schedule[k],
+        k,
+        dose_schedule[k]
+      )
+    }
+  }
+  invisible(TRUE)
+}
+
 #' @rdname canonicalize
 #' @return a `[data.table()]`, canonical populations object mirroring the input `populations` with:
 #'  - `obs_c_id`, the observation id the row concerns, canonicalized to match
@@ -459,9 +529,14 @@ canonicalize_populations <- function(
   locations,
   max_cohort,
   max_age,
-  max_dose = 2L
+  max_dose = 2L,
+  imugap_opts = NULL
 ) {
   if (is_canonical(populations, "populations")) {
+    if (!is.null(imugap_opts)) {
+      dose_schedule <- imugap_opts$dose_schedule %||% c(1L, 4L)
+      validate_dose_schedule(dose_schedule, populations)
+    }
     return(populations[])
   }
 
@@ -481,7 +556,19 @@ canonicalize_populations <- function(
   observations <- canonicalize_observations(observations)
   locations <- canonicalize_locations(locations)
 
-  assert_subset(populations, "dose", seq_len(max_dose))
+  if (!is.null(imugap_opts)) {
+    dose_schedule <- imugap_opts$dose_schedule %||% c(1L, 4L)
+    if (missing(max_dose)) {
+      max_dose <- length(dose_schedule)
+    }
+  }
+
+  assert_positive_integer(populations, "dose")
+  if (!is.null(imugap_opts)) {
+    validate_dose_schedule(dose_schedule, populations)
+  } else {
+    assert_subset(populations, "dose", seq_len(max_dose))
+  }
 
   # check that populations id correspond to all observation ids
   assert_set_equivalence(populations, "obs_id", observations$obs_id)

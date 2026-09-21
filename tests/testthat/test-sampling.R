@@ -61,6 +61,17 @@ test_that("sampling propagates validation errors from canonicalize_populations",
     ),
     "dose"
   )
+
+  # Incompatible dose schedule via imugap_opts (schedule requires 3 doses, but pops only has 2)
+  expect_error(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs(),
+      imugap_opts = imugap_options(dose_schedule = c(1, 4, 7))
+    ),
+    "maximum dose \\(3\\) must be observed in `populations`"
+  )
 })
 
 # --- data assembly path ------------------------------------------------------
