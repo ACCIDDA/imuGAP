@@ -11,8 +11,8 @@ on:
         default: ''
 
 permissions:
-  contents: read
-  issues: write   # so the action can create a tracking issue with submission status
+  contents: write  # required to create candidate release tags and upload release assets
+  issues: write    # so the action can create a tracking issue with submission status
 
 jobs:
   news-version-sync:
@@ -38,6 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       # cache-stan is left off to match the prior workflow: the submission build
       # is deliberately not seeded from a cached src/.
@@ -48,7 +50,57 @@ jobs:
           needs: check
           cache-stan: 'false'
 
-      - uses: coatless-actions/cran-submission@v1
+      - name: Build package source tarball
+        id: build-tarball
+        shell: bash
+        run: |
+          VERSION=$(grep -E '^Version:' DESCRIPTION | sed -E 's/Version:[[:space:]]*//')
+          echo "Building source tarball for imuGAP v${VERSION}..."
+          R CMD build --compact-vignettes=both .
+          TARBALL="imuGAP_${VERSION}.tar.gz"
+          if [ ! -f "$TARBALL" ]; then
+            TARBALL=$(ls -1 imuGAP_*.tar.gz 2>/dev/null | head -n 1)
+          fi
+          echo "Built tarball: $TARBALL"
+          echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Submit to CRAN
+        uses: coatless-actions/cran-submission@v1
         with:
+          path: ${{ steps.build-tarball.outputs.tarball }}
           error-on: 'warning'
           confirmation: ${{ github.event.inputs.confirmation }}
+
+      - name: Create or overwrite candidate release tag
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          VERSION="${{ steps.build-tarball.outputs.version }}"
+          TARBALL="${{ steps.build-tarball.outputs.tarball }}"
+          TAG_NAME="v${VERSION}-candidate"
+          RELEASE_TITLE="imuGAP v${VERSION} (CRAN Submission Candidate)"
+          
+          # If triggered by a pre-release event, use that release's tag name
+          if [ "${{ github.event_name }}" = "release" ] && [ -n "${{ github.event.release.tag_name }}" ]; then
+            TAG_NAME="${{ github.event.release.tag_name }}"
+            RELEASE_TITLE="${{ github.event.release.name }}"
+            [ -z "$RELEASE_TITLE" ] && RELEASE_TITLE="imuGAP ${TAG_NAME}"
+          fi
+          
+          echo "Creating / updating candidate release tag: $TAG_NAME"
+          
+          # If the release tag already exists (e.g. resubmission), force update the git tag and overwrite asset
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Candidate release $TAG_NAME exists. Force-updating git tag to commit ${{ github.sha }} and replacing tarball..."
+            git tag -f "$TAG_NAME" "${{ github.sha }}"
+            git push --force origin "$TAG_NAME"
+            
+            gh release edit "$TAG_NAME"               --title "$RELEASE_TITLE"               --notes "CRAN submission candidate built and submitted on $(date -u +'%Y-%m-%d %H:%M:%S UTC') from commit ${{ github.sha }} (Workflow run #${{ github.run_number }})."               --prerelease
+            gh release upload "$TAG_NAME" "$TARBALL" --clobber
+          else
+            echo "Creating new candidate pre-release $TAG_NAME with built source tarball..."
+            gh release create "$TAG_NAME" "$TARBALL"               --title "$RELEASE_TITLE"               --notes "CRAN submission candidate built and submitted on $(date -u +'%Y-%m-%d %H:%M:%S UTC') from commit ${{ github.sha }} (Workflow run #${{ github.run_number }})."               --prerelease               --target "${{ github.sha }}"
+          fi
