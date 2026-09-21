@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+```{r setup, include = FALSE}
 if (requireNamespace("thematic", quietly = TRUE)) {
   thematic::thematic_off()
 }
