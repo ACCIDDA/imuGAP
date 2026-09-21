@@ -70,7 +70,7 @@ test_that("sampling propagates validation errors from canonicalize_populations",
       locations = make_3layer_locs(),
       imugap_opts = imugap_options(dose_schedule = c(1, 4, 7))
     ),
-    "maximum dose \\(3\\) must be observed in `populations`"
+    err_pattern(ERR_DOSE_FINAL_NOT_OBSERVED, n_doses = 3L)
   )
 })
 

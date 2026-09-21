@@ -273,60 +273,72 @@ test_that("canonicalize_target performs correct bounds checking against fit obje
   fit <- make_mock_fit()
 
   # Location bounds mismatch
-  expect_error(
-    canonicalize_target(
-      create_target(
-        location = "unknown_loc",
-        age = 1L,
-        cohort = 1L,
-        dose = 1L
-      ),
-      fit
-    ),
-    "loc_id.*must all exist in `fit\\$locations`"
+  bad_loc_target <- create_target(
+    location = "unknown_loc",
+    age = 1L,
+    cohort = 1L,
+    dose = 1L
   )
+  err_loc <- expect_error(
+    canonicalize_target(bad_loc_target, fit),
+    err_pattern(ERR_TARGET_INVALID_LOCS, invalid_locs = "unknown_loc")
+  )
+  diag_loc <- eval_err_diagnostic(
+    err_loc,
+    list(target = bad_loc_target, fit = fit)
+  )
+  expect_equal(diag_loc$loc_id, "unknown_loc")
 
   # Dose bounds mismatch
-  expect_error(
-    canonicalize_target(
-      create_target(
-        location = "schlA",
-        age = 1L,
-        cohort = 1L,
-        dose = 3L
-      ),
-      fit
-    ),
-    "dose.*must contain values between 1 and"
+  bad_dose_target <- create_target(
+    location = "schlA",
+    age = 1L,
+    cohort = 1L,
+    dose = 3L
   )
+  err_dose <- expect_error(
+    canonicalize_target(bad_dose_target, fit),
+    err_pattern(ERR_TARGET_INVALID_DOSE, n_doses = fit$data$n_doses)
+  )
+  diag_dose <- eval_err_diagnostic(
+    err_dose,
+    list(target = bad_dose_target, fit = fit)
+  )
+  expect_equal(diag_dose$dose, 3L)
 
   # Age bounds mismatch
-  expect_error(
-    canonicalize_target(
-      create_target(
-        location = "schlA",
-        age = 6L,
-        cohort = 1L,
-        dose = 1L
-      ),
-      fit
-    ),
-    "age.*must contain values between 1 and"
+  bad_age_target <- create_target(
+    location = "schlA",
+    age = 6L,
+    cohort = 1L,
+    dose = 1L
   )
+  err_age <- expect_error(
+    canonicalize_target(bad_age_target, fit),
+    err_pattern(ERR_TARGET_INVALID_AGE, n_yr = fit$data$n_yr)
+  )
+  diag_age <- eval_err_diagnostic(
+    err_age,
+    list(target = bad_age_target, fit = fit)
+  )
+  expect_equal(diag_age$age, 6L)
 
   # Cohort bounds mismatch
-  expect_error(
-    canonicalize_target(
-      create_target(
-        location = "schlA",
-        age = 1L,
-        cohort = 11L,
-        dose = 1L
-      ),
-      fit
-    ),
-    "cohort.*must contain values between 1 and"
+  bad_cohort_target <- create_target(
+    location = "schlA",
+    age = 1L,
+    cohort = 11L,
+    dose = 1L
   )
+  err_cohort <- expect_error(
+    canonicalize_target(bad_cohort_target, fit),
+    err_pattern(ERR_TARGET_INVALID_COHORT, n_cohort = fit$data$n_cohort)
+  )
+  diag_cohort <- eval_err_diagnostic(
+    err_cohort,
+    list(target = bad_cohort_target, fit = fit)
+  )
+  expect_equal(diag_cohort$cohort, 11L)
 })
 
 test_that("create_target builds a grid with mode='snapshot'", {

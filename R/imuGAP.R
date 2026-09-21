@@ -1,9 +1,3 @@
-# Internal error message format strings for imuGAP.R
-ERR_DOSE_SCHEDULE_EMPTY <- "`dose_schedule` must not be empty"
-ERR_DOSE_SCHED_OOB <- "`dose_schedule` contains no changepoints within 1..%d"
-ERR_AGES_EMPTY <- "`ages` must not be empty"
-ERR_AGES_OOB <- "`ages` contains no valid ages within 1..%d"
-
 #' @title Build sparse interval evaluation schedule
 #'
 #' @param dose_schedule integer vector of dose eligibility changepoints.
@@ -25,13 +19,13 @@ build_interval_schedule <- function(dose_schedule, ages) {
   stop_fmt_if(
     length(valid_sched) == 0L,
     ERR_DOSE_SCHED_OOB,
-    max_age
+    max_age = max_age
   )
   valid_ages <- ages[ages >= 1L & ages <= max_age]
   stop_fmt_if(
     length(valid_ages) == 0L,
     ERR_AGES_OOB,
-    max_age
+    max_age = max_age
   )
   eval_ages <- sort(unique(c(valid_sched, valid_ages, max_age)))
   t_points <- c(0L, eval_ages)
@@ -211,7 +205,7 @@ generate_inits <- function(dat_stan, model = "default") {
       stats::rnorm(dat_stan$k_bs, 0, 0.05)
     list(beta_bs = array(init_beta, dim = dat_stan$k_bs))
   } else {
-    stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model)
+    stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model = model)
   }
 
   c(inits, model_inits)
@@ -294,7 +288,11 @@ sampling <- function(
 ) {
   # check imugap_opts
   model <- imugap_opts$model %||% "default"
-  stop_fmt_if(!identical(model, "default"), ERR_OPT_UNKNOWN_MODEL, model)
+  stop_fmt_if(
+    !identical(model, "default"),
+    ERR_OPT_UNKNOWN_MODEL,
+    model = model
+  )
   dose_sched_opts <- imugap_opts$dose_schedule %||% c(1L, 4L)
   df_opts <- imugap_opts$df %||% 5L
 
@@ -374,7 +372,7 @@ sampling <- function(
       "impute_school_coverage_process_v6_single_layer"
     }
   } else {
-    stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model)
+    stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model = model)
   }
 
   raw_fit <- fit_model(
@@ -436,6 +434,6 @@ sampling <- function(
 #'
 #' @export
 extract_imugap <- function(fit, pars = c("beta_bs"), ...) {
-  stop_fmt_if(!inherits(fit, "imugap_fit"), ERR_NOT_IMUGAP_FIT, "fit")
+  stop_fmt_if(!inherits(fit, "imugap_fit"), ERR_NOT_IMUGAP_FIT, name = "fit")
   backend_extract(fit$raw_fit, pars = pars, ...)
 }

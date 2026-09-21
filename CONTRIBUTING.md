@@ -205,47 +205,72 @@ When adding or refactoring Stan include files, create unit tests following these
 
 ---
 
-## Error Messages and Signaling Standards
+## Error Messages, Signaling Standards, and Unit Testing
 
 All user-facing validation errors and warnings should follow these standards:
 
-### 1. Centralized Format String Constants
-* Define error and warning message format strings as constants at the top of each R file prefixed with `ERR_` or `MSG_`:
+### 1. Centralized Named Template Constants
+* Define error and warning message format strings as constants at the top of each R file
+  prefixed with `ERR_` or `MSG_`:
+* Use named `{var}` placeholders (e.g. `{dose}`, `{sched_age}`, `{n_doses}`) rather than cryptic
+  unnamed format specifiers to keep message definitions self-documenting:
   ```r
-  ERR_MUST_BE_INTEGER <- "`%s` column '%s' must contain integers"
-  ERR_CANNOT_HAVE_NA <- "`%s` column '%s' cannot contain NA values"
-  ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '%s'"
+  ERR_POP_DOSE_INCOMPATIBLE <- paste0(
+    "dose {dose} requires age > {sched_age} (`dose_schedule[{dose}] == {sched_age}`), but ",
+    "`populations` contains observations where all ages are <= {sched_age}; ",
+    "use `subset(populations, dose == {dose} & age <= {sched_age})` or configure ",
+    "`imugap_options(dose_schedule = ...)` to resolve invalid entries"
+  )
+  ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '{model}'"
   ```
 
 ### 2. Signaling Functions: `stop_fmt_if` and `warn_fmt_if`
 
-* Use internal helpers `stop_fmt_if()` and `warn_fmt_if()` for validation assertions:
+* Use internal helpers `stop_fmt_if()` and `warn_fmt_if()` for validation assertions, passing named
+  arguments matching the `{var}` placeholders in the template:
 
   ```r
   stop_fmt_if(
-    !all(as.integer(dt[, get(x)]) == dt[, get(x)]),
-    ERR_MUST_BE_INTEGER,
-    deparse(substitute(dt)),
-    x,
-    n = n + 1L
+    length(invalid_obs) > 0L,
+    ERR_POP_DOSE_INCOMPATIBLE,
+    dose = k,
+    sched_age = dose_schedule[k]
   )
   ```
 
-* Use the parameter `n` to adjust the call stack offset so the error is attributed to the user's top-level function call rather than internal helper functions.
+* Use the parameter `n` to adjust the call stack offset so the error is attributed to the user's
+  top-level function call rather than internal helper functions.
 
-### 3. Typography: Backticks vs. Single Quotes
+### 3. Error Message Unit Testing via `err_pattern`
+
+* In unit tests (`tests/testthat/`), verify error and warning messages using the test helper
+  `err_pattern(ERR_..., ...)`:
+  ```r
+  expect_error(
+    validate_dose_schedule(c(1L, 4L), wts_unmixed),
+    err_pattern(ERR_POP_DOSE_INCOMPATIBLE, dose = 2L, sched_age = 4L)
+  )
+  ```
+* **Wildcards and Partial Matches**: `err_pattern()` escapes all regex metacharacters in literal
+  template text and substitutes specified slot values. Unsupplied or `NA`/`NULL` slots automatically
+  match wildcards (`.+?`), allowing unit tests to assert on key parameter values while remaining
+  resilient against minor phrasing changes.
+
+### 4. Typography: Backticks vs. Single Quotes
 
 Follow a strict convention when formatting error and warning strings:
 
-* **Backticks (`` `code` ``)**: Use for formal R code symbols, argument names, function names, expressions, and classes:
+* **Backticks (`` `code` ``)**: Use for formal R code symbols, argument names, function names,
+  expressions, and classes:
   * `` `observations` must be a data.frame ``
   * `` `df` must be a single positive integer ``
   * `` `stan_opts` must be created by stan_options() ``
 
-* **Single Quotes (`'value'`)**: Use for user-supplied string values, column names, model names, or discrete inputs:
-  * `` column '%s' cannot contain NA values ``
-  * `` unknown model '%s' ``
-  * `` '%s' must be numeric ``
+* **Single Quotes (`'value'`)**: Use for user-supplied string values, column names, model names, or
+  discrete inputs:
+  * `` column '{col}' cannot contain NA values ``
+  * `` unknown model '{model}' ``
+  * `` '{arg}' must be numeric ``
 
 ### 4. Markdown List Formatting Standards
 

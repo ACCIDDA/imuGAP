@@ -1,22 +1,3 @@
-# Internal error message format strings for helpers.R
-ERR_HELP_MODE_MISSING_COLS <- paste0(
-  "mode '%s' requires column(s): %s; missing from combination of ",
-  "`observations` and '...': %s"
-)
-ERR_HELP_MODE_DUP_COLS <- paste0(
-  "the following column(s) are specified in both `observations` ",
-  "and '...': %s"
-)
-ERR_HELP_AGE_MIN_MAX <- "`age_min` must be strictly less than `age_max`"
-ERR_HELP_VEC_INPUTS_MISSING <- paste0(
-  "`age`, `cohort`, and `dose` must be supplied when ",
-  "`location` is a vector"
-)
-ERR_HELP_VEC_INPUTS_NA <- "arguments cannot contain NA values; the following do: %s"
-ERR_HELP_VEC_INPUTS_ZERO_LEN <- "arguments cannot have length zero; the following do: %s"
-ERR_HELP_ERROR_MODE_LEN <- "all arguments must have the same length in 'error' mode"
-ERR_HELP_SNAP_COHORT_SINGLE <- "`cohort` must be a single reference value in 'snapshot' mode"
-
 #' @title Create observation populations
 #'
 #' @description
@@ -84,9 +65,9 @@ create_observation_populations <- function(
   stop_fmt_if(
     length(missing_cols) > 0,
     ERR_HELP_MODE_MISSING_COLS,
-    mode,
-    toString(required_cols),
-    toString(missing_cols)
+    mode = mode,
+    required = toString(required_cols),
+    missing = toString(missing_cols)
   )
 
   optional_cols <- c("age_max")
@@ -95,7 +76,11 @@ create_observation_populations <- function(
     c(required_cols, optional_cols),
     intersect(names(observations), names(dot_args))
   )
-  stop_fmt_if(length(dup_cols) > 0, ERR_HELP_MODE_DUP_COLS, toString(dup_cols))
+  stop_fmt_if(
+    length(dup_cols) > 0,
+    ERR_HELP_MODE_DUP_COLS,
+    cols = toString(dup_cols)
+  )
 
   # merge required columns into obs_dt
   if (length(dot_args) > 0) {
@@ -238,7 +223,7 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
   stop_fmt_if(
     length(na_args) > 0,
     ERR_HELP_VEC_INPUTS_NA,
-    toString(na_args),
+    args = toString(na_args),
     n = 2L
   )
 
@@ -254,7 +239,7 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
   stop_fmt_if(
     length(zero_lens) > 0,
     ERR_HELP_VEC_INPUTS_ZERO_LEN,
-    toString(zero_lens),
+    args = toString(zero_lens),
     n = 2L
   )
   c(n_loc = n_loc, n_age = n_age, n_coh = n_coh, n_dos = n_dos)

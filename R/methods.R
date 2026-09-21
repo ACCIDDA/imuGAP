@@ -1,20 +1,3 @@
-# Internal error message format strings for methods.R
-ERR_POSTERIOR_SIZE_SINGLE <- "`posterior_size` must be a single value"
-ERR_POSTERIOR_SIZE_EXCEEDS <- paste0(
-  "`posterior_size` (%d) exceeds the %d available posterior ",
-  "draws in `object`"
-)
-ERR_SUBSET_NOT_LOGICAL <- "`subset` must be a logical vector"
-MSG_POSTERIOR_SIZE_ROUNDED <- paste0(
-  "`posterior_size` (%d) is not a multiple of the %d chains; ",
-  "using %d draws instead"
-)
-MSG_POSTERIOR_SUBSAMPLE_WARN <- paste0(
-  "predict() is using a sub-sample of %d posterior draws and does ",
-  "not check whether it is adequate (chain mixing, effective sample ",
-  "size); verify sufficiency statistics yourself"
-)
-
 #' @title Predict coverage probabilities
 #'
 #' @description
@@ -69,7 +52,11 @@ predict.imugap_fit <- function(
   posterior_size = NULL,
   ...
 ) {
-  stop_fmt_if(!inherits(object, "imugap_fit"), ERR_NOT_IMUGAP_FIT, "object")
+  stop_fmt_if(
+    !inherits(object, "imugap_fit"),
+    ERR_NOT_IMUGAP_FIT,
+    name = "object"
+  )
 
   raw_fit <- object$raw_fit
 
@@ -88,23 +75,23 @@ predict.imugap_fit <- function(
     warn_fmt_if(
       posterior_size != rounded,
       MSG_POSTERIOR_SIZE_ROUNDED,
-      posterior_size,
-      n_chains,
-      rounded
+      posterior_size = posterior_size,
+      n_chains = n_chains,
+      adjusted_size = rounded
     )
     posterior_size <- rounded
 
     stop_fmt_if(
       posterior_size > n_avail,
       ERR_POSTERIOR_SIZE_EXCEEDS,
-      posterior_size,
-      n_avail
+      posterior_size = posterior_size,
+      n_draws = n_avail
     )
     # No adequacy check (mixing, ESS); warn only when a sub-sample is taken.
     warn_fmt_if(
       TRUE,
       MSG_POSTERIOR_SUBSAMPLE_WARN,
-      posterior_size
+      posterior_size = posterior_size
     )
   }
 
@@ -286,7 +273,7 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
   stop_fmt_if(
     !inherits(object, "imugap_predict"),
     ERR_NOT_IMUGAP_PREDICT,
-    "object"
+    name = "object"
   )
 
   draws <- object$draws
@@ -360,7 +347,11 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
 #'
 #' @export
 subset.imugap_predict <- function(x, subset, iteration, chain, ...) {
-  stop_fmt_if(!inherits(x, "imugap_predict"), ERR_NOT_IMUGAP_PREDICT, "x")
+  stop_fmt_if(
+    !inherits(x, "imugap_predict"),
+    ERR_NOT_IMUGAP_PREDICT,
+    name = "x"
+  )
 
   # Subset variables (columns/third dimension) using the metadata
   r <- if (missing(subset)) {
@@ -420,7 +411,11 @@ as.data.frame.imugap_predict <- function(
   optional = FALSE,
   ...
 ) {
-  stop_fmt_if(!inherits(x, "imugap_predict"), ERR_NOT_IMUGAP_PREDICT, "x")
+  stop_fmt_if(
+    !inherits(x, "imugap_predict"),
+    ERR_NOT_IMUGAP_PREDICT,
+    name = "x"
+  )
 
   dims <- dim(x$draws)
   dim_i <- dims[1]
@@ -468,7 +463,7 @@ as.data.frame.imugap_predict <- function(
 #' @export
 #' @autoglobal
 print.imugap_fit <- function(x, pars = NULL, ...) {
-  stop_fmt_if(!inherits(x, "imugap_fit"), ERR_NOT_IMUGAP_FIT, "x")
+  stop_fmt_if(!inherits(x, "imugap_fit"), ERR_NOT_IMUGAP_FIT, name = "x")
 
   n_locs <- if (!is.null(x$locations)) nrow(x$locations) else NA_integer_
   n_layers <- if (!is.null(x$locations) && "layer" %in% names(x$locations)) {
@@ -586,7 +581,11 @@ print.imugap_fit <- function(x, pars = NULL, ...) {
 #' @export
 #' @autoglobal
 print.imugap_predict <- function(x, ...) {
-  stop_fmt_if(!inherits(x, "imugap_predict"), ERR_NOT_IMUGAP_PREDICT, "x")
+  stop_fmt_if(
+    !inherits(x, "imugap_predict"),
+    ERR_NOT_IMUGAP_PREDICT,
+    name = "x"
+  )
 
   dims <- dim(x$draws)
   n_draws <- if (length(dims) == 3L) {
