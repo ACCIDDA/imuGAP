@@ -140,7 +140,7 @@ if (file.exists(diag_file)) {
    This may optionally include population sizes, which may be necessary to ensure accurate results
    when entities within the same layer differ substantially in size.
 2. `observations`: Empirical survey counts (`positive` and `sample_n`) and censoring indicators.
-3. `populations`: Metadata and fractional weights mapping observations to discrete age/cohort/dose slices.
+3. `populations`: Metadata and fractional weights mapping observations to discrete location/age/cohort/dose slices.
 
 ```{r load-data}
 library(imuGAP)
@@ -217,7 +217,7 @@ head(target_grid)
 
 ## 4. Predicting Coverage
 
-Pass the model fit and target grid to `predict()` to generate posterior draws of coverage:
+Pass the model fit and target grid to `predict()` to generate posterior draws of coverage on the natural (probability) scale:
 
 ```{r predict-code, eval = FALSE}
 # Generate posterior draws for each target slice
@@ -235,7 +235,7 @@ predict_sim
 
 ## 5. Summarizing and Visualizing Predictions
 
-You can compute vaccination coverage estimate summary statistics (posterior mean, median, standard deviation, and credible intervals) across your prediction targets using `summary()`:
+You can compute vaccination coverage estimate summary statistics (posterior mean, median, and credible intervals) on the natural (probability) scale across your prediction targets using `summary()`:
 
 ```{r summarize-predictions}
 summary_predict <- summary(predict_sim)

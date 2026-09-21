@@ -399,6 +399,18 @@ ERR_DOSE_FINAL_NOT_OBSERVED <- paste0(
   "configure `imugap_options(dose_schedule = ...)` to match observed doses"
 )
 
+#' @title Population Options Override Max Dose Warning
+#' @description
+#' Raised when both `imugap_opts` and `max_dose` are supplied to
+#' `canonicalize_populations()`.
+#' @param {max_dose} supplied `max_dose` value being overridden.
+#' @keywords internal
+#' @noRd
+MSG_POP_OPTS_OVERRIDE_MAX_DOSE <- paste0(
+  "`imugap_opts` is overriding `max_dose` value ({max_dose})"
+)
+
+
 # ------------------------------------------------------------------------------
 # 6. Target Construction & Canonicalization Templates
 # ------------------------------------------------------------------------------

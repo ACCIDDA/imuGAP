@@ -85,7 +85,7 @@ test_that("canonicalize_populations infers weight = 1.0 when missing and obs_ids
   expect_true(all(res$weight == 1.0))
 })
 
-test_that("canonicalize_populations errors on dose outside {1, 2}", {
+test_that("canonicalize_populations errors on dose > max_dose", {
   bad <- make_test_pops()
   bad$dose <- c(1L, 3L)
   expect_error(
@@ -94,10 +94,25 @@ test_that("canonicalize_populations errors on dose outside {1, 2}", {
       make_test_obs(),
       make_test_locs(),
       max_cohort = 5L,
-      max_age = 10L
+      max_age = 10L,
+      max_dose = 2L
     ),
     "dose"
   )
+})
+
+test_that("canonicalize_populations allows any positive dose when max_dose is omitted", {
+  pops3 <- make_test_pops()
+  pops3$dose <- c(1L, 3L)
+  res <- canonicalize_populations(
+    pops3,
+    make_test_obs(),
+    make_test_locs(),
+    max_cohort = 5L,
+    max_age = 10L
+  )
+  expect_s3_class(res, "data.table")
+  expect_equal(res$dose, c(1L, 3L))
 })
 
 test_that("canonicalize_populations errors when obs_id does not cover all observations", {
@@ -515,5 +530,42 @@ test_that("canonicalize_populations validates imugap_opts on already-canonical i
       imugap_opts = imugap_options(dose_schedule = c(1, 4, 7))
     ),
     err_pattern(ERR_DOSE_FINAL_NOT_OBSERVED, n_doses = 3L)
+  )
+})
+
+test_that("canonicalize_populations warns when imugap_opts overrides max_dose", {
+  locs <- make_test_locs()
+  obs <- make_test_obs()
+  pops <- data.frame(
+    obs_id = c("o1", "o2"),
+    loc_id = c("schl1", "schl2"),
+    cohort = c(1L, 1L),
+    age = c(2L, 5L),
+    dose = c(1L, 2L),
+    weight = c(1.0, 1.0)
+  )
+
+  expect_warning(
+    canonicalize_populations(
+      pops,
+      obs,
+      locs,
+      max_dose = 1L,
+      imugap_opts = imugap_options(dose_schedule = c(1, 4))
+    ),
+    err_pattern(MSG_POP_OPTS_OVERRIDE_MAX_DOSE, max_dose = 1L)
+  )
+
+  # Also warns on already-canonical input
+  canon_pops <- canonicalize_populations(pops, obs, locs)
+  expect_warning(
+    canonicalize_populations(
+      canon_pops,
+      obs,
+      locs,
+      max_dose = 1L,
+      imugap_opts = imugap_options(dose_schedule = c(1, 4))
+    ),
+    err_pattern(MSG_POP_OPTS_OVERRIDE_MAX_DOSE, max_dose = 1L)
   )
 })
