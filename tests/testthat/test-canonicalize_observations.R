@@ -63,7 +63,19 @@ test_that("can ensure scientific validity", {
     sample_n = c(10, 9, 30)
   )
 
-  expect_error(canonicalize_observations(obs_pos_samp_inconsistent), "sample_n")
+  err_pos <- tryCatch(
+    canonicalize_observations(obs_pos_samp_inconsistent),
+    error = identity
+  )
+  expect_match(
+    err_pos$message,
+    err_pattern(ERR_OBS_POS_GT_SAMPLE, n_rows = 1L, obs_ids = "b")
+  )
+  diag_pos <- eval_err_diagnostic(
+    err_pos,
+    list(observations = obs_pos_samp_inconsistent)
+  )
+  expect_equal(diag_pos$obs_id, "b")
 })
 
 test_that("errors when obs_id contains NA", {
@@ -72,7 +84,13 @@ test_that("errors when obs_id contains NA", {
     positive = c(5, 10, 15),
     sample_n = c(10, 20, 30)
   )
-  expect_error(canonicalize_observations(obs), "obs_id.*NA")
+  err_na <- tryCatch(canonicalize_observations(obs), error = identity)
+  expect_match(
+    err_na$message,
+    err_pattern(ERR_OBS_NA_ID, n_nas = 1L, rows = "2")
+  )
+  diag_na <- eval_err_diagnostic(err_na, list(observations = obs))
+  expect_true(is.na(diag_na$obs_id))
 })
 
 test_that("errors when obs_id has duplicates", {
@@ -81,7 +99,13 @@ test_that("errors when obs_id has duplicates", {
     positive = c(5, 10, 15),
     sample_n = c(10, 20, 30)
   )
-  expect_error(canonicalize_observations(obs), "unique")
+  err_dup <- tryCatch(canonicalize_observations(obs), error = identity)
+  expect_match(
+    err_dup$message,
+    err_pattern(ERR_OBS_DUP_ID, n_duplicates = 1L, duplicates = "3")
+  )
+  diag_dup <- eval_err_diagnostic(err_dup, list(observations = obs))
+  expect_equal(diag_dup$obs_id, c("a", "a"))
 })
 
 test_that("errors when censored column is not numeric", {
@@ -91,7 +115,10 @@ test_that("errors when censored column is not numeric", {
     sample_n = c(10, 20, 30),
     censored = c("no", "yes", "no")
   )
-  expect_error(canonicalize_observations(obs), "censored.*numeric")
+  expect_error(
+    canonicalize_observations(obs),
+    err_pattern(ERR_OBS_CENSORED_NUMERIC)
+  )
 })
 
 test_that("errors when censored column contains values other than NA or 1", {
@@ -101,7 +128,11 @@ test_that("errors when censored column contains values other than NA or 1", {
     sample_n = c(10, 20, 30),
     censored = c(NA, 0, 1) # 0 is not allowed (reserved for left-censoring)
   )
-  expect_error(canonicalize_observations(obs), "censored")
+  err_cens <- tryCatch(canonicalize_observations(obs), error = identity)
+  expect_match(err_cens$message, err_pattern(ERR_OBS_CENSORED_VALUES))
+  diag_cens <- eval_err_diagnostic(err_cens, list(observations = obs))
+  expect_equal(diag_cens$obs_id, "b")
+  expect_equal(diag_cens$censored, 0)
 })
 
 test_that("canonical input short-circuits and returns unchanged", {

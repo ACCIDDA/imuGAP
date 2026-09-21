@@ -73,19 +73,19 @@ test_that("build_interval_schedule rejects empty or invalid ages", {
   # NULL ages
   expect_error(
     build_interval_schedule(c(1L, 4L), ages = NULL),
-    "`ages` must not be empty"
+    err_pattern(ERR_AGES_EMPTY)
   )
 
   # Empty ages vector
   expect_error(
     build_interval_schedule(c(1L, 4L), ages = integer(0)),
-    "`ages` must not be empty"
+    err_pattern(ERR_AGES_EMPTY)
   )
 
   # All NA ages
   expect_error(
     build_interval_schedule(c(1L, 4L), ages = c(NA_integer_, NA_integer_)),
-    "`ages` must not be empty"
+    err_pattern(ERR_AGES_EMPTY)
   )
 })
 
@@ -93,7 +93,7 @@ test_that("build_interval_schedule rejects empty or out-of-bound dose schedules"
   # Empty dose schedule
   expect_error(
     build_interval_schedule(integer(0), ages = c(1L, 2L, 5L)),
-    "`dose_schedule` must not be empty"
+    err_pattern(ERR_DOSE_SCHEDULE_EMPTY)
   )
 
   # Entirely out of bounds dose schedule relative to max(ages)
@@ -103,7 +103,7 @@ test_that("build_interval_schedule rejects empty or out-of-bound dose schedules"
       dose_sched_out,
       ages = c(1L, 2L, 5L)
     ),
-    "`dose_schedule` contains no changepoints within 1..5"
+    err_pattern(ERR_DOSE_SCHED_OOB, max_age = 5L)
   )
 })
 
@@ -139,7 +139,7 @@ test_that("validate_dose_schedule rejects doses exceeding schedule length", {
   )
   expect_error(
     validate_dose_schedule(c(1L, 4L), wts),
-    "maximum dose is 2 \\(`dose_schedule` length == 2\\)"
+    err_pattern(ERR_POP_DOSE_EXCEEDS_SCHED, n_doses = 2L, max_dose = 3L)
   )
 })
 
@@ -152,7 +152,7 @@ test_that("validate_dose_schedule rejects when final dose is not observed in pop
   # Final dose 2 is not observed in wts
   expect_error(
     validate_dose_schedule(c(1L, 4L), wts),
-    "maximum dose \\(2\\) must be observed in `populations`"
+    err_pattern(ERR_DOSE_FINAL_NOT_OBSERVED, n_doses = 2L)
   )
 })
 
@@ -165,7 +165,7 @@ test_that("validate_dose_schedule rejects observations younger than schedule", {
   )
   expect_error(
     validate_dose_schedule(c(1L, 4L), wts_unmixed),
-    "dose 2 requires age > 4 \\(`dose_schedule\\[2\\] == 4`\\)"
+    err_pattern(ERR_POP_DOSE_INCOMPATIBLE, dose = 2L, sched_age = 4L)
   )
 
   # Mixed observation where ALL contributing ages are <= dose changepoint
@@ -176,7 +176,7 @@ test_that("validate_dose_schedule rejects observations younger than schedule", {
   )
   expect_error(
     validate_dose_schedule(c(1L, 4L), wts_mixed_bad),
-    "dose 2 requires age > 4 \\(`dose_schedule\\[2\\] == 4`\\)"
+    err_pattern(ERR_POP_DOSE_INCOMPATIBLE, dose = 2L, sched_age = 4L)
   )
 
   # Mixed observation where at least ONE age is > dose changepoint (valid)

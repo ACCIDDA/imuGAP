@@ -30,10 +30,20 @@ This document provides concise instructions and rules for AI coding assistants w
   * Format code with `just format` (`air`).
   * Verify lint compliance with `just lint` (`air` and `lintr`).
   * Maximum line length is **100 characters**.
-* **Error Handling & Assertions**:
-  * Define error format strings as module constants (`ERR_*`, `MSG_*`) at the top of each file.
-  * Use `stop_fmt_if()` and `warn_fmt_if()` for assertions.
-  * **Typography**: Use backticks (`` `code` ``) for function/argument/symbol names and single quotes (`'value'`) for user string values, column names, and model names.
+* **Error Handling, Message Templates & Assertions**:
+  * Define error format strings as module constants (`ERR_*`, `MSG_*`) at the top of each file
+    using named `{var}` placeholders (e.g. `"{n_doses}"`, `"{dose}"`, `"{sched_age}"`) for
+    self-documenting readability.
+  * Use `stop_fmt_if()` and `warn_fmt_if()` for assertions, passing named arguments matching
+    `{var}` placeholders (e.g. `stop_fmt_if(..., ERR_..., dose = k, sched_age = sched[k])`).
+  * **Typography**: Use backticks (`` `code` ``) for function/argument/symbol names and single
+    quotes (`'value'`) for user string values, column names, and model names.
+* **Error Message Unit Testing (`err_pattern`)**:
+  * In unit tests (`tests/testthat/`), test error/warning messages using `err_pattern(ERR_..., ...)`.
+  * `err_pattern()` converts templates to regexes, escaping literal metacharacters and binding
+    specified named arguments.
+  * Omitted, `NA`, or `NULL` slots automatically match wildcards (`.+?`), allowing tests to assert
+    on specific key parameters while remaining robust to phrasing updates.
 * **Roxygen Documentation Standards**:
   * **Explicit `@title` and `@description`**: Roxygen blocks must use explicit `@title` and `@description` tags rather than relying on automatic inference.
   * **`data.table` and `@autoglobal`**: Functions containing `data.table` calculations or non-standard evaluation expressions should generally be annotated with `@autoglobal` so `roxyglobals` generates appropriate symbol declarations in `R/globals.R`.

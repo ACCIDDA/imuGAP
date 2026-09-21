@@ -32,32 +32,44 @@ test_that("can enforce id and parent_id columns", {
 })
 
 test_that("can enforce unique ids", {
-  expect_error(
-    canonicalize_locations(data.frame(
-      loc_id = c(1, 1, 2),
-      parent_id = c(NA, 1, 1)
-    ))
+  locs_dup <- data.frame(
+    loc_id = c(1, 1, 2),
+    parent_id = c(NA, 1, 1)
   )
+  err <- expect_error(
+    canonicalize_locations(locs_dup),
+    err_pattern(ERR_LOCATIONS_UNIQUE_IDS, n_duplicates = 1L, duplicates = "1")
+  )
+  diag_rows <- eval_err_diagnostic(err, list(locations = locs_dup))
+  expect_equal(diag_rows$loc_id, c(1, 1))
 })
 
 test_that("can enforce unique root", {
-  expect_error(
-    canonicalize_locations(data.frame(loc_id = 1:3, parent_id = c(NA, NA, 1))),
-    "one root.*2"
+  locs_two_roots <- data.frame(loc_id = 1:3, parent_id = c(NA, NA, 1))
+  err2 <- expect_error(
+    canonicalize_locations(locs_two_roots),
+    err_pattern(ERR_LOCATIONS_SINGLE_ROOT, n_roots = 2L)
   )
-  expect_error(
-    canonicalize_locations(data.frame(loc_id = 1:3, parent_id = c(2, 3, 1))),
-    "one root.*0"
+  diag_rows2 <- eval_err_diagnostic(err2, list(locations = locs_two_roots))
+  expect_equal(diag_rows2$loc_id, c(1, 2))
+
+  locs_no_root <- data.frame(loc_id = 1:3, parent_id = c(2, 3, 1))
+  err0 <- expect_error(
+    canonicalize_locations(locs_no_root),
+    err_pattern(ERR_LOCATIONS_SINGLE_ROOT, n_roots = 0L)
   )
+  diag_rows0 <- eval_err_diagnostic(err0, list(locations = locs_no_root))
+  expect_equal(nrow(diag_rows0), 0L)
 })
 
 test_that("can enforce no cycles", {
+  locs_cycle <- data.frame(
+    loc_id = 1:4,
+    parent_id = c(NA, 1, 4, 3)
+  )
   expect_error(
-    canonicalize_locations(data.frame(
-      loc_id = 1:4,
-      parent_id = c(NA, 1, 4, 3)
-    )),
-    "cycle"
+    canonicalize_locations(locs_cycle),
+    err_pattern(ERR_LOCATIONS_NO_CYCLES, n_locations = 2L, locations = "3, 4")
   )
 })
 
@@ -105,20 +117,38 @@ test_that("canonicalize_locations errors when a location has exactly 1 offspring
     loc_id = c("state", "cnty1"),
     parent_id = c(NA, "state")
   )
-  expect_error(
+  err_sc <- expect_error(
     canonicalize_locations(locs_single_child),
-    "either 0 or strictly greater than 1 offspring.*state"
+    err_pattern(
+      ERR_LOCATIONS_OFFSPRING_COUNT,
+      n_locations = 1L,
+      locations = "'state'"
+    )
   )
+  diag_rows_sc <- eval_err_diagnostic(
+    err_sc,
+    list(locations = locs_single_child)
+  )
+  expect_equal(diag_rows_sc$loc_id, "cnty1")
 
   # Intermediate node with single child in a branch
   locs_single_grandchild <- data.frame(
     loc_id = c("state", "cnty1", "cnty2", "schl1"),
     parent_id = c(NA, "state", "state", "cnty1")
   )
-  expect_error(
+  err_sgc <- expect_error(
     canonicalize_locations(locs_single_grandchild),
-    "either 0 or strictly greater than 1 offspring.*cnty1"
+    err_pattern(
+      ERR_LOCATIONS_OFFSPRING_COUNT,
+      n_locations = 1L,
+      locations = "'cnty1'"
+    )
   )
+  diag_rows_sgc <- eval_err_diagnostic(
+    err_sgc,
+    list(locations = locs_single_grandchild)
+  )
+  expect_equal(diag_rows_sgc$loc_id, "schl1")
 
   # Linear chain hierarchy: A -> B -> C -> D
   locs_chain <- data.frame(
@@ -127,7 +157,11 @@ test_that("canonicalize_locations errors when a location has exactly 1 offspring
   )
   expect_error(
     canonicalize_locations(locs_chain),
-    "either 0 or strictly greater than 1 offspring"
+    err_pattern(
+      ERR_LOCATIONS_OFFSPRING_COUNT,
+      n_locations = 3L,
+      locations = "'A', 'B', 'C'"
+    )
   )
 })
 

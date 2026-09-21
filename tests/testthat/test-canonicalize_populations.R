@@ -56,7 +56,7 @@ test_that("canonicalize_populations errors on missing required columns", {
   # With duplicate obs_id, weight is required
   bad <- rbind(make_test_pops(), make_test_pops()[1, ])
   bad$weight <- NULL
-  expect_error(
+  err <- expect_error(
     canonicalize_populations(
       bad,
       make_test_obs(),
@@ -64,8 +64,10 @@ test_that("canonicalize_populations errors on missing required columns", {
       max_cohort = 5L,
       max_age = 10L
     ),
-    "weight"
+    err_pattern(ERR_POP_MISSING_WEIGHT_COL)
   )
+  diag_rows <- eval_err_diagnostic(err, list(populations = bad))
+  expect_equal(diag_rows$obs_id, bad$obs_id[1])
 })
 
 test_that("canonicalize_populations infers weight = 1.0 when missing and obs_ids are unique", {
@@ -396,15 +398,17 @@ test_that("canonicalize_populations validates dose schedule when imugap_opts is 
   # Dose exceeding schedule length
   pops_bad_dose <- pops
   pops_bad_dose$dose <- c(1L, 3L)
-  expect_error(
+  err_dose <- expect_error(
     canonicalize_populations(
       pops_bad_dose,
       obs,
       locs,
       imugap_opts = imugap_options(dose_schedule = c(1, 4))
     ),
-    "maximum dose is 2 \\(`dose_schedule` length == 2\\)"
+    err_pattern(ERR_POP_DOSE_EXCEEDS_SCHED, n_doses = 2L, max_dose = 3L)
   )
+  diag_dose <- eval_err_diagnostic(err_dose, list(populations = pops_bad_dose))
+  expect_equal(diag_dose$dose, 3L)
 
   # Final dose not observed in populations (schedule has 2 doses, but only dose 1 present)
   pops_no_dose2 <- pops
@@ -416,21 +420,24 @@ test_that("canonicalize_populations validates dose schedule when imugap_opts is 
       locs,
       imugap_opts = imugap_options(dose_schedule = c(1, 4))
     ),
-    "maximum dose \\(2\\) must be observed in `populations`"
+    err_pattern(ERR_DOSE_FINAL_NOT_OBSERVED, n_doses = 2L)
   )
 
   # Observation younger than dose changepoint (dose 2 changepoint 4, but obs2 age 3 with max age 10)
   pops_too_young <- pops
   pops_too_young$age <- c(10L, 3L)
-  expect_error(
+  err_age <- expect_error(
     canonicalize_populations(
       pops_too_young,
       obs,
       locs,
       imugap_opts = imugap_options(dose_schedule = c(1, 4))
     ),
-    "dose 2 requires age > 4 \\(`dose_schedule\\[2\\] == 4`\\)"
+    err_pattern(ERR_POP_DOSE_INCOMPATIBLE, dose = 2L, sched_age = 4L)
   )
+  diag_age <- eval_err_diagnostic(err_age, list(populations = pops_too_young))
+  expect_equal(diag_age$dose, 2L)
+  expect_equal(diag_age$age, 3L)
 })
 
 test_that("canonicalize_populations expands max_dose from imugap_opts schedule", {
@@ -483,15 +490,21 @@ test_that("canonicalize_populations validates imugap_opts on already-canonical i
   expect_identical(res, canon_pops)
 
   # Incompatible age schedule on canonical input fails (dose 2 changepoint 5 >= age 5)
-  expect_error(
+  err_canon_inc <- expect_error(
     canonicalize_populations(
       canon_pops,
       obs,
       locs,
       imugap_opts = imugap_options(dose_schedule = c(1, 5))
     ),
-    "dose 2 requires age > 5 \\(`dose_schedule\\[2\\] == 5`\\)"
+    err_pattern(ERR_POP_DOSE_INCOMPATIBLE, dose = 2L, sched_age = 5L)
   )
+  diag_canon <- eval_err_diagnostic(
+    err_canon_inc,
+    list(populations = canon_pops)
+  )
+  expect_equal(diag_canon$dose, 2L)
+  expect_equal(diag_canon$age, 5L)
 
   # Incompatible schedule length on canonical input fails (schedule requires 3 doses)
   expect_error(
@@ -501,6 +514,6 @@ test_that("canonicalize_populations validates imugap_opts on already-canonical i
       locs,
       imugap_opts = imugap_options(dose_schedule = c(1, 4, 7))
     ),
-    "maximum dose \\(3\\) must be observed in `populations`"
+    err_pattern(ERR_DOSE_FINAL_NOT_OBSERVED, n_doses = 3L)
   )
 })

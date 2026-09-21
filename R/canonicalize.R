@@ -141,85 +141,6 @@ is_canonical <- function(dt, target_class) {
   !is.null(canonical) && (canonical == target_class)
 }
 
-## Internal error message format strings for canonicalize
-ERR_LOCATIONS_UNIQUE_IDS <- paste0(
-  "`locations` column 'loc_id' must contain unique values; ",
-  "found %d duplicate(s): %s"
-)
-ERR_LOCATIONS_SINGLE_ROOT <- "`locations` must have exactly one root location; found %d%s"
-ERR_LOCATIONS_ROOT_DETAILS <- ": %s"
-ERR_LOCATIONS_NO_CYCLES <- paste0(
-  "`locations` hierarchy cannot contain cycles; found %d location(s) ",
-  "in cycle(s): %s"
-)
-ERR_LOCATIONS_OFFSPRING_COUNT <- paste0(
-  "`locations` each location must have either 0 or strictly greater than 1 offspring; ",
-  "found %d location(s) with exactly 1 offspring: %s"
-)
-
-ERR_OBS_NA_ID <- paste0(
-  "`observations` column 'obs_id' cannot contain NA values; ",
-  "found %d NA value(s) at row(s): %s"
-)
-ERR_OBS_DUP_ID <- paste0(
-  "`observations` column 'obs_id' must contain unique values; ",
-  "found %d duplicate(s): %s"
-)
-ERR_OBS_POS_GT_SAMPLE <- paste0(
-  "`observations` column 'positive' must be <= 'sample_n'; ",
-  "found %d invalid row(s) with obs_id: %s"
-)
-ERR_OBS_CENSORED_NUMERIC <- "`observations` column 'censored' must contain numeric values"
-ERR_OBS_CENSORED_VALUES <- paste0(
-  "`observations` column 'censored' must contain NA (uncensored) ",
-  "or 1 (right-censored)"
-)
-
-ERR_POP_MISSING_WEIGHT_COL <- "`populations` is missing required column(s): 'weight'"
-ERR_POP_WEIGHT_SUM <- "`populations` column 'weight' must sum to 1 by 'obs_id'"
-ERR_POP_MAX_LAYER_OBS <- paste0(
-  "`populations` must contain at least one observation at the ",
-  "maximum location layer depth (%d)"
-)
-ERR_POP_DOSE_EXCEEDS_SCHED <- paste0(
-  "maximum dose is %d (`dose_schedule` length == %d), but `populations` contains ",
-  "dose(s) exceeding this limit (found max dose %d); use `subset(populations, dose > %d)` ",
-  "or configure `imugap_options(dose_schedule = ...)` to resolve invalid entries"
-)
-ERR_POP_DOSE_INCOMPATIBLE <- paste0(
-  "dose %d requires age > %d (`dose_schedule[%d] == %d`), but `populations` contains ",
-  "observations where all ages are <= %d; use `subset(populations, dose == %d & age <= %d)` ",
-  "or configure `imugap_options(dose_schedule = ...)` to resolve invalid entries"
-)
-ERR_DOSE_FINAL_NOT_OBSERVED <- paste0(
-  "maximum dose (%d) must be observed in `populations`; ",
-  "configure `imugap_options(dose_schedule = ...)` to match observed doses"
-)
-
-ERR_TARGET_NON_UNIQUE_WEIGHTS <- paste0(
-  "`target` non-unique observation IDs with weights are not yet ",
-  "supported (see https://github.com/ACCIDDA/imuGAP/issues/79)"
-)
-ERR_TARGET_INVALID_OBS_C_ID <- "`target` column 'obs_c_id' must equal 1:nrow(target)"
-ERR_TARGET_INVALID_OBS_ID <- "`target` column 'obs_id' must contain unique non-NA values"
-ERR_TARGET_INVALID_WEIGHT <- "`target` column 'weight' must equal 1"
-ERR_TARGET_INVALID_LOCS <- paste0(
-  "`target` column 'loc_id' must all exist in `fit$locations`; ",
-  "invalid location(s): %s"
-)
-ERR_TARGET_INVALID_DOSE <- paste0(
-  "`target` column 'dose' must contain values between 1 and ",
-  "fit$data$n_doses (%d); invalid row(s): %s"
-)
-ERR_TARGET_INVALID_AGE <- paste0(
-  "`target` column 'age' must contain values between 1 and ",
-  "fit$data$n_yr (%d); invalid row(s): %s"
-)
-ERR_TARGET_INVALID_COHORT <- paste0(
-  "`target` column 'cohort' must contain values between 1 and ",
-  "fit$data$n_cohort (%d); invalid row(s): %s"
-)
-
 #' @rdname canonicalize
 #' @return a `[data.table()]`, with:
 #'  - `loc_id`, `parent_id` columns as originally supplied, possibly reordered
@@ -259,12 +180,12 @@ canonicalize_locations <- function(locations) {
   )
 
   # check for duplicate ids
-  dupes <- locations[, which(duplicated(loc_id))]
+  dupes <- locations[duplicated(loc_id), unique(loc_id)]
   stop_fmt_if(
     length(dupes) > 0,
     ERR_LOCATIONS_UNIQUE_IDS,
-    length(dupes),
-    toString(dupes, width = 80)
+    n_duplicates = length(dupes),
+    duplicates = toString(dupes, width = 80)
   )
 
   # Find candidate unique root
@@ -279,9 +200,12 @@ canonicalize_locations <- function(locations) {
   stop_fmt_if(
     len_p_root != 1L,
     ERR_LOCATIONS_SINGLE_ROOT,
-    len_p_root,
-    if (len_p_root) {
-      sprintf(ERR_LOCATIONS_ROOT_DETAILS, toString(potential_root, width = 80))
+    n_roots = len_p_root,
+    details = if (len_p_root) {
+      format_message(
+        ERR_LOCATIONS_ROOT_DETAILS,
+        roots = toString(potential_root, width = 80)
+      )
     } else {
       ""
     }
@@ -311,8 +235,8 @@ canonicalize_locations <- function(locations) {
     stop_fmt_if(
       length(layer_members) == 0L && locations[, any(is.na(layer))],
       ERR_LOCATIONS_NO_CYCLES,
-      locations[is.na(layer), .N],
-      toString(locations[is.na(layer), loc_id], width = 80)
+      n_locations = locations[is.na(layer), .N],
+      locations = toString(locations[is.na(layer), loc_id], width = 80)
     )
   }
 
@@ -322,8 +246,8 @@ canonicalize_locations <- function(locations) {
   stop_fmt_if(
     length(single_child_parents) > 0L,
     ERR_LOCATIONS_OFFSPRING_COUNT,
-    length(single_child_parents),
-    toString(single_child_parents, width = 80)
+    n_locations = length(single_child_parents),
+    locations = toString(sprintf("'%s'", single_child_parents), width = 80)
   )
 
   # Validate population hierarchy if population column is present
@@ -403,16 +327,16 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
   stop_fmt_if(
     observations[, any(is.na(obs_id))],
     ERR_OBS_NA_ID,
-    observations[is.na(obs_id), .N],
-    toString(observations[, which(is.na(obs_id))], width = 80)
+    n_nas = observations[is.na(obs_id), .N],
+    rows = toString(observations[, which(is.na(obs_id))], width = 80)
   )
 
   dupes <- observations[, which(duplicated(obs_id))]
   stop_fmt_if(
     length(dupes) > 0,
     ERR_OBS_DUP_ID,
-    length(dupes),
-    toString(dupes, width = 80)
+    n_duplicates = length(dupes),
+    duplicates = toString(dupes, width = 80)
   )
 
   # check scientific data validity
@@ -422,8 +346,8 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
   stop_fmt_if(
     observations[, any(positive > sample_n)],
     ERR_OBS_POS_GT_SAMPLE,
-    observations[positive > sample_n, .N],
-    toString(observations[positive > sample_n, obs_id], width = 80)
+    n_rows = observations[positive > sample_n, .N],
+    obs_ids = toString(observations[positive > sample_n, obs_id], width = 80)
   )
 
   if ("censored" %in% names(observations)) {
@@ -474,17 +398,15 @@ validate_dose_schedule <- function(dose_schedule, wts) {
   stop_fmt_if(
     any(wts$dose > n_doses),
     ERR_POP_DOSE_EXCEEDS_SCHED,
-    n_doses,
-    n_doses,
-    max(wts$dose),
-    n_doses
+    n_doses = n_doses,
+    max_dose = max(wts$dose)
   )
 
   # Final dose must be observed in populations
   stop_fmt_if(
     !any(wts$dose == n_doses),
     ERR_DOSE_FINAL_NOT_OBSERVED,
-    n_doses
+    n_doses = n_doses
   )
 
   # Check that every observation has at least one age strictly greater than dose changepoint
@@ -496,13 +418,8 @@ validate_dose_schedule <- function(dose_schedule, wts) {
       stop_fmt_if(
         length(invalid_obs) > 0L,
         ERR_POP_DOSE_INCOMPATIBLE,
-        k,
-        dose_schedule[k],
-        k,
-        dose_schedule[k],
-        dose_schedule[k],
-        k,
-        dose_schedule[k]
+        dose = k,
+        sched_age = dose_schedule[k]
       )
     }
   }
@@ -582,7 +499,7 @@ canonicalize_populations <- function(
   stop_fmt_if(
     !any(populations$loc_id %in% max_layer_locs),
     ERR_POP_MAX_LAYER_OBS,
-    max_layer
+    max_depth = max_layer
   )
 
   # check cohort and age if max values provided
@@ -698,7 +615,7 @@ canonicalize_target <- function(target, fit) {
   stop_fmt_if(
     length(invalid_locs) > 0,
     ERR_TARGET_INVALID_LOCS,
-    toString(invalid_locs, width = 60),
+    invalid_locs = toString(invalid_locs, width = 60),
     n = 0L
   )
 
@@ -706,8 +623,8 @@ canonicalize_target <- function(target, fit) {
   stop_fmt_if(
     length(invalid_dose_rows) > 0,
     ERR_TARGET_INVALID_DOSE,
-    fit$data$n_doses,
-    toString(invalid_dose_rows, width = 60),
+    n_doses = fit$data$n_doses,
+    rows = toString(invalid_dose_rows, width = 60),
     n = 0L
   )
 
@@ -715,8 +632,8 @@ canonicalize_target <- function(target, fit) {
   stop_fmt_if(
     length(invalid_age_rows) > 0,
     ERR_TARGET_INVALID_AGE,
-    fit$data$n_yr,
-    toString(invalid_age_rows, width = 60),
+    n_yr = fit$data$n_yr,
+    rows = toString(invalid_age_rows, width = 60),
     n = 0L
   )
 
@@ -726,8 +643,8 @@ canonicalize_target <- function(target, fit) {
   stop_fmt_if(
     length(invalid_cohort_rows) > 0,
     ERR_TARGET_INVALID_COHORT,
-    fit$data$n_cohort,
-    toString(invalid_cohort_rows, width = 60),
+    n_cohort = fit$data$n_cohort,
+    rows = toString(invalid_cohort_rows, width = 60),
     n = 0L
   )
 
