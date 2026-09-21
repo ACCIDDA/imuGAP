@@ -66,8 +66,8 @@ create_observation_populations <- function(
     length(missing_cols) > 0,
     ERR_HELP_MODE_MISSING_COLS,
     mode = mode,
-    required = toString(required_cols),
-    missing = toString(missing_cols)
+    required = required_cols,
+    missing = missing_cols
   )
 
   optional_cols <- c("age_max")
@@ -79,7 +79,7 @@ create_observation_populations <- function(
   stop_fmt_if(
     length(dup_cols) > 0,
     ERR_HELP_MODE_DUP_COLS,
-    cols = toString(dup_cols)
+    cols = dup_cols
   )
 
   # merge required columns into obs_dt
@@ -223,7 +223,7 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
   stop_fmt_if(
     length(na_args) > 0,
     ERR_HELP_VEC_INPUTS_NA,
-    args = toString(na_args),
+    args = na_args,
     n = 2L
   )
 
@@ -239,7 +239,7 @@ validate_vec_inputs <- function(location, age, cohort, dose) {
   stop_fmt_if(
     length(zero_lens) > 0,
     ERR_HELP_VEC_INPUTS_ZERO_LEN,
-    args = toString(zero_lens),
+    args = zero_lens,
     n = 2L
   )
   c(n_loc = n_loc, n_age = n_age, n_coh = n_coh, n_dos = n_dos)
