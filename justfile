@@ -110,7 +110,7 @@ spell: bootstrap-namespace
 
 
 [doc('Install development version of imuGAP')]
-install: bootstrap-namespace
+install: bootstrap-namespace docs
 	R CMD INSTALL .
 
 [doc('Remove development version of imuGAP')]
@@ -171,7 +171,7 @@ site-quick: site
 
 [group('site')]
 [doc('Full build of pkgdown site with package reinstallation so vignettes see updated data/code')]
-site-full: bootstrap-namespace install docs
+site-full: bootstrap-namespace docs install
 	#!/usr/bin/env Rscript
 	if (!requireNamespace("pkgdown", quietly = TRUE)) stop("missing 'pkgdown'")
 	pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
