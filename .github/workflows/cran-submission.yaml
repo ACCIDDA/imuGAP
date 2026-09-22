@@ -68,7 +68,8 @@ jobs:
       - name: Submit to CRAN
         uses: coatless-actions/cran-submission@v1
         with:
-          path: ${{ steps.build-tarball.outputs.tarball }}
+          pkg-directory: '.'
+          check-directory: 'check'
           error-on: 'warning'
           confirmation: ${{ github.event.inputs.confirmation }}
 
@@ -82,13 +83,6 @@ jobs:
           TARBALL="${{ steps.build-tarball.outputs.tarball }}"
           TAG_NAME="v${VERSION}-candidate"
           RELEASE_TITLE="imuGAP v${VERSION} (CRAN Submission Candidate)"
-          
-          # If triggered by a pre-release event, use that release's tag name
-          if [ "${{ github.event_name }}" = "release" ] && [ -n "${{ github.event.release.tag_name }}" ]; then
-            TAG_NAME="${{ github.event.release.tag_name }}"
-            RELEASE_TITLE="${{ github.event.release.name }}"
-            [ -z "$RELEASE_TITLE" ] && RELEASE_TITLE="imuGAP ${TAG_NAME}"
-          fi
           
           echo "Creating / updating candidate release tag: $TAG_NAME"
           
