@@ -32,7 +32,7 @@
 #'
 #' Taking this approach to `age_max` enables this method to naturally support partial
 #' cohorts. For example, if `age_max = 18.5` and `age_min = 17`, then age 17 population
-#' has 2/3rds the weight and the age 18 population has 1/3rd. `age_min` works the
+#' has two-thirds the weight and the age 18 population has one-third. `age_min` works the
 #' same way.
 #'
 #' Note that "snapshot" mode assumes that all populations are uniformly sized with

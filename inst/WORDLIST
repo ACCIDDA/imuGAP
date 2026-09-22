@@ -1,6 +1,5 @@
 2L
 3D
-3rds
 5L
 Canonicalization
 Canonicalize
@@ -10,6 +9,7 @@ DOI
 MMR
 NIS
 ORCID
+Perrin
 RStan
 S3
 SchoolVaxView
@@ -26,6 +26,9 @@ ge
 https
 loc
 mc
+natively
+overline
+pathologies
 pkgdown
 pre
 rightarrow
