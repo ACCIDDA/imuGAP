@@ -247,7 +247,7 @@ canonicalize_locations <- function(locations) {
     length(single_child_parents) > 0L,
     ERR_LOCATIONS_OFFSPRING_COUNT,
     n_locations = length(single_child_parents),
-    locations = single_child_parents
+    locations = paste0("'", single_child_parents, "'")
   )
 
   # Validate population hierarchy if population column is present

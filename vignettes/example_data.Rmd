@@ -107,7 +107,7 @@ In this scenario:
   - **ChildVaxView / NIS-Child**: State-level single-cohort point estimates at ages 2 and 3 for dose 1.
   - **SchoolVaxView**: State-level kindergarten entry surveys (dose 2 at age 5).
   - **TeenVaxView**: State-level multi-cohort cross-sectional survey snapshots spanning ages 14 to 18 (dose 2).
-  - **County 6th Grade Surveys**: Right-censored dose 2 coverage at age 11 across all `r length(county_names)` counties.
+  - **County Sixth-Grade Surveys**: Right-censored dose 2 coverage at age 11 across all `r length(county_names)` counties.
   - **School Kindergarten Entry Records**: Annual kindergarten entry surveys for dose 2 at age 5 across all `r n_schools` individual schools.
 
 ---
@@ -378,7 +378,7 @@ In public health surveillance, records often report composite vaccine series com
 `imuGAP` natively models right-censored observations:
 
 - In `observations`, you mark right-censored survey records with `censored = 1` (and uncensored records with `NA`).
-- During Bayesian model fitting, the likelihood accounts for the right-censoring mechanism, ensuring that lower-bound surveillance records accurately inform the latent process without downwardly biasing coverage trajectories.
+- During Bayesian model fitting, the likelihood accounts for the right-censoring mechanism, ensuring that lower-bound surveillance records accurately inform the latent process without biasing coverage trajectories downward.
 
 In this simulation universe, routine county-wide middle school entry tallies (dose 2 at age 11) across all three counties represent right-censored surveillance streams:
 
