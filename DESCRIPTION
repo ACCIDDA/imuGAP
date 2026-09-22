@@ -60,7 +60,9 @@ Suggests:
     withr,
     pkgload,
     thematic,
-    usethis
+    usethis,
+    loo (>= 2.6.0),
+    scoringRules
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: https://accidda.github.io/imuGAP/, https://github.com/ACCIDDA/imuGAP
