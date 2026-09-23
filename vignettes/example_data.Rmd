@@ -94,10 +94,7 @@ if (!pkgs_available) {
 
 # Overview of the Synthetic Simulation Universe
 
-`imuGAP` provides four bundled datasets (`locations_sim`, `observations_sim`, `populations_sim`,
-and `target_sim`) alongside latent parameter fixtures (`latent_params_sim`, `fit_sim`,
-`predict_sim`) that reflect an underlying vaccination process model and surveillance streams
-across a multi-resolution hierarchical population structure.
+`imuGAP` provides four bundled datasets (`locations_sim`, `observations_sim`, `populations_sim`, and `target_sim`) alongside latent parameter fixtures (`latent_params_sim`, `fit_sim`, `predict_sim`) that reflect an underlying vaccination process model and surveillance streams across a multi-resolution hierarchical population structure.
 
 In this scenario:
 
@@ -165,25 +162,17 @@ head(canonical_observations)
 
 ### Observation Metadata & Populations (`populations_sim`)
 
-The `populations` table provides essential metadata for all observations—defining the discrete
-location, age, cohort, and dose associated with each survey outcome. Every record in `observations`
-receives one or more entries in `populations`:
+The `populations` table provides essential metadata for all observations—defining the discrete location, age, cohort, and dose associated with each survey outcome. Every record in `observations` receives one or more entries in `populations`:
 
-- **Direct (1:1) observations**: A single row with `weight = 1.0` maps the observation directly
-  to a discrete population slice (such as a single-cohort kindergarten survey at age 5).
-- **Mixed observations**: When a survey mixes multiple underlying populations (such as
-  cross-sectional surveys spanning multiple age groups or cohorts), `populations` captures this
-  mixture using multiple rows sharing the same `obs_id`, each assigned a fractional weight
-  (e.g. equal weights or demographic population shares summing to 1.0).
+- **Direct (1:1) observations**: A single row with `weight = 1.0` maps the observation directly to a discrete population slice (such as a single-cohort kindergarten survey at age 5).
+- **Mixed observations**: When a survey mixes multiple underlying populations (such as cross-sectional surveys spanning multiple age groups or cohorts), `populations` captures this mixture using multiple rows sharing the same `obs_id`, each assigned a fractional weight (e.g. equal weights or demographic population shares summing to 1.0).
 
 ```{r populations}
 data("populations_sim", package = "imuGAP")
 head(populations_sim)
 ```
 
-For single-cohort kindergarten surveys, `obs_id` has a 1:1 mapping with `weight = 1.0`. For
-multi-age surveys (such as TeenVaxView at `obs_id == 761`), multiple rows describe the mixture
-across ages:
+For single-cohort kindergarten surveys, `obs_id` has a 1:1 mapping with `weight = 1.0`. For multi-age surveys (such as TeenVaxView at `obs_id == 761`), multiple rows describe the mixture across ages:
 
 ```{r populations-multi}
 # TeenVaxView-style observation spanning ages 14 to 18
@@ -482,9 +471,7 @@ ggplot() +
 
 ### School Kindergarten Enrollment Records
 
-The following plot illustrates school-level kindergarten entry records (dose 2 at age 5) across
-all elementary schools grouped by county, comparing empirical survey counts against the
-underlying school-specific latent coverage curves:
+The following plot illustrates school-level kindergarten entry records (dose 2 at age 5) across all elementary schools grouped by county, comparing empirical survey counts against the underlying school-specific latent coverage curves:
 
 ```{r synthetic-school-viz, fold = TRUE, code_summary = "Show plot code"}
 canonical_locations <- canonicalize_locations(locations_sim)

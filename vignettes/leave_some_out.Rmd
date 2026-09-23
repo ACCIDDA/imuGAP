@@ -61,37 +61,24 @@ if (!pkgs_available) {
 
 # Introduction
 
-In spatial and hierarchical disease models, evaluating model fit and predictive accuracy requires
-careful consideration of the data generating process and observation hierarchy. Standard random
-train/test splits frequently overestimate out-of-sample predictive performance because observations
-within the same school, county, birth cohort, or surveillance stream share latent structure.
+With any model fitting work, you want to apply a variety of techniques to assess how confident you should be about fitting results. Among other approaches, researchers will frequently use so-called leave some out cross-validation techniques. The "leaving out" element refers to systematically keeping some data held out a test set, fitting the model on the remaining training set, and then comparing the fit predictions for the test set.
 
-This vignette demonstrates four complementary cross-validation and evaluation workflows supported
-by `imuGAP`:
+In this vignette, we share applying some standard tools to `imuGAP` outputs to apply those techniques. We demonstrates four complementary cross-validation and evaluation workflows supported by `imuGAP`:
 
-1. **Approximate PSIS-LOO Influence Diagnostics**: Using the `{loo}` package to compute Pareto
-   smoothed importance sampling leave-one-out cross-validation diagnostics and identify influential
-   observations.
-2. **Grouped Spatial Holdouts (Leave-Locations-Out)**: Evaluating how well the hierarchical random
-   effects generalize to unobserved schools or entire counties.
-3. **Surveillance Stream Holdout (Leave-Stream-Out)**: Assessing how well kindergarten and state
-   surveys predict aggregate or interval-censored middle school surveys.
-4. **Temporal / Cohort Forecast Holdouts & Scoring**: Holding out recent birth cohorts to evaluate
-   prospective projections using Continuous Ranked Probability Scores (CRPS) via `{scoringRules}`.
+1. **Approximate PSIS-LOO Influence Diagnostics**: Using the [`{loo}`](https://cran.r-project.org/package=loo) package to compute leave-one-out cross-validation diagnostics and identify influential observations.
+2. **Spatial Holdouts (Leave-Locations-Out)**: Using `{loo}` to assess how estimates perform when leaving out entire schools.
+3. **Surveillance Stream Holdout (Leave-Stream-Out)**: Using `{loo}` to assess how estimates perform when leaving out particular data streams (e.g. state surveys).
+4. **Temporal / Cohort Forecast Holdouts & Scoring**: Using [`{scoringRules}`](https://cran.r-project.org/package=scoringRules) to assess estimates ability to reproduce latest observations by holding the out of fitting.
 
 ---
 
 # 1. Approximate Leave-One-Out Diagnostics (PSIS-LOO)
 
-The `{loo}` package provides fast, approximate leave-one-out cross-validation without requiring
-re-fitting the MCMC model $N$ times. `imuGAP` integrates seamlessly with `{loo}` through the S3
-methods `log_lik()` and `loo()`.
+The `{loo}` package provides fast, approximate leave-one-out cross-validation without requiring re-fitting the MCMC model. `imuGAP` provides the necessary interface, S3 methods `log_lik()` and `loo()`, to seamlessly integrate with `{loo}`.
 
 ## Computing the Pointwise Log-Likelihood
 
-The `log_lik()` method extracts the pointwise log-likelihood matrix for all $N$ observations across
-the $S$ posterior draws. For uncensored observations, it computes the binomial log probability mass;
-for left- or right-censored observations, it computes the cumulative log probability:
+The `log_lik()` method extracts the pointwise log-likelihood matrix for all $N$ observations across the $S$ posterior draws. For uncensored observations, it computes the binomial log probability mass; for left- or right-censored observations, it computes the cumulative log probability:
 
 ```{r load-data}
 data("fit_sim", package = "imuGAP")
@@ -109,8 +96,7 @@ dim(ll_mat)
 
 ## Running PSIS-LOO and Inspecting Diagnostics
 
-We can compute the Expected Log Pointwise Predictive Density ($\text{elpd}_{\text{loo}}$) and Pareto
-shape parameter $\hat{k}$ diagnostics by calling `loo()` directly on the `imugap_fit` object:
+We can compute the Expected Log Pointwise Predictive Density ($\text{elpd}_{\text{loo}}$) and Pareto shape parameter $\hat{k}$ diagnostics by calling `loo()` directly on the `imugap_fit` object:
 
 ```{r run-loo}
 loo_res <- loo(fit_sim)
@@ -148,12 +134,9 @@ ggplot(k_df, aes(x = obs_idx, y = pareto_k)) +
 
 # 2. Grouped Spatial Holdouts (Leave-Locations-Out)
 
-In public health surveillance, we often want to know: *How accurately can `imuGAP` predict coverage
-in a school or county where no direct survey was collected?*
+In public health surveillance, we often want to know: *How accurately can `imuGAP` predict coverage in a school or county where no direct survey was collected?*
 
-Because `imuGAP` embeds the full tree hierarchy in the location random effects, it can project
-coverage for any location in `locations` even if that location has zero observations in the training
-set.
+Because `imuGAP` embeds the full tree hierarchy in the location random effects, it can project coverage for any location in `locations` even if that location has zero observations in the training set.
 
 ## Partitioning Training and Validation Sets
 
@@ -172,8 +155,7 @@ train_pops <- populations_sim[!loc_id %in% heldout_schools]
 
 ## Fitting the Training Model & Projecting to Held-Out Locations
 
-We fit the model on the remaining data and project coverage for the held-out schools using
-`create_target()` and `predict()`:
+We fit the model on the remaining data and project coverage for the held-out schools using `create_target()` and `predict()`:
 
 ```{r fit-spatial-holdout, eval = FALSE}
 fit_spatial_train <- sampling(
@@ -249,12 +231,9 @@ ggplot() +
 
 # 3. Surveillance Stream Holdout (Leave-Stream-Out)
 
-Real-world immunization systems often combine census-like school entry reports with aggregate or
-right-censored middle school surveys. Evaluating whether kindergarten surveys alone can reconstruct
-older middle school coverage is a classic surveillance validation task.
+Real-world immunization systems often combine census-like school entry reports with aggregate or right-censored middle school surveys. Evaluating whether kindergarten surveys alone can reconstruct older middle school coverage is a classic surveillance validation task.
 
-In `observations_sim`, right-censored observations represent middle school surveys where coverage was
-reported as an interval upper bound (`censored == 1`):
+In `observations_sim`, right-censored observations represent middle school surveys where coverage was reported as an interval upper bound (`censored == 1`):
 
 ```{r stream-partition}
 # Table of observations by censoring status
@@ -266,20 +245,17 @@ train_stream_pops <- populations_sim[obs_id %in% train_stream_obs$obs_id]
 heldout_stream_obs <- observations_sim[censored == 1]
 ```
 
-By fitting without the middle school surveillance stream, we can verify whether the latent hazard
-model ($\lambda$) and propensity parameter ($\phi$) extrapolate accurately to adolescent ages.
+By fitting without the middle school surveillance stream, we can verify whether the latent hazard model ($\lambda$) and propensity parameter ($\phi$) extrapolate accurately to adolescent ages.
 
 ---
 
 # 4. Temporal Forecast Holdouts & Scoring with CRPS
 
-To test the model's forecasting ability, we hold out the most recent birth cohort (`cohort == 5`)
-and evaluate the posterior predictive distribution against the true latent population coverage.
+To test the model's forecasting ability, we hold out the most recent birth cohort (`cohort == 5`) and evaluate the posterior predictive distribution against the true latent population coverage.
 
 ## Evaluating Uncertainty with CRPS
 
-The Continuous Ranked Probability Score (CRPS) is a proper scoring rule that assesses both
-sharpness and calibration of probabilistic forecasts:
+The Continuous Ranked Probability Score (CRPS) is a proper scoring rule that assesses both sharpness and calibration of probabilistic forecasts:
 
 $$\text{CRPS}(F, y) = \int_{-\infty}^{\infty} (F(x) - \mathbb{I}(x \ge y))^2 \, dx$$
 
@@ -335,5 +311,4 @@ When designing validation experiments for `imuGAP`:
 
 - **Use PSIS-LOO (`loo`)** for fast, exploratory influence and outlier diagnostics on full fits.
 - **Use Grouped Spatial Holdouts** to quantify transferability to unmeasured schools or regions.
-- **Use Temporal Holdouts** evaluated with **CRPS (`scoringRules`)** to validate forecasting
-  calibration for emerging cohorts before deploying estimates into policy decisions.
+- **Use Temporal Holdouts** evaluated with **CRPS (`scoringRules`)** to validate forecasting calibration for emerging cohorts before deploying estimates into policy decisions.

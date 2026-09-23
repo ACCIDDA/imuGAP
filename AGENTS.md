@@ -30,7 +30,7 @@ This document provides concise instructions and rules for AI coding assistants w
 * **Formatting & Linting**:
   * Format code with `just format` (`air`).
   * Verify lint compliance with `just lint` (`air` and `lintr`).
-  * Maximum line length is **100 characters**.
+  * Maximum line length is **100 characters** for R code, comments, and scripts. In documentation vignettes (`vignettes/*.Rmd`), do not insert hard line breaks when writing or managing text paragraphs and list items (keep each paragraph or list item description on a single unbroken line).
 * **Error Handling, Message Templates & Assertions**:
   * Define error format strings as module constants (`ERR_*`, `MSG_*`) at the top of each file
     using named `{var}` placeholders (e.g. `"{n_doses}"`, `"{dose}"`, `"{sched_age}"`) for
@@ -94,7 +94,8 @@ This document provides concise instructions and rules for AI coding assistants w
   * Always guard with `skip_if_not_installed("rstan")` and `skip_if_stan_unchanged(target)`.
 * **Test Coverage Expectations (`covr`)**:
   * All manually authored R files (`R/canonicalize.R`, `R/checkers.R`, `R/helpers.R`, `R/imuGAP.R`, `R/methods.R`, `R/options.R`) must maintain high test coverage (>90%, targeting 100%).
-* **Markdown List Formatting**:
+* **Markdown & Vignette Text Formatting**:
+  * **No Hard Line Breaks in Prose Text**: Do not insert line breaks when managing prose text in vignettes (`vignettes/*.Rmd`). Each paragraph and list item description should remain on a single unbroken line.
   * Always precede list blocks with an empty blank line after introductory text.
   * Use consistent bullet markers (`-`) for unordered lists and (`1.`, `2.`) for top-level ordered sequences.
   * For sub-lists, use 2-space or 4-space indentation with consistent sub-bullet markers (`-`). Avoid mixing unindented numbered sub-items directly under unordered bullets.

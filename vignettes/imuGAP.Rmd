@@ -136,9 +136,7 @@ if (file.exists(diag_file)) {
 
 `imuGAP` requires three core input tables:
 
-1. `locations`: The nested population hierarchy (e.g. State $\rightarrow$ County $\rightarrow$ School).
-   This may optionally include population sizes, which may be necessary to ensure accurate results
-   when entities within the same layer differ substantially in size.
+1. `locations`: The nested population hierarchy (e.g. State $\rightarrow$ County $\rightarrow$ School). This may optionally include population sizes, which may be necessary to ensure accurate results when entities within the same layer differ substantially in size.
 2. `observations`: Empirical survey counts (`positive` and `sample_n`) and censoring indicators.
 3. `populations`: Metadata and fractional weights mapping observations to discrete location/age/cohort/dose slices.
 
@@ -156,13 +154,9 @@ head(observations_sim[, .(obs_id, loc_id, positive, sample_n, censored)])
 head(populations_sim)
 ```
 
-Input datasets are automatically validated and canonicalized during sampling via
-`canonicalize_locations()`, `canonicalize_observations()`, and `canonicalize_populations()`.
+Input datasets are automatically validated and canonicalized during sampling via `canonicalize_locations()`, `canonicalize_observations()`, and `canonicalize_populations()`.
 
-For an in-depth walkthrough of flexible surveillance stream structures—including right-censored
-observations (such as when surveillance reports only complete coverage for a bundle of vaccines,
-not specifically the target vaccine) and composite observations that mix multiple age groups or
-populations—see **[Included Example Datasets and Data Validation](example_data.html)**.
+For an in-depth walkthrough of flexible surveillance stream structures—including right-censored observations (such as when surveillance reports only complete coverage for a bundle of vaccines, not specifically the target vaccine) and composite observations that mix multiple age groups or populations—see **[Included Example Datasets and Data Validation](example_data.html)**.
 
 ---
 
@@ -317,15 +311,8 @@ head(draws_df)
 
 To explore advanced features and deeper technical details, see the following companion vignettes:
 
-- **[Included Example Datasets and Data Validation](example_data.html)**:
-  Detailed documentation of the bundled simulation fixtures, surveillance stream types (ChildVaxView, SchoolVaxView, TeenVaxView), canonicalization rules, and validation error diagnostics.
+- **[Included Example Datasets and Data Validation](example_data.html)**: Detailed documentation of the bundled simulation fixtures, surveillance stream types (ChildVaxView, SchoolVaxView, TeenVaxView), canonicalization rules, and validation error diagnostics.
 
-- **[Flexible Location Layers in imuGAP](user_specified_layers.html)**:
-  Demonstrates how `imuGAP` estimates the process model across 1-layer, 2-layer, and multi-layer
-  hierarchical population structures, showing how inferred relationships enable sub-regional
-  estimation and cohort projection.
+- **[Flexible Location Layers in imuGAP](user_specified_layers.html)**: Demonstrates how `imuGAP` estimates the process model across 1-layer, 2-layer, and multi-layer hierarchical population structures, showing how inferred relationships enable sub-regional estimation and cohort projection.
 
-- **[Fit Inspection and Stan Diagnostics](examining_fits.html)**:
-  Comprehensive guide to MCMC convergence assessment, parameter extraction with `extract_imugap()`,
-  and parameter recovery trace plots for $\beta_{\text{bs}}$, $\sigma_{\text{layer}}$,
-  $\delta_{\text{loc}}$, and $\lambda$.
+- **[Fit Inspection and Stan Diagnostics](examining_fits.html)**: Comprehensive guide to MCMC convergence assessment, parameter extraction with `extract_imugap()`, and parameter recovery trace plots for $\beta_{\text{bs}}$, $\sigma_{\text{layer}}$, $\delta_{\text{loc}}$, and $\lambda$.

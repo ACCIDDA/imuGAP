@@ -72,7 +72,7 @@ We use [`just`](https://github.com/casey/just) to automate development tasks. Th
 ### 1. Formatting & Linting
 
 * R code is formatted with `air` and linted with `lintr` (rules in `.lintr`).
-* Maximum line length is **100 characters**.
+* Maximum line length is **100 characters** for R code, comments, and scripts. In documentation vignettes (`vignettes/*.Rmd`), do not insert hard line breaks when writing or managing text paragraphs and list items (keep each paragraph or list item description on a single unbroken line).
 * `R/stanmodels.R`, `R/flexstanr.R`, `inst/analysis/`, `inst/scripts/`, and `data-raw/` are excluded from linting because they are generated artifacts or standalone scratch scripts.
 
 ### 2. Tracked vs. Untracked Artifacts & Generated Files
@@ -277,10 +277,11 @@ Follow a strict convention when formatting error and warning strings:
   * `` unknown model '{model}' ``
   * `` '{arg}' must be numeric ``
 
-### 4. Markdown List Formatting Standards
+### 4. Markdown & Vignette Text Formatting Standards
 
 To ensure clean rendering across GitHub, `pkgdown`, and Pandoc HTML/PDF engines:
 
+* **No Hard Line Breaks in Prose Text**: Do not insert line breaks when writing or managing prose text in vignettes (`vignettes/*.Rmd`). Each paragraph and list item description should remain on a single unbroken line.
 * **Preceding Blank Lines**: Always separate preceding introductory text from lists with an empty blank line (`\n\n`). Never start a list immediately on the line following a colon or text.
 * **Consistent Indentation & Sub-Lists**: Indent sub-lists by 2 or 4 spaces and use consistent bullet styling (`-`). Avoid mixing unindented numbered sequences under unordered list items.
 * **Multi-Line Continuation Margin**: When list items span multiple lines, align continuation lines with the item text margin (e.g. 2 spaces for `- `, 3 spaces for `1. `).

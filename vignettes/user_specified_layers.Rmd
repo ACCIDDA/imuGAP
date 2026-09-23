@@ -70,17 +70,9 @@ ggplot2::theme_set(
 
 ## Overview
 
-The `imuGAP` package estimates the underlying vaccination process model across nested population
-hierarchies (e.g. a state divided into counties, counties into schools) and uses the fitted model to predict
-coverage across resolution levels. A key strength of `imuGAP` is support for **flexible location
-layers**: the process model dynamically scales its hierarchical depth to match the population
-structure you provide. If you supply only aggregate state-wide data, the model estimates a 1-layer
-structure; adding counties expands it to 2 layers; adding schools creates a 3-layer hierarchy, and
-so forth.
+The `imuGAP` package estimates the underlying vaccination process model across nested population hierarchies (e.g. a state divided into counties, counties into schools) and uses the fitted model to predict coverage across resolution levels. A key strength of `imuGAP` is support for **flexible location layers**: the process model dynamically scales its hierarchical depth to match the population structure you provide. If you supply only aggregate state-wide data, the model estimates a 1-layer structure; adding counties expands it to 2 layers; adding schools creates a 3-layer hierarchy, and so forth.
 
-Whatever the data resolution, `imuGAP` canonicalizes the population tree, maps parent-child
-relationships across layers, and estimates hierarchical location offset parameters for each
-resolution level (beyond fully aggregated populations).
+Whatever the data resolution, `imuGAP` canonicalizes the population tree, maps parent-child relationships across layers, and estimates hierarchical location offset parameters for each resolution level (beyond fully aggregated populations).
 
 This vignette demonstrates:
 
@@ -183,9 +175,7 @@ fit_sim_2layer
 
 ## 3. Using the Fits to Predict Coverage
 
-Predicting coverage from fitted models involves providing a target grid for the desired locations,
-ages, cohorts, and doses, and then calling `predict()`. You can load the example target dataset
-bundled with `imuGAP` package data and filter it to match each location resolution:
+Predicting coverage from fitted models involves providing a target grid for the desired locations, ages, cohorts, and doses, and then calling `predict()`. You can load the example target dataset bundled with `imuGAP` package data and filter it to match each location resolution:
 
 ```{r predict-code, eval = FALSE}
 data("target_sim", package = "imuGAP")
@@ -203,8 +193,7 @@ target_1layer <- target_sim[loc_id %in% locs_1layer$loc_id]
 predict_1layer <- predict(object = fit_1layer, target = target_1layer, posterior_size = 100)
 ```
 
-If you are working along through this vignette, you can simply load the pre-computed prediction
-results bundled with `imuGAP` package data:
+If you are working along through this vignette, you can simply load the pre-computed prediction results bundled with `imuGAP` package data:
 
 ```{r load-predictions}
 data("predict_sim", package = "imuGAP")
@@ -460,14 +449,10 @@ ggplot(lambda_est, aes(x = hierarchy, y = q50)) +
 
 ## Conclusion
 
-Support for **flexible location layers** allows `imuGAP` to adapt to whatever population hierarchy
-you provide:
+Support for **flexible location layers** allows `imuGAP` to adapt to whatever population hierarchy you provide:
 
-- If you provide only state-level aggregated data (**1 layer**), macro trends are estimated
-  accurately by the process model.
-- If you provide sub-populations like counties (**2 layers**) or sub-sub-populations like schools
-  (**3 layers**), the model estimates hierarchical random offsets down the tree, allowing you to
-  project cohort trajectories and resolve finer-grained geographic variation.
+- If you provide only state-level aggregated data (**1 layer**), macro trends are estimated accurately by the process model.
+- If you provide sub-populations like counties (**2 layers**) or sub-sub-populations like schools (**3 layers**), the model estimates hierarchical random offsets down the tree, allowing you to project cohort trajectories and resolve finer-grained geographic variation.
 
 ---
 
