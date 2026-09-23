@@ -82,6 +82,9 @@ This document provides concise instructions and rules for AI coding assistants w
     * **Row Index Lookups**: Use `data.table`'s `dt[condition, which = TRUE]` rather than `which(thing$col == ...)`.
 * **Vignette Plots & Dark Mode**:
   * Vignette plots must enforce a solid white background and black text (`dev.args = list(bg = "white")`, `thematic::thematic_off()`, and `ggplot2::theme_set(...)`).
+  * **Minimize Non-Data Elements**: Avoid redundant plot titles or subtitles when chunk figure captions (`fig.cap`) describe the plot. Avoid cluttered legends when direct in-plot labels can clearly identify series or regions.
+  * **Unexpanded Axes**: Prefer not expanding axes (`expand = c(0, 0)` in `scale_*_continuous()` or `coord_cartesian(expand = FALSE)`) to keep coordinate bounds tight.
+  * **In-Plot Area & Category Labels**: Prefer direct in-plot annotations (e.g. distinguishing quantitative threshold regions or category clusters directly inside the plotting canvas) over external legend keys.
 * **Vignette Mermaid Diagrams & PDF Support**:
   * The fundamental tracked source for diagrams is the Mermaid file (`vignettes/figures/*.mmd`).
   * Compiled SVG/PDF/PNG assets are untracked (gitignored) and dynamically built via `just diagrams` (integrated into `just docs`, `just render`, `just build`, `just site`, and CI workflows).

@@ -25,6 +25,31 @@ if (requireNamespace("thematic", quietly = TRUE)) {
   thematic::thematic_off()
 }
 
+# Define a knitr hook to fold source code into a <details> block below the plot
+local({
+  hook_source <- knitr::knit_hooks$get("source")
+  knitr::knit_hooks$set(source = function(x, options) {
+    res <- hook_source(x, options)
+    if (isTRUE(options$fold) || !is.null(options$code_summary)) {
+      label <- options$code_summary
+      if (is.null(label)) label <- "Show code"
+      sprintf("\n<details><summary><b>%s</b></summary>\n\n%s\n</details>\n", label, res)
+    } else {
+      res
+    }
+  })
+
+  hook_chunk <- knitr::knit_hooks$get("chunk")
+  knitr::knit_hooks$set(chunk = function(x, options) {
+    res <- hook_chunk(x, options)
+    if (isTRUE(options$fold)) {
+      sprintf("\n<div class=\"chunk-plot-first\">\n%s\n</div>\n", res)
+    } else {
+      res
+    }
+  })
+})
+
 # List all suggested packages needed for this vignette
 required_pkgs <- c(
   "imuGAP", "data.table", "ggplot2", "loo", "scoringRules"
@@ -107,7 +132,7 @@ print(loo_res)
 
 The Pareto shape parameter $\hat{k}$ diagnostic indicates whether importance weights have finite variance and gauges the reliability of the PSIS approximation (see @vehtari2017, @vehtari2024):
 
-- $\hat{k} < 0.5$: High reliability; importance weights have finite variance, and the central limit theorem holds.
+- $\hat{k} < 0.5$ (including $< 0$): High reliability; importance weights have finite variance, and the central limit theorem holds.
 - $0.5 \le \hat{k} < 0.7$: Moderate reliability; variance is finite, but convergence is slower.
 - $\hat{k} \ge 0.7$: Influential observation; raw importance weights have high or infinite variance, meaning importance sampling estimates may be unreliable without exact refitting or moment matching.
 
@@ -115,7 +140,7 @@ In practice, if all observations have $\hat{k} < 0.7$, PSIS-LOO provides a fast 
 
 Let's visualize the $\hat{k}$ diagnostics across all observations:
 
-```{r plot-loo-k, fig.cap = "Pareto k influence diagnostics across surveillance streams"}
+```{r plot-loo-k, fold = TRUE, code_summary = "Show plot code", fig.cap = "Pareto k influence diagnostics across surveillance streams"}
 # Map observations to surveillance stream / layer type
 loc_map <- canonicalize_locations(locations_sim)[, .(loc_id, layer)]
 obs_meta <- canonicalize_observations(observations_sim, drop_extra = FALSE)
@@ -123,59 +148,305 @@ obs_meta <- merge(obs_meta, loc_map, by = "loc_id")
 setorder(obs_meta, obs_c_id)
 
 obs_meta[, stream := fcase(
-  layer == 1L, "State Surveillance (NIS/School/Teen)",
-  layer == 2L, "County 6th Grade (Censored)",
-  layer == 3L, "School Kindergarten Entry"
+  layer == 1L, "State Surveys",
+  layer == 2L, "County Surveys (Censored)",
+  layer == 3L, "School Entry"
 )]
 
 k_df <- data.frame(
   obs_idx = seq_along(loo_res$diagnostics$pareto_k),
   pareto_k = loo_res$diagnostics$pareto_k,
   stream = factor(obs_meta$stream, levels = c(
-    "State Surveillance (NIS/School/Teen)",
-    "County 6th Grade (Censored)",
-    "School Kindergarten Entry"
+    "School Entry",
+    "State Surveys",
+    "County Surveys (Censored)"
   ))
 )
 
-ggplot(k_df, aes(x = obs_idx, y = pareto_k, color = stream)) +
-  geom_hline(yintercept = 0.5, linetype = "dashed", color = "grey50") +
-  geom_hline(yintercept = 0.7, linetype = "dotted", color = "firebrick") +
-  geom_point(size = 1.8, alpha = 0.8) +
-  scale_color_brewer(palette = "Dark2", name = "Observation Stream") +
-  labs(
-    title = "PSIS-LOO Pareto k Diagnostics",
-    subtitle = "Points above dotted line (k >= 0.7) are influential observations",
-    x = "Observation Index",
-    y = "Pareto k Estimate"
+stream_midpoints <- tapply(k_df$obs_idx, k_df$stream, mean)
+
+ggplot(k_df) +
+  # Painted background regions for k thresholds
+  annotate(
+    "rect",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = -Inf,
+    ymax = 0.5,
+    fill = "#2ca02c",
+    alpha = 0.07
   ) +
-  coord_cartesian(ylim = c(0, 1))
+  annotate(
+    "rect",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = 0.5,
+    ymax = 0.7,
+    fill = "#e6ab02",
+    alpha = 0.12
+  ) +
+  annotate(
+    "rect",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = 0.7,
+    ymax = Inf,
+    fill = "#d95f02",
+    alpha = 0.15
+  ) +
+  # Pareto k quantitative region labels
+  annotate(
+    "label",
+    x = 10L,
+    y = 0.75,
+    label = "Influential (k >= 0.7)",
+    hjust = 0,
+    size = 3.2,
+    fontface = "italic",
+    color = "#b30000",
+    fill = alpha("white", 0.6)
+  ) +
+  annotate(
+    "label",
+    x = 10L,
+    y = 0.60,
+    label = "Moderate (0.5 <= k < 0.7)",
+    hjust = 0,
+    size = 3.2,
+    fontface = "italic",
+    color = "#8c6d00",
+    fill = alpha("white", 0.6)
+  ) +
+  annotate(
+    "label",
+    x = 10L,
+    y = 0.45,
+    label = "Good (k < 0.5)",
+    hjust = 0,
+    size = 3.2,
+    fontface = "italic",
+    color = "#1b7837",
+    fill = alpha("white", 0.6)
+  ) +
+  # Observation points
+  geom_point(aes(x = obs_idx, y = pareto_k, color = stream), size = 1.4, alpha = 0.75) +
+  # Surveillance stream labels
+  annotate(
+    "label",
+    x = stream_midpoints["School Entry"],
+    y = 0.45,
+    label = "School Kindergarten Entry",
+    fontface = "bold",
+    size = 3.3,
+    color = "#1b9e77",
+    fill = alpha("white", 0.6)
+  ) +
+  annotate(
+    "label",
+    x = stream_midpoints["State Surveys"],
+    y = 0.10,
+    label = "State Surveys",
+    fontface = "bold",
+    size = 3.3,
+    color = "#d95f02",
+    angle = 90,
+    fill = alpha("white", 0.6)
+  ) +
+  annotate(
+    "label",
+    x = stream_midpoints["County Surveys (Censored)"],
+    y = 0.10,
+    label = "County Surveys (Censored)",
+    fontface = "bold",
+    size = 3.3,
+    color = "#7570b3",
+    angle = 90,
+    fill = alpha("white", 0.6)
+  ) +
+  scale_color_brewer(palette = "Dark2") +
+  scale_x_continuous(expand = c(0, 0), breaks = NULL) +
+  scale_y_continuous(
+    expand = c(0, 0),
+    limits = c(-0.20, 1.0),
+    breaks = seq(-0.2, 1.0, by = 0.1)
+  ) +
+  guides(color = "none") +
+  labs(
+    x = "Observation Index",
+    y = expression("Pareto " * hat(k) * " Diagnostic")
+  ) +
+  theme(
+    axis.ticks.x = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )
 ```
 
 ---
 
 # 2. Grouped Spatial Holdouts (Leave-Locations-Out)
 
-In public health surveillance, we often want to know: *How accurately can `imuGAP` predict coverage in a school or county where no direct survey was collected?*
+The `imuGAP` approach focuses on partitioned populations observed across hierarchical resolutions. In real-world surveillance systems, some populations may be well observed while others represent known-unknowns: for example, we might have county-level survey data and observations from *most* schools in a county, but some schools were systematically unmeasured.
 
-Because `imuGAP` embeds the full tree hierarchy in the location random effects, it can project coverage for any location in `locations` even if that location has zero observations in the training set.
+When evaluating predictive performance on unmeasured areas, standard random leave-one-out or random $K$-fold cross-validation is overly optimistic: if one observation from School A is held out while other cohorts from School A remain in the training set, the model has already learned School A's specific random effect ($\alpha_{\text{School A}}$).
 
-## Partitioning Training and Validation Sets
+To evaluate true spatial generalizability, we must leave out **entire location clusters** at once.
 
-Let's select two schools in County 1 to hold out:
+## Approximate Leave-One-School-Out Diagnostics (Grouped PSIS-LOO)
+
+Before performing exact MCMC refitting for each spatial holdout, we can evaluate whether PSIS-LOO can approximate leaving out whole schools at once.
+
+For each school $g \in \{1, \dots, G\}$, we sum the pointwise log-likelihood draws across all observations belonging to that school:
+
+$$\log p(y_{\text{school } g} \mid \theta^{(s)}) = \sum_{j \in \text{school } g} \log p(y_j \mid \theta^{(s)})$$
+
+Passing this grouped log-likelihood matrix to `{loo}` computes Pareto $\hat{k}$ diagnostics for each school:
+
+```{r run-school-loo}
+# Identify all schools (layer 3) and map to county parent
+locs <- canonicalize_locations(locations_sim)
+schools <- locs[layer == 3L, .(loc_id, parent_id)]
+setorder(schools, parent_id, loc_id)
+
+obs_meta <- canonicalize_observations(observations_sim, drop_extra = FALSE)
+ll <- log_lik(fit_sim)
+
+# Sum log-likelihood draws across observations for each school
+school_ll <- sapply(schools$loc_id, function(s) {
+  cols <- which(obs_meta$loc_id == s)
+  rowSums(ll[, cols, drop = FALSE])
+})
+
+school_loo <- loo::loo(school_ll, r_eff = rep(1, ncol(school_ll)))
+print(school_loo)
+```
+
+Let's visualize the school-level Pareto $\hat{k}$ diagnostics:
+
+```{r plot-school-loo-k, fold = TRUE, code_summary = "Show plot code", fig.cap = "School-level Pareto k diagnostics (Leave-One-School-Out)"}
+k_school_df <- data.frame(
+  school_idx = seq_len(nrow(schools)),
+  school_name = schools$loc_id,
+  county = factor(schools$parent_id),
+  pareto_k = school_loo$diagnostics$pareto_k
+)
+
+ggplot(k_school_df) +
+  # Painted background regions for k thresholds
+  annotate(
+    "rect",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = -Inf,
+    ymax = 0.5,
+    fill = "#2ca02c",
+    alpha = 0.07
+  ) +
+  annotate(
+    "rect",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = 0.5,
+    ymax = 0.7,
+    fill = "#e6ab02",
+    alpha = 0.12
+  ) +
+  annotate(
+    "rect",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = 0.7,
+    ymax = Inf,
+    fill = "#d95f02",
+    alpha = 0.15
+  ) +
+  # Pareto k quantitative region labels
+  annotate(
+    "label",
+    x = 1L,
+    y = 1.30,
+    label = "Influential (k >= 0.7)",
+    hjust = 0,
+    size = 3.2,
+    fontface = "italic",
+    color = "#b30000",
+    fill = alpha("white", 0.6)
+  ) +
+  annotate(
+    "label",
+    x = 1L,
+    y = 0.60,
+    label = "Moderate (0.5 <= k < 0.7)",
+    hjust = 0,
+    size = 3.2,
+    fontface = "italic",
+    color = "#8c6d00",
+    fill = alpha("white", 0.6)
+  ) +
+  annotate(
+    "label",
+    x = 1L,
+    y = 0.45,
+    label = "Good (k < 0.5)",
+    hjust = 0,
+    size = 3.2,
+    fontface = "italic",
+    color = "#1b7837",
+    fill = alpha("white", 0.6)
+  ) +
+  # School points
+  geom_point(aes(x = school_idx, y = pareto_k, color = county), size = 2.5, alpha = 0.85) +
+  scale_color_brewer(palette = "Dark2") +
+  scale_x_continuous(
+    expand = c(0.04, 0.04),
+    breaks = k_school_df$school_idx,
+    labels = k_school_df$school_name
+  ) +
+  scale_y_continuous(
+    expand = c(0, 0),
+    limits = c(0.30, 1.45),
+    breaks = seq(0.4, 1.4, by = 0.2)
+  ) +
+  guides(color = guide_legend(title = "County")) +
+  labs(
+    x = "School (Grouped by County)",
+    y = expression("School Pareto " * hat(k) * " Diagnostic")
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 8),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )
+```
+
+Notice that while almost all individual observations had $\hat{k} < 0.5$ in Section 1, leaving out an entire school yields $\hat{k} \ge 0.7$ for the majority of schools. Because omitting a school removes all local evidence and isolates its latent random effect ($\alpha_{\text{school}}$), the posterior distribution shifts substantially. This diagnostic confirms that spatial holdout evaluation requires exact MCMC refitting.
+
+## Systematic Spatial Partitioning with `kfold_split_grouped()`
+
+The `{loo}` package provides `kfold_split_grouped()` to partition observations into $K$ mutually exclusive folds such that all observations sharing the same grouping variable (here, `loc_id`) are assigned to the same fold:
 
 ```{r spatial-partition}
-# Identify all schools in Scruggs County
+# Systematically partition schools in Scruggs County into K = 3 spatial holdout folds
 county1_schools <- subset(locations_sim, parent_id == "Scruggs")$loc_id
-heldout_schools <- county1_schools[1:2]
+
+set.seed(42)
+school_folds <- loo::kfold_split_grouped(K = 3, x = county1_schools)
+
+# Inspect the grouped assignment
+split(county1_schools, school_folds)
+
+# Select Fold 1 schools as our validation holdout
+heldout_schools <- county1_schools[school_folds == 1]
 heldout_schools
 
-# Filter out the held-out schools from the training data
+# Filter training sets: strictly exclude held-out schools
 train_obs <- subset(observations_sim, !loc_id %in% heldout_schools)
 train_pops <- subset(populations_sim, !loc_id %in% heldout_schools)
 ```
 
 ## Fitting the Training Model & Projecting to Held-Out Locations
+
+Because `imuGAP` embeds the full tree hierarchy in the location random effects, it can project coverage for any location in `locations` even if that location has zero observations in the training set.
 
 We fit the model on the remaining data and project coverage for the held-out schools using `create_target()` and `predict()`:
 
@@ -208,7 +479,7 @@ head(pred_summary)
 
 We compare the model's out-of-sample predictions against the held-out empirical observations:
 
-```{r plot-spatial-eval, fig.cap = "Out-of-sample predictions vs. held-out school observations"}
+```{r plot-spatial-eval, fold = TRUE, code_summary = "Show plot code", fig.cap = "Out-of-sample predictions vs. held-out school observations"}
 # Extract the empirical observations for the held-out schools
 obs_eval <- subset(observations_sim, loc_id %in% heldout_schools)
 obs_eval_pops <- subset(populations_sim, obs_id %in% obs_eval$obs_id)
@@ -306,7 +577,7 @@ pred_c5_df[, .(loc_id, dose, mean, q2_5, q97_5, crps)]
 
 Finally, we visualize the temporal trajectory of predicted coverage compared to empirical points:
 
-```{r plot-longitudinal-calibration, fig.cap = "Temporal trajectory and calibration across cohorts"}
+```{r plot-longitudinal-calibration, fold = TRUE, code_summary = "Show plot code", fig.cap = "Temporal trajectory and calibration across cohorts"}
 pred_all <- summary(pred_heldout)
 
 ggplot(subset(pred_all, age == 5), aes(x = cohort, y = mean, group = interaction(loc_id, dose))) +
