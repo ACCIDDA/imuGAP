@@ -9,7 +9,7 @@ by location, cohort, age, and dose for the requested quantiles."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">imuGAP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,15 +18,18 @@ by location, cohort, age, and dose for the requested quantiles."><meta property=
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/imuGAP.html">Get started</a></li>
-<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/user_specified_layers.html">Flexible Location Layers in imuGAP</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/imuGAP.html">Getting Started</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>User Guides &amp; Deep Dives</h6></li>
+    <li><a class="dropdown-item" href="../articles/example_data.html">Included Example Data &amp; Validation</a></li>
+    <li><a class="dropdown-item" href="../articles/user_specified_layers.html">Flexible Location Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/examining_fits.html">Fit Inspection &amp; Stan Diagnostics</a></li>
   </ul></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
- <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch"><li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
@@ -61,21 +64,21 @@ by location, cohort, age, and dose for the requested quantiles.</p>
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p>an <code>imugap_predict</code> object returned by <code>[predict()]</code></p></dd>
+<dd><p>an object of class <code>imugap_predict</code> returned by <code>[predict()]</code>.</p></dd>
 
 
 <dt id="arg-probs">probs<a class="anchor" aria-label="anchor" href="#arg-probs"></a></dt>
-<dd><p>numeric vector of probabilities/quantiles to compute.
-Defaults to <code>c(0.025, 0.5, 0.975)</code>.</p></dd>
+<dd><p>numeric vector of probabilities/quantiles to compute
+(default: <code>c(0.025, 0.5, 0.975)</code>).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>additional arguments (currently ignored)</p></dd>
+<dd><p>additional arguments (currently ignored).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>data.table</code> containing target population parameters, posterior mean
+    <p>a <code>[data.table()]</code>, containing target population parameters, posterior mean
 coverage (<code>mean</code>), and the requested quantiles (e.g. <code>q2.5</code>, <code>q50</code>, <code>q97.5</code>).</p>
     </div>
 
@@ -107,11 +110,11 @@ coverage (<code>mean</code>), and the requested quantiles (e.g. <code>q2.5</code
 <span class="r-out co"><span class="r-pr">#&gt;</span>    4: 0.0000000 0.0000000 0.0000000 0.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    5: 0.0000000 0.0000000 0.0000000 0.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ---                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1004: 0.8926001 0.8744692 0.8922801 0.9114879</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1005: 0.9747594 0.9625232 0.9750352 0.9847424</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1006: 0.9771210 0.9598872 0.9779763 0.9904439</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1007: 0.8772717 0.8550566 0.8777533 0.8961703</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1008: 0.9190308 0.9105220 0.9183768 0.9277653</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1004: 0.8943781 0.8741308 0.8947423 0.9109003</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1005: 0.9757563 0.9636538 0.9753240 0.9869096</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1006: 0.9784638 0.9629755 0.9786510 0.9891350</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1007: 0.8781338 0.8588578 0.8770492 0.8970955</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1008: 0.9193504 0.9048380 0.9202304 0.9306611</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Summarize with custom quantiles</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">predict_sim</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -136,11 +139,11 @@ coverage (<code>mean</code>), and the requested quantiles (e.g. <code>q2.5</code
 <span class="r-out co"><span class="r-pr">#&gt;</span>    4: 0.0000000 0.0000000 0.0000000 0.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    5: 0.0000000 0.0000000 0.0000000 0.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ---                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1004: 0.8926001 0.8808246 0.8922801 0.9039639</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1005: 0.9747594 0.9675553 0.9750352 0.9821826</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1006: 0.9771210 0.9668028 0.9779763 0.9846868</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1007: 0.8772717 0.8640975 0.8777533 0.8901798</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1008: 0.9190308 0.9131487 0.9183768 0.9254217</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1004: 0.8943781 0.8837599 0.8947423 0.9054732</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1005: 0.9757563 0.9679561 0.9753240 0.9833429</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1006: 0.9784638 0.9705036 0.9786510 0.9855303</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1007: 0.8781338 0.8674319 0.8770492 0.8910474</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1008: 0.9193504 0.9126196 0.9202304 0.9262668</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">imuGAP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -16,15 +16,18 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/imuGAP.html">Get started</a></li>
-<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/user_specified_layers.html">Flexible Location Layers in imuGAP</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/imuGAP.html">Getting Started</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>User Guides &amp; Deep Dives</h6></li>
+    <li><a class="dropdown-item" href="../articles/example_data.html">Included Example Data &amp; Validation</a></li>
+    <li><a class="dropdown-item" href="../articles/user_specified_layers.html">Flexible Location Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/examining_fits.html">Fit Inspection &amp; Stan Diagnostics</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
- <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch"><li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
@@ -43,6 +46,42 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="imugap-030">imuGAP 0.3.0<a class="anchor" aria-label="anchor" href="#imugap-030"></a></h2>
+<div class="section level3">
+<h3 id="major-features-0-3-0">Major Features<a class="anchor" aria-label="anchor" href="#major-features-0-3-0"></a></h3>
+<ul><li>
+<strong>S3 Print Methods</strong>:
+<ul><li>Added dedicated <code><a href="../reference/print.imugap_fit.html">print.imugap_fit()</a></code> providing a structured summary of the location hierarchy, observation data distribution, and key Stan parameters (<code>beta_bs</code>, <code>sigma_layer</code>, <code>lambda_raw</code>, and <code>lp__</code>).</li>
+<li>Added <code><a href="../reference/print.imugap_predict.html">print.imugap_predict()</a></code> displaying target coverage metadata, location counts, and posterior prediction draw dimensions.</li>
+</ul></li>
+<li>
+<strong>Vignette Architecture &amp; Documentation Overhaul</strong>:
+<ul><li>Reorganized the vignette suite into focused modular articles: <code>imuGAP</code> (core workflow), <code>example_data</code> (input data schemas and structure), <code>examining_fits</code> (posterior diagnostics and inspection), and <code>user_specified_layers</code> (multi-layer and single-layer spatial partitions).</li>
+<li>Added kindergarten entry records visualization distinguishing individual schools by color and illustrating coverage dynamics across cohorts.</li>
+<li>Standardized voice, visual presentations, and documentation formatting across all articles.</li>
+</ul></li>
+<li>
+<strong>Automated Diagram Pipeline</strong>:
+<ul><li>Added automated Mermaid diagram compilation pipeline (<code>just diagrams</code>) generating SVG and PDF visual assets with dark-mode compatibility.</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="performance--stan-model-improvements-0-3-0">Performance &amp; Stan Model Improvements<a class="anchor" aria-label="anchor" href="#performance--stan-model-improvements-0-3-0"></a></h3>
+<ul><li>
+<strong>Stan Computation Optimization</strong>:
+<ul><li>Optimized dose transitions, linear predictor broadcasting, and blocked QR orthonormal basis calculations.</li>
+<li>Decoupled observation likelihood evaluation into uncensored, right-censored, and left-censored streams for vectorized evaluation.</li>
+<li>Added population-scaled hierarchical layer offset shrinkage with standardized QR basis orientation.</li>
+<li>Refactored Stan initial value generation into static helper <code>make_init_fn()</code>.</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="infrastructure--maintenance-0-3-0">Infrastructure &amp; Maintenance<a class="anchor" aria-label="anchor" href="#infrastructure--maintenance-0-3-0"></a></h3>
+<ul><li>Streamlined developer and CI workflows via authoritative <code>just</code> recipes (<code>just lint</code>, <code>just docs</code>, <code>just diagrams</code>, <code>just data-fit</code>).</li>
+<li>Decoupled <code>lintr</code> package execution from <code>devtools</code> in CI linting workflows.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="imugap-020">imuGAP 0.2.0<a class="anchor" aria-label="anchor" href="#imugap-020"></a></h2><p class="text-muted">CRAN release: 2026-09-02</p>
 <div class="section level3">
 <h3 id="major-features-0-2-0">Major Features<a class="anchor" aria-label="anchor" href="#major-features-0-2-0"></a></h3>
@@ -50,7 +89,7 @@
 <strong>Arbitrary Hierarchy Layer Depth</strong>:
 <ul><li>
 <code><a href="../reference/sampling.html">sampling()</a></code>, <code><a href="../reference/canonicalize.html">canonicalize_locations()</a></code>, and underlying Stan models now support user-defined hierarchical location structures of arbitrary depth (e.g. 1-layer statewide, 2-layer state-county, 3-layer state-county-school, or deeper regional partitions).</li>
-<li>Added <code><a href="../reference/assemble_layer_data.html">assemble_layer_data()</a></code> helper to construct and validate hierarchical metadata, bounds, and parent mappings.</li>
+<li>Added <code>assemble_layer_data()</code> helper to construct and validate hierarchical metadata, bounds, and parent mappings.</li>
 <li>Added dedicated single-layer model <code>impute_school_coverage_process_v6_single_layer</code> with automatic dispatch when single-layer inputs are supplied.</li>
 <li>Added a new vignette (<code>user_specified_layers</code>) demonstrating 1-layer, 2-layer, and 3-layer model estimation and prediction workflows.</li>
 </ul></li>
@@ -75,7 +114,7 @@
 <ul><li>
 <strong>Location Hierarchy Invariant</strong>: Enforced structural validation ensuring location nodes have either 0 offspring (leaf) or <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≥</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">\ge 2</annotation></semantics></math> offspring (preventing single-child degenerate chains).</li>
 <li>
-<strong>Error Handling &amp; Assertions</strong>: Standardized assertion messages across all functions using module-level <code>ERR_*</code> format string constants and helper assertion functions <code><a href="../reference/stop_fmt_if.html">stop_fmt_if()</a></code> and <code><a href="../reference/warn_fmt_if.html">warn_fmt_if()</a></code>.</li>
+<strong>Error Handling &amp; Assertions</strong>: Standardized assertion messages across all functions using module-level <code>ERR_*</code> format string constants and helper assertion functions <code>stop_fmt_if()</code> and <code>warn_fmt_if()</code>.</li>
 <li>
 <strong>Validation</strong>: Added validation against <code>NA</code> weights in population and target specifications.</li>
 <li>

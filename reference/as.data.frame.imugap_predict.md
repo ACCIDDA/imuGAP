@@ -15,7 +15,7 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
 
 - x:
 
-  an `imugap_predict` object returned by `[predict()]`.
+  an object of class `imugap_predict` returned by `[predict()]`.
 
 - row.names:
 
@@ -23,8 +23,8 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
 
 - optional:
 
-  logical. If `TRUE`, setting row names and converting column names is
-  optional.
+  logical scalar; make setting row and column names optional? (default:
+  `FALSE`).
 
 - ...:
 
@@ -32,8 +32,8 @@ as.data.frame(x, row.names = NULL, optional = FALSE, ...)
 
 ## Value
 
-A `data.table` with columns `iteration`, `chain`, the target metadata
-columns, and `coverage`.
+a `[data.table()]`, with columns `iteration`, `chain`, the target
+metadata columns, and `coverage`.
 
 ## Examples
 

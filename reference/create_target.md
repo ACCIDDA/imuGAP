@@ -28,23 +28,24 @@ create_target(
 
 - age:
 
-  vector of ages for which to predict coverage, consistent with
-  `[canonicalize_populations()]`.
+  integer or numeric vector of ages for which to predict coverage,
+  consistent with `[canonicalize_populations()]`.
 
 - cohort:
 
-  vector of cohorts for which to predict coverage, consistent with
-  `[canonicalize_populations()]`.
+  integer or numeric vector of cohorts for which to predict coverage,
+  consistent with `[canonicalize_populations()]`.
 
 - dose:
 
-  vector of doses for which to predict coverage, consistent with
+  integer vector of doses for which to predict coverage, consistent with
   `[canonicalize_observations()]`.
 
 - mode:
 
-  one of `"error"` (default), `"enumerate"`, `"recycle"`, or
-  `"snapshot"`, controlling how the vector inputs combine:
+  character string specifying how vector inputs combine (default:
+  `"error"`). One of `"error"`, `"enumerate"`, `"recycle"`, or
+  `"snapshot"`:
 
   - `"error"`: all vector inputs must have the same length.
 
@@ -62,8 +63,8 @@ create_target(
 
 ## Value
 
-a `data.table` target grid with columns `obs_c_id`, `loc_id`, `age`,
-`cohort`, `dose`, and `weight`.
+a `[data.table()]`, target grid with columns `obs_c_id`, `loc_id`,
+`age`, `cohort`, `dose`, and `weight`.
 
 ## See also
 

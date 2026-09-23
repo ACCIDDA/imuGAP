@@ -20,7 +20,8 @@ sampling(
 
 - observations:
 
-  a `[data.frame()]`, the observed data, with at least three columns:
+  a `[data.frame()]` containing observed data, with at least three
+  columns:
 
   - an `obs_id` column; any type, as long as unique, non-NA
 
@@ -28,14 +29,14 @@ sampling(
     vaccinated individuals
 
   - a `sample_n` column; positive integers, the number of individuals
-    sampled, must be greater than or equal to "positive"
+    sampled, must be greater than or equal to `positive`
 
-  - optionally, a `censored` column; numeric, NA (uncensored) or 1
-    (right-censored); if not present, will be assumed NA
+  - optionally, a `censored` column; numeric, `NA` (uncensored) or 1
+    (right-censored); if not present, will be assumed `NA`
 
 - populations:
 
-  a `[data.frame()]`, the observation meta data, with columns
+  a `[data.frame()]` containing observation metadata, with columns:
 
   - `obs_id`, any type; the observation the row concerns (i.e. id shared
     with an observations data object)
@@ -57,8 +58,8 @@ sampling(
 
 - locations:
 
-  a `[data.frame()]`, with columns `loc_id` and `parent_id`, of the same
-  type. See Details for restrictions.
+  a `[data.frame()]` with columns `loc_id` and `parent_id` of matching
+  types. See Details for restrictions.
 
 - imugap_opts:
 
@@ -74,7 +75,7 @@ sampling(
 
 ## Value
 
-An object of class `imugap_fit` wrapping the raw `stanfit` (or
+an object of class `imugap_fit`, wrapping the raw `stanfit` (or
 `CmdStanMCMC`) object along with model settings and dataset metadata.
 
 ## Details

@@ -11,7 +11,7 @@ doses."><meta property="og:image" content="https://accidda.github.io/imuGAP/logo
 
     <a class="navbar-brand me-2" href="../index.html">imuGAP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,15 +20,18 @@ doses."><meta property="og:image" content="https://accidda.github.io/imuGAP/logo
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/imuGAP.html">Get started</a></li>
-<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/user_specified_layers.html">Flexible Location Layers in imuGAP</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/imuGAP.html">Getting Started</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>User Guides &amp; Deep Dives</h6></li>
+    <li><a class="dropdown-item" href="../articles/example_data.html">Included Example Data &amp; Validation</a></li>
+    <li><a class="dropdown-item" href="../articles/user_specified_layers.html">Flexible Location Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/examining_fits.html">Fit Inspection &amp; Stan Diagnostics</a></li>
   </ul></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
- <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch"><li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
@@ -69,20 +72,19 @@ doses.</p>
 
 
 <dl><dt id="arg-observations">observations<a class="anchor" aria-label="anchor" href="#arg-observations"></a></dt>
-<dd><p>a <code>[data.frame()]</code>, the observed data, with at least
+<dd><p>a <code>[data.frame()]</code> containing observed data, with at least
 three columns:</p><ul><li><p>an <code>obs_id</code> column; any type, as long as unique, non-NA</p></li>
 <li><p>a <code>positive</code> column; non-negative integers, the observed number of
 vaccinated individuals</p></li>
 <li><p>a <code>sample_n</code> column; positive integers, the number of individuals
-sampled, must be greater than or equal to "positive"</p></li>
-<li><p>optionally, a <code>censored</code> column; numeric, NA (uncensored) or 1
-(right-censored); if not present, will be assumed NA</p></li>
+sampled, must be greater than or equal to <code>positive</code></p></li>
+<li><p>optionally, a <code>censored</code> column; numeric, <code>NA</code> (uncensored) or 1
+(right-censored); if not present, will be assumed <code>NA</code></p></li>
 </ul></dd>
 
 
 <dt id="arg-populations">populations<a class="anchor" aria-label="anchor" href="#arg-populations"></a></dt>
-<dd><p>a <code>[data.frame()]</code>, the observation meta data, with
-columns</p><ul><li><p><code>obs_id</code>, any type; the observation the row concerns (i.e. id shared with
+<dd><p>a <code>[data.frame()]</code> containing observation metadata, with columns:</p><ul><li><p><code>obs_id</code>, any type; the observation the row concerns (i.e. id shared with
 an observations data object)</p></li>
 <li><p><code>loc_id</code>, any type; the location the row concerns (i.e. id shared with a
 locations data object)</p></li>
@@ -95,8 +97,8 @@ observation. Optional if each population row has a unique <code>obs_id</code>.</
 
 
 <dt id="arg-locations">locations<a class="anchor" aria-label="anchor" href="#arg-locations"></a></dt>
-<dd><p>a <code>[data.frame()]</code>, with columns <code>loc_id</code> and <code>parent_id</code>,
-of the same type. See Details for restrictions.</p></dd>
+<dd><p>a <code>[data.frame()]</code> with columns <code>loc_id</code> and <code>parent_id</code>
+of matching types. See Details for restrictions.</p></dd>
 
 
 <dt id="arg-imugap-opts">imugap_opts<a class="anchor" aria-label="anchor" href="#arg-imugap-opts"></a></dt>
@@ -113,7 +115,7 @@ uses <code>threading = TRUE</code>.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>imugap_fit</code> wrapping the raw <code>stanfit</code> (or
+    <p>an object of class <code>imugap_fit</code>, wrapping the raw <code>stanfit</code> (or
 <code>CmdStanMCMC</code>) object along with model settings and dataset metadata.</p>
     </div>
     <div class="section level2">

@@ -18,7 +18,8 @@ canonicalize_populations(
   locations,
   max_cohort,
   max_age,
-  max_dose = 2L
+  max_dose,
+  imugap_opts
 )
 ```
 
@@ -26,12 +27,13 @@ canonicalize_populations(
 
 - locations:
 
-  a `[data.frame()]`, with columns `loc_id` and `parent_id`, of the same
-  type. See Details for restrictions.
+  a `[data.frame()]` with columns `loc_id` and `parent_id` of matching
+  types. See Details for restrictions.
 
 - observations:
 
-  a `[data.frame()]`, the observed data, with at least three columns:
+  a `[data.frame()]` containing observed data, with at least three
+  columns:
 
   - an `obs_id` column; any type, as long as unique, non-NA
 
@@ -39,18 +41,18 @@ canonicalize_populations(
     vaccinated individuals
 
   - a `sample_n` column; positive integers, the number of individuals
-    sampled, must be greater than or equal to "positive"
+    sampled, must be greater than or equal to `positive`
 
-  - optionally, a `censored` column; numeric, NA (uncensored) or 1
-    (right-censored); if not present, will be assumed NA
+  - optionally, a `censored` column; numeric, `NA` (uncensored) or 1
+    (right-censored); if not present, will be assumed `NA`
 
 - drop_extra:
 
-  a logical scalar; drop extraneous columns? (default: yes)
+  logical scalar; drop extraneous columns? (default: `TRUE`).
 
 - populations:
 
-  a `[data.frame()]`, the observation meta data, with columns
+  a `[data.frame()]` containing observation metadata, with columns:
 
   - `obs_id`, any type; the observation the row concerns (i.e. id shared
     with an observations data object)
@@ -72,19 +74,24 @@ canonicalize_populations(
 
 - max_cohort:
 
-  if present, what is the maximum cohort that should be present?
+  optional integer scalar; maximum birth cohort permitted.
 
 - max_age:
 
-  if present, what is the maximum age that should be present?
+  optional integer scalar; maximum age permitted.
 
 - max_dose:
 
-  maximum dose number to allow (default: 2L)
+  optional integer scalar; maximum dose number permitted.
+
+- imugap_opts:
+
+  optional named list of `imuGAP` model options, created by
+  [`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md).
 
 ## Value
 
-`canonicalize_locations` returns a `data.table`, with:
+a `[data.table()]`, with:
 
 - `loc_id`, `parent_id` columns as originally supplied, possibly
   reordered
@@ -98,8 +105,7 @@ canonicalize_populations(
 - `layer_bound` column, an integer starting from 1 by layer. This
   provides index slice information used in the stan model.
 
-`canonicalize_observations` returns a canonical observation object, a
-`[data.table()]` with:
+a `[data.table()]`, canonical observation object with:
 
 - an `obs_c_id` column, an integer sequence from 1; the order
   observations will be passed to estimation
@@ -108,11 +114,11 @@ canonicalize_populations(
 
 - `positive` and `sample_n` columns, possibly reordered
 
-- a "censored" column; all NA, if not present in original `observations`
-  argument
+- a `censored` column; all `NA`, if not present in original
+  `observations` argument
 
-`canonicalize_populations` returns a canonical populations object,
-mirroring the input `populations`, with the following updates:
+a `[data.table()]`, canonical populations object mirroring the input
+`populations` with:
 
 - `obs_c_id`, the observation id the row concerns, canonicalized to
   match the canonical observation ids

@@ -103,6 +103,12 @@ particular place combine the impact of all enclosing locations.
 - [`predict_sim_2layer`](https://accidda.github.io/imuGAP/reference/predict_sim_2layer.md)
   : Example Coverage Predictions (2 Layers)
 
+- [`print(`*`<imugap_fit>`*`)`](https://accidda.github.io/imuGAP/reference/print.imugap_fit.md)
+  : Print an imuGAP model fit
+
+- [`print(`*`<imugap_predict>`*`)`](https://accidda.github.io/imuGAP/reference/print.imugap_predict.md)
+  : Print coverage predictions
+
 - [`sampling()`](https://accidda.github.io/imuGAP/reference/sampling.md)
   :
 
@@ -127,7 +133,11 @@ particular place combine the impact of all enclosing locations.
 
 ### All vignettes
 
-- [imuGAP, Immunity: Geographic & Age-based
-  Projection](https://accidda.github.io/imuGAP/articles/imuGAP.md):
+- [Fit Inspection and Stan
+  Diagnostics](https://accidda.github.io/imuGAP/articles/examining_fits.md):
+- [Included Example Datasets and Data
+  Validation](https://accidda.github.io/imuGAP/articles/example_data.md):
+- [Getting Started with
+  imuGAP](https://accidda.github.io/imuGAP/articles/imuGAP.md):
 - [Flexible Location Layers in
   imuGAP](https://accidda.github.io/imuGAP/articles/user_specified_layers.md):

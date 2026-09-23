@@ -1,5 +1,54 @@
 # Changelog
 
+## imuGAP 0.3.0
+
+### Major Features
+
+- **S3 Print Methods**:
+  - Added dedicated
+    [`print.imugap_fit()`](https://accidda.github.io/imuGAP/reference/print.imugap_fit.md)
+    providing a structured summary of the location hierarchy,
+    observation data distribution, and key Stan parameters (`beta_bs`,
+    `sigma_layer`, `lambda_raw`, and `lp__`).
+  - Added
+    [`print.imugap_predict()`](https://accidda.github.io/imuGAP/reference/print.imugap_predict.md)
+    displaying target coverage metadata, location counts, and posterior
+    prediction draw dimensions.
+- **Vignette Architecture & Documentation Overhaul**:
+  - Reorganized the vignette suite into focused modular articles:
+    `imuGAP` (core workflow), `example_data` (input data schemas and
+    structure), `examining_fits` (posterior diagnostics and inspection),
+    and `user_specified_layers` (multi-layer and single-layer spatial
+    partitions).
+  - Added kindergarten entry records visualization distinguishing
+    individual schools by color and illustrating coverage dynamics
+    across cohorts.
+  - Standardized voice, visual presentations, and documentation
+    formatting across all articles.
+- **Automated Diagram Pipeline**:
+  - Added automated Mermaid diagram compilation pipeline
+    (`just diagrams`) generating SVG and PDF visual assets with
+    dark-mode compatibility.
+
+### Performance & Stan Model Improvements
+
+- **Stan Computation Optimization**:
+  - Optimized dose transitions, linear predictor broadcasting, and
+    blocked QR orthonormal basis calculations.
+  - Decoupled observation likelihood evaluation into uncensored,
+    right-censored, and left-censored streams for vectorized evaluation.
+  - Added population-scaled hierarchical layer offset shrinkage with
+    standardized QR basis orientation.
+  - Refactored Stan initial value generation into static helper
+    `make_init_fn()`.
+
+### Infrastructure & Maintenance
+
+- Streamlined developer and CI workflows via authoritative `just`
+  recipes (`just lint`, `just docs`, `just diagrams`, `just data-fit`).
+- Decoupled `lintr` package execution from `devtools` in CI linting
+  workflows.
+
 ## imuGAP 0.2.0
 
 CRAN release: 2026-09-02
@@ -13,10 +62,8 @@ CRAN release: 2026-09-02
     location structures of arbitrary depth (e.g. 1-layer statewide,
     2-layer state-county, 3-layer state-county-school, or deeper
     regional partitions).
-  - Added
-    [`assemble_layer_data()`](https://accidda.github.io/imuGAP/reference/assemble_layer_data.md)
-    helper to construct and validate hierarchical metadata, bounds, and
-    parent mappings.
+  - Added `assemble_layer_data()` helper to construct and validate
+    hierarchical metadata, bounds, and parent mappings.
   - Added dedicated single-layer model
     `impute_school_coverage_process_v6_single_layer` with automatic
     dispatch when single-layer inputs are supplied.
@@ -51,10 +98,8 @@ CRAN release: 2026-09-02
   offspring (preventing single-child degenerate chains).
 - **Error Handling & Assertions**: Standardized assertion messages
   across all functions using module-level `ERR_*` format string
-  constants and helper assertion functions
-  [`stop_fmt_if()`](https://accidda.github.io/imuGAP/reference/stop_fmt_if.md)
-  and
-  [`warn_fmt_if()`](https://accidda.github.io/imuGAP/reference/warn_fmt_if.md).
+  constants and helper assertion functions `stop_fmt_if()` and
+  `warn_fmt_if()`.
 - **Validation**: Added validation against `NA` weights in population
   and target specifications.
 - **Documentation Examples & Check Times**: Applied combined

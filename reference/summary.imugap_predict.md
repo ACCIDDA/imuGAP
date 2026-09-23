@@ -14,21 +14,21 @@ summary(object, probs = c(0.025, 0.5, 0.975), ...)
 
 - object:
 
-  an `imugap_predict` object returned by `[predict()]`
+  an object of class `imugap_predict` returned by `[predict()]`.
 
 - probs:
 
-  numeric vector of probabilities/quantiles to compute. Defaults to
-  `c(0.025, 0.5, 0.975)`.
+  numeric vector of probabilities/quantiles to compute (default:
+  `c(0.025, 0.5, 0.975)`).
 
 - ...:
 
-  additional arguments (currently ignored)
+  additional arguments (currently ignored).
 
 ## Value
 
-A `data.table` containing target population parameters, posterior mean
-coverage (`mean`), and the requested quantiles (e.g. `q2.5`, `q50`,
+a `[data.table()]`, containing target population parameters, posterior
+mean coverage (`mean`), and the requested quantiles (e.g. `q2.5`, `q50`,
 `q97.5`).
 
 ## Examples
@@ -60,11 +60,11 @@ summary(predict_sim)
 #>    4: 0.0000000 0.0000000 0.0000000 0.0000000
 #>    5: 0.0000000 0.0000000 0.0000000 0.0000000
 #>   ---                                        
-#> 1004: 0.8926001 0.8744692 0.8922801 0.9114879
-#> 1005: 0.9747594 0.9625232 0.9750352 0.9847424
-#> 1006: 0.9771210 0.9598872 0.9779763 0.9904439
-#> 1007: 0.8772717 0.8550566 0.8777533 0.8961703
-#> 1008: 0.9190308 0.9105220 0.9183768 0.9277653
+#> 1004: 0.8943781 0.8741308 0.8947423 0.9109003
+#> 1005: 0.9757563 0.9636538 0.9753240 0.9869096
+#> 1006: 0.9784638 0.9629755 0.9786510 0.9891350
+#> 1007: 0.8781338 0.8588578 0.8770492 0.8970955
+#> 1008: 0.9193504 0.9048380 0.9202304 0.9306611
 
 # Summarize with custom quantiles
 summary(predict_sim, probs = c(0.1, 0.5, 0.9))
@@ -89,9 +89,9 @@ summary(predict_sim, probs = c(0.1, 0.5, 0.9))
 #>    4: 0.0000000 0.0000000 0.0000000 0.0000000
 #>    5: 0.0000000 0.0000000 0.0000000 0.0000000
 #>   ---                                        
-#> 1004: 0.8926001 0.8808246 0.8922801 0.9039639
-#> 1005: 0.9747594 0.9675553 0.9750352 0.9821826
-#> 1006: 0.9771210 0.9668028 0.9779763 0.9846868
-#> 1007: 0.8772717 0.8640975 0.8777533 0.8901798
-#> 1008: 0.9190308 0.9131487 0.9183768 0.9254217
+#> 1004: 0.8943781 0.8837599 0.8947423 0.9054732
+#> 1005: 0.9757563 0.9679561 0.9753240 0.9833429
+#> 1006: 0.9784638 0.9705036 0.9786510 0.9855303
+#> 1007: 0.8781338 0.8674319 0.8770492 0.8910474
+#> 1008: 0.9193504 0.9126196 0.9202304 0.9262668
 ```

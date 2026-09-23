@@ -11,7 +11,7 @@ by the [sampling()] sampler and the underlying Stan models."><meta property="og:
 
     <a class="navbar-brand me-2" href="../index.html">imuGAP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,15 +20,18 @@ by the [sampling()] sampler and the underlying Stan models."><meta property="og:
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/imuGAP.html">Get started</a></li>
-<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/user_specified_layers.html">Flexible Location Layers in imuGAP</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/imuGAP.html">Getting Started</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>User Guides &amp; Deep Dives</h6></li>
+    <li><a class="dropdown-item" href="../articles/example_data.html">Included Example Data &amp; Validation</a></li>
+    <li><a class="dropdown-item" href="../articles/user_specified_layers.html">Flexible Location Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/examining_fits.html">Fit Inspection &amp; Stan Diagnostics</a></li>
   </ul></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
- <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch"><li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
@@ -65,7 +68,8 @@ by the <code>[sampling()]</code> sampler and the underlying Stan models.</p>
 <span>  <span class="va">locations</span>,</span>
 <span>  <span class="va">max_cohort</span>,</span>
 <span>  <span class="va">max_age</span>,</span>
-<span>  max_dose <span class="op">=</span> <span class="fl">2L</span></span>
+<span>  <span class="va">max_dose</span>,</span>
+<span>  <span class="va">imugap_opts</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -74,29 +78,28 @@ by the <code>[sampling()]</code> sampler and the underlying Stan models.</p>
 
 
 <dl><dt id="arg-locations">locations<a class="anchor" aria-label="anchor" href="#arg-locations"></a></dt>
-<dd><p>a <code>[data.frame()]</code>, with columns <code>loc_id</code> and <code>parent_id</code>,
-of the same type. See Details for restrictions.</p></dd>
+<dd><p>a <code>[data.frame()]</code> with columns <code>loc_id</code> and <code>parent_id</code>
+of matching types. See Details for restrictions.</p></dd>
 
 
 <dt id="arg-observations">observations<a class="anchor" aria-label="anchor" href="#arg-observations"></a></dt>
-<dd><p>a <code>[data.frame()]</code>, the observed data, with at least
+<dd><p>a <code>[data.frame()]</code> containing observed data, with at least
 three columns:</p><ul><li><p>an <code>obs_id</code> column; any type, as long as unique, non-NA</p></li>
 <li><p>a <code>positive</code> column; non-negative integers, the observed number of
 vaccinated individuals</p></li>
 <li><p>a <code>sample_n</code> column; positive integers, the number of individuals
-sampled, must be greater than or equal to "positive"</p></li>
-<li><p>optionally, a <code>censored</code> column; numeric, NA (uncensored) or 1
-(right-censored); if not present, will be assumed NA</p></li>
+sampled, must be greater than or equal to <code>positive</code></p></li>
+<li><p>optionally, a <code>censored</code> column; numeric, <code>NA</code> (uncensored) or 1
+(right-censored); if not present, will be assumed <code>NA</code></p></li>
 </ul></dd>
 
 
 <dt id="arg-drop-extra">drop_extra<a class="anchor" aria-label="anchor" href="#arg-drop-extra"></a></dt>
-<dd><p>a logical scalar; drop extraneous columns? (default: yes)</p></dd>
+<dd><p>logical scalar; drop extraneous columns? (default: <code>TRUE</code>).</p></dd>
 
 
 <dt id="arg-populations">populations<a class="anchor" aria-label="anchor" href="#arg-populations"></a></dt>
-<dd><p>a <code>[data.frame()]</code>, the observation meta data, with
-columns</p><ul><li><p><code>obs_id</code>, any type; the observation the row concerns (i.e. id shared with
+<dd><p>a <code>[data.frame()]</code> containing observation metadata, with columns:</p><ul><li><p><code>obs_id</code>, any type; the observation the row concerns (i.e. id shared with
 an observations data object)</p></li>
 <li><p><code>loc_id</code>, any type; the location the row concerns (i.e. id shared with a
 locations data object)</p></li>
@@ -109,37 +112,38 @@ observation. Optional if each population row has a unique <code>obs_id</code>.</
 
 
 <dt id="arg-max-cohort">max_cohort<a class="anchor" aria-label="anchor" href="#arg-max-cohort"></a></dt>
-<dd><p>if present, what is the maximum cohort that should be
-present?</p></dd>
+<dd><p>optional integer scalar; maximum birth cohort permitted.</p></dd>
 
 
 <dt id="arg-max-age">max_age<a class="anchor" aria-label="anchor" href="#arg-max-age"></a></dt>
-<dd><p>if present, what is the maximum age that should be present?</p></dd>
+<dd><p>optional integer scalar; maximum age permitted.</p></dd>
 
 
 <dt id="arg-max-dose">max_dose<a class="anchor" aria-label="anchor" href="#arg-max-dose"></a></dt>
-<dd><p>maximum dose number to allow (default: 2L)</p></dd>
+<dd><p>optional integer scalar; maximum dose number permitted.</p></dd>
+
+
+<dt id="arg-imugap-opts">imugap_opts<a class="anchor" aria-label="anchor" href="#arg-imugap-opts"></a></dt>
+<dd><p>optional named list of <code>imuGAP</code> model options, created by
+<code><a href="imugap_options.html">imugap_options()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>canonicalize_locations</code> returns a <code>data.table</code>, with:</p><ul><li><p><code>loc_id</code>, <code>parent_id</code> columns as originally supplied, possibly reordered</p></li>
+    <p>a <code>[data.table()]</code>, with:</p><ul><li><p><code>loc_id</code>, <code>parent_id</code> columns as originally supplied, possibly reordered</p></li>
 <li><p><code>loc_c_id</code>, <code>loc_cp_id</code> columns, canonicalized id/parent_id columns,
 representing the order that will be used in the sampler</p></li>
 <li><p><code>layer</code> column, an integer from 1 (root), 2 (root children),
 3 (grandchildren), &amp;c</p></li>
 <li><p><code>layer_bound</code> column, an integer starting from 1 by layer. This provides
 index slice information used in the stan model.</p></li>
-</ul><p><code>canonicalize_observations</code> returns a canonical observation object,
-a <code>[data.table()]</code> with:</p><ul><li><p>an <code>obs_c_id</code> column, an integer sequence from 1; the order observations
+</ul><p>a <code>[data.table()]</code>, canonical observation object with:</p><ul><li><p>an <code>obs_c_id</code> column, an integer sequence from 1; the order observations
 will be passed to estimation</p></li>
 <li><p>the original <code>obs_id</code> column, possibly reordered</p></li>
 <li><p><code>positive</code> and <code>sample_n</code> columns, possibly reordered</p></li>
-<li><p>a "censored" column; all NA, if not present in original <code>observations</code>
+<li><p>a <code>censored</code> column; all <code>NA</code>, if not present in original <code>observations</code>
 argument</p></li>
-</ul><p><code>canonicalize_populations</code> returns a canonical populations object,
-mirroring the input <code>populations</code>,
-with the following updates:</p><ul><li><p><code>obs_c_id</code>, the observation id the row concerns, canonicalized to match
+</ul><p>a <code>[data.table()]</code>, canonical populations object mirroring the input <code>populations</code> with:</p><ul><li><p><code>obs_c_id</code>, the observation id the row concerns, canonicalized to match
 the canonical observation ids</p></li>
 <li><p><code>loc_c_id</code>, the location id the row concerns, canonicalized to match</p></li>
 <li><p>reordered to <code>obs_c_id</code> order</p></li>

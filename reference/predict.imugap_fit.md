@@ -14,12 +14,11 @@ predict(object, target, posterior_size = NULL, ...)
 
 - object:
 
-  an `imugap_fit` object returned by
-  [`sampling()`](https://accidda.github.io/imuGAP/reference/sampling.md)
+  an object of class `imugap_fit` returned by `[sampling()]`.
 
 - target:
 
-  a `[data.frame()]` of target populations to predict for
+  a `[data.frame()]` of target populations to predict for.
 
 - posterior_size:
 
@@ -27,15 +26,15 @@ predict(object, target, posterior_size = NULL, ...)
   many draws, taken from the end of each chain (the converged tail).
   Must be a multiple of the number of chains; a value that isn't is
   rounded up to the next multiple, with a warning. Must not exceed the
-  number of draws in the fit. Defaults to `NULL`, which uses every draw.
+  number of draws in the fit (default: `NULL`, which uses every draw).
 
 - ...:
 
-  additional arguments (currently ignored)
+  additional arguments (currently ignored).
 
 ## Value
 
-An object of class `imugap_predict` wrapping the 3D array of predicted
+an object of class `imugap_predict`, wrapping the 3D array of predicted
 draws and the canonical target dataset.
 
 ## Details

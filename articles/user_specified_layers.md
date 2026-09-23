@@ -1,33 +1,33 @@
 # Flexible Location Layers in imuGAP
 
-## Overview
+### Overview
 
-The `imuGAP` package models vaccine coverage on nested population
-partitions - e.g. a state divided into counties divided into schools. A
-key strength of `imuGAP` is support for **flexible location layers**:
-you can change the layer depth based on the location hierarchy you
-provide. So, for example if you provide only the most aggregated
-population (e.g. state-wide data), the model will have 1 layer, but if
-you provide sub-populations (e.g. counties) there will be 2 layers. If
-you also provide sub-sub-populations (e.g. schools), there will be 3
-layers, and so on.
+The `imuGAP` package estimates the underlying vaccination process model
+across nested population hierarchies (e.g. a state divided into
+counties, counties into schools) and uses the fitted model to predict
+coverage across resolution levels. A key strength of `imuGAP` is support
+for **flexible location layers**: the process model dynamically scales
+its hierarchical depth to match the population structure you provide. If
+you supply only aggregate state-wide data, the model estimates a 1-layer
+structure; adding counties expands it to 2 layers; adding schools
+creates a 3-layer hierarchy, and so forth.
 
-Whatever the data resolution, `imuGAP` canonicalizes the location tree,
-maps parent-child relationships across layers, and estimates location
-offset parameters for each resolution level (beyond fully aggregated
-populations).
+Whatever the data resolution, `imuGAP` canonicalizes the population
+tree, maps parent-child relationships across layers, and estimates
+hierarchical location offset parameters for each resolution level
+(beyond fully aggregated populations).
 
 This vignette demonstrates:
 
 1.  Exploring arbitrary location hierarchies and verifying layer depths.
 2.  Constructing models for 1-layer (state-level only), 2-layer (state
     and county), and 3-layer (state, county, and school) datasets.
-3.  Fitting and comparing parameter recovery and coverage trajectories
-    across different layer resolutions.
+3.  Fitting and comparing parameter recovery and projected cohort
+    trajectories across different layer resolutions.
 
 ------------------------------------------------------------------------
 
-## The Example Location Hierarchy
+### The Example Location Hierarchy
 
 Let’s first inspect the full hierarchy available in `locations_sim`:
 
@@ -61,7 +61,7 @@ locs_2layer <- locs_3layer[layer <= 2] # state and county only
 locs_1layer <- locs_3layer[layer <= 1] # state only
 ```
 
-Similarly, we filter our observations and associated metadata
+Similarly, you can filter observations and associated metadata
 (i.e. populations) to match each location resolution:
 
 ``` r
@@ -99,7 +99,7 @@ stopifnot(!pops_1layer[obs_id %in% obs_1layer$obs_id, any(!loc_id %in% locs_1lay
 
 ------------------------------------------------------------------------
 
-## 2. Fitting the Model
+### 2. Fitting the Model
 
 To fit the model at different resolutions looks basically the same: just
 use 1-layer, 2-layer, or 3-layer location inputs. Note that no other
@@ -124,13 +124,48 @@ To load precomputed results, get the following items from package data:
 data("fit_sim", package = "imuGAP")
 data("fit_sim_2layer", package = "imuGAP")
 data("fit_sim_1layer", package = "imuGAP")
+
+fit_sim_2layer
+#> An imuGAP model fit (`imugap_fit`):
+#>   Hierarchy:    4 locations across 2 layers (root: 'State')
+#>   Observations: 841 total (775 uncensored, 66 right-censored)
+#> 
+#> Inference for Stan model: impute_school_coverage_process_v6.
+#> 4 chains, each with iter=1000; warmup=500; thin=1; 
+#> post-warmup draws per chain=500, total post-warmup draws=2000.
+#> 
+#>                     mean se_mean   sd      2.5%       25%       50%       75%
+#> beta_bs[1]         -1.68    0.00 0.03     -1.75     -1.70     -1.68     -1.66
+#> beta_bs[2]         -1.90    0.00 0.06     -2.01     -1.93     -1.90     -1.86
+#> beta_bs[3]         -2.48    0.00 0.09     -2.66     -2.54     -2.48     -2.42
+#> beta_bs[4]         -3.24    0.00 0.11     -3.45     -3.31     -3.24     -3.17
+#> beta_bs[5]         -2.63    0.00 0.10     -2.82     -2.69     -2.62     -2.56
+#> sigma_layer[1]      0.66    0.01 0.31      0.26      0.43      0.58      0.82
+#> lambda_raw[1]       1.00    0.00 0.03      0.95      0.98      1.00      1.02
+#> lambda_raw[2]       1.01    0.00 0.01      0.98      1.00      1.01      1.02
+#> lp__           -79930.65    0.10 2.41 -79936.35 -79931.94 -79930.28 -79928.96
+#>                    97.5% n_eff Rhat
+#> beta_bs[1]         -1.62  1153    1
+#> beta_bs[2]         -1.79   886    1
+#> beta_bs[3]         -2.32   814    1
+#> beta_bs[4]         -3.02   852    1
+#> beta_bs[5]         -2.45  1019    1
+#> sigma_layer[1]      1.44   661    1
+#> lambda_raw[1]       1.05  1088    1
+#> lambda_raw[2]       1.04   877    1
+#> lp__           -79927.06   607    1
+#> 
+#> Samples were drawn using NUTS(diag_e) at Wed Sep 23 01:08:36 2026.
+#> For each parameter, n_eff is a crude measure of effective sample size,
+#> and Rhat is the potential scale reduction factor on split chains (at 
+#> convergence, Rhat=1).
 ```
 
-## 3. Using the Fits to Predict Coverage
+### 3. Using the Fits to Predict Coverage
 
 Predicting coverage from fitted models involves providing a target grid
 for the desired locations, ages, cohorts, and doses, and then calling
-[`predict()`](https://rdrr.io/r/stats/predict.html). We can load the
+[`predict()`](https://rdrr.io/r/stats/predict.html). You can load the
 example target dataset bundled with `imuGAP` package data and filter it
 to match each location resolution:
 
@@ -151,15 +186,21 @@ target_1layer <- target_sim[loc_id %in% locs_1layer$loc_id]
 predict_1layer <- predict(object = fit_1layer, target = target_1layer, posterior_size = 100)
 ```
 
-If you are working along through this vignette, you may wish to simply
-load the pre-computed prediction results, as we bundled them with
-`imuGAP` package data:
+If you are working along through this vignette, you can simply load the
+pre-computed prediction results bundled with `imuGAP` package data:
 
 ``` r
 
 data("predict_sim", package = "imuGAP")
 data("predict_sim_2layer", package = "imuGAP")
 data("predict_sim_1layer", package = "imuGAP")
+
+predict_sim_2layer
+#> An imuGAP predictions object (`imugap_predict`):
+#>   Targets:   144 target population slices across 4 locations
+#>   Posterior: 100 draws (4 chains x 25 iterations)
+#> 
+#> Use summary() to compute quantiles or as.data.frame() to convert to a long table.
 ```
 
 You can summarize the predictions using
@@ -175,17 +216,19 @@ summary_1layer <- summary(predict_sim_1layer)
 
 ------------------------------------------------------------------------
 
-## 4. Comparing Different Resolution Fits
+### 4. Comparing Different Resolution Fits
 
 As seen in previous sections, the actual fitting and prediction steps
 are identical irrespective of data resolution. Let’s see how the
 different resolutions affect parameter and coverage estimation.
 
-First, compare estimated State-level coverage from the 1-layer, 2-layer,
-and 3-layer model fits against the latent coverage stored in
-`latent_params_sim$coverage`. Faceting by data resolution (columns)
-shows that macro State trends are estimated accurately regardless of
-whether lower-level sub-population data are provided:
+The following plot compares estimated State-level coverage from the
+1-layer, 2-layer, and 3-layer model fits against the latent coverage
+stored in `latent_params_sim$coverage`. Faceting by data resolution
+(columns) shows that macro State trends are estimated better with more
+data, essentially because the as-observed state data had a bit of bias
+(just due to noise) but that noise was dampened by additional
+independent observations of higher resolution populations:
 
 **Show plot code**
 
@@ -274,10 +317,11 @@ values.](user_specified_layers_files/figure-html/state-plot-1.png)
 State-level coverage comparison across 1-layer, 2-layer, and 3-layer
 model fits against true values.
 
-### County-Level Coverage Across Data Resolutions
+#### County-Level Coverage Across Data Resolutions
 
-Next, we compare County-level coverage estimates between the 2-layer and
-3-layer model fits across counties (*Scruggs*, *Simone*, *Watson*):
+The following plot compares County-level coverage estimates between the
+2-layer and 3-layer model fits across counties (*Scruggs*, *Simone*,
+*Watson*):
 
 **Show plot code**
 
@@ -361,18 +405,18 @@ values.](user_specified_layers_files/figure-html/county-plot-1.png)
 County-level coverage comparison: 2-layer vs. 3-layer model estimates
 against true values.
 
-### Force of Vaccination ($`\lambda`$) Estimation
+#### Force of Vaccination ($`\lambda`$) Estimation
 
-We also examine the model’s ability to estimate the underlying force of
-vaccination parameters ($`\lambda`$) across different location data
-resolutions.
+The following plot shows force of vaccination parameter estimates
+($`\lambda`$) across different location data resolutions compared
+against true values:
 
 **Show plot code**
 
 ``` r
 
 extract_lambda_summary <- function(fit, label) {
-  draws <- rstan::extract(fit$stanfit, pars = "lambda_raw")$lambda_raw
+  draws <- extract_imugap(fit, pars = "lambda_raw")$lambda_raw
   doses_factor <- factor(c(
     rep("Dose 1", nrow(draws)),
     rep("Dose 2", nrow(draws))
@@ -448,14 +492,28 @@ to true values.
 
 ------------------------------------------------------------------------
 
-## Conclusion
+### Conclusion
 
 Support for **flexible location layers** allows `imuGAP` to adapt to
-whatever location hierarchy you provide:
+whatever population hierarchy you provide:
 
 - If you provide only state-level aggregated data (**1 layer**), macro
-  trends are estimated accurately.
+  trends are estimated accurately by the process model.
 - If you provide sub-populations like counties (**2 layers**) or
-  sub-sub-populations like schools (**3 layers**), the model
-  automatically builds hierarchical random offsets down the location
-  tree to capture finer resolution variation.
+  sub-sub-populations like schools (**3 layers**), the model estimates
+  hierarchical random offsets down the tree, allowing you to project
+  cohort trajectories and resolve finer-grained geographic variation.
+
+------------------------------------------------------------------------
+
+## Summary and Related Vignettes
+
+- For an overview of estimating the underlying process model and
+  predicting coverage, see **[Getting Started with
+  imuGAP](https://accidda.github.io/imuGAP/articles/imuGAP.md)**.
+- To explore input datasets and validation rules, see **[Included
+  Example Datasets and Data
+  Validation](https://accidda.github.io/imuGAP/articles/example_data.md)**.
+- For convergence diagnostics and trace plots, see **[Fit Inspection and
+  Stan
+  Diagnostics](https://accidda.github.io/imuGAP/articles/examining_fits.md)**.

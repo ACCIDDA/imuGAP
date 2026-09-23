@@ -14,13 +14,13 @@ create_observation_populations(observations, mode = "snapshot", ...)
 
 - observations:
 
-  a pre- or post-canonicalization `observations` object. Optionally
-  contains additional columns required for the specified `mode` that
-  vary by row.
+  a pre- or post-canonicalization `[data.frame()]`. Optionally contains
+  additional columns required for the specified `mode` that vary by row.
 
 - mode:
 
-  character; the mode for populations creation (default: "snapshot").
+  character string; the mode for populations creation (default:
+  `"snapshot"`).
 
 - ...:
 
@@ -29,7 +29,7 @@ create_observation_populations(observations, mode = "snapshot", ...)
 
 ## Value
 
-A `data.table` representing the populations mapping.
+a `[data.table()]`, representing the populations mapping.
 
 ## Details
 
@@ -55,8 +55,8 @@ provided, but if missing or `NA`, is assumed to be `age_min` + 1.
 
 Taking this approach to `age_max` enables this method to naturally
 support partial cohorts. For example, if `age_max = 18.5` and
-`age_min = 17`, then age 17 population has 2/3rds the weight and the age
-18 population has 1/3rd. `age_min` works the same way.
+`age_min = 17`, then age 17 population has two-thirds the weight and the
+age 18 population has one-third. `age_min` works the same way.
 
 Note that "snapshot" mode assumes that all populations are uniformly
 sized with respect to weighting. This assumption may be inadequate when

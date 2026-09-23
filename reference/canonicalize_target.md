@@ -13,16 +13,17 @@ canonicalize_target(target, fit)
 
 - target:
 
-  a target grid: the output of `[create_target()]`, or a `data.frame` /
-  `data.table` with `loc_id`, `age`, `cohort`, and `dose` columns.
+  a target grid: the output of `[create_target()]`, or a
+  `[data.frame()]` with `loc_id`, `age`, `cohort`, and `dose` columns.
 
 - fit:
 
-  an `imugap_fit` object returned by `[sampling()]`.
+  an object of class `imugap_fit` returned by `[sampling()]`.
 
 ## Value
 
-the validated `target` (a `data.table`) with `loc_c_id` added.
+a `[data.table()]`, validated target grid with canonical `loc_c_id`
+added.
 
 ## Details
 

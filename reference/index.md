@@ -62,6 +62,12 @@
 - [`predict_sim_2layer`](https://accidda.github.io/imuGAP/reference/predict_sim_2layer.md)
   : Example Coverage Predictions (2 Layers)
 
+- [`print(`*`<imugap_fit>`*`)`](https://accidda.github.io/imuGAP/reference/print.imugap_fit.md)
+  : Print an imuGAP model fit
+
+- [`print(`*`<imugap_predict>`*`)`](https://accidda.github.io/imuGAP/reference/print.imugap_predict.md)
+  : Print coverage predictions
+
 - [`sampling()`](https://accidda.github.io/imuGAP/reference/sampling.md)
   :
 

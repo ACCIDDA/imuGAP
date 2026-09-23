@@ -17,18 +17,18 @@ imugap_options(df = 5L, dose_schedule = c(1, 4), model = c("default"))
 
 - dose_schedule:
 
-  an ascending integer vector of ages at which each dose `1..n` becomes
+  ascending integer vector of ages at which each dose `1..n` becomes
   eligible (default: `c(1, 4)` for 2-dose vaccines).
 
 - model:
 
-  character string specifying the model formulation. Defaults to
-  `"default"`, with dispatch to optimized single versus multilayer
-  versions within `[sampling()]`
+  character string specifying the model formulation (default:
+  `"default"`). Dispatch to optimized single versus multi-layer versions
+  occurs automatically within `[sampling()]`.
 
 ## Value
 
-a list of imuGAP model options
+a named list, of `imuGAP` model options.
 
 ## Examples
 

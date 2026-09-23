@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">imuGAP</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -16,15 +16,18 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="articles/imuGAP.html">Get started</a></li>
-<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="articles/user_specified_layers.html">Flexible Location Layers in imuGAP</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="articles/imuGAP.html">Getting Started</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>User Guides &amp; Deep Dives</h6></li>
+    <li><a class="dropdown-item" href="articles/example_data.html">Included Example Data &amp; Validation</a></li>
+    <li><a class="dropdown-item" href="articles/user_specified_layers.html">Flexible Location Layers</a></li>
+    <li><a class="dropdown-item" href="articles/examining_fits.html">Fit Inspection &amp; Stan Diagnostics</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
- <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json"></form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch"><li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
@@ -58,21 +61,26 @@
 </ul><hr></div>
 <div class="section level2">
 <h2 id="development-workflow--just-recipes">Development Workflow &amp; <code>just</code> Recipes<a class="anchor" aria-label="anchor" href="#development-workflow--just-recipes"></a></h2>
-<p>We use <a href="https://github.com/casey/just" class="external-link"><code>just</code></a> to automate development tasks. All recipes handle namespace and environment configuration automatically:</p>
+<p>We use <a href="https://github.com/casey/just" class="external-link"><code>just</code></a> to automate development tasks. The <code>justfile</code> serves as the <strong>single authoritative reference</strong> for repository build, documentation, verification, and diagram actions across both local development and GitHub Actions CI:</p>
 <table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Recipe</th>
 <th>Description</th>
 <th>Equivalent Base Command</th>
 </tr></thead><tbody><tr><td><code>just</code></td>
-<td>Run full validation pipeline: clean, format, lint, docs, test</td>
+<td>Run standard validation pipeline: format, lint, docs, test</td>
+<td><em>(compound command)</em></td>
+</tr><tr><td><code>just clean</code></td>
+<td>Clean up build, check, and rendered diagram artifacts</td>
 <td><em>(compound command)</em></td>
 </tr><tr><td><code>just format</code></td>
 <td>Format R code using <code>air</code>
 </td>
 <td><code>air format .</code></td>
 </tr><tr><td><code>just lint</code></td>
-<td>Lint R code using <code>air</code> and <code>lintr</code>
-</td>
-<td><code>air format . --check &amp;&amp; Rscript -e "lintr::lint_package()"</code></td>
+<td>Lint R code and verify Rcpp export bindings</td>
+<td><code>air format . --check &amp;&amp; Rscript -e "lintr::lint_package()" &amp;&amp; just check-rcpp</code></td>
+</tr><tr><td><code>just check-rcpp</code></td>
+<td>Check that Rcpp export bindings in <code>src/</code> are synchronized with Stan models</td>
+<td><code>Rscript -e "Rcpp::compileAttributes()" &amp;&amp; git diff --exit-code src/RcppExports.cpp</code></td>
 </tr><tr><td><code>just docs</code></td>
 <td>Regenerate roxygen documentation (<code>man/</code>, <code>R/globals.R</code>)</td>
 <td><code>Rscript -e "roxygen2::roxygenize()"</code></td>
@@ -97,6 +105,9 @@
 </tr><tr><td><code>just render</code></td>
 <td>Render all vignettes to HTML and PDF</td>
 <td><code>Rscript -e "rmarkdown::render(...)"</code></td>
+</tr><tr><td><code>just diagrams</code></td>
+<td>Compile Mermaid source diagrams (<code>.mmd</code> to <code>.svg</code>/<code>.pdf</code>)</td>
+<td><code>mmdc -i ... -o ...</code></td>
 </tr><tr><td>
 <code>just site</code> / <code>just site-quick</code>
 </td>
@@ -160,14 +171,21 @@
 <code>R/stanmodels.R</code>, <code>R/flexstanr.R</code>, <code>inst/analysis/</code>, <code>inst/scripts/</code>, and <code>data-raw/</code> are excluded from linting because they are generated artifacts or standalone scratch scripts.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="id_2-untracked-artifacts--generated-files">2. Untracked Artifacts &amp; Generated Files<a class="anchor" aria-label="anchor" href="#id_2-untracked-artifacts--generated-files"></a></h3>
+<h3 id="id_2-tracked-vs-untracked-artifacts--generated-files">2. Tracked vs. Untracked Artifacts &amp; Generated Files<a class="anchor" aria-label="anchor" href="#id_2-tracked-vs-untracked-artifacts--generated-files"></a></h3>
 <ul><li>
-<strong>Do not hand-edit generated files</strong>:
+<strong>Untracked Generated Files</strong> (do not commit; rebuilt automatically during build/CI):
 <ul><li>
 <code>R/globals.R</code> and <code>man/*.Rd</code> are produced by <code><a href="https://roxygen2.r-lib.org/reference/roxygenize.html" class="external-link">roxygen2::roxygenise()</a></code> (via <code>roxygen2</code> and <code>roxyglobals</code>) and are untracked (#53). Regenerate them with <code>just docs</code>.</li>
 <li>Pre-computed fitted data artifacts (<code>data/fit_sim*.rda</code>, <code>data/predict_sim*.rda</code>, <code>data/target_sim*.rda</code>) are untracked and generated via <code>just data-fit</code>.</li>
+<li>Diagram assets (<code>vignettes/figures/*.svg</code>, <code>vignettes/figures/*.pdf</code>, <code>vignettes/figures/*.png</code>) are generated from Mermaid <code>.mmd</code> files via <code>just diagrams</code>.</li>
 <li>
 <code>R/flexstanr.R</code> is generated by <code><a href="https://accidda.github.io/flexstanr/reference/use_flexstanr.html" class="external-link">flexstanr::use_flexstanr()</a></code>.</li>
+</ul></li>
+<li>
+<strong>Tracked Generated Files</strong>:
+<ul><li>
+<code>src/RcppExports.cpp</code> is generated by <code><a href="https://rdrr.io/pkg/Rcpp/man/compileAttributes.html" class="external-link">Rcpp::compileAttributes()</a></code> and <strong>must remain tracked in git</strong>. When users install directly from GitHub (e.g. via <code>devtools::install_github()</code>, <code>remotes::install_github()</code>, or <code><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak::pak()</a></code>), R’s installer downloads only git-tracked files and invokes <code>R CMD INSTALL</code> without running developer-side attribute compilation. Tracking <code>src/RcppExports.cpp</code> ensures DLL symbols and module registration routines (<code>R_init_imuGAP()</code>) are present for compilation.</li>
+<li>Synchronization of <code>src/RcppExports.cpp</code> with Stan models and Rcpp attributes is enforced automatically by <code>just check-rcpp</code> (run during <code>just lint</code> and CI) and by the unit test in <code>tests/testthat/test-rcpp_exports.R</code>.</li>
 </ul></li>
 <li>
 <strong>Exported Datasets</strong>: Document datasets with the <code>@name &lt;data&gt;</code> / <code>@docType data</code> idiom in <code>R/imuGAP-package.R</code>.</li>
@@ -180,6 +198,28 @@
 <strong><code>data.table</code> and <code>@autoglobal</code></strong>: Functions performing calculations or non-standard evaluation with <code>data.table</code> should generally be marked with <code>@autoglobal</code> so that <code>roxyglobals</code> automatically registers referenced columns and symbols in <code>R/globals.R</code>.</li>
 <li>
 <strong>Internal Functions</strong>: Unexported helper functions should be tagged with <code>@keywords internal</code> and <code>@noRd</code> so they are fully documented in source code without generating unneeded <code>.Rd</code> manual files.</li>
+<li>
+<strong>Casing &amp; Punctuation for <code>@param</code> and <code>@return</code></strong>:
+<ul><li>All <code>@param</code> descriptions should lead with a lowercase letter (e.g. <code>a [data.frame()]</code>, <code>integer vector</code>, <code>logical scalar; ...</code>).</li>
+<li>Descriptions should end with a terminating period (<code>.</code>).</li>
+</ul></li>
+<li>
+<strong>Parameter (<code>@param</code>) Formatting</strong>:
+<ul><li>
+<strong>Types</strong>: Explicitly state input types/classes using the minimal type that will work (e.g. <code>a [data.frame()]</code> rather than compound <code>[data.frame()] or [data.table()]</code>, <code>integer vector</code>, <code>an object of class \</code>imugap_fit``).</li>
+<li>
+<strong>Flag Parameters</strong>: Frame descriptions for boolean/logical flags as questions (e.g. <code>logical scalar; drop extraneous columns? (default: \</code>TRUE`).<code>,</code>logical; allow `NA` values? (default: `FALSE`).`).</li>
+<li>
+<strong>Defaults</strong>: Standardize default value notation using <code>(default: &lt;val&gt;)</code>, e.g. <code>(default: 5L)</code>, <code>(default: "snapshot")</code>, <code>(default: NULL)</code>.</li>
+<li>
+<strong>Ellipsis (<code>...</code>)</strong>: Document <code>...</code> explicitly as forwarded (<code>additional arguments passed to [target_fn()].</code>) or ignored (<code>additional arguments (currently ignored).</code>), or document forwarded dots via <code>@inheritDotParams &lt;pkg&gt;::&lt;fn&gt;</code>.</li>
+</ul></li>
+<li>
+<strong>Return Value (<code>@return</code>) Formatting</strong>:
+<ul><li>Always document the return type and structure leading with <code>a &lt;type&gt;, ...explanation...</code> in lowercase (e.g. <code>a [data.table()], containing...</code>, <code>an object of class \</code>imugap_predict`, wrapping…<code>,</code>a logical scalar, indicating whether…`).</li>
+<li>For side-effect or validation functions, state invisible returns explicitly (e.g. <code>invisibly returns \</code>TRUE` on success.`).</li>
+<li>For multi-element lists, use an indented markdown bullet list detailing element names in backticks and types.</li>
+</ul></li>
 <li>
 <strong>Markdown Formatting</strong>: <code>roxygen2</code> markdown mode is enabled (<code>Roxygen: list(markdown = TRUE)</code>). Prefer standard markdown syntax:
 <ul><li>Use backticks for code identifiers, arguments, and return types (e.g. <code>`locations`</code>, <code>`data.table`</code>).</li>
@@ -220,16 +260,39 @@
 <li>Never inline full block contents or raw logic directly into top-level models in <code>inst/stan/</code>; keep component logic encapsulated in dedicated sub-files to facilitate reuse, maintainability, and clean diffs.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="id_6-vignette-plot-styling-coordinate-limits--dark-mode-compatibility">6. Vignette Plot Styling, Coordinate Limits &amp; Dark Mode Compatibility<a class="anchor" aria-label="anchor" href="#id_6-vignette-plot-styling-coordinate-limits--dark-mode-compatibility"></a></h3>
-<p>To ensure plots remain clear, readable, and geometrically intact:</p>
-<ul><li>In vignette setup chunks, specify <code>knitr::opts_chunk$set(dev.args = list(bg = "white"))</code>.</li>
-<li>Disable automatic plot theme inversion with <code>if (requireNamespace("thematic", quietly = TRUE)) thematic::thematic_off()</code>.</li>
-<li>Configure <code><a href="https://ggplot2.tidyverse.org/reference/get_theme.html" class="external-link">ggplot2::theme_set()</a></code> with solid white backgrounds (<code>plot.background</code>, <code>panel.background</code>, <code>legend.background</code>) and black text (<code>text</code>, <code>axis.text</code>, <code>axis.title</code>, <code>plot.title</code>).</li>
+<h3 id="id_6-vignette-voice-plot-styling--dark-mode-compatibility">6. Vignette Voice, Plot Styling &amp; Dark Mode Compatibility<a class="anchor" aria-label="anchor" href="#id_6-vignette-voice-plot-styling--dark-mode-compatibility"></a></h3>
+<p>To ensure vignettes provide clear, engaging, and robust guidance for users:</p>
+<ul><li>
+<strong>Active Voice &amp; Tone</strong>: Write vignettes directly to the user in the active voice for actions (e.g. “You can fit the model to your data by calling <code><a href="reference/sampling.html">sampling()</a></code>…”, “Configure your sampler with <code><a href="https://accidda.github.io/flexstanr/reference/stan_options.html" class="external-link">stan_options()</a></code>…”). Avoid passive or impersonal constructions (e.g. avoid “Model fitting is executed via…”, “Calculations are performed by…”). When introducing visual presentations, diagrams, or rendered plots (describing something to see rather than an action the reader performs), introduce the visual directly (e.g. “The following diagram shows…”, “The following plot compares…”).</li>
+<li>
+<strong>Solid Backgrounds</strong>: In vignette setup chunks, specify <code>knitr::opts_chunk$set(dev.args = list(bg = "white"))</code>.</li>
+<li>
+<strong>Thematic Inversion</strong>: Disable automatic plot theme inversion with <code>if (requireNamespace("thematic", quietly = TRUE)) thematic::thematic_off()</code>.</li>
+<li>
+<strong>Theme Styling</strong>: Configure <code><a href="https://ggplot2.tidyverse.org/reference/get_theme.html" class="external-link">ggplot2::theme_set()</a></code> with solid white backgrounds (<code>plot.background</code>, <code>panel.background</code>, <code>legend.background</code>) and black text (<code>text</code>, <code>axis.text</code>, <code>axis.title</code>, <code>plot.title</code>).</li>
 <li>
 <strong>Coordinate System vs. Scale Limits</strong>: Prefer ggplot2 coordinate system bounds (<code>coord_cartesian(xlim = ..., ylim = ...)</code>) over scale-based limits (<code>scale_*_continuous(limits = ...)</code>) when zooming or adjusting visible ranges. Scale limits discard data points outside the window (altering summary statistics, regressions, or ribbon clipping), whereas coordinate zooming retains all underlying data.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="id_7-package-reinstallation--vignette-data">7. Package Reinstallation &amp; Vignette Data<a class="anchor" aria-label="anchor" href="#id_7-package-reinstallation--vignette-data"></a></h3>
+<h3 id="id_7-vignette-mermaid-diagrams--full-pdf-support">7. Vignette Mermaid Diagrams &amp; Full PDF Support<a class="anchor" aria-label="anchor" href="#id_7-vignette-mermaid-diagrams--full-pdf-support"></a></h3>
+<p>Vignettes can include process workflows and structural diagrams defined using Mermaid:</p>
+<ul><li>
+<strong>Source vs. Untracked Artifacts</strong>: The fundamental tracked source artifact is the Mermaid specification in <code>vignettes/figures/*.mmd</code>. Generated image files (<code>vignettes/figures/*.svg</code>, <code>vignettes/figures/*.pdf</code>, <code>vignettes/figures/*.png</code>) are untracked (gitignored).</li>
+<li>
+<strong>Automatic Compilation</strong>: The recipe <code>just diagrams</code> (invoking <code>mmdc</code> / <code>@mermaid-js/mermaid-cli</code>) generates both SVG (for HTML/pkgdown) and PDF (for LaTeX pdflatex builds) prior to building docs, running R CMD check, or rendering vignettes.</li>
+<li>
+<strong>Embedding</strong>: Include diagrams in vignette <code>.Rmd</code> files via <code>knitr::include_graphics("figures/&lt;name&gt;.svg")</code>. Always list the SVG file under <code>resource_files:</code> in the YAML frontmatter so <code>pkgdown</code> copies and discovers the asset.</li>
+<li>
+<strong>Dark Mode Styling</strong>: Diagrams are styled independently from statistical plots. In <code>pkgdown/extra.css</code>, <code>html[data-bs-theme="dark"] .figure img[src$=".svg"]</code> applies a dark-mode filter inversion (<code>invert(0.88) hue-rotate(180deg)</code>) allowing the diagram to seamlessly blend with dark themes while maintaining crisp line and text contrast.</li>
+<li>
+<strong>Flow Diagram Design Guidelines</strong>:
+<ul><li>Exclude step numbers from container box labels; sequential order is conveyed by diagram wiring.</li>
+<li>Align primary container labels toward the top of each box.</li>
+<li>Keep secondary detail text styling close in weight/color to the container title so that contrast remains clear under color scheme inversions.</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_8-package-reinstallation--vignette-data">8. Package Reinstallation &amp; Vignette Data<a class="anchor" aria-label="anchor" href="#id_8-package-reinstallation--vignette-data"></a></h3>
 <p>Vignette chunks load data using <code>data(..., package = "imuGAP")</code>, which resolves datasets from the <strong>installed package library</strong> rather than the working directory. When troubleshooting vignette (and related <code>pkgdown</code> site) issues associated with rendering package example data, if the fix ends up being in the package data (<code>data-raw/DATASET.R</code> or <code>data-raw/fit_data.R</code>), you must reinstall the package (<code>just install</code> or <code>R CMD INSTALL .</code>) before re-rendering vignettes or rebuilding the site with updated data (or use <code>just site-full</code>).</p>
 <hr></div>
 </div>
@@ -331,36 +394,53 @@
 </tr></tbody></table><hr></div>
 </div>
 <div class="section level2">
-<h2 id="error-messages-and-signaling-standards">Error Messages and Signaling Standards<a class="anchor" aria-label="anchor" href="#error-messages-and-signaling-standards"></a></h2>
+<h2 id="error-messages-signaling-standards-and-unit-testing">Error Messages, Signaling Standards, and Unit Testing<a class="anchor" aria-label="anchor" href="#error-messages-signaling-standards-and-unit-testing"></a></h2>
 <p>All user-facing validation errors and warnings should follow these standards:</p>
 <div class="section level3">
-<h3 id="id_1-centralized-format-string-constants">1. Centralized Format String Constants<a class="anchor" aria-label="anchor" href="#id_1-centralized-format-string-constants"></a></h3>
-<ul><li>
-<p>Define error and warning message format strings as constants at the top of each R file prefixed with <code>ERR_</code> or <code>MSG_</code>:</p>
+<h3 id="id_1-centralized-named-template-constants">1. Centralized Named Template Constants<a class="anchor" aria-label="anchor" href="#id_1-centralized-named-template-constants"></a></h3>
+<ul><li><p>Define error and warning message format strings as constants at the top of each R file prefixed with <code>ERR_</code> or <code>MSG_</code>:</p></li>
+<li>
+<p>Use named <code>{var}</code> placeholders (e.g. <code>{dose}</code>, <code>{sched_age}</code>, <code>{n_doses}</code>) rather than cryptic unnamed format specifiers to keep message definitions self-documenting:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ERR_MUST_BE_INTEGER</span> <span class="op">&lt;-</span> <span class="st">"`%s` column '%s' must contain integers"</span></span>
-<span><span class="va">ERR_CANNOT_HAVE_NA</span> <span class="op">&lt;-</span> <span class="st">"`%s` column '%s' cannot contain NA values"</span></span>
-<span><span class="va">ERR_OPT_UNKNOWN_MODEL</span> <span class="op">&lt;-</span> <span class="st">"`imugap_opts` unknown model '%s'"</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">ERR_POP_DOSE_INCOMPATIBLE</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
+<span>  <span class="st">"dose {dose} requires age &gt; {sched_age} (`dose_schedule[{dose}] == {sched_age}`), but "</span>,</span>
+<span>  <span class="st">"`populations` contains observations where all ages are &lt;= {sched_age}; "</span>,</span>
+<span>  <span class="st">"use `subset(populations, dose == {dose} &amp; age &lt;= {sched_age})` or configure "</span>,</span>
+<span>  <span class="st">"`imugap_options(dose_schedule = ...)` to resolve invalid entries"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">ERR_OPT_UNKNOWN_MODEL</span> <span class="op">&lt;-</span> <span class="st">"`imugap_opts` unknown model '{model}'"</span></span></code></pre></div>
 </li>
 </ul></div>
 <div class="section level3">
 <h3 id="id_2-signaling-functions-stop_fmt_if-and-warn_fmt_if">2. Signaling Functions: <code>stop_fmt_if</code> and <code>warn_fmt_if</code>
 <a class="anchor" aria-label="anchor" href="#id_2-signaling-functions-stop_fmt_if-and-warn_fmt_if"></a></h3>
 <ul><li>
-<p>Use internal helpers <code><a href="reference/stop_fmt_if.html">stop_fmt_if()</a></code> and <code><a href="reference/warn_fmt_if.html">warn_fmt_if()</a></code> for validation assertions:</p>
+<p>Use internal helpers <code>stop_fmt_if()</code> and <code>warn_fmt_if()</code> for validation assertions, passing named arguments matching the <code>{var}</code> placeholders in the template:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/stop_fmt_if.html">stop_fmt_if</a></span><span class="op">(</span></span>
-<span>  <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">dt</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/get.html" class="external-link">get</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">]</span><span class="op">)</span> <span class="op">==</span> <span class="va">dt</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/get.html" class="external-link">get</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>,</span>
-<span>  <span class="va">ERR_MUST_BE_INTEGER</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/deparse.html" class="external-link">deparse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/substitute.html" class="external-link">substitute</a></span><span class="op">(</span><span class="va">dt</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  <span class="va">x</span>,</span>
-<span>  n <span class="op">=</span> <span class="va">n</span> <span class="op">+</span> <span class="fl">1L</span></span>
+<code class="sourceCode R"><span><span class="fu">stop_fmt_if</span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">invalid_obs</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0L</span>,</span>
+<span>  <span class="va">ERR_POP_DOSE_INCOMPATIBLE</span>,</span>
+<span>  dose <span class="op">=</span> <span class="va">k</span>,</span>
+<span>  sched_age <span class="op">=</span> <span class="va">dose_schedule</span><span class="op">[</span><span class="va">k</span><span class="op">]</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </li>
 <li><p>Use the parameter <code>n</code> to adjust the call stack offset so the error is attributed to the user’s top-level function call rather than internal helper functions.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="id_3-typography-backticks-vs-single-quotes">3. Typography: Backticks vs. Single Quotes<a class="anchor" aria-label="anchor" href="#id_3-typography-backticks-vs-single-quotes"></a></h3>
+<h3 id="id_3-error-message-unit-testing-via-err_pattern">3. Error Message Unit Testing via <code>err_pattern</code>
+<a class="anchor" aria-label="anchor" href="#id_3-error-message-unit-testing-via-err_pattern"></a></h3>
+<ul><li>
+<p>In unit tests (<code>tests/testthat/</code>), verify error and warning messages using the test helper <code>err_pattern(ERR_..., ...)</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">expect_error</span><span class="op">(</span></span>
+<span>  <span class="fu">validate_dose_schedule</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">4L</span><span class="op">)</span>, <span class="va">wts_unmixed</span><span class="op">)</span>,</span>
+<span>  <span class="fu">err_pattern</span><span class="op">(</span><span class="va">ERR_POP_DOSE_INCOMPATIBLE</span>, dose <span class="op">=</span> <span class="fl">2L</span>, sched_age <span class="op">=</span> <span class="fl">4L</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</li>
+<li><p><strong>Wildcards and Partial Matches</strong>: <code>err_pattern()</code> escapes all regex metacharacters in literal template text and substitutes specified slot values. Unsupplied or <code>NA</code>/<code>NULL</code> slots automatically match wildcards (<code>.+?</code>), allowing unit tests to assert on key parameter values while remaining resilient against minor phrasing changes.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_4-typography-backticks-vs-single-quotes">4. Typography: Backticks vs. Single Quotes<a class="anchor" aria-label="anchor" href="#id_4-typography-backticks-vs-single-quotes"></a></h3>
 <p>Follow a strict convention when formatting error and warning strings:</p>
 <ul><li>
 <strong>Backticks (<code>`code`</code>)</strong>: Use for formal R code symbols, argument names, function names, expressions, and classes:
@@ -370,10 +450,20 @@
 </ul></li>
 <li>
 <strong>Single Quotes (<code>'value'</code>)</strong>: Use for user-supplied string values, column names, model names, or discrete inputs:
-<ul><li><code>column '%s' cannot contain NA values</code></li>
-<li><code>unknown model '%s'</code></li>
-<li><code>'%s' must be numeric</code></li>
+<ul><li><code>column '{col}' cannot contain NA values</code></li>
+<li><code>unknown model '{model}'</code></li>
+<li><code>'{arg}' must be numeric</code></li>
 </ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_4-markdown-list-formatting-standards">4. Markdown List Formatting Standards<a class="anchor" aria-label="anchor" href="#id_4-markdown-list-formatting-standards"></a></h3>
+<p>To ensure clean rendering across GitHub, <code>pkgdown</code>, and Pandoc HTML/PDF engines:</p>
+<ul><li>
+<strong>Preceding Blank Lines</strong>: Always separate preceding introductory text from lists with an empty blank line (<code>\n\n</code>). Never start a list immediately on the line following a colon or text.</li>
+<li>
+<strong>Consistent Indentation &amp; Sub-Lists</strong>: Indent sub-lists by 2 or 4 spaces and use consistent bullet styling (<code>-</code>). Avoid mixing unindented numbered sequences under unordered list items.</li>
+<li>
+<strong>Multi-Line Continuation Margin</strong>: When list items span multiple lines, align continuation lines with the item text margin (e.g. 2 spaces for <code>-</code>, 3 spaces for <code>1.</code>).</li>
 </ul><hr></div>
 </div>
 <div class="section level2">
@@ -387,11 +477,11 @@
 </ul><hr></div>
 <div class="section level2">
 <h2 id="pull-request-and-ci-workflows">Pull Request and CI Workflows<a class="anchor" aria-label="anchor" href="#pull-request-and-ci-workflows"></a></h2>
-<p>Every pull request triggers four automated GitHub Actions workflows:</p>
+<p>Every pull request triggers automated GitHub Actions workflows that delegate directly to <code>justfile</code> recipes for build, documentation, and validation:</p>
 <ol style="list-style-type: decimal"><li>
-<strong><code>R-CMD-check</code></strong>: Runs <code>R CMD check --as-cran</code> across Ubuntu, macOS, and Windows on R release, oldrel, and devel (9 jobs).</li>
+<strong><code>R-CMD-check</code></strong>: Runs <code>R CMD check --as-cran</code> across Ubuntu, macOS, and Windows on R release, oldrel, and devel (9 jobs), using shared build artifacts from <code>just data-fit</code>, <code>just diagrams</code>, and <code>just docs</code>.</li>
 <li>
-<strong><code>lint</code></strong>: Verifies formatting with <code>air format . --check</code> and lint rules with <code><a href="https://lintr.r-lib.org/reference/lint.html" class="external-link">lintr::lint_package()</a></code>.</li>
+<strong><code>lint</code></strong>: Runs <code>just lint</code> (verifying <code>air format . --check</code> and <code><a href="https://lintr.r-lib.org/reference/lint.html" class="external-link">lintr::lint_package()</a></code>).</li>
 <li>
 <strong><code>test-coverage</code></strong>: Computes code coverage with <code>covr</code> and uploads results to Codecov.</li>
 <li>
