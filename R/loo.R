@@ -29,7 +29,11 @@ log_lik <- function(object, ...) {
 #' @export
 #' @importFrom stats dbinom pbinom
 log_lik.imugap_fit <- function(object, posterior_size = NULL, ...) {
-  stop_fmt_if(!inherits(object, "imugap_fit"), ERR_NOT_IMUGAP_FIT, name = "object")
+  stop_fmt_if(
+    !inherits(object, "imugap_fit"),
+    ERR_NOT_IMUGAP_FIT,
+    name = "object"
+  )
 
   dat <- object$data
   loc_dt <- object$locations
