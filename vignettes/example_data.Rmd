@@ -242,7 +242,7 @@ The following figures illustrate empirical coverage rates across each observatio
 ```{r synthetic-state-viz, fold = TRUE, code_summary = "Show plot code"}
 data("latent_params_sim", package = "imuGAP")
 
-state_obs <- copy(observations_sim[loc_id == "State"])
+state_obs <- copy(subset(observations_sim, loc_id == "State"))
 state_obs[, source := factor(
   fcase(
     dose == 1 & age_min == 2, "ChildVaxView (Dose 1, Age 2)",
@@ -259,8 +259,8 @@ state_obs[, source := factor(
 )]
 state_obs[, obs_prop := positive / sample_n]
 
-single_cohort_obs <- state_obs[is.na(age_max) | age_max == age_min + 1L]
-multi_cohort_obs <- copy(state_obs[!is.na(age_max) & age_max > age_min + 1L])
+single_cohort_obs <- subset(state_obs, is.na(age_max) | age_max == age_min + 1L)
+multi_cohort_obs <- copy(subset(state_obs, !is.na(age_max) & age_max > age_min + 1L))
 multi_cohort_obs[, cohort_max := cohort_min + (age_max - 1L) - age_min]
 
 latent_state <- data.table(
@@ -373,7 +373,7 @@ In this simulation universe, routine county-wide middle school entry tallies (do
 
 ```{r synthetic-county-viz, fold = TRUE, code_summary = "Show plot code"}
 county_names <- names(latent_params_sim$off_cnty)
-county_obs <- copy(observations_sim[loc_id %in% county_names])
+county_obs <- copy(subset(observations_sim, loc_id %in% county_names))
 county_obs[, obs_prop := positive / sample_n]
 
 max_obs_cohort <- max(county_obs$cohort_min)
@@ -394,8 +394,8 @@ county_latent <- rbindlist(lapply(names(latent_params_sim$off_cnty), function(cn
   )
 }))
 
-county_latent_obs <- county_latent[cohort_min <= max_obs_cohort]
-county_latent_unobs <- county_latent[cohort_min >= max_obs_cohort]
+county_latent_obs <- subset(county_latent, cohort_min <= max_obs_cohort)
+county_latent_unobs <- subset(county_latent, cohort_min >= max_obs_cohort)
 
 ggplot() +
   geom_point(
@@ -492,13 +492,13 @@ school_latent <- rbindlist(lapply(seq_len(nrow(sch_locs)), function(i) {
   data.table(loc_id = sch, county_id = cnty, cohort_min = cohorts, latent_cov = cov_true)
 }))
 
-sch_obs <- copy(observations_sim[loc_id %in% sch_locs$loc_id])
+sch_obs <- copy(subset(observations_sim, loc_id %in% sch_locs$loc_id))
 sch_obs[, obs_prop := positive / sample_n]
 sch_obs <- merge(sch_obs, sch_locs[, .(loc_id, county_id = parent_id)], by = "loc_id")
 
 max_obs_cohort <- max(sch_obs$cohort_min)
-school_latent_obs <- school_latent[cohort_min <= max_obs_cohort]
-school_latent_unobs <- school_latent[cohort_min >= max_obs_cohort]
+school_latent_obs <- subset(school_latent, cohort_min <= max_obs_cohort)
+school_latent_unobs <- subset(school_latent, cohort_min >= max_obs_cohort)
 
 ggplot() +
   geom_point(

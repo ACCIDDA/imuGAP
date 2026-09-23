@@ -235,7 +235,7 @@ You can compute vaccination coverage estimate summary statistics (posterior mean
 summary_predict <- summary(predict_sim)
 
 # Filter coverage estimate statistics to a specific target slice (e.g. age 4, dose 2)
-summary_predict[age == 4 & dose == 2]
+subset(summary_predict, age == 4 & dose == 2)
 ```
 
 ### State-Level Coverage Trajectory
@@ -245,7 +245,7 @@ The following plot shows predicted state-level two-dose coverage across ages 5 t
 ```{r state-viz, fold = TRUE, code_summary = "Show plot code"}
 data("latent_params_sim", package = "imuGAP")
 
-state_predict <- summary_predict[loc_id == "State" & dose == 2 & age > 4]
+state_predict <- subset(summary_predict, loc_id == "State" & dose == 2 & age > 4)
 state_idx <- predict_sim$target[loc_id == "State" & dose == 2 & age > 4, which = TRUE]
 state_predict[, latent := latent_params_sim$coverage[state_idx]]
 
@@ -278,7 +278,7 @@ The following plot compares county-level coverage estimates across counties:
 ```{r county-viz, fold = TRUE, code_summary = "Show plot code"}
 summary_predict |>
   subset(loc_id %in% c("Scruggs", "Simone", "Watson") & dose == 2 & age > 4) |>
-  transform(loc_id = factor(loc_id, levels = c("Simone", "Watson", "Scruggs"))) |>
+  within(loc_id <- factor(loc_id, levels = c("Simone", "Watson", "Scruggs"))) |>
   ggplot() +
   aes(x = age) +
   geom_line(aes(y = q50, color = loc_id)) +

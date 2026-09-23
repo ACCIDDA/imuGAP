@@ -73,6 +73,13 @@ This document provides concise instructions and rules for AI coding assistants w
   * Write vignettes directly to the user using active voice for actions (e.g. "You can fit the model to your data by calling `sampling()`...", "Specify your model options using `imugap_options()`...").
   * Avoid passive or impersonal constructions (e.g. avoid "Model fitting is executed via...", "Calculations are performed by...").
   * For visual presentations, diagrams, or rendered plots (where text describes something to see rather than an action the reader takes), introduce the visual directly (e.g. "The following diagram shows...", "The following plot compares...").
+* **Vignette User-Facing Code Style**:
+  * While `data.table` conventions are used throughout package internals, code displayed to users in vignettes should balance readability and idiomatic usage:
+    * **Filtering & Slicing**: Prefer base-R `subset(some_dt, ...)` over `some_dt[...]`.
+    * **Single Column Extraction**: Use `$` accessors (e.g. `some_dt$col`) only when extracting a single column vector for use; avoid compound vector comparisons like `thing$col == ... & thing$col2 == ...`.
+    * **In-Place Column Mutations**: When adding or modifying columns on a `data.table`, prefer `data.table` in-place assignment (`dt[, col := ...]`) over dollar-assignment (`dt$col <- ...`).
+    * **Derived Subsets & Transforms**: Prefer `within(subset(...), col <- val)` over `transform(...)`.
+    * **Row Index Lookups**: Use `data.table`'s `dt[condition, which = TRUE]` rather than `which(thing$col == ...)`.
 * **Vignette Plots & Dark Mode**:
   * Vignette plots must enforce a solid white background and black text (`dev.args = list(bg = "white")`, `thematic::thematic_off()`, and `ggplot2::theme_set(...)`).
 * **Vignette Mermaid Diagrams & PDF Support**:

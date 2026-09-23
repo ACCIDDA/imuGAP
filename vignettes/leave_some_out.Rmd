@@ -1,6 +1,8 @@
 ---
 title: "Model Evaluation & Leave-Some-Out Cross-Validation"
 output: rmarkdown::html_vignette
+bibliography: references.bib
+link-citations: true
 vignette: >
   %\VignetteIndexEntry{Model Evaluation & Leave-Some-Out Cross-Validation}
   %\VignetteEngine{knitr::rmarkdown}
@@ -103,27 +105,47 @@ loo_res <- loo(fit_sim)
 print(loo_res)
 ```
 
-The Pareto $\hat{k}$ diagnostic indicates whether importance weights have finite variance:
-- $\hat{k} < 0.5$: Excellent reliability.
-- $0.5 \le \hat{k} < 0.7$: Good / acceptable reliability.
-- $\hat{k} \ge 0.7$: Influential observation; importance sampling has high variance.
+The Pareto shape parameter $\hat{k}$ diagnostic indicates whether importance weights have finite variance and gauges the reliability of the PSIS approximation (see @vehtari2017, @vehtari2024):
+
+- $\hat{k} < 0.5$: High reliability; importance weights have finite variance, and the central limit theorem holds.
+- $0.5 \le \hat{k} < 0.7$: Moderate reliability; variance is finite, but convergence is slower.
+- $\hat{k} \ge 0.7$: Influential observation; raw importance weights have high or infinite variance, meaning importance sampling estimates may be unreliable without exact refitting or moment matching.
+
+In practice, if all observations have $\hat{k} < 0.7$, PSIS-LOO provides a fast and reliable leave-one-out cross-validation approximation without refitting. If a small number of observations have $\hat{k} \ge 0.7$, you only need to perform exact MCMC refits for those specific observations (or use moment matching). However, if many observations have high $\hat{k}$ values, or when evaluating structured group omissions (such as leaving out entire schools or streams), you should do manual holdout refitting (as shown in Sections 2 through 4).
 
 Let's visualize the $\hat{k}$ diagnostics across all observations:
 
-```{r plot-loo-k, fig.cap = "Pareto k influence diagnostics across survey observations"}
+```{r plot-loo-k, fig.cap = "Pareto k influence diagnostics across surveillance streams"}
+# Map observations to surveillance stream / layer type
+loc_map <- canonicalize_locations(locations_sim)[, .(loc_id, layer)]
+obs_meta <- canonicalize_observations(observations_sim, drop_extra = FALSE)
+obs_meta <- merge(obs_meta, loc_map, by = "loc_id")
+setorder(obs_meta, obs_c_id)
+
+obs_meta[, stream := fcase(
+  layer == 1L, "State Surveillance (NIS/School/Teen)",
+  layer == 2L, "County 6th Grade (Censored)",
+  layer == 3L, "School Kindergarten Entry"
+)]
+
 k_df <- data.frame(
   obs_idx = seq_along(loo_res$diagnostics$pareto_k),
-  pareto_k = loo_res$diagnostics$pareto_k
+  pareto_k = loo_res$diagnostics$pareto_k,
+  stream = factor(obs_meta$stream, levels = c(
+    "State Surveillance (NIS/School/Teen)",
+    "County 6th Grade (Censored)",
+    "School Kindergarten Entry"
+  ))
 )
 
-ggplot(k_df, aes(x = obs_idx, y = pareto_k)) +
+ggplot(k_df, aes(x = obs_idx, y = pareto_k, color = stream)) +
   geom_hline(yintercept = 0.5, linetype = "dashed", color = "grey50") +
   geom_hline(yintercept = 0.7, linetype = "dotted", color = "firebrick") +
-  geom_point(aes(color = pareto_k >= 0.7), size = 1.8, alpha = 0.8) +
-  scale_color_manual(values = c("FALSE" = "#2b5c8f", "TRUE" = "#d95f02"), guide = "none") +
+  geom_point(size = 1.8, alpha = 0.8) +
+  scale_color_brewer(palette = "Dark2", name = "Observation Stream") +
   labs(
     title = "PSIS-LOO Pareto k Diagnostics",
-    subtitle = "Points above the dotted line (k >= 0.7) are highly influential observations",
+    subtitle = "Points above dotted line (k >= 0.7) are influential observations",
     x = "Observation Index",
     y = "Pareto k Estimate"
   ) +
@@ -144,13 +166,13 @@ Let's select two schools in County 1 to hold out:
 
 ```{r spatial-partition}
 # Identify all schools in Scruggs County
-county1_schools <- locations_sim[parent_id == "Scruggs", loc_id]
+county1_schools <- subset(locations_sim, parent_id == "Scruggs")$loc_id
 heldout_schools <- county1_schools[1:2]
 heldout_schools
 
 # Filter out the held-out schools from the training data
-train_obs <- observations_sim[!loc_id %in% heldout_schools]
-train_pops <- populations_sim[!loc_id %in% heldout_schools]
+train_obs <- subset(observations_sim, !loc_id %in% heldout_schools)
+train_pops <- subset(populations_sim, !loc_id %in% heldout_schools)
 ```
 
 ## Fitting the Training Model & Projecting to Held-Out Locations
@@ -188,13 +210,13 @@ We compare the model's out-of-sample predictions against the held-out empirical 
 
 ```{r plot-spatial-eval, fig.cap = "Out-of-sample predictions vs. held-out school observations"}
 # Extract the empirical observations for the held-out schools
-obs_eval <- observations_sim[loc_id %in% heldout_schools]
-obs_eval_pops <- populations_sim[obs_id %in% obs_eval$obs_id]
+obs_eval <- subset(observations_sim, loc_id %in% heldout_schools)
+obs_eval_pops <- subset(populations_sim, obs_id %in% obs_eval$obs_id)
 obs_merged <- merge(obs_eval, obs_eval_pops, by = "obs_id", suffixes = c("", "_pop"))
 obs_merged[, empirical_coverage := positive / sample_n]
 
 # Filter predictions to dose 2 at age 5 (kindergarten age)
-pred_kdg <- pred_summary[dose == 2 & age == 5]
+pred_kdg <- subset(pred_summary, dose == 2 & age == 5)
 
 ggplot() +
   geom_ribbon(
@@ -208,7 +230,7 @@ ggplot() +
     linewidth = 1
   ) +
   geom_point(
-    data = obs_merged[dose == 2 & age == 5],
+    data = subset(obs_merged, dose == 2 & age == 5),
     aes(x = cohort, y = empirical_coverage, color = loc_id),
     size = 3,
     shape = 17
@@ -240,9 +262,9 @@ In `observations_sim`, right-censored observations represent middle school surve
 table(observations_sim$censored, useNA = "ifany")
 
 # Retain only uncensored kindergarten surveys for training
-train_stream_obs <- observations_sim[is.na(censored)]
-train_stream_pops <- populations_sim[obs_id %in% train_stream_obs$obs_id]
-heldout_stream_obs <- observations_sim[censored == 1]
+train_stream_obs <- subset(observations_sim, is.na(censored))
+train_stream_pops <- subset(populations_sim, obs_id %in% train_stream_obs$obs_id)
+heldout_stream_obs <- subset(observations_sim, censored == 1)
 ```
 
 By fitting without the middle school surveillance stream, we can verify whether the latent hazard model ($\lambda$) and propensity parameter ($\phi$) extrapolate accurately to adolescent ages.
@@ -255,7 +277,7 @@ To test the model's forecasting ability, we hold out the most recent birth cohor
 
 ## Evaluating Uncertainty with CRPS
 
-The Continuous Ranked Probability Score (CRPS) is a proper scoring rule that assesses both sharpness and calibration of probabilistic forecasts:
+The Continuous Ranked Probability Score (CRPS; @gneiting2007) is a proper scoring rule that assesses both sharpness and calibration of probabilistic forecasts:
 
 $$\text{CRPS}(F, y) = \int_{-\infty}^{\infty} (F(x) - \mathbb{I}(x \ge y))^2 \, dx$$
 
@@ -287,7 +309,7 @@ Finally, we visualize the temporal trajectory of predicted coverage compared to 
 ```{r plot-longitudinal-calibration, fig.cap = "Temporal trajectory and calibration across cohorts"}
 pred_all <- summary(pred_heldout)
 
-ggplot(pred_all[age == 5], aes(x = cohort, y = mean, group = interaction(loc_id, dose))) +
+ggplot(subset(pred_all, age == 5), aes(x = cohort, y = mean, group = interaction(loc_id, dose))) +
   geom_ribbon(
     aes(ymin = q2_5, ymax = q97_5, fill = factor(dose)),
     alpha = 0.2
@@ -312,3 +334,7 @@ When designing validation experiments for `imuGAP`:
 - **Use PSIS-LOO (`loo`)** for fast, exploratory influence and outlier diagnostics on full fits.
 - **Use Grouped Spatial Holdouts** to quantify transferability to unmeasured schools or regions.
 - **Use Temporal Holdouts** evaluated with **CRPS (`scoringRules`)** to validate forecasting calibration for emerging cohorts before deploying estimates into policy decisions.
+
+---
+
+# References

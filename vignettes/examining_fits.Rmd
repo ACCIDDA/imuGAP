@@ -335,7 +335,7 @@ cov <- latent_params_sim$uptake
 off_cnty <- latent_params_sim$off_cnty
 censor_red <- latent_params_sim$censor_reduction
 
-obs_cnty <- obs[loc_id %in% county_names]
+obs_cnty <- subset(observations_sim, loc_id %in% county_names)
 obs_cnty[, mu := {
   c_off <- unname(off_cnty[loc_id])
   phi_c <- plogis(qlogis(phi_st[cohort]) + c_off)

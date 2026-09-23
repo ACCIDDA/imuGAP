@@ -149,6 +149,12 @@ To ensure vignettes provide clear, engaging, and robust guidance for users:
 * **Thematic Inversion**: Disable automatic plot theme inversion with `if (requireNamespace("thematic", quietly = TRUE)) thematic::thematic_off()`.
 * **Theme Styling**: Configure `ggplot2::theme_set()` with solid white backgrounds (`plot.background`, `panel.background`, `legend.background`) and black text (`text`, `axis.text`, `axis.title`, `plot.title`).
 * **Coordinate System vs. Scale Limits**: Prefer ggplot2 coordinate system bounds (`coord_cartesian(xlim = ..., ylim = ...)`) over scale-based limits (`scale_*_continuous(limits = ...)`) when zooming or adjusting visible ranges. Scale limits discard data points outside the window (altering summary statistics, regressions, or ribbon clipping), whereas coordinate zooming retains all underlying data.
+* **User-Facing Code Conventions**: While `data.table` conventions are used throughout package internals, code displayed to users in vignettes should balance readability and idiomatic usage:
+  * **Filtering & Slicing**: Prefer base-R `subset(some_dt, ...)` over `some_dt[...]`.
+  * **Single Column Extraction**: Use `$` accessors (e.g. `some_dt$col`) only when extracting a single column vector for use, avoiding compound vector comparisons like `thing$col == ... & thing$col2 == ...`.
+  * **In-Place Column Mutations**: When adding or modifying columns on a `data.table`, prefer `data.table` in-place assignment (`dt[, col := ...]`) over dollar-assignment (`dt$col <- ...`).
+  * **Derived Subsets & Transforms**: Prefer `within(subset(...), col <- val)` over `transform(...)`.
+  * **Row Index Lookups**: Use `data.table`'s `dt[condition, which = TRUE]` rather than `which(thing$col == ...)`.
 
 ### 7. Vignette Mermaid Diagrams & Full PDF Support
 

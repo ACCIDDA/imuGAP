@@ -110,8 +110,8 @@ Most of our examples focus on using the higher resolution dataset (i.e. includin
 
 ```{r locs-nlayer}
 locs_3layer <- canonicalize_locations(locations_sim) # all the data
-locs_2layer <- locs_3layer[layer <= 2] # state and county only
-locs_1layer <- locs_3layer[layer <= 1] # state only
+locs_2layer <- subset(locs_3layer, layer <= 2) # state and county only
+locs_1layer <- subset(locs_3layer, layer <= 1) # state only
 ```
 
 Similarly, you can filter observations and associated metadata (i.e. populations) to match each location resolution:
@@ -123,29 +123,31 @@ data("latent_params_sim", package = "imuGAP")
 
 # 3-Layer views (State, County, School)
 # 1. Filter populations to locations present in locs_3layer
-pops_3layer <- populations_sim[loc_id %in% locs_3layer$loc_id]
+pops_3layer <- subset(populations_sim, loc_id %in% locs_3layer$loc_id)
 # 2. Extract relevant observations corresponding to filtered populations
-obs_3layer <- observations_sim[obs_id %in% pops_3layer$obs_id]
+obs_3layer <- subset(observations_sim, obs_id %in% pops_3layer$obs_id)
 # 3. Confirm extracted observations don't have unpresent locations in original population data
-stopifnot(!populations_sim[obs_id %in% obs_3layer$obs_id, any(!loc_id %in% locs_3layer$loc_id)])
+pop_locs_3 <- subset(populations_sim, obs_id %in% obs_3layer$obs_id)$loc_id
+stopifnot(!any(!pop_locs_3 %in% locs_3layer$loc_id))
 
 # 2-Layer views (State and County)
 # 1. Filter populations to locations present in locs_2layer
-pops_2layer <- populations_sim[loc_id %in% locs_2layer$loc_id]
+pops_2layer <- subset(populations_sim, loc_id %in% locs_2layer$loc_id)
 # 2. Extract relevant observations corresponding to filtered populations
-obs_2layer <- observations_sim[obs_id %in% pops_2layer$obs_id]
+obs_2layer <- subset(observations_sim, obs_id %in% pops_2layer$obs_id)
 # 3. Confirm extracted observations don't have unpresent locations in original population data
-stopifnot(!populations_sim[obs_id %in% obs_2layer$obs_id, any(!loc_id %in% locs_2layer$loc_id)])
+pop_locs_2 <- subset(populations_sim, obs_id %in% obs_2layer$obs_id)$loc_id
+stopifnot(!any(!pop_locs_2 %in% locs_2layer$loc_id))
 
 # 1-Layer views (State only)
 # 1. Aggregate and filter populations to State level (locs_1layer)
 pops_1layer <- copy(populations_sim)[, loc_id := "State"]
 pops_1layer <- pops_1layer[, .(weight = sum(weight)), by = .(obs_id, loc_id, cohort, age, dose)]
-pops_1layer <- pops_1layer[loc_id %in% locs_1layer$loc_id]
+pops_1layer <- subset(pops_1layer, loc_id %in% locs_1layer$loc_id)
 # 2. Extract relevant observations corresponding to filtered populations
-obs_1layer <- observations_sim[obs_id %in% pops_1layer$obs_id]
+obs_1layer <- subset(observations_sim, obs_id %in% pops_1layer$obs_id)
 # 3. Confirm extracted observations don't have unpresent locations in population data
-stopifnot(!pops_1layer[obs_id %in% obs_1layer$obs_id, any(!loc_id %in% locs_1layer$loc_id)])
+stopifnot(!any(!subset(pops_1layer, obs_id %in% obs_1layer$obs_id)$loc_id %in% locs_1layer$loc_id))
 ```
 
 ---
@@ -181,15 +183,15 @@ Predicting coverage from fitted models involves providing a target grid for the 
 data("target_sim", package = "imuGAP")
 
 # 3-Layer Prediction (State, County, School)
-target_3layer <- target_sim[loc_id %in% locs_3layer$loc_id]
+target_3layer <- subset(target_sim, loc_id %in% locs_3layer$loc_id)
 predict_3layer <- predict(object = fit_3layer, target = target_3layer, posterior_size = 100)
 
 # 2-Layer Prediction (State and County)
-target_2layer <- target_sim[loc_id %in% locs_2layer$loc_id]
+target_2layer <- subset(target_sim, loc_id %in% locs_2layer$loc_id)
 predict_2layer <- predict(object = fit_2layer, target = target_2layer, posterior_size = 100)
 
 # 1-Layer Prediction (State only)
-target_1layer <- target_sim[loc_id %in% locs_1layer$loc_id]
+target_1layer <- subset(target_sim, loc_id %in% locs_1layer$loc_id)
 predict_1layer <- predict(object = fit_1layer, target = target_1layer, posterior_size = 100)
 ```
 
@@ -222,15 +224,18 @@ The following plot compares estimated State-level coverage from the 1-layer, 2-l
 ```{r state-plot, fold = TRUE, code_summary = "Show plot code", fig.cap = "State-level coverage comparison across 1-layer, 2-layer, and 3-layer model fits against true values.", fig.width = 8, fig.height = 4}
 state_name <- locations_sim[is.na(parent_id), loc_id]
 
-state_1layer_pred <- summary_1layer[
-  loc_id == state_name & dose == 2 & age > 4
-][, hierarchy := "1-Layer (State Only)"]
-state_2layer_pred <- summary_2layer[
-  loc_id == state_name & dose == 2 & age > 4
-][, hierarchy := "2-Layer (State/County)"]
-state_3layer_pred <- summary_3layer[
-  loc_id == state_name & dose == 2 & age > 4
-][, hierarchy := "3-Layer (State/County/School)"]
+state_1layer_pred <- within(
+  subset(summary_1layer, loc_id == state_name & dose == 2 & age > 4),
+  hierarchy <- "1-Layer (State Only)"
+)
+state_2layer_pred <- within(
+  subset(summary_2layer, loc_id == state_name & dose == 2 & age > 4),
+  hierarchy <- "2-Layer (State/County)"
+)
+state_3layer_pred <- within(
+  subset(summary_3layer, loc_id == state_name & dose == 2 & age > 4),
+  hierarchy <- "3-Layer (State/County/School)"
+)
 
 state_cov_pred <- rbindlist(list(
   state_1layer_pred,
@@ -303,12 +308,14 @@ The following plot compares County-level coverage estimates between the 2-layer 
 ```{r county-plot, fold = TRUE, code_summary = "Show plot code", fig.cap = "County-level coverage comparison: 2-layer vs. 3-layer model estimates against true values.", fig.width = 8, fig.height = 4}
 counties <- locations_sim[parent_id == state_name, loc_id]
 
-county_2layer_pred <- summary_2layer[
-  loc_id %in% counties & dose == 2 & age > 4
-][, hierarchy := "2-Layer (State/County)"]
-county_3layer_pred <- summary_3layer[
-  loc_id %in% counties & dose == 2 & age > 4
-][, hierarchy := "3-Layer (State/County/School)"]
+county_2layer_pred <- within(
+  subset(summary_2layer, loc_id %in% counties & dose == 2 & age > 4),
+  hierarchy <- "2-Layer (State/County)"
+)
+county_3layer_pred <- within(
+  subset(summary_3layer, loc_id %in% counties & dose == 2 & age > 4),
+  hierarchy <- "3-Layer (State/County/School)"
+)
 
 county_cov_pred <- rbindlist(list(county_2layer_pred, county_3layer_pred))
 h_levels_county <- c("2-Layer (State/County)", "3-Layer (State/County/School)")
