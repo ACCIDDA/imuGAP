@@ -398,3 +398,16 @@ test_that("canonicalize_locations errors when child populations do not sum to pa
   diag_sum <- eval_err_diagnostic(err_sum, list(locations = locs_bad_pop))
   expect_equal(diag_sum$loc_id, c("cnty1", "schl1", "schl2"))
 })
+
+test_that("an NA loc_id is rejected with its rows (#156)", {
+  locs <- make_test_locs()
+  locs$loc_id[4] <- NA
+  err <- tryCatch(canonicalize_locations(locs), error = identity)
+  expect_s3_class(err, "imugap_error")
+  expect_identical(err$id, "ERR_LOCATIONS_NA_ID")
+  expect_identical(err$rows, 4L)
+  expect_match(
+    conditionMessage(err),
+    err_pattern(ERR_LOCATIONS_NA_ID, rows = 4L)
+  )
+})

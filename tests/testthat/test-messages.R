@@ -90,3 +90,50 @@ test_that("eval_err_diagnostic extracts and executes subset diagnostic correctly
   expect_equal(bad_rows$obs_id, "b")
   expect_equal(bad_rows$positive, 25)
 })
+
+# --- structured conditions (#156) ---------------------------------------------
+
+test_that("stop_fmt_if raises an imugap_error carrying the template id and fields", {
+  test_fn <- function(bad_rows) {
+    stop_fmt_if(
+      TRUE,
+      ERR_CANNOT_HAVE_NA,
+      name = "observations",
+      col = "positive",
+      rows = bad_rows
+    )
+  }
+  err <- tryCatch(test_fn(c(2L, 7L)), error = identity)
+
+  expect_s3_class(err, c("imugap_error", "error", "condition"), exact = TRUE)
+  expect_identical(err$id, "ERR_CANNOT_HAVE_NA")
+  # named arguments become fields, with their raw values (not toString()'d)
+  expect_identical(err$name, "observations")
+  expect_identical(err$col, "positive")
+  expect_identical(err$rows, c(2L, 7L))
+  # fields absent from the template are carried but not printed
+  expect_match(
+    conditionMessage(err),
+    err_pattern(ERR_CANNOT_HAVE_NA, name = "observations")
+  )
+  expect_no_match(conditionMessage(err), "7")
+  expect_equal(deparse(err$call), "test_fn(c(2L, 7L))")
+})
+
+test_that("an imugap_error is caught by class and by plain error handlers", {
+  signal <- function() stop_fmt_if(TRUE, ERR_OBS_CENSORED_NUMERIC)
+  expect_identical(
+    tryCatch(signal(), imugap_error = function(e) e$id),
+    "ERR_OBS_CENSORED_NUMERIC"
+  )
+  expect_error(signal(), class = "imugap_error")
+  expect_error(signal(), err_pattern(ERR_OBS_CENSORED_NUMERIC))
+})
+
+test_that("stop_fmt_if gives a non-symbol template an NA id and keeps only named fields", {
+  err <- tryCatch(stop_fmt_if(TRUE, "found %d errors", 3L), error = identity)
+  expect_s3_class(err, "imugap_error")
+  expect_identical(err$id, NA_character_)
+  expect_identical(conditionMessage(err), "found 3 errors")
+  expect_named(unclass(err), c("message", "call", "id"))
+})
