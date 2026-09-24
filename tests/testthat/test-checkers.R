@@ -287,3 +287,89 @@ test_that("assert_positive_numeric validates numeric type, NA presence, and boun
     "must contain numeric values"
   )
 })
+
+# --- table names and offending rows (#156) ------------------------------------
+
+test_that("nested assert_* checks name the caller's table, not `dt`", {
+  observations <- data.table::data.table(positive = c(1L, NA, 3L))
+  err <- tryCatch(
+    assert_nonneg_integer(observations, "positive"),
+    error = identity
+  )
+  expect_identical(err$id, "ERR_CANNOT_HAVE_NA")
+  expect_identical(err$name, "observations")
+  expect_match(
+    conditionMessage(err),
+    err_pattern(ERR_CANNOT_HAVE_NA, name = "observations")
+  )
+
+  populations <- data.table::data.table(dose = c(1L, 2L, 9L))
+  err <- tryCatch(
+    assert_maxed_pos_integer(populations, "dose", 3L),
+    error = identity
+  )
+  expect_identical(err$name, "populations")
+})
+
+test_that("assert_* checks report the offending rows", {
+  dt <- data.table::data.table(v = c(1, NA, 3, NA))
+  expect_identical(
+    tryCatch(assert_as_integer(dt, "v"), error = identity)$rows,
+    c(2L, 4L)
+  )
+
+  dt <- data.table::data.table(v = c(1, 2.5, 3))
+  expect_identical(
+    tryCatch(assert_as_integer(dt, "v"), error = identity)$rows,
+    2L
+  )
+
+  dt <- data.table::data.table(v = c(1L, 0L, 3L, -1L))
+  expect_identical(
+    tryCatch(assert_positive_integer(dt, "v"), error = identity)$rows,
+    c(2L, 4L)
+  )
+
+  dt <- data.table::data.table(v = c(1L, -2L, 3L))
+  expect_identical(
+    tryCatch(assert_nonneg_integer(dt, "v"), error = identity)$rows,
+    2L
+  )
+
+  max_val <- 3L
+  dt <- data.table::data.table(v = c(1L, 5L, 3L, 4L))
+  err <- tryCatch(assert_maxed_pos_integer(dt, "v", max_val), error = identity)
+  expect_identical(err$rows, which(dt$v > max_val))
+
+  dt <- data.table::data.table(v = c("a", "z", "b"))
+  err <- tryCatch(assert_subset(dt, "v", c("a", "b")), error = identity)
+  expect_identical(err$rows, 2L)
+  expect_identical(err$missing, "z")
+
+  dt <- data.table::data.table(v = c("a", "b", "z"))
+  err <- tryCatch(
+    assert_set_equivalence(dt, "v", c("a", "b")),
+    error = identity
+  )
+  expect_identical(err$id, "ERR_SET_EQUIV_EXTRA")
+  expect_identical(err$rows, 3L)
+
+  dt <- data.table::data.table(v = c(0.5, NA, -1))
+  expect_identical(
+    tryCatch(assert_positive_numeric(dt, "v"), error = identity)$rows,
+    2L
+  )
+  dt <- data.table::data.table(v = c(0.5, 0, -1))
+  expect_identical(
+    tryCatch(assert_positive_numeric(dt, "v"), error = identity)$rows,
+    c(2L, 3L)
+  )
+})
+
+test_that("assert_subset reports a blank as a blank, not as a missing NA value", {
+  dt <- data.table::data.table(v = c("a", NA, "b"))
+  err <- tryCatch(assert_subset(dt, "v", c("a", "b")), error = identity)
+  expect_identical(err$id, "ERR_CANNOT_HAVE_NA")
+  expect_identical(err$rows, 2L)
+  expect_no_match(conditionMessage(err), "missing NA")
+})

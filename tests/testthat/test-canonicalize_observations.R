@@ -145,3 +145,40 @@ test_that("canonical input short-circuits and returns unchanged", {
   again <- canonicalize_observations(canon)
   expect_identical(canon, again)
 })
+
+# --- structured errors (#156) -------------------------------------------------
+
+test_that("positive > sample_n reports the offending rows", {
+  obs <- make_test_obs()
+  obs$positive[2] <- obs$sample_n[2] + 1L
+  err <- tryCatch(canonicalize_observations(obs), error = identity)
+  expect_identical(err$id, "ERR_OBS_POS_GT_SAMPLE")
+  expect_identical(err$rows, which(obs$positive > obs$sample_n))
+})
+
+test_that("invalid censored values report the offending rows", {
+  obs <- make_test_obs()
+  obs$censored <- c(NA, 2)
+  err <- tryCatch(canonicalize_observations(obs), error = identity)
+  expect_identical(err$id, "ERR_OBS_CENSORED_VALUES")
+  expect_identical(err$rows, 2L)
+})
+
+test_that("an NA positive names `observations` and reports the row", {
+  obs <- make_test_obs()
+  obs$positive[2] <- NA
+  err <- tryCatch(canonicalize_observations(obs), error = identity)
+  expect_identical(err$name, "observations")
+  expect_identical(err$col, "positive")
+  expect_identical(err$rows, 2L)
+})
+
+test_that("an all-NA logical censored column means none censored", {
+  obs <- make_test_obs()
+  # what read.csv() gives for an empty column
+  obs$censored <- NA
+  expect_type(obs$censored, "logical")
+  expect_silent(res <- canonicalize_observations(obs))
+  expect_type(res$censored, "double")
+  expect_true(all(is.na(res$censored)))
+})

@@ -179,6 +179,14 @@ canonicalize_locations <- function(locations) {
     allowed_extra = "population"
   )
 
+  # check for missing ids
+  stop_fmt_if(
+    locations[, any(is.na(loc_id))],
+    ERR_LOCATIONS_NA_ID,
+    n_nas = locations[is.na(loc_id), .N],
+    rows = locations[, which(is.na(loc_id))]
+  )
+
   # check for duplicate ids
   dupes <- locations[duplicated(loc_id), unique(loc_id)]
   stop_fmt_if(
@@ -347,15 +355,23 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
     observations[, any(positive > sample_n)],
     ERR_OBS_POS_GT_SAMPLE,
     n_rows = observations[positive > sample_n, .N],
-    obs_ids = observations[positive > sample_n, obs_id]
+    obs_ids = observations[positive > sample_n, obs_id],
+    rows = observations[, which(positive > sample_n)]
   )
 
   if ("censored" %in% names(observations)) {
+    # an all-NA column (e.g. empty in a CSV) reads as logical; NA is the
+    # documented "uncensored" value, so treat it as none censored
+    if (observations[, is.logical(censored) && all(is.na(censored))]) {
+      # full-length RHS: `:=` would coerce a scalar NA_real_ back to logical
+      observations[, censored := as.numeric(censored)]
+    }
     # confirmed censored is numeric, and only contains NA or 1
     stop_fmt_if(!is.numeric(observations$censored), ERR_OBS_CENSORED_NUMERIC)
     stop_fmt_if(
       observations[, any(!is.na(censored) & censored != 1)],
-      ERR_OBS_CENSORED_VALUES
+      ERR_OBS_CENSORED_VALUES,
+      rows = observations[, which(!is.na(censored) & censored != 1)]
     )
   } else {
     observations[, censored := NA_real_]

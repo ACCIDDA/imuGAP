@@ -23,6 +23,18 @@
   - Added automated Mermaid diagram compilation pipeline (`just diagrams`) generating SVG
     and PDF visual assets with dark-mode compatibility.
 
+- **Structured Input Errors** (#156):
+  - Errors raised by imuGAP now have class `imugap_error` (still an `error`), carrying an `id`
+    (the message template name, e.g. `"ERR_OBS_NA_ID"`) and the values the message was built
+    from as fields. Front-ends can catch `imugap_error` and read fields instead of parsing
+    message text.
+  - Canonicalizer column checks report the offending rows in a `rows` field (1-based indices
+    into the table the caller passed), and name the caller's table (`observations`,
+    `populations`) instead of the internal `dt`.
+  - `canonicalize_locations()` now rejects `NA` in `loc_id`, and `canonicalize_observations()`
+    accepts an all-`NA` logical `censored` column (as `read.csv()` gives) as none censored.
+    An `NA` in a subset-checked column is reported as a missing value, not as "missing NA".
+
 ## Performance & Stan Model Improvements
 
 - **Stan Computation Optimization**:

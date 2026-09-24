@@ -569,3 +569,27 @@ test_that("canonicalize_populations warns when imugap_opts overrides max_dose", 
     err_pattern(MSG_POP_OPTS_OVERRIDE_MAX_DOSE, max_dose = 1L)
   )
 })
+
+# --- structured errors (#156) -------------------------------------------------
+
+test_that("population column errors name `populations` and report rows", {
+  pops <- make_test_pops()
+  pops$cohort[2] <- NA
+  err <- tryCatch(
+    canonicalize_populations(pops, make_test_obs(), make_test_locs()),
+    error = identity
+  )
+  expect_identical(err$name, "populations")
+  expect_identical(err$col, "cohort")
+  expect_identical(err$rows, 2L)
+
+  pops <- make_test_pops()
+  pops$loc_id[2] <- "nowhere"
+  err <- tryCatch(
+    canonicalize_populations(pops, make_test_obs(), make_test_locs()),
+    error = identity
+  )
+  expect_identical(err$id, "ERR_SUBSET_MISSING")
+  expect_identical(err$rows, 2L)
+  expect_identical(err$missing, "nowhere")
+})

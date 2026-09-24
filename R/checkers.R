@@ -10,16 +10,25 @@
 #' @param x column name as character string.
 #' @param na_allowed logical; allow `NA` values? (default: `FALSE`).
 #' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#' @param name table name for error messages (default: the expression passed as `dt`).
 #'
 #' @keywords internal
 #' @noRd
-assert_as_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
+assert_as_integer <- function(
+  dt,
+  x,
+  na_allowed = FALSE,
+  n = 1L,
+  name = deparse(substitute(dt))
+) {
   if (dt[, !is.integer(get(x))]) {
+    non_int <- dt[, which(as.integer(get(x)) != get(x))]
     stop_fmt_if(
-      !all(as.integer(dt[, get(x)]) == dt[, get(x)]),
+      length(non_int) > 0L,
       ERR_MUST_BE_INTEGER,
-      name = deparse(substitute(dt)),
+      name = name,
       col = x,
+      rows = non_int,
       n = n + 1L
     )
     expr <- parse(text = sprintf("%s := as.integer(%s)", x, x))
@@ -28,8 +37,9 @@ assert_as_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
   stop_fmt_if(
     !na_allowed && dt[, any(is.na(get(x)))],
     ERR_CANNOT_HAVE_NA,
-    name = deparse(substitute(dt)),
+    name = name,
     col = x,
+    rows = dt[, which(is.na(get(x)))],
     n = n + 1L
   )
   dt[]
@@ -44,15 +54,26 @@ assert_as_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
 #' @param x column name as character string.
 #' @param na_allowed logical; allow `NA` values? (default: `FALSE`).
 #' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#' @param name table name for error messages (default: the expression passed as `dt`).
 #'
 #' @keywords internal
 #' @noRd
-assert_positive_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
+assert_positive_integer <- function(
+  dt,
+  x,
+  na_allowed = FALSE,
+  n = 1L,
+  name = deparse(substitute(dt))
+) {
+  bad <- assert_as_integer(dt, x, na_allowed, n = n + 1L, name = name)[,
+    which(get(x) < 1L)
+  ]
   stop_fmt_if(
-    assert_as_integer(dt, x, na_allowed, n = n + 1L)[, any(get(x) < 1L)],
+    length(bad) > 0L,
     ERR_MUST_BE_GT_ZERO,
-    name = deparse(substitute(dt)),
+    name = name,
     col = x,
+    rows = bad,
     n = n + 1L
   )
   dt[]
@@ -67,15 +88,26 @@ assert_positive_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
 #' @param x column name as character string.
 #' @param na_allowed logical; allow `NA` values? (default: `FALSE`).
 #' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#' @param name table name for error messages (default: the expression passed as `dt`).
 #'
 #' @keywords internal
 #' @noRd
-assert_nonneg_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
+assert_nonneg_integer <- function(
+  dt,
+  x,
+  na_allowed = FALSE,
+  n = 1L,
+  name = deparse(substitute(dt))
+) {
+  bad <- assert_as_integer(dt, x, na_allowed, n = n + 1L, name = name)[,
+    which(get(x) < 0L)
+  ]
   stop_fmt_if(
-    assert_as_integer(dt, x, na_allowed, n = n + 1L)[, any(get(x) < 0L)],
+    length(bad) > 0L,
     ERR_MUST_BE_GTE_ZERO,
-    name = deparse(substitute(dt)),
+    name = name,
     col = x,
+    rows = bad,
     n = n + 1L
   )
   dt[]
@@ -91,17 +123,26 @@ assert_nonneg_integer <- function(dt, x, na_allowed = FALSE, n = 1L) {
 #' @param max optional maximum integer limit.
 #' @param na_allowed logical; allow `NA` values? (default: `FALSE`).
 #' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#' @param name table name for error messages (default: the expression passed as `dt`).
 #'
 #' @keywords internal
 #' @noRd
-assert_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE, n = 1L) {
-  assert_positive_integer(dt, x, na_allowed, n = n + 1L)
+assert_maxed_pos_integer <- function(
+  dt,
+  x,
+  max,
+  na_allowed = FALSE,
+  n = 1L,
+  name = deparse(substitute(dt))
+) {
+  assert_positive_integer(dt, x, na_allowed, n = n + 1L, name = name)
   stop_fmt_if(
     !missing(max) && dt[, any(get(x) > max)],
     ERR_MUST_BE_LTE_MAX,
-    name = deparse(substitute(dt)),
+    name = name,
     col = x,
     max_val = max,
+    rows = if (!missing(max)) dt[, which(get(x) > max)],
     n = n + 1L
   )
   dt[]
@@ -116,24 +157,32 @@ assert_maxed_pos_integer <- function(dt, x, max, na_allowed = FALSE, n = 1L) {
 #' @param x column name as character string.
 #' @param tarset expected set vector.
 #' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#' @param name table name for error messages (default: the expression passed as `dt`).
 #'
 #' @keywords internal
 #' @noRd
-assert_set_equivalence <- function(dt, x, tarset, n = 1L) {
+assert_set_equivalence <- function(
+  dt,
+  x,
+  tarset,
+  n = 1L,
+  name = deparse(substitute(dt))
+) {
   tarset <- unique(tarset)
   setlen <- length(tarset)
   stop_fmt_if(
     length(intersect(tarset, dt[, get(x)])) != setlen,
     ERR_SET_EQUIV_MISSING,
-    name = deparse(substitute(dt)),
+    name = name,
     col = x,
     n = n + 1L
   )
   stop_fmt_if(
     length(union(tarset, dt[, get(x)])) != setlen,
     ERR_SET_EQUIV_EXTRA,
-    name = deparse(substitute(dt)),
+    name = name,
     col = x,
+    rows = dt[, which(!get(x) %in% tarset)],
     n = n + 1L
   )
   dt[]
@@ -148,17 +197,34 @@ assert_set_equivalence <- function(dt, x, tarset, n = 1L) {
 #' @param x column name as character string.
 #' @param tarset allowed superset vector.
 #' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#' @param name table name for error messages (default: the expression passed as `dt`).
 #'
 #' @keywords internal
 #' @noRd
-assert_subset <- function(dt, x, tarset, n = 1L) {
+assert_subset <- function(
+  dt,
+  x,
+  tarset,
+  n = 1L,
+  name = deparse(substitute(dt))
+) {
+  # a blank is reported as a blank, not as a value missing from the parent set
+  stop_fmt_if(
+    dt[, any(is.na(get(x)))],
+    ERR_CANNOT_HAVE_NA,
+    name = name,
+    col = x,
+    rows = dt[, which(is.na(get(x)))],
+    n = n + 1L
+  )
   checkset <- unique(dt[, get(x)])
   stop_fmt_if(
     !all(checkset %in% tarset),
     ERR_SUBSET_MISSING,
-    name = deparse(substitute(dt)),
+    name = name,
     col = x,
     missing = setdiff(checkset, tarset),
+    rows = dt[, which(!get(x) %in% tarset)],
     n = n + 1L
   )
   dt[]
@@ -230,29 +296,37 @@ assert_cols <- function(
 #' @param dt a `[data.table()]`.
 #' @param x column name as character string.
 #' @param n frame offset integer specifying call stack depth for error attribution (default: `1L`).
+#' @param name table name for error messages (default: the expression passed as `dt`).
 #'
 #' @keywords internal
 #' @noRd
-assert_positive_numeric <- function(dt, x, n = 1L) {
+assert_positive_numeric <- function(
+  dt,
+  x,
+  n = 1L,
+  name = deparse(substitute(dt))
+) {
   stop_fmt_if(
     dt[, !is.numeric(get(x))],
     ERR_MUST_BE_NUMERIC,
-    name = deparse(substitute(dt)),
+    name = name,
     col = x,
     n = n + 1L
   )
   stop_fmt_if(
     dt[, any(is.na(get(x)))],
     ERR_CANNOT_HAVE_NA,
-    name = deparse(substitute(dt)),
+    name = name,
     col = x,
+    rows = dt[, which(is.na(get(x)))],
     n = n + 1L
   )
   stop_fmt_if(
     dt[, any(get(x) <= 0)],
     ERR_MUST_BE_GT_ZERO,
-    name = deparse(substitute(dt)),
+    name = name,
     col = x,
+    rows = dt[, which(get(x) <= 0)],
     n = n + 1L
   )
   dt[]
