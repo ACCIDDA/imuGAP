@@ -40,10 +40,15 @@ oos_draws <- setNames(
   vapply(folds, `[[`, "school", FUN.VALUE = character(1))
 )
 
-# 2. Extract empirical measurements for Scruggs schools
-obs_scruggs <- observations_sim[loc_id %in% scruggs_schools]
-obs_scruggs_pops <- populations_sim[obs_id %in% obs_scruggs$obs_id]
-obs_empirical <- merge(obs_scruggs, obs_scruggs_pops, by = "obs_id")
+# 2. Extract empirical measurements for Scruggs schools from population metadata
+school_obs_meta <- populations_sim[loc_id %in% scruggs_schools]
+obs_scruggs <- observations_sim[obs_id %in% school_obs_meta$obs_id]
+
+obs_empirical <- merge(
+  school_obs_meta[, .(obs_id, loc_id, cohort, age, dose, weight)],
+  obs_scruggs[, .(obs_id, sample_n, positive)],
+  by = "obs_id"
+)
 obs_empirical[, empirical_coverage := positive / sample_n]
 
 # Align out-of-sample predictions with empirical observations
@@ -66,8 +71,7 @@ eval_comparison <- merge(
 eval_comparison[, `:=`(
   abs_error = abs(q50 - empirical_coverage),
   sq_error = (mean - empirical_coverage)^2,
-  in_ci_95 = (empirical_coverage >= q2_5 & empirical_coverage <= q97_5),
-  in_ci_50 = (empirical_coverage >= q25 & empirical_coverage <= q75)
+  in_ci_95 = (empirical_coverage >= q2_5 & empirical_coverage <= q97_5)
 )]
 
 # Summary metrics across all held-out schools
@@ -75,7 +79,6 @@ metrics <- list(
   mae = mean(eval_comparison$abs_error, na.rm = TRUE),
   rmse = sqrt(mean(eval_comparison$sq_error, na.rm = TRUE)),
   coverage_95 = mean(eval_comparison$in_ci_95, na.rm = TRUE),
-  coverage_50 = mean(eval_comparison$in_ci_50, na.rm = TRUE),
   n_eval_points = nrow(eval_comparison)
 )
 
@@ -85,9 +88,12 @@ target_all_scruggs <- canonicalize_target(
   eval_comparison[, .(loc_id, cohort, age, dose)],
   fit_sim
 )
-pred_insample <- summary(
-  predict(fit_sim, target = target_all_scruggs, posterior_size = 200L)
+pred_insample_obj <- predict(
+  fit_sim,
+  target = target_all_scruggs,
+  posterior_size = 200L
 )
+pred_insample <- summary(pred_insample_obj)
 
 shrinkage_comp <- merge(
   eval_comparison[, .(
@@ -97,8 +103,7 @@ shrinkage_comp <- merge(
     dose,
     empirical_coverage,
     oos_q50 = q50,
-    oos_mean = mean,
-    oos_sd = sd
+    oos_mean = mean
   )],
   pred_insample[, .(
     loc_id,
@@ -106,14 +111,12 @@ shrinkage_comp <- merge(
     age,
     dose,
     insample_q50 = q50,
-    insample_mean = mean,
-    insample_sd = sd
+    insample_mean = mean
   )],
   by = c("loc_id", "cohort", "age", "dose")
 )
 shrinkage_comp[, `:=`(
-  shrinkage_delta = oos_mean - insample_mean,
-  uncertainty_ratio = oos_sd / insample_sd
+  shrinkage_delta = oos_mean - insample_mean
 )]
 
 # 4. Export consolidated package dataset
