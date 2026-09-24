@@ -45,13 +45,42 @@ format_message <- function(fmt, ..., width = 80L) {
   }
 }
 
+#' @title Construct an imuGAP error condition
+#'
+#' @description
+#' Builds an error condition of class `imugap_error` that carries structured
+#' data alongside its message, so callers (e.g. front-ends) can read fields
+#' instead of parsing message text.
+#'
+#' @param message character scalar; the formatted error message.
+#' @param id character scalar; the name of the message template (e.g.
+#'   `"ERR_OBS_NA_ID"`), or `NA` if unknown.
+#' @param fields a named list of additional fields to attach (default: `list()`).
+#' @param call the call to attribute the error to (default: `NULL`).
+#'
+#' @return a condition of class `c("imugap_error", "error", "condition")`, with
+#'   elements `message`, `call`, `id`, and each element of `fields`.
+#'
+#' @keywords internal
+#' @noRd
+imugap_error <- function(message, id, fields = list(), call = NULL) {
+  structure(
+    c(list(message = message, call = call, id = id), fields),
+    class = c("imugap_error", "error", "condition")
+  )
+}
+
 #' @title Signal an error if a condition is met with formatted message
 #'
 #' @description
-#' Evaluates `cond` and if `TRUE`, raises an error formatted with `format_message()`.
+#' Evaluates `cond` and if `TRUE`, raises an `imugap_error` formatted with
+#' `format_message()`. The error's `id` is the name of the template passed as
+#' `fmt`, and each named argument in `...` is attached as a field with its raw
+#' value, whether or not the template prints it.
 #'
 #' @param cond logical expression to evaluate.
-#' @param fmt character format string.
+#' @param fmt character format string, passed as a template constant (e.g.
+#'   `ERR_OBS_NA_ID`) so its name can be recorded as the error `id`.
 #' @param ... additional arguments passed to `format_message()`.
 #' @param n frame offset integer specifying call stack depth for call attribution
 #'   (default: `1L`). If `n <= 0L`, call attribution is suppressed (`NULL`).
@@ -61,7 +90,11 @@ format_message <- function(fmt, ..., width = 80L) {
 stop_fmt_if <- function(cond, fmt, ..., n = 1L) {
   if (isTRUE(cond)) {
     call_obj <- if (n > 0L) sys.call(-n) else NULL
-    stop(simpleError(format_message(fmt, ...), call = call_obj))
+    fmt_expr <- substitute(fmt)
+    id <- if (is.name(fmt_expr)) as.character(fmt_expr) else NA_character_
+    args <- list(...)
+    fields <- if (is.null(names(args))) list() else args[nzchar(names(args))]
+    stop(imugap_error(format_message(fmt, ...), id, fields, call_obj))
   }
 }
 
@@ -221,6 +254,18 @@ ERR_ARG_MUST_BE_GT_ZERO <- "'{name}' must be positive"
 # ------------------------------------------------------------------------------
 # 3. Location Hierarchy Templates
 # ------------------------------------------------------------------------------
+
+#' @title Location ID NA Error
+#' @description Raised when `loc_id` column contains NA values.
+#' @param {n_nas} count of NA values.
+#' @param {rows} string list of row indices containing NA.
+#' @keywords internal
+#' @noRd
+ERR_LOCATIONS_NA_ID <- paste0(
+  "`locations` column 'loc_id' cannot contain NA values; ",
+  "found {n_nas} NA value(s) at row(s): {rows}; ",
+  "use `subset(locations, is.na(loc_id))` to resolve invalid entries"
+)
 
 #' @title Duplicate Location ID Error
 #' @description Raised when location identifiers are not unique.
