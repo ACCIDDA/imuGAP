@@ -3,7 +3,7 @@ test_that("src/RcppExports.cpp is synchronized with Stan models and Rcpp attribu
   skip_if_not_installed("rstantools")
 
   pkg_dir <- tryCatch(
-    rprojroot::find_package_root_file(),
+    normalizePath(testthat::test_path("../.."), mustWork = TRUE),
     error = function(e) "."
   )
   cpp_file <- file.path(pkg_dir, "src", "RcppExports.cpp")

@@ -677,3 +677,12 @@ ERR_AGES_EMPTY <- "`ages` must not be empty"
 #' @keywords internal
 #' @noRd
 ERR_AGES_OOB <- "`ages` contains no valid ages within 1..{max_age}"
+
+#' @title Loo Package Not Installed Error
+#' @description Raised when `loo()` is called on an `imugap_fit` but the `loo` package is missing.
+#' @keywords internal
+#' @noRd
+ERR_LOO_NOT_INSTALLED <- paste0(
+  "The 'loo' package is required for loo.imugap_fit(); ",
+  "please install it with install.packages('loo')"
+)

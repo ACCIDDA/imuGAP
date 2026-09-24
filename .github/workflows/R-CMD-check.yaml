@@ -6,18 +6,185 @@ on:
   pull_request:
 
 jobs:
-  # Generate the gitignored, platform-independent build artifacts ONCE, then
-  # share them with every matrix leg. fit_data.R (the fitted datasets) and
-  # roxygenise (man/, NAMESPACE, R/globals.R) are the same regardless of the
-  # check platform, but each of the 9 legs was regenerating them -- fit_data.R
-  # alone is ~2 min on Linux and ~5.5 min on Windows per leg. Running it once
-  # on Linux and downloading the result removes that redundant work.
-  #
-  # Sharing the Linux-built fitted data to the macOS/Windows legs is safe: the
-  # CRAN submission tarball is built on Linux with exactly these .rda files and
-  # is checked by CRAN across all platforms, so their cross-platform loading is
-  # already validated.
+  # ---------------------------------------------------------------------------
+  # 1. Parallel Data & Artifact Preparation (Scatter / Fan-Out)
+  # ---------------------------------------------------------------------------
+  prep-main:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup imuGAP CI environment
+        uses: ./.github/actions/setup-imugap
+        with:
+          extra-packages: any::pkgload
+          needs: check
+          generate-data: 'false'
+          generate-docs: 'false'
+          generate-diagrams: 'false'
+
+      - name: Generate core 3-layer data
+        shell: bash
+        run: just data-fit-main
+
+      - name: Upload core 3-layer artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prep-main
+          if-no-files-found: error
+          retention-days: 1
+          path: |
+            data/fit_sim*.rda
+            data/target_sim*.rda
+            data/predict_sim*.rda
+
+  prep-layers:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup imuGAP CI environment
+        uses: ./.github/actions/setup-imugap
+        with:
+          extra-packages: any::pkgload
+          needs: check
+          generate-data: 'false'
+          generate-docs: 'false'
+          generate-diagrams: 'false'
+
+      - name: Generate 1-layer and 2-layer ablation models
+        shell: bash
+        run: just data-fit-layers
+
+      - name: Upload layer ablation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prep-layers
+          if-no-files-found: error
+          retention-days: 1
+          path: |
+            data/*_1layer*.rda
+            data/*_2layer*.rda
+
+  prep-school-folds:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fold_idx: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup imuGAP CI environment
+        uses: ./.github/actions/setup-imugap
+        with:
+          extra-packages: any::pkgload
+          needs: check
+          generate-data: 'false'
+          generate-docs: 'false'
+          generate-diagrams: 'false'
+
+      - name: Fit school fold ${{ matrix.fold_idx }}
+        shell: bash
+        run: just data-fit-school-fold ${{ matrix.fold_idx }}
+
+      - name: Upload fold artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: school-fold-${{ matrix.fold_idx }}
+          if-no-files-found: error
+          retention-days: 1
+          path: data-raw/scratch_school_cv/fold_*.rds
+
+  prep-school-consolidate:
+    needs: [prep-main, prep-school-folds]
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup imuGAP CI environment
+        uses: ./.github/actions/setup-imugap
+        with:
+          extra-packages: any::pkgload
+          needs: check
+          generate-data: 'false'
+          generate-docs: 'false'
+          generate-diagrams: 'false'
+
+      - name: Download main data (for in-sample comparison)
+        uses: actions/download-artifact@v4
+        with:
+          name: prep-main
+          path: .
+
+      - name: Download all fold artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: school-fold-*
+          merge-multiple: true
+          path: data-raw/scratch_school_cv
+
+      - name: Consolidate folds into package dataset
+        shell: bash
+        run: just data-fit-school-consolidate
+
+      - name: Upload consolidated school CV data
+        uses: actions/upload-artifact@v4
+        with:
+          name: prep-school-cv
+          if-no-files-found: error
+          retention-days: 1
+          path: data/leave_school_out*.rda
+
+  prep-docs:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup imuGAP CI environment
+        uses: ./.github/actions/setup-imugap
+        with:
+          extra-packages: any::roxygen2, any::roxyglobals, any::pkgload
+          needs: check
+          generate-data: 'false'
+
+      - name: Upload documentation and diagram artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prep-docs
+          if-no-files-found: error
+          retention-days: 1
+          path: |
+            man
+            NAMESPACE
+            R/globals.R
+            vignettes/figures/*.svg
+
+  # ---------------------------------------------------------------------------
+  # 2. Gather All Artifacts into Unified Package Bundle (Gather / Fan-In)
+  # ---------------------------------------------------------------------------
   prep:
+    needs: [prep-main, prep-layers, prep-school-consolidate, prep-docs]
     runs-on: ubuntu-latest
 
     env:
@@ -28,11 +195,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Download and merge all prep slices
+        uses: actions/download-artifact@v4
+        with:
+          pattern: prep-*
+          merge-multiple: true
+          path: .
+
       - name: Setup imuGAP CI environment
         uses: ./.github/actions/setup-imugap
         with:
           extra-packages: any::roxygen2, any::roxyglobals, any::pkgload
           needs: check
+          bootstrap-namespace: 'false'
+          cache-stan: 'false'
+          generate-data: 'false'
+          generate-docs: 'false'
+          generate-diagrams: 'false'
 
       - name: Guard source tarball size
         shell: bash
@@ -49,7 +228,7 @@ jobs:
           fi
           rm -f "${TARBALL}"
 
-      - name: Upload build artifacts
+      - name: Upload unified build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: prep-build-artifacts
@@ -62,6 +241,9 @@ jobs:
             R/globals.R
             vignettes/figures/*.svg
 
+  # ---------------------------------------------------------------------------
+  # 3. Validation Matrix Across OS and R Versions
+  # ---------------------------------------------------------------------------
   R-CMD-check:
     needs: prep
     runs-on: ${{ matrix.config.os }}
@@ -100,10 +282,6 @@ jobs:
           name: prep-build-artifacts
           path: .
 
-      # Build steps are toggled off: the artifacts above already provide the
-      # NAMESPACE, docs, and fitted data, so this leg only needs R + the check
-      # dependencies before running R CMD check (which builds/compiles the
-      # tarball itself, independently of the fitted-data step).
       - name: Setup imuGAP CI environment
         uses: ./.github/actions/setup-imugap
         with:
@@ -114,6 +292,7 @@ jobs:
           cache-stan: 'false'
           generate-data: 'false'
           generate-docs: 'false'
+          generate-diagrams: 'false'
 
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
@@ -123,17 +302,11 @@ jobs:
 
   check-result:
     if: always()
-    needs: [prep, R-CMD-check]
+    needs: [prep-main, prep-layers, prep-school-folds, prep-school-consolidate, prep-docs, prep, R-CMD-check]
     runs-on: ubuntu-latest
     steps:
       - name: Verify prep and all required checks passed
         run: |
-          # Fail on anything that is not a clean success (failure, skipped,
-          # cancelled). In particular, if `prep` fails the matrix legs are
-          # SKIPPED rather than failed, so checking only for "failure" would let
-          # a prep failure slip through as a green required check.
-          # (devel legs are continue-on-error, so a devel failure is reported as
-          # success in the matrix result and is tolerated as before.)
           if [ "${{ needs.prep.result }}" != "success" ]; then
             echo "prep job did not succeed (result: ${{ needs.prep.result }})"
             exit 1
@@ -142,4 +315,4 @@ jobs:
             echo "R-CMD-check did not succeed (result: ${{ needs.R-CMD-check.result }})"
             exit 1
           fi
-          echo "prep and R-CMD-check both succeeded."
+          echo "All prep and R-CMD-check matrix legs succeeded."

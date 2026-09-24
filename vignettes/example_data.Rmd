@@ -94,10 +94,7 @@ if (!pkgs_available) {
 
 # Overview of the Synthetic Simulation Universe
 
-`imuGAP` provides four bundled datasets (`locations_sim`, `observations_sim`, `populations_sim`,
-and `target_sim`) alongside latent parameter fixtures (`latent_params_sim`, `fit_sim`,
-`predict_sim`) that reflect an underlying vaccination process model and surveillance streams
-across a multi-resolution hierarchical population structure.
+`imuGAP` provides four bundled datasets (`locations_sim`, `observations_sim`, `populations_sim`, and `target_sim`) alongside latent parameter fixtures (`latent_params_sim`, `fit_sim`, `predict_sim`) that reflect an underlying vaccination process model and surveillance streams across a multi-resolution hierarchical population structure.
 
 In this scenario:
 
@@ -165,25 +162,17 @@ head(canonical_observations)
 
 ### Observation Metadata & Populations (`populations_sim`)
 
-The `populations` table provides essential metadata for all observations—defining the discrete
-location, age, cohort, and dose associated with each survey outcome. Every record in `observations`
-receives one or more entries in `populations`:
+The `populations` table provides essential metadata for all observations—defining the discrete location, age, cohort, and dose associated with each survey outcome. Every record in `observations` receives one or more entries in `populations`:
 
-- **Direct (1:1) observations**: A single row with `weight = 1.0` maps the observation directly
-  to a discrete population slice (such as a single-cohort kindergarten survey at age 5).
-- **Mixed observations**: When a survey mixes multiple underlying populations (such as
-  cross-sectional surveys spanning multiple age groups or cohorts), `populations` captures this
-  mixture using multiple rows sharing the same `obs_id`, each assigned a fractional weight
-  (e.g. equal weights or demographic population shares summing to 1.0).
+- **Direct (1:1) observations**: A single row with `weight = 1.0` maps the observation directly to a discrete population slice (such as a single-cohort kindergarten survey at age 5).
+- **Mixed observations**: When a survey mixes multiple underlying populations (such as cross-sectional surveys spanning multiple age groups or cohorts), `populations` captures this mixture using multiple rows sharing the same `obs_id`, each assigned a fractional weight (e.g. equal weights or demographic population shares summing to 1.0).
 
 ```{r populations}
 data("populations_sim", package = "imuGAP")
 head(populations_sim)
 ```
 
-For single-cohort kindergarten surveys, `obs_id` has a 1:1 mapping with `weight = 1.0`. For
-multi-age surveys (such as TeenVaxView at `obs_id == 761`), multiple rows describe the mixture
-across ages:
+For single-cohort kindergarten surveys, `obs_id` has a 1:1 mapping with `weight = 1.0`. For multi-age surveys (such as TeenVaxView at `obs_id == 761`), multiple rows describe the mixture across ages:
 
 ```{r populations-multi}
 # TeenVaxView-style observation spanning ages 14 to 18
@@ -253,7 +242,7 @@ The following figures illustrate empirical coverage rates across each observatio
 ```{r synthetic-state-viz, fold = TRUE, code_summary = "Show plot code"}
 data("latent_params_sim", package = "imuGAP")
 
-state_obs <- copy(observations_sim[loc_id == "State"])
+state_obs <- copy(subset(observations_sim, loc_id == "State"))
 state_obs[, source := factor(
   fcase(
     dose == 1 & age_min == 2, "ChildVaxView (Dose 1, Age 2)",
@@ -270,8 +259,8 @@ state_obs[, source := factor(
 )]
 state_obs[, obs_prop := positive / sample_n]
 
-single_cohort_obs <- state_obs[is.na(age_max) | age_max == age_min + 1L]
-multi_cohort_obs <- copy(state_obs[!is.na(age_max) & age_max > age_min + 1L])
+single_cohort_obs <- subset(state_obs, is.na(age_max) | age_max == age_min + 1L)
+multi_cohort_obs <- copy(subset(state_obs, !is.na(age_max) & age_max > age_min + 1L))
 multi_cohort_obs[, cohort_max := cohort_min + (age_max - 1L) - age_min]
 
 latent_state <- data.table(
@@ -384,7 +373,7 @@ In this simulation universe, routine county-wide middle school entry tallies (do
 
 ```{r synthetic-county-viz, fold = TRUE, code_summary = "Show plot code"}
 county_names <- names(latent_params_sim$off_cnty)
-county_obs <- copy(observations_sim[loc_id %in% county_names])
+county_obs <- copy(subset(observations_sim, loc_id %in% county_names))
 county_obs[, obs_prop := positive / sample_n]
 
 max_obs_cohort <- max(county_obs$cohort_min)
@@ -405,8 +394,8 @@ county_latent <- rbindlist(lapply(names(latent_params_sim$off_cnty), function(cn
   )
 }))
 
-county_latent_obs <- county_latent[cohort_min <= max_obs_cohort]
-county_latent_unobs <- county_latent[cohort_min >= max_obs_cohort]
+county_latent_obs <- subset(county_latent, cohort_min <= max_obs_cohort)
+county_latent_unobs <- subset(county_latent, cohort_min >= max_obs_cohort)
 
 ggplot() +
   geom_point(
@@ -482,9 +471,7 @@ ggplot() +
 
 ### School Kindergarten Enrollment Records
 
-The following plot illustrates school-level kindergarten entry records (dose 2 at age 5) across
-all elementary schools grouped by county, comparing empirical survey counts against the
-underlying school-specific latent coverage curves:
+The following plot illustrates school-level kindergarten entry records (dose 2 at age 5) across all elementary schools grouped by county, comparing empirical survey counts against the underlying school-specific latent coverage curves:
 
 ```{r synthetic-school-viz, fold = TRUE, code_summary = "Show plot code"}
 canonical_locations <- canonicalize_locations(locations_sim)
@@ -505,13 +492,13 @@ school_latent <- rbindlist(lapply(seq_len(nrow(sch_locs)), function(i) {
   data.table(loc_id = sch, county_id = cnty, cohort_min = cohorts, latent_cov = cov_true)
 }))
 
-sch_obs <- copy(observations_sim[loc_id %in% sch_locs$loc_id])
+sch_obs <- copy(subset(observations_sim, loc_id %in% sch_locs$loc_id))
 sch_obs[, obs_prop := positive / sample_n]
 sch_obs <- merge(sch_obs, sch_locs[, .(loc_id, county_id = parent_id)], by = "loc_id")
 
 max_obs_cohort <- max(sch_obs$cohort_min)
-school_latent_obs <- school_latent[cohort_min <= max_obs_cohort]
-school_latent_unobs <- school_latent[cohort_min >= max_obs_cohort]
+school_latent_obs <- subset(school_latent, cohort_min <= max_obs_cohort)
+school_latent_unobs <- subset(school_latent, cohort_min >= max_obs_cohort)
 
 ggplot() +
   geom_point(

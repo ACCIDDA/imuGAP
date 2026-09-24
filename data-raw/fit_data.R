@@ -1,8 +1,7 @@
-# Part B of the package-data pipeline: build the fit-derived artifacts.
+# Part B of the package-data pipeline: build the core 3-layer fit-derived artifacts.
 #
-# Produces fit_sim, target_sim, and predict_sim from the tracked *_sim inputs,
-# as well as 1-layer and 2-layer variants (fit_sim_1layer, predict_sim_1layer,
-# fit_sim_2layer, predict_sim_2layer) for layer demonstration and vignettes.
+# Produces fit_sim, target_sim, and predict_sim from the tracked *_sim inputs.
+# Layer variants (1-layer and 2-layer) are built by data-raw/fit_layers.R.
 
 pkgload::load_all(quiet = TRUE)
 library(data.table)
@@ -158,100 +157,4 @@ predict_sim <- pred_res$val
 print_time("Predicting", pred_res$time)
 usethis::use_data(predict_sim, overwrite = TRUE, compress = "xz")
 
-# --- 2-Layer Fit (State -> County) ----------------------------------------
-cat("\n=== 2-Layer Fit (State -> County) ===\n")
-locations_sim_2layer <- locations_sim[is.na(parent_id) | parent_id == "State"]
-
-populations_sim_2layer <- copy(populations_sim)
-loc_map_2layer <- locations_sim[!is.na(parent_id), .(loc_id, parent_id)]
-populations_sim_2layer[loc_map_2layer, on = .(loc_id), loc_id := i.parent_id]
-populations_sim_2layer <- populations_sim_2layer[,
-  .(weight = sum(weight)),
-  by = .(obs_id, loc_id, cohort, age, dose)
-]
-observations_sim_2layer <- copy(observations_sim)
-
-fit_res_2layer <- measure_time(sampling(
-  observations_sim_2layer,
-  populations_sim_2layer,
-  locations_sim_2layer,
-  stan_opts = st_opts
-))
-fit_sim_2layer <- fit_res_2layer$val
-print_time("Fitting", fit_res_2layer$time)
-print_stan_summary(fit_sim_2layer$raw_fit)
-
-stopifnot(inherits(fit_sim_2layer$raw_fit, "stanfit"))
-usethis::use_data(fit_sim_2layer, overwrite = TRUE, compress = "xz")
-
-target_sim_2layer <- canonicalize_target(
-  create_target(
-    location = unique(locations_sim_2layer$loc_id),
-    age = 1:18,
-    cohort = max(populations_sim_2layer$cohort) - 18,
-    dose = c(1, 2),
-    mode = "snapshot"
-  ),
-  fit_sim_2layer
-)
-usethis::use_data(target_sim_2layer, overwrite = TRUE, compress = "xz")
-
-pred_res_2layer <- measure_time(
-  predict(
-    object = fit_sim_2layer,
-    target = target_sim_2layer,
-    posterior_size = 100
-  )
-)
-predict_sim_2layer <- pred_res_2layer$val
-print_time("Predicting", pred_res_2layer$time)
-usethis::use_data(predict_sim_2layer, overwrite = TRUE, compress = "xz")
-
-# --- 1-Layer Fit (State Only) ---------------------------------------------
-cat("\n=== 1-Layer Fit (State Only) ===\n")
-locations_sim_1layer <- locations_sim[is.na(parent_id)]
-
-populations_sim_1layer <- copy(populations_sim)
-populations_sim_1layer[, loc_id := "State"]
-populations_sim_1layer <- populations_sim_1layer[,
-  .(weight = sum(weight)),
-  by = .(obs_id, loc_id, cohort, age, dose)
-]
-observations_sim_1layer <- copy(observations_sim)
-
-fit_res_1layer <- measure_time(sampling(
-  observations_sim_1layer,
-  populations_sim_1layer,
-  locations_sim_1layer,
-  stan_opts = st_opts
-))
-fit_sim_1layer <- fit_res_1layer$val
-print_time("Fitting", fit_res_1layer$time)
-print_stan_summary(fit_sim_1layer$raw_fit)
-
-stopifnot(inherits(fit_sim_1layer$raw_fit, "stanfit"))
-usethis::use_data(fit_sim_1layer, overwrite = TRUE, compress = "xz")
-
-target_sim_1layer <- canonicalize_target(
-  create_target(
-    location = "State",
-    age = 1:18,
-    cohort = max(populations_sim_1layer$cohort) - 18,
-    dose = c(1, 2),
-    mode = "snapshot"
-  ),
-  fit_sim_1layer
-)
-usethis::use_data(target_sim_1layer, overwrite = TRUE, compress = "xz")
-
-pred_res_1layer <- measure_time(
-  predict(
-    object = fit_sim_1layer,
-    target = target_sim_1layer,
-    posterior_size = 100
-  )
-)
-predict_sim_1layer <- pred_res_1layer$val
-print_time("Predicting", pred_res_1layer$time)
-usethis::use_data(predict_sim_1layer, overwrite = TRUE, compress = "xz")
-cat("\nFit and prediction artifacts updated successfully.\n")
+cat("\nMain 3-layer fit and prediction artifacts updated successfully.\n")

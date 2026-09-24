@@ -21,6 +21,8 @@ navbar:
           href: articles/user_specified_layers.html
         - text: "Fit Inspection & Stan Diagnostics"
           href: articles/examining_fits.html
+        - text: "Leave Some Out Validation"
+          href: articles/leave_some_out.html
 
 authors:
   sidebar:
