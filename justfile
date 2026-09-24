@@ -132,7 +132,7 @@ remove:
 
 
 [group('data')]
-[doc('Regenerate all package data (inputs + fitted artifacts; inputs need nc_measles)')]
+[doc('Regenerate all package data (inputs + all fitted artifacts; inputs need nc_measles)')]
 data: data-inputs data-fit
 
 [group('data')]
@@ -141,9 +141,39 @@ data-inputs:
 	Rscript data-raw/DATASET.R
 
 [group('data')]
-[doc('Regenerate the fitted-data artifacts (fit_sim/target_sim/predict_sim/latent_params_sim) from tracked inputs; needs a Stan toolchain')]
-data-fit:
+[doc('Regenerate core 3-layer fit artifacts (fit_sim, target_sim, predict_sim)')]
+data-fit-main:
 	Rscript data-raw/fit_data.R
+
+[group('data')]
+[doc('Regenerate 1-layer and 2-layer ablation fit artifacts')]
+data-fit-layers:
+	Rscript data-raw/fit_layers.R
+
+[group('data')]
+[doc('Run a single leave-school-out fold (by index=1..10 or school="name")')]
+data-fit-school-fold index="1" school="":
+	Rscript data-raw/fit_single_school_out.R {{ if index != "" { "--index " + index } else { "--school '" + school + "'" } }}
+
+[group('data')]
+[doc('Consolidate scratch fold files into data/leave_school_out_scruggs.rda')]
+data-fit-school-consolidate:
+	Rscript data-raw/consolidate_school_out.R
+
+[group('data')]
+[doc('Run all leave-school-out folds and consolidate into data/leave_school_out_scruggs.rda')]
+data-fit-school-cv:
+	#!/usr/bin/env bash
+	set -euo pipefail
+	for i in {1..10}; do
+		just data-fit-school-fold "$i" &
+	done
+	wait
+	just data-fit-school-consolidate
+
+[group('data')]
+[doc('Regenerate all fitted-data artifacts across all models')]
+data-fit: data-fit-main data-fit-layers data-fit-school-cv
 
 
 [doc('Build a tar.gz artifact')]

@@ -34,6 +34,8 @@ R/globals.R
 data/fit_sim*.rda
 data/target_sim*.rda
 data/predict_sim*.rda
+data/leave_school_out*.rda
+data-raw/scratch*/
 
 # Diagram artifacts generated from .mmd sources prior to building vignettes
 vignettes/figures/*.svg

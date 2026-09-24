@@ -212,4 +212,13 @@ NULL
 #' @keywords datasets
 NULL
 
+#' @title Leave-Each-School-Out Cross-Validation for Scruggs County
+#' @description A precomputed list containing out-of-sample prediction draws, summaries,
+#'   scoring metrics, and shrinkage comparisons from leave-one-school-out cross-validation
+#'   across all schools in Scruggs County.
+#' @name leave_school_out_scruggs
+#' @docType data
+#' @keywords datasets
+NULL
+
 .datatable.aware <- TRUE # nolint: object_name_linter.
