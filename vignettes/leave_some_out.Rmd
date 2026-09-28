@@ -88,14 +88,14 @@ if (!pkgs_available) {
 
 # Introduction
 
-With any model fitting work, you want to apply a variety of techniques to assess how confident you should be about fitting results. Among other approaches, researchers will frequently use so-called leave some out cross-validation techniques. The "leaving out" element refers to systematically keeping some data held out a test set, fitting the model on the remaining training set, and then comparing the fit predictions for the test set.
+With any model fitting work, you want to apply a variety of techniques to assess how confident you should be about fitting results. Among other approaches, researchers will frequently use leave some out cross-validation techniques. The "leaving out" element refers to systematically keeping some data held out a test set, fitting the model on the remaining training set, comparing the fit predictions for the test set, and then moving on to a new slice of hold out data.
 
-In this vignette, we share applying some standard tools to `imuGAP` outputs to apply those techniques. We demonstrates four complementary cross-validation and evaluation workflows supported by `imuGAP`:
+In this vignette, we share using standard tools with `imuGAP` outputs to apply those techniques. We demonstrate four complementary cross-validation and evaluation workflows:
 
 1. **Approximate PSIS-LOO Influence Diagnostics**: Using the [`{loo}`](https://cran.r-project.org/package=loo) package to compute leave-one-out cross-validation diagnostics and identify influential observations.
-2. **Spatial Holdouts (Leave-Locations-Out)**: Using `{loo}` to assess how estimates perform when leaving out entire schools.
-3. **Surveillance Stream Holdout (Leave-Stream-Out)**: Using `{loo}` to assess how estimates perform when leaving out particular data streams (e.g. state surveys).
-4. **Temporal / Cohort Forecast Holdouts & Scoring**: Using [`{scoringRules}`](https://cran.r-project.org/package=scoringRules) to assess estimates ability to reproduce latest observations by holding the out of fitting.
+2. **Spatial Holdouts (Leave-Each-School-Out)**: Systematically leaving out individual schools to evaluate out-of-sample prediction accuracy.
+3. **Surveillance Stream Holdout (Leave-Stream-Out)**: Assessing how estimates perform when leaving out particular data streams (e.g. state surveys).
+4. **Temporal / Cohort Forecast Holdouts & Scoring**: Using [`{scoringRules}`](https://cran.r-project.org/package=scoringRules) to assess estimates ability to reproduce latest observations by holding them out of fitting.
 
 ---
 
@@ -109,10 +109,14 @@ The `log_lik()` method extracts the pointwise log-likelihood matrix for all $N$ 
 
 ```{r load-data}
 data("fit_sim", package = "imuGAP")
+data("predict_sim", package = "imuGAP")
 data("observations_sim", package = "imuGAP")
 data("populations_sim", package = "imuGAP")
 data("locations_sim", package = "imuGAP")
 data("latent_params_sim", package = "imuGAP")
+data("leave_school_out_scruggs", package = "imuGAP")
+data("leave_stream_out", package = "imuGAP")
+data("leave_recent_out", package = "imuGAP")
 ```
 
 ```{r compute-log-lik}
@@ -421,37 +425,27 @@ ggplot(k_school_df) +
 
 Notice that while almost all individual observations had $\hat{k} < 0.5$ in Section 1, leaving out an entire school yields $\hat{k} \ge 0.7$ for the majority of schools. Because omitting a school removes all local evidence and isolates its latent random effect ($\alpha_{\text{school}}$), the posterior distribution shifts substantially. This diagnostic confirms that spatial holdout evaluation requires exact MCMC refitting.
 
-## Systematic Spatial Partitioning with `kfold_split_grouped()`
+## Systematic Leave-Each-School-Out Workflow
 
-The `{loo}` package provides `kfold_split_grouped()` to partition observations into $K$ mutually exclusive folds such that all observations sharing the same grouping variable (here, `loc_id`) are assigned to the same fold:
+Because `imuGAP` associates observations with explicit location identifiers (`loc_id`) in `populations_sim`, spatial holdouts can be constructed directly by filtering out one school at a time. This leave-each-school-out cross-validation mimics real-world scenarios where an entire school or community has no direct survey measurements.
 
-```{r spatial-partition}
-# Systematically partition schools in Scruggs County into K = 3 spatial holdout folds
-county1_schools <- subset(locations_sim, parent_id == "Scruggs")$loc_id
+To hold out a single school (for example, `"School_01"`), identify its corresponding observation IDs and omit them from the training inputs:
 
-set.seed(42)
-school_folds <- loo::kfold_split_grouped(K = 3, x = county1_schools)
+```{r school-holdout-split}
+target_school <- "School_01"
 
-# Inspect the grouped assignment
-split(county1_schools, school_folds)
-
-# Select Fold 1 schools as our validation holdout
-heldout_schools <- county1_schools[school_folds == 1]
-heldout_schools
-
-# Filter training sets: strictly exclude held-out schools
-train_obs <- subset(observations_sim, !loc_id %in% heldout_schools)
-train_pops <- subset(populations_sim, !loc_id %in% heldout_schools)
+# Identify and exclude observation IDs belonging to the held-out school
+heldout_obs_ids <- subset(populations_sim, loc_id == target_school)$obs_id
+train_obs <- subset(observations_sim, !obs_id %in% heldout_obs_ids)
+train_pops <- subset(populations_sim, !obs_id %in% heldout_obs_ids)
 ```
 
 ## Fitting the Training Model & Projecting to Held-Out Locations
 
-Because `imuGAP` embeds the full tree hierarchy in the location random effects, it can project coverage for any location in `locations` even if that location has zero observations in the training set.
-
-We fit the model on the remaining data and project coverage for the held-out schools using `create_target()` and `predict()`:
+Because `imuGAP` embeds the entire tree hierarchy in the location random effects, it can project coverage for any location in `locations_sim` even when that location has zero training observations:
 
 ```{r fit-spatial-holdout, eval = FALSE}
-fit_spatial_train <- sampling(
+fit_school_train <- sampling(
   observations = train_obs,
   populations = train_pops,
   locations = locations_sim,
@@ -459,152 +453,370 @@ fit_spatial_train <- sampling(
 )
 ```
 
-```{r predict-spatial-holdout}
-# Create target grid for the held-out schools across all cohorts and ages
-target_heldout <- create_target(
-  location = heldout_schools,
+You can then create a target projection grid for the held-out school and generate posterior predictive draws using `predict()`:
+
+```{r predict-spatial-holdout-demo, eval = FALSE}
+target_school_grid <- create_target(
+  location = target_school,
   cohort = 1:5,
   age = 1:5,
   dose = 1:2,
   mode = "enumerate"
 )
 
-# Predict coverage using posterior draws
-pred_heldout <- predict(fit_sim, target = target_heldout, posterior_size = 200)
-pred_summary <- summary(pred_heldout)
-head(pred_summary)
+pred_school <- predict(fit_school_train, target = target_school_grid, posterior_size = 200)
 ```
 
-## Evaluating Predictive Performance
+## Evaluating Predictive Performance Across All Schools
 
-We compare the model's out-of-sample predictions against the held-out empirical observations:
+Repeating this workflow for each of the 10 schools in Scruggs County yields independent out-of-sample projections. The package dataset `leave_school_out_scruggs` contains consolidated results from all 10 folds:
 
-```{r plot-spatial-eval, fold = TRUE, code_summary = "Show plot code", fig.cap = "Out-of-sample predictions vs. held-out school observations"}
-# Extract the empirical observations for the held-out schools
-obs_eval <- subset(observations_sim, loc_id %in% heldout_schools)
-obs_eval_pops <- subset(populations_sim, obs_id %in% obs_eval$obs_id)
-obs_merged <- merge(obs_eval, obs_eval_pops, by = "obs_id", suffixes = c("", "_pop"))
-obs_merged[, empirical_coverage := positive / sample_n]
+```{r inspect-school-metrics}
+data.frame(
+  Metric = c(
+    "Mean Absolute Error (MAE)",
+    "Root Mean Squared Error (RMSE)",
+    "95% CI Coverage Rate",
+    "Evaluation Points"
+  ),
+  Value = c(
+    sprintf("%.4f", leave_school_out_scruggs$metrics$mae),
+    sprintf("%.4f", leave_school_out_scruggs$metrics$rmse),
+    sprintf("%.1f%%", 100 * leave_school_out_scruggs$metrics$coverage_95),
+    as.character(leave_school_out_scruggs$metrics$n_eval_points)
+  )
+)
+```
 
-# Filter predictions to dose 2 at age 5 (kindergarten age)
-pred_kdg <- subset(pred_summary, dose == 2 & age == 5)
+We compare the out-of-sample posterior predictive trajectories against the held-out empirical observations across all 10 schools:
+
+```{r plot-spatial-eval, fold = TRUE, code_summary = "Show plot code", fig.cap = "Out-of-sample projections vs. held-out school observations (Dose 2 at Age 5)"}
+pred_kdg <- subset(leave_school_out_scruggs$predictions, dose == 2 & age == 5)
+eval_kdg <- subset(leave_school_out_scruggs$eval_comparison, dose == 2 & age == 5)
 
 ggplot() +
   geom_ribbon(
     data = pred_kdg,
-    aes(x = cohort, ymin = q2_5, ymax = q97_5, fill = loc_id),
+    aes(x = cohort, ymin = q2_5, ymax = q97_5),
+    fill = "#386cb0",
     alpha = 0.25
   ) +
   geom_line(
     data = pred_kdg,
-    aes(x = cohort, y = q50, color = loc_id),
-    linewidth = 1
+    aes(x = cohort, y = q50),
+    color = "#386cb0",
+    linewidth = 0.9
   ) +
   geom_point(
-    data = subset(obs_merged, dose == 2 & age == 5),
-    aes(x = cohort, y = empirical_coverage, color = loc_id),
-    size = 3,
+    data = eval_kdg,
+    aes(x = cohort, y = empirical_coverage),
+    color = "#d95f02",
+    size = 2.5,
     shape = 17
   ) +
-  facet_wrap(~loc_id) +
-  scale_fill_brewer(palette = "Set1") +
-  scale_color_brewer(palette = "Set1") +
+  facet_wrap(~loc_id, ncol = 5) +
   labs(
-    title = "Out-of-Sample School Coverage Projections",
-    subtitle = "Lines & ribbons: 95% posterior credible intervals; Triangles: held-out data",
     x = "Birth Cohort",
-    y = "Dose 2 Coverage at Age 5",
-    color = "School",
-    fill = "School"
+    y = "Dose 2 Coverage at Age 5"
   ) +
-  coord_cartesian(ylim = c(0.5, 1.0))
+  coord_cartesian(ylim = c(0.4, 1.0))
 ```
+
+## Spatial Shrinkage & Hierarchical Pooling
+
+When a school has zero observations, its projection shrinks toward the parent county mean (`Scruggs`) and the broader state-level trend. Comparing out-of-sample predictions against in-sample fitted means illustrates this Bayesian hierarchical shrinkage:
+
+```{r plot-school-shrinkage, fold = TRUE, code_summary = "Show plot code", fig.cap = "In-sample fitted vs. out-of-sample projected school coverage (Dose 2 at Age 5)"}
+shrinkage_kdg <- subset(
+  leave_school_out_scruggs$shrinkage_comparison,
+  dose == 2 & age == 5
+)
+
+ggplot(shrinkage_kdg, aes(x = insample_mean, y = oos_mean)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey50") +
+  geom_point(aes(color = loc_id), size = 2.8, alpha = 0.9) +
+  scale_color_brewer(palette = "Paired") +
+  labs(
+    x = "In-Sample Fitted Posterior Mean",
+    y = "Out-of-Sample Projected Posterior Mean",
+    color = "School"
+  ) +
+  coord_cartesian(xlim = c(0.70, 0.95), ylim = c(0.70, 0.95))
+```
+
+## Expected Log Predictive Density: PSIS-LOO vs. Exact Spatial Holdouts
+
+In Section 2.1, the grouped Pareto $\hat{k}$ diagnostics flagged that leaving out entire schools shifts the posterior distribution too substantially for importance sampling to reliably approximate out-of-sample predictive density.
+
+With exact MCMC holdout refits for all 10 schools in Scruggs County, we can evaluate the exact out-of-sample Expected Log Predictive Density under the binomial observation process:
+
+$$\text{elpd}_s^{\text{Exact}} = \log \left( \frac{1}{S} \sum_{t=1}^S \prod_{j \in \text{school } s} \binom{N_j}{y_j} (p_j^{(t)})^{y_j} (1 - p_j^{(t)})^{N_j - y_j} \right)$$
+
+We compare $\widehat{\text{elpd}}_s^{\text{PSIS}}$ (from the full-data model) against $\text{elpd}_s^{\text{Exact}}$ (from the holdout refits):
+
+```{r compute-elpd-comparison}
+# Extract PSIS-LOO ELPD and Pareto k for Scruggs County schools
+psis_elpd_vec <- school_loo$pointwise[, "elpd_loo"]
+pareto_k_vec <- school_loo$diagnostics$pareto_k
+names(pareto_k_vec) <- schools$loc_id
+
+scruggs_schools <- leave_school_out_scruggs$schools
+
+# Exact out-of-sample ELPD helper (numerically stable log-sum-exp)
+log_sum_exp <- function(x) {
+  m <- max(x)
+  m + log(sum(exp(x - m)))
+}
+
+exact_elpd_vec <- numeric(length(scruggs_schools))
+names(exact_elpd_vec) <- scruggs_schools
+
+for (s in scruggs_schools) {
+  s_eval <- subset(leave_school_out_scruggs$eval_comparison, loc_id == s)
+  s_preds <- subset(leave_school_out_scruggs$predictions, loc_id == s)
+  draws_s <- leave_school_out_scruggs$draws[[s]]
+  n_draws <- dim(draws_s)[1] * dim(draws_s)[2]
+
+  log_lik_draws <- matrix(0, nrow = n_draws, ncol = nrow(s_eval))
+  for (j in seq_len(nrow(s_eval))) {
+    c_j <- s_eval$cohort[j]
+    a_j <- s_eval$age[j]
+    d_j <- s_eval$dose[j]
+    y_j <- s_eval$positive[j]
+    n_j <- s_eval$sample_n[j]
+
+    t_idx <- which(s_preds$cohort == c_j & s_preds$age == a_j & s_preds$dose == d_j)
+    p_draws <- as.vector(draws_s[, , t_idx])
+    log_lik_draws[, j] <- dbinom(y_j, size = n_j, prob = p_draws, log = TRUE)
+  }
+
+  school_ll_draws <- rowSums(log_lik_draws)
+  exact_elpd_vec[s] <- log_sum_exp(school_ll_draws) - log(n_draws)
+}
+
+elpd_comparison <- data.frame(
+  loc_id = scruggs_schools,
+  pareto_k = round(pareto_k_vec[scruggs_schools], 2),
+  elpd_psis = round(psis_elpd_vec[scruggs_schools], 2),
+  elpd_exact = round(exact_elpd_vec[scruggs_schools], 2),
+  delta_elpd = round(psis_elpd_vec[scruggs_schools] - exact_elpd_vec[scruggs_schools], 2)
+)
+elpd_comparison
+```
+
+We visualize the approximation discrepancy $\Delta\text{elpd} = \widehat{\text{elpd}}^{\text{PSIS}} - \text{elpd}^{\text{Exact}}$ as a function of the school Pareto $\hat{k}$ diagnostic:
+
+```{r plot-elpd-comparison, fold = TRUE, code_summary = "Show plot code", fig.cap = "PSIS-LOO ELPD approximation discrepancy vs. school Pareto k diagnostic"}
+ggplot(elpd_comparison, aes(x = pareto_k, y = delta_elpd)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey50") +
+  geom_point(aes(color = loc_id), size = 3) +
+  scale_color_brewer(palette = "Paired") +
+  labs(
+    x = expression("School Pareto " * hat(k)),
+    y = expression(Delta * "ELPD (PSIS " * hat(elpd) * " - Exact " * elpd * ")"),
+    color = "School"
+  )
+```
+
+Because $\Delta\text{elpd} > 0$ across the schools, importance sampling on the full fit is consistently overly optimistic relative to exact out-of-sample predictive density, confirming why high $\hat{k}$ diagnostics necessitate exact MCMC holdouts.
 
 ---
 
 # 3. Surveillance Stream Holdout (Leave-Stream-Out)
 
-Real-world immunization systems often combine census-like school entry reports with aggregate or right-censored middle school surveys. Evaluating whether kindergarten surveys alone can reconstruct older middle school coverage is a classic surveillance validation task.
+Real-world immunization surveillance systems frequently integrate multiple heterogeneous datastreams. In our simulated surveillance environment, observations are organized across four distinct surveillance streams:
 
-In `observations_sim`, right-censored observations represent middle school surveys where coverage was reported as an interval upper bound (`censored == 1`):
+1. **ChildVaxView (State)**: State-level early childhood surveys capturing Dose 1 uptake across ages 2 and 3.
+2. **SchoolVaxView (State)**: State-level aggregate kindergarten entry surveys capturing Dose 2 uptake at age 5.
+3. **TeenVaxView (State)**: State-level adolescent surveys capturing Doses 1 and 2 across ages 14 through 18.
+4. **Grade 6 Surveys (County)**: County-level middle school surveys capturing Dose 2 at age 11, reported with right-censoring (`censored == 1`).
 
-```{r stream-partition}
-# Table of observations by censoring status
-table(observations_sim$censored, useNA = "ifany")
+*(Individual school-level kindergarten entry surveys across the 24 local schools are evaluated under the grouped spatial cross-validation in Section 2).*
 
-# Retain only uncensored kindergarten surveys for training
-train_stream_obs <- subset(observations_sim, is.na(censored))
-train_stream_pops <- subset(populations_sim, obs_id %in% train_stream_obs$obs_id)
-heldout_stream_obs <- subset(observations_sim, censored == 1)
+## Approximate Leave-Stream-Out Diagnostics (Grouped PSIS-LOO)
+
+Before performing exact MCMC refits without each stream, we evaluate whether PSIS-LOO can approximate holding out an entire surveillance stream. For each stream $k \in \{1, 2, 3, 4\}$, we sum the pointwise log-likelihood draws across all observations belonging to that stream:
+
+$$\log p(y_{\text{stream } k} \mid \theta^{(s)}) = \sum_{j \in \text{stream } k} \log p(y_j \mid \theta^{(s)})$$
+
+Passing this grouped log-likelihood matrix to `{loo}` computes Pareto $\hat{k}$ diagnostics for each surveillance stream:
+
+```{r run-stream-loo}
+# Group pointwise log-likelihood draws across the 4 surveillance streams
+stream_cols_list <- list(
+  childvaxview = which(obs_meta$loc_id == "State" & obs_meta$age_min <= 3L),
+  schoolvaxview = which(obs_meta$loc_id == "State" & obs_meta$age_min == 5L),
+  teenvaxview = which(obs_meta$loc_id == "State" & obs_meta$age_min >= 14L),
+  grade6 = which(obs_meta$layer == 2L)
+)
+
+stream_ll <- do.call(cbind, lapply(stream_cols_list, function(cols) {
+  rowSums(ll_mat[, cols, drop = FALSE])
+}))
+
+stream_loo <- loo::loo(stream_ll, r_eff = rep(1, ncol(stream_ll)))
+print(stream_loo)
 ```
 
-By fitting without the middle school surveillance stream, we can verify whether the latent hazard model ($\lambda$) and propensity parameter ($\phi$) extrapolate accurately to adolescent ages.
+Surveillance streams that establish foundational baseline propensity (such as `ChildVaxView` and `TeenVaxView`) exhibit high Pareto $\hat{k}$ values ($\hat{k} > 0.7$), indicating that their omission substantially shifts posterior distributions and requires exact MCMC refitting.
+
+## Systematic Leave-Stream-Out Cross-Validation
+
+To evaluate true out-of-sample generalizability across surveillance streams, we systematically hold out each stream independently, refit the model on the remaining streams, and project coverage on the held-out stream coordinates.
+
+For example, to hold out the county-level middle school survey (`grade6`), identify its observation IDs and exclude them from training:
+
+```{r stream-holdout-split}
+# Identify and exclude observation IDs belonging to the county Grade 6 stream
+counties <- c("Scruggs", "Simone", "Watson")
+heldout_stream_obs_ids <- subset(populations_sim, loc_id %in% counties)$obs_id
+train_stream_obs <- subset(observations_sim, !obs_id %in% heldout_stream_obs_ids)
+train_stream_pops <- subset(populations_sim, !obs_id %in% heldout_stream_obs_ids)
+```
+
+The precomputed package dataset `leave_stream_out` consolidates results from all 4 stream holdout fits:
+
+```{r inspect-stream-metrics}
+stream_metric_rows <- lapply(names(leave_stream_out$metrics$by_stream), function(st) {
+  m <- leave_stream_out$metrics$by_stream[[st]]
+  data.frame(
+    Stream = st,
+    MAE = sprintf("%.4f", m$mae),
+    RMSE = sprintf("%.4f", m$rmse),
+    Coverage_95 = sprintf("%.1f%%", 100 * m$coverage_95),
+    Eval_Points = as.character(m$n_eval_points)
+  )
+})
+do.call(rbind, stream_metric_rows)
+```
+
+## Out-of-Sample Predictions vs. Held-Out Stream Observations
+
+We compare the out-of-sample projected coverage against the empirical measurements for each held-out stream:
+
+```{r plot-stream-eval, fold = TRUE, code_summary = "Show plot code", fig.cap = "Out-of-sample projections vs. empirical observations across held-out surveillance streams"}
+eval_dt <- copy(leave_stream_out$eval_comparison)
+eval_dt[, stream_label := fcase(
+  heldout_stream == "childvaxview", "ChildVaxView (Age 2-3, Dose 1)",
+  heldout_stream == "schoolvaxview", "SchoolVaxView (Age 5, Dose 2)",
+  heldout_stream == "teenvaxview", "TeenVaxView (Age 14-18)",
+  heldout_stream == "grade6", "Grade 6 Surveys (Age 11, Dose 2)"
+)]
+
+ggplot(eval_dt) +
+  geom_point(aes(x = cohort, y = empirical_coverage), color = "#d95f02", size = 2, alpha = 0.8) +
+  geom_line(aes(x = cohort, y = q50), color = "#386cb0", linewidth = 0.8) +
+  geom_ribbon(aes(x = cohort, ymin = q2_5, ymax = q97_5), fill = "#386cb0", alpha = 0.2) +
+  facet_wrap(~stream_label, scales = "free_x") +
+  labs(
+    x = "Birth Cohort",
+    y = "Coverage Proportion"
+  ) +
+  coord_cartesian(ylim = c(0.4, 1.0))
+```
+
+## Expected Log Predictive Density: PSIS-LOO vs. Exact Stream Holdouts
+
+We compare the approximate Expected Log Predictive Density ($\widehat{\text{elpd}}^{\text{PSIS}}$) against the exact out-of-sample log predictive density ($\text{elpd}^{\text{Exact}}$) obtained from exact MCMC stream refits:
+
+```{r compute-stream-elpd-comparison}
+leave_stream_out$elpd_comparison
+```
+
+The discrepancy $\Delta\text{elpd} = \widehat{\text{elpd}}^{\text{PSIS}} - \text{elpd}^{\text{Exact}} > 0$ confirms that importance sampling without refitting is overly optimistic for major surveillance stream holdouts.
 
 ---
 
 # 4. Temporal Forecast Holdouts & Scoring with CRPS
 
-To test the model's forecasting ability, we hold out the most recent birth cohort (`cohort == 5`) and evaluate the posterior predictive distribution against the true latent population coverage.
+In operational surveillance systems, validating forecasting performance for emerging birth cohorts is critical. The most recent observations across all surveillance streams correspond strictly to the maximum observation calendar year:
 
-## Evaluating Uncertainty with CRPS
+$$\text{Observation Year} = \text{cohort} + \text{age} = \max(\text{cohort} + \text{age}) = 33$$
 
-The Continuous Ranked Probability Score (CRPS; @gneiting2007) is a proper scoring rule that assesses both sharpness and calibration of probabilistic forecasts:
+This frontier represents the latest available surveillance wave: cohort 30 for `ChildVaxView` (age 3), cohort 28 for kindergarten entry (age 5), and cohort 22 for middle school surveys (age 11).
+
+## Grouped PSIS-LOO for Recent Observations
+
+We evaluate the grouped PSIS-LOO diagnostic for holding out the entire most recent observation frontier:
+
+```{r run-recent-loo}
+max_year <- max(populations_sim$cohort + populations_sim$age)
+recent_obs_ids <- subset(populations_sim, cohort + age == max_year)$obs_id
+recent_cols <- which(obs_meta$obs_id %in% recent_obs_ids)
+
+recent_ll <- matrix(rowSums(ll_mat[, recent_cols, drop = FALSE]), ncol = 1)
+colnames(recent_ll) <- "Frontier_Year_33"
+
+recent_loo <- loo::loo(recent_ll, r_eff = 1)
+print(recent_loo)
+```
+
+The Pareto $\hat{k} \approx 0.46 < 0.5$ confirms that importance weights for this single-year temporal frontier retain finite variance, though exact MCMC refitting provides full predictive distributions for proper scoring.
+
+## Out-of-Sample Forecasting & CRPS Scoring
+
+The Continuous Ranked Probability Score (CRPS; @gneiting2007) is a strictly proper scoring rule assessing both sharpness and calibration of probabilistic forecasts:
 
 $$\text{CRPS}(F, y) = \int_{-\infty}^{\infty} (F(x) - \mathbb{I}(x \ge y))^2 \, dx$$
 
-Using `{scoringRules}`, we compute the CRPS across posterior predictive draws:
+We inspect out-of-sample forecast accuracy and CRPS scores from `leave_recent_out`:
 
-```{r crps-eval}
-# Extract predictions for cohort 5 across all schools and doses at age 5
-pred_c5 <- subset(pred_heldout, cohort == 5 & age == 5)
-pred_c5_df <- summary(pred_c5)
-
-# Calculate CRPS for each school prediction
-draws_3d <- pred_c5$draws
-crps_vals <- numeric(nrow(pred_c5_df))
-for (i in seq_len(nrow(pred_c5_df))) {
-  draws_i <- as.vector(draws_3d[, , i])
-  # In validation experiments, y_val is the empirical observed point or holdout target
-  y_val <- pred_c5_df$mean[i]
-  crps_vals[i] <- scoringRules::crps_sample(y = y_val, dat = draws_i)
-}
-
-pred_c5_df[, crps := crps_vals]
-pred_c5_df[, .(loc_id, dose, mean, q2_5, q97_5, crps)]
+```{r inspect-recent-metrics}
+data.frame(
+  Metric = c(
+    "Mean Absolute Error (MAE)",
+    "Root Mean Squared Error (RMSE)",
+    "95% CI Coverage Rate",
+    "Mean CRPS",
+    "Evaluation Points"
+  ),
+  Value = c(
+    sprintf("%.4f", leave_recent_out$metrics$mae),
+    sprintf("%.4f", leave_recent_out$metrics$rmse),
+    sprintf("%.1f%%", 100 * leave_recent_out$metrics$coverage_95),
+    sprintf("%.4f", leave_recent_out$metrics$mean_crps),
+    as.character(leave_recent_out$metrics$n_eval_points)
+  )
+)
 ```
 
-## Longitudinal Calibration Across Cohorts
+## Longitudinal Calibration Across Recent Cohorts
 
-Finally, we visualize the temporal trajectory of predicted coverage compared to empirical points:
+We visualize the out-of-sample forecast trajectories and prediction intervals against the held-out empirical observations:
 
-```{r plot-longitudinal-calibration, fold = TRUE, code_summary = "Show plot code", fig.cap = "Temporal trajectory and calibration across cohorts"}
-pred_all <- summary(pred_heldout)
+```{r plot-recent-calibration, fold = TRUE, code_summary = "Show plot code", fig.cap = "Out-of-sample forecast predictions vs. held-out empirical observations at the temporal frontier"}
+eval_recent_dt <- copy(leave_recent_out$eval_comparison)
 
-ggplot(subset(pred_all, age == 5), aes(x = cohort, y = mean, group = interaction(loc_id, dose))) +
-  geom_ribbon(
-    aes(ymin = q2_5, ymax = q97_5, fill = factor(dose)),
-    alpha = 0.2
-  ) +
-  geom_line(aes(color = factor(dose)), linewidth = 0.9) +
-  facet_wrap(~loc_id) +
-  scale_fill_manual(values = c("1" = "#1b9e77", "2" = "#7570b3"), name = "Dose") +
-  scale_color_manual(values = c("1" = "#1b9e77", "2" = "#7570b3"), name = "Dose") +
+ggplot(eval_recent_dt, aes(x = cohort)) +
+  geom_point(aes(y = empirical_coverage), color = "#d95f02", size = 2.5, shape = 17) +
+  geom_point(aes(y = q50), color = "#386cb0", size = 2) +
+  geom_errorbar(aes(ymin = q2_5, ymax = q97_5), color = "#386cb0", width = 0.3) +
+  facet_wrap(~loc_id, scales = "free_x") +
   labs(
-    title = "Longitudinal Coverage Projections at Age 5",
-    subtitle = "Evaluated across birth cohorts with 95% posterior credible intervals",
     x = "Birth Cohort",
-    y = "Predicted Coverage Proportion"
+    y = "Coverage Proportion"
   ) +
   coord_cartesian(ylim = c(0.4, 1.0))
 ```
+
+## ELPD Forecast Comparison
+
+Comparing the PSIS-LOO approximation with exact temporal refits:
+
+```{r compute-recent-elpd-comparison}
+leave_recent_out$elpd_comparison
+```
+
+---
 
 # Summary & Best Practices
 
 When designing validation experiments for `imuGAP`:
 
 - **Use PSIS-LOO (`loo`)** for fast, exploratory influence and outlier diagnostics on full fits.
-- **Use Grouped Spatial Holdouts** to quantify transferability to unmeasured schools or regions.
-- **Use Temporal Holdouts** evaluated with **CRPS (`scoringRules`)** to validate forecasting calibration for emerging cohorts before deploying estimates into policy decisions.
+- **Use Leave-Each-School-Out Cross-Validation** to evaluate spatial shrinkage and generalizability for unmeasured schools or communities.
+- **Use Leave-Stream-Out Cross-Validation** to verify whether subsets of surveillance streams can accurately identify latent hazards ($\lambda$) and propensity parameters ($\phi$).
+- **Use Temporal Horizon Holdouts** scored with **CRPS (`scoringRules`)** to validate prospective forecasting calibration before deploying estimates into policy decisions.
 
 ---
 

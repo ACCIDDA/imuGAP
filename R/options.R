@@ -11,16 +11,24 @@
 #'   Dispatch to optimized single versus multi-layer versions occurs automatically
 #'   within `[sampling()]`.
 #'
+#' @param max_age optional positive integer; maximum age horizon for the hazard
+#'   model (default: `NULL`, inferred from maximum age in populations).
+#' @param max_cohort optional positive integer; maximum cohort horizon for the
+#'   B-spline propensity model (default: `NULL`, inferred from maximum cohort in populations).
+#'
 #' @examples
 #' imugap_options()
 #' imugap_options(dose_schedule = c(1, 3))
+#' imugap_options(max_age = 18L, max_cohort = 30L)
 #'
 #' @return a named list, of `imuGAP` model options.
 #' @export
 imugap_options <- function(
   df = 5L,
   dose_schedule = c(1, 4),
-  model = c("default")
+  model = c("default"),
+  max_age = NULL,
+  max_cohort = NULL
 ) {
   model <- match.arg(model)
 
@@ -33,9 +41,18 @@ imugap_options <- function(
     ERR_OPT_DOSE_SCHEDULE
   )
 
+  if (!is.null(max_age)) {
+    max_age <- assert_positive_int(max_age, "max_age")
+  }
+  if (!is.null(max_cohort)) {
+    max_cohort <- assert_positive_int(max_cohort, "max_cohort")
+  }
+
   list(
     df = df,
     dose_schedule = dose_schedule,
-    model = model
+    model = model,
+    max_age = max_age,
+    max_cohort = max_cohort
   )
 }

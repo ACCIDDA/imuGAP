@@ -221,4 +221,23 @@ NULL
 #' @keywords datasets
 NULL
 
+#' @title Leave-Surveillance-Stream-Out Cross-Validation
+#' @description A precomputed list containing grouped LOO-PSIS diagnostics, out-of-sample
+#'   prediction draws, evaluation metrics, and exact ELPD comparisons from
+#'   leave-one-stream-out cross-validation across the four surveillance streams.
+#' @name leave_stream_out
+#' @docType data
+#' @keywords datasets
+NULL
+
+#' @title Leave-Most-Recent-Observations-Out (Temporal Forecast) Cross-Validation
+#' @description A precomputed list containing grouped LOO-PSIS diagnostics, out-of-sample
+#'   forecast prediction draws, CRPS scores, evaluation metrics, and exact ELPD comparisons
+#'   from holding out all observations at the maximum observation year frontier
+#'   `max(cohort + age)`.
+#' @name leave_recent_out
+#' @docType data
+#' @keywords datasets
+NULL
+
 .datatable.aware <- TRUE # nolint: object_name_linter.

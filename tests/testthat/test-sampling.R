@@ -340,7 +340,7 @@ test_that("sampling returns a structured imugap_fit object", {
   )
   expect_named(
     fit$settings$imugap_opts,
-    c("df", "dose_schedule", "model", "model_name"),
+    c("df", "dose_schedule", "model", "model_name", "max_age", "max_cohort"),
     ignore.order = TRUE
   )
 })

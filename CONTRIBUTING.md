@@ -43,6 +43,7 @@ We use [`just`](https://github.com/casey/just) to automate development tasks. Th
 | `just data-fit-main` | Regenerate core 3-layer Stan fits (`fit_sim`, `predict_sim`) | `Rscript data-raw/fit_data.R` |
 | `just data-fit-layers` | Regenerate 1-layer and 2-layer ablation models | `Rscript data-raw/fit_layers.R` |
 | `just data-fit-school-fold [index=1]` | Run a single leave-school-out fold | `Rscript data-raw/fit_single_school_out.R --index 1` |
+| `just data-fit-school-local` | Run all 10 folds sequentially on local machine | `just data-fit-school-cv-seq` |
 | `just data-fit-school-cv` | Run all 10 leave-school-out folds and consolidate | *(compound script)* |
 | `just data-fit` | Regenerate all pre-computed Stan fits across all models | `just data-fit-main data-fit-layers data-fit-school-cv` |
 | `just data` | Regenerate all package data (`data-inputs` + `data-fit`) | *(compound command)* |

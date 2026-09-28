@@ -317,8 +317,11 @@ sampling <- function(
     imugap_opts = imugap_opts
   )
 
+  max_cohort <- max(imugap_opts$max_cohort %||% 0L, max(wts$cohort))
+  max_age <- max(imugap_opts$max_age %||% 0L, max(wts$age))
+
   bsp <- splines::bs(
-    seq_len(wts[, diff(range(cohort)) + 1L]),
+    seq_len(max_cohort),
     df = df_opts,
     intercept = TRUE
   )
@@ -335,8 +338,8 @@ sampling <- function(
   # prepare dat_stan
   dat_stan <- c(
     list(
-      n_yr = max(wts$age),
-      n_cohort = max(wts$cohort)
+      n_yr = as.integer(max_age),
+      n_cohort = as.integer(max_cohort)
     ),
     if (is_multilayer) layer_data,
     list(

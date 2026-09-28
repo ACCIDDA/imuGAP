@@ -161,7 +161,21 @@ data-fit-school-consolidate:
 	Rscript data-raw/consolidate_school_out.R
 
 [group('data')]
-[doc('Run all leave-school-out folds and consolidate into data/leave_school_out_scruggs.rda')]
+[doc('Run all leave-school-out folds sequentially on local machine and consolidate')]
+data-fit-school-cv-seq:
+	#!/usr/bin/env bash
+	set -euo pipefail
+	for i in {1..10}; do
+		just data-fit-school-fold "$i"
+	done
+	just data-fit-school-consolidate
+
+[group('data')]
+[doc('Alias for data-fit-school-cv-seq (sequential execution)')]
+data-fit-school-local: data-fit-school-cv-seq
+
+[group('data')]
+[doc('Run all leave-school-out folds in parallel and consolidate into data/leave_school_out_scruggs.rda')]
 data-fit-school-cv:
 	#!/usr/bin/env bash
 	set -euo pipefail
@@ -172,8 +186,34 @@ data-fit-school-cv:
 	just data-fit-school-consolidate
 
 [group('data')]
+[doc('Run a single leave-stream-out fold (by stream="name" or index=1..4)')]
+data-fit-stream-fold stream="" index="":
+	Rscript data-raw/fit_single_stream_out.R {{ if stream != "" { "--stream '" + stream + "'" } else { "--index " + index } }}
+
+[group('data')]
+[doc('Consolidate stream fold scratch files into data/leave_stream_out.rda')]
+data-fit-stream-consolidate:
+	Rscript data-raw/consolidate_stream_out.R
+
+[group('data')]
+[doc('Run all leave-stream-out folds in parallel and consolidate into data/leave_stream_out.rda')]
+data-fit-stream-cv:
+	#!/usr/bin/env bash
+	set -euo pipefail
+	for s in childvaxview schoolvaxview teenvaxview grade6; do
+		just data-fit-stream-fold "$s" &
+	done
+	wait
+	just data-fit-stream-consolidate
+
+[group('data')]
+[doc('Run leave-recent-out (temporal forecast) holdout fit into data/leave_recent_out.rda')]
+data-fit-recent:
+	Rscript data-raw/fit_recent_out.R
+
+[group('data')]
 [doc('Regenerate all fitted-data artifacts across all models')]
-data-fit: data-fit-main data-fit-layers data-fit-school-cv
+data-fit: data-fit-main data-fit-layers data-fit-school-cv data-fit-stream-cv data-fit-recent
 
 
 [doc('Build a tar.gz artifact')]

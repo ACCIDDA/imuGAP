@@ -83,7 +83,11 @@ metrics <- list(
 )
 
 # 3. In-Sample vs. Out-of-Sample Shrinkage Comparison
-data("fit_sim", package = "imuGAP")
+if (file.exists("data/fit_sim.rda")) {
+  load("data/fit_sim.rda")
+} else {
+  data("fit_sim", package = "imuGAP", envir = environment())
+}
 target_all_scruggs <- canonicalize_target(
   eval_comparison[, .(loc_id, cohort, age, dose)],
   fit_sim

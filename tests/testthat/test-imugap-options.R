@@ -5,11 +5,22 @@ test_that("imugap_options returns expected structure with defaults", {
   expect_type(defaults, "list")
   expect_setequal(
     names(defaults),
-    c("df", "dose_schedule", "model")
+    c("df", "dose_schedule", "model", "max_age", "max_cohort")
   )
   expect_equal(defaults$df, 5L)
   expect_equal(defaults$dose_schedule, c(1, 4))
   expect_equal(defaults$model, "default")
+  expect_null(defaults$max_age)
+  expect_null(defaults$max_cohort)
+})
+
+test_that("imugap_options max_age and max_cohort can be set", {
+  opts <- imugap_options(max_age = 18L, max_cohort = 30L)
+  expect_equal(opts$max_age, 18L)
+  expect_equal(opts$max_cohort, 30L)
+
+  expect_error(imugap_options(max_age = -1L), "max_age")
+  expect_error(imugap_options(max_cohort = 0L), "max_cohort")
 })
 
 test_that("imugap_options df can be overridden", {
