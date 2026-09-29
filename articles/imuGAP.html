@@ -113,21 +113,21 @@ slice
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>i</mi><mo>,</mo><mi>a</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(i, a)</annotation></semantics></math>
 (location
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>,
-birth cohort
+cohort born at time
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>a</mi><annotation encoding="application/x-tex">a</annotation></semantics></math>)
-as having an underlying non-uptake rate
+as having an underlying non-uptake probability
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ϕ</mi><mrow><mi>i</mi><mo>,</mo><mi>a</mi></mrow></msub><annotation encoding="application/x-tex">\phi_{i,a}</annotation></semantics></math>,
-with complementary uptake propensity
+with complementary uptake probability
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><msub><mi>ϕ</mi><mrow><mi>i</mi><mo>,</mo><mi>a</mi></mrow></msub></mrow><annotation encoding="application/x-tex">1 - \phi_{i,a}</annotation></semantics></math>.
 Given a dose eligibility schedule
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi><mo stretchy="false" form="prefix">(</mo><mi>s</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\nu(s)</annotation></semantics></math>
-and a force-of-vaccination rate
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo stretchy="false" form="prefix">(</mo><mi>s</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\lambda(s)</annotation></semantics></math>,
-cumulative coverage at age
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi><mo stretchy="false" form="prefix">(</mo><mi>τ</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\nu(\tau)</annotation></semantics></math>
+(in terms of time-in-life) and a force-of-vaccination rate
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi><mo stretchy="false" form="prefix">(</mo><mi>t</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\lambda(t)</annotation></semantics></math>
+(in terms of absolute time), cumulative coverage at age
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
 for the first dose is modeled as:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false" form="prefix">(</mo><mo>≥</mo><mtext mathvariant="normal">1 dose</mtext><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>ϕ</mi><mrow><mi>i</mi><mo>,</mo><mi>a</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi mathvariant="normal">exp</mi><mrow><mo stretchy="true" form="prefix">{</mo><mi>−</mi><msubsup><mo>∫</mo><mi>a</mi><mi>t</mi></msubsup><msub><mi>λ</mi><mrow><mi>i</mi><mo>,</mo><mi>a</mi></mrow></msub><mo stretchy="false" form="prefix">(</mo><mi>s</mi><mo stretchy="false" form="postfix">)</mo><mi>ν</mi><mo stretchy="false" form="prefix">(</mo><mi>s</mi><mo stretchy="false" form="postfix">)</mo><mi>d</mi><mtext mathvariant="normal">s</mtext><mo stretchy="true" form="postfix">}</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
-P(\ge\textrm{1 dose}) = \left(1 - \phi_{i, a}\right) \left(1 - \exp\left\{-\int_a^{t} \lambda_{i, a}(s)\nu(s) d\textrm{s}\right\}\right)
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mi mathvariant="normal">Pr</mi><mrow><mi>i</mi><mo>,</mo><mi>a</mi></mrow></munder><mo stretchy="false" form="prefix">(</mo><mo>≥</mo><mtext mathvariant="normal">1 dose</mtext><mo>∣</mo><mi>t</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>ϕ</mi><mrow><mi>i</mi><mo>,</mo><mi>a</mi></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi mathvariant="normal">exp</mi><mrow><mo stretchy="true" form="prefix">{</mo><mi>−</mi><msubsup><mo>∫</mo><mi>a</mi><mi>t</mi></msubsup><mi>λ</mi><mo stretchy="false" form="prefix">(</mo><mi>s</mi><mo stretchy="false" form="postfix">)</mo><mi>ν</mi><mo stretchy="false" form="prefix">(</mo><mi>s</mi><mo>−</mo><mi>a</mi><mo stretchy="false" form="postfix">)</mo><mi mathvariant="normal">d</mi><mi>s</mi><mo stretchy="true" form="postfix">}</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
+\Pr_{i, a}(\ge\textrm{1 dose}\mid t) = \left(1 - \phi_{i, a}\right) \left(1 - \exp\left\{-\int_a^{t} \lambda(s)\nu(s-a) \mathrm{d}s\right\}\right)
 </annotation></semantics></math></p>
 <p>This formulation extends sequentially to multiple vaccine doses,
 conditional on receipt of prior doses. Sequential multi-dose regimens
@@ -252,29 +252,29 @@ degrees of freedom and dose eligibility ages) with
 <span><span class="co">#&gt; post-warmup draws per chain=500, total post-warmup draws=2000.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                     mean se_mean   sd      2.5%       25%       50%       75%</span></span>
-<span><span class="co">#&gt; beta_bs[1]         -1.68    0.00 0.03     -1.74     -1.70     -1.68     -1.65</span></span>
-<span><span class="co">#&gt; beta_bs[2]         -1.88    0.00 0.05     -1.98     -1.91     -1.88     -1.85</span></span>
-<span><span class="co">#&gt; beta_bs[3]         -2.48    0.00 0.08     -2.65     -2.53     -2.48     -2.42</span></span>
-<span><span class="co">#&gt; beta_bs[4]         -3.13    0.00 0.09     -3.30     -3.19     -3.13     -3.07</span></span>
-<span><span class="co">#&gt; beta_bs[5]         -2.59    0.00 0.08     -2.75     -2.64     -2.59     -2.53</span></span>
-<span><span class="co">#&gt; sigma_layer[1]      0.56    0.01 0.30      0.19      0.33      0.48      0.72</span></span>
-<span><span class="co">#&gt; sigma_layer[2]      0.74    0.01 0.12      0.55      0.66      0.73      0.81</span></span>
+<span><span class="co">#&gt; beta_bs[1]         -1.68    0.00 0.03     -1.74     -1.70     -1.67     -1.65</span></span>
+<span><span class="co">#&gt; beta_bs[2]         -1.88    0.00 0.05     -1.98     -1.92     -1.88     -1.84</span></span>
+<span><span class="co">#&gt; beta_bs[3]         -2.48    0.00 0.09     -2.64     -2.54     -2.47     -2.41</span></span>
+<span><span class="co">#&gt; beta_bs[4]         -3.13    0.00 0.09     -3.30     -3.19     -3.13     -3.06</span></span>
+<span><span class="co">#&gt; beta_bs[5]         -2.59    0.00 0.09     -2.76     -2.65     -2.58     -2.53</span></span>
+<span><span class="co">#&gt; sigma_layer[1]      0.52    0.01 0.28      0.19      0.31      0.45      0.67</span></span>
+<span><span class="co">#&gt; sigma_layer[2]      0.73    0.01 0.12      0.53      0.64      0.72      0.80</span></span>
 <span><span class="co">#&gt; lambda_raw[1]       1.02    0.00 0.03      0.97      1.00      1.02      1.04</span></span>
-<span><span class="co">#&gt; lambda_raw[2]       1.06    0.00 0.01      1.03      1.05      1.06      1.07</span></span>
-<span><span class="co">#&gt; lp__           -78864.85    0.28 5.07 -78875.23 -78868.18 -78864.55 -78861.15</span></span>
+<span><span class="co">#&gt; lambda_raw[2]       1.06    0.00 0.01      1.04      1.05      1.06      1.07</span></span>
+<span><span class="co">#&gt; lp__           -78865.34    0.29 5.21 -78876.40 -78868.69 -78864.98 -78861.60</span></span>
 <span><span class="co">#&gt;                    97.5% n_eff Rhat</span></span>
-<span><span class="co">#&gt; beta_bs[1]         -1.61  1194 1.00</span></span>
-<span><span class="co">#&gt; beta_bs[2]         -1.79  1095 1.00</span></span>
-<span><span class="co">#&gt; beta_bs[3]         -2.31   994 1.00</span></span>
-<span><span class="co">#&gt; beta_bs[4]         -2.96  1010 1.00</span></span>
-<span><span class="co">#&gt; beta_bs[5]         -2.43  1403 1.00</span></span>
-<span><span class="co">#&gt; sigma_layer[1]      1.34   656 1.00</span></span>
-<span><span class="co">#&gt; sigma_layer[2]      1.03   286 1.01</span></span>
-<span><span class="co">#&gt; lambda_raw[1]       1.07  1198 1.00</span></span>
-<span><span class="co">#&gt; lambda_raw[2]       1.09   936 1.00</span></span>
-<span><span class="co">#&gt; lp__           -78856.26   330 1.00</span></span>
+<span><span class="co">#&gt; beta_bs[1]         -1.61  1532 1.00</span></span>
+<span><span class="co">#&gt; beta_bs[2]         -1.78   922 1.01</span></span>
+<span><span class="co">#&gt; beta_bs[3]         -2.31  1038 1.01</span></span>
+<span><span class="co">#&gt; beta_bs[4]         -2.95   989 1.00</span></span>
+<span><span class="co">#&gt; beta_bs[5]         -2.41  1266 1.00</span></span>
+<span><span class="co">#&gt; sigma_layer[1]      1.25   638 1.01</span></span>
+<span><span class="co">#&gt; sigma_layer[2]      0.97   224 1.00</span></span>
+<span><span class="co">#&gt; lambda_raw[1]       1.07  1503 1.00</span></span>
+<span><span class="co">#&gt; lambda_raw[2]       1.09  1148 1.00</span></span>
+<span><span class="co">#&gt; lp__           -78856.27   318 1.00</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Sep 23 01:08:11 2026.</span></span>
+<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Tue Sep 29 23:08:48 2026.</span></span>
 <span><span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span></span>
 <span><span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span></span>
 <span><span class="co">#&gt; convergence, Rhat=1).</span></span></code></pre></div>
@@ -371,38 +371,38 @@ scale:</p>
 <span><span class="co">#&gt; 28:      616      Cormorant Elementary     4     26     2      1       22</span></span>
 <span><span class="co">#&gt;     obs_c_id                    loc_id   age cohort  dose weight loc_c_id</span></span>
 <span><span class="co">#&gt;        &lt;int&gt;                    &lt;char&gt; &lt;int&gt;  &lt;num&gt; &lt;num&gt;  &lt;num&gt;    &lt;int&gt;</span></span>
-<span><span class="co">#&gt;             mean          q2_5   q50        q97_5</span></span>
-<span><span class="co">#&gt;            &lt;num&gt;         &lt;num&gt; &lt;num&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt;  1: 2.229695e-18 -2.233975e-16     0 1.124299e-16</span></span>
-<span><span class="co">#&gt;  2: 2.227779e-18 -2.239259e-16     0 1.125666e-16</span></span>
-<span><span class="co">#&gt;  3: 2.167167e-18 -2.175164e-16     0 1.096010e-16</span></span>
-<span><span class="co">#&gt;  4: 2.282649e-18 -2.274951e-16     0 1.145564e-16</span></span>
-<span><span class="co">#&gt;  5: 2.247771e-18 -2.280889e-16     0 1.146705e-16</span></span>
-<span><span class="co">#&gt;  6: 2.216492e-18 -2.254058e-16     0 1.131855e-16</span></span>
-<span><span class="co">#&gt;  7: 2.223872e-18 -2.277746e-16     0 1.143745e-16</span></span>
-<span><span class="co">#&gt;  8: 2.339035e-18 -2.324320e-16     0 1.170108e-16</span></span>
-<span><span class="co">#&gt;  9: 2.298711e-18 -2.313144e-16     0 1.163135e-16</span></span>
-<span><span class="co">#&gt; 10: 2.212027e-18 -2.211039e-16     0 1.113452e-16</span></span>
-<span><span class="co">#&gt; 11: 2.283059e-18 -2.225852e-16     0 1.128720e-16</span></span>
-<span><span class="co">#&gt; 12: 2.330488e-18 -2.298751e-16     0 1.159048e-16</span></span>
-<span><span class="co">#&gt; 13: 2.044697e-18 -2.070015e-16     0 1.047570e-16</span></span>
-<span><span class="co">#&gt; 14: 2.155375e-18 -2.119639e-16     0 1.074247e-16</span></span>
-<span><span class="co">#&gt; 15: 2.278474e-18 -2.289938e-16     0 1.154546e-16</span></span>
-<span><span class="co">#&gt; 16: 1.750787e-18 -1.589900e-16     0 8.219622e-17</span></span>
-<span><span class="co">#&gt; 17: 1.757610e-18 -1.903010e-16     0 9.476038e-17</span></span>
-<span><span class="co">#&gt; 18: 2.309072e-18 -2.336008e-16     0 1.172010e-16</span></span>
-<span><span class="co">#&gt; 19: 2.148560e-18 -2.116391e-16     0 1.072276e-16</span></span>
-<span><span class="co">#&gt; 20: 1.470800e-18 -1.612247e-16     0 8.083440e-17</span></span>
-<span><span class="co">#&gt; 21: 2.177431e-18 -2.187043e-16     0 1.103714e-16</span></span>
-<span><span class="co">#&gt; 22: 2.136675e-18 -2.216743e-16     0 1.109990e-16</span></span>
-<span><span class="co">#&gt; 23: 2.243125e-18 -2.269781e-16     0 1.140143e-16</span></span>
-<span><span class="co">#&gt; 24: 2.169432e-18 -2.227897e-16     0 1.116490e-16</span></span>
-<span><span class="co">#&gt; 25: 2.318801e-18 -2.337379e-16     0 1.174920e-16</span></span>
-<span><span class="co">#&gt; 26: 2.411914e-18 -2.325425e-16     0 1.178177e-16</span></span>
-<span><span class="co">#&gt; 27: 2.251423e-18 -2.187336e-16     0 1.109605e-16</span></span>
-<span><span class="co">#&gt; 28: 2.243648e-18 -2.258344e-16     0 1.134462e-16</span></span>
-<span><span class="co">#&gt;             mean          q2_5   q50        q97_5</span></span>
-<span><span class="co">#&gt;            &lt;num&gt;         &lt;num&gt; &lt;num&gt;        &lt;num&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;              mean          q2_5   q50        q97_5</span></span>
+<span><span class="co">#&gt;             &lt;num&gt;         &lt;num&gt; &lt;num&gt;        &lt;num&gt;</span></span>
+<span><span class="co">#&gt;  1: -5.569248e-18 -2.241288e-16     0 1.123059e-16</span></span>
+<span><span class="co">#&gt;  2: -5.568015e-18 -2.243850e-16     0 1.125327e-16</span></span>
+<span><span class="co">#&gt;  3: -5.416521e-18 -2.182401e-16     0 1.095451e-16</span></span>
+<span><span class="co">#&gt;  4: -5.694550e-18 -2.285260e-16     0 1.142268e-16</span></span>
+<span><span class="co">#&gt;  5: -5.686539e-18 -2.287039e-16     0 1.145120e-16</span></span>
+<span><span class="co">#&gt;  6: -5.603029e-18 -2.253615e-16     0 1.128993e-16</span></span>
+<span><span class="co">#&gt;  7: -5.676182e-18 -2.281617e-16     0 1.145700e-16</span></span>
+<span><span class="co">#&gt;  8: -5.768977e-18 -2.326308e-16     0 1.164845e-16</span></span>
+<span><span class="co">#&gt;  9: -5.708085e-18 -2.306696e-16     0 1.156993e-16</span></span>
+<span><span class="co">#&gt; 10: -5.520913e-18 -2.224973e-16     0 1.113431e-16</span></span>
+<span><span class="co">#&gt; 11: -5.624902e-18 -2.254365e-16     0 1.126683e-16</span></span>
+<span><span class="co">#&gt; 12: -5.696254e-18 -2.306711e-16     0 1.157738e-16</span></span>
+<span><span class="co">#&gt; 13: -5.068252e-18 -2.076763e-16     0 1.047798e-16</span></span>
+<span><span class="co">#&gt; 14: -5.284309e-18 -2.127905e-16     0 1.067209e-16</span></span>
+<span><span class="co">#&gt; 15: -5.679695e-18 -2.291108e-16     0 1.149208e-16</span></span>
+<span><span class="co">#&gt; 16: -4.173313e-18 -1.635485e-16     0 8.199413e-17</span></span>
+<span><span class="co">#&gt; 17: -4.771514e-18 -1.896589e-16     0 9.532569e-17</span></span>
+<span><span class="co">#&gt; 18: -5.841709e-18 -2.341992e-16     0 1.171588e-16</span></span>
+<span><span class="co">#&gt; 19: -5.311215e-18 -2.134417e-16     0 1.069604e-16</span></span>
+<span><span class="co">#&gt; 20: -4.075305e-18 -1.610855e-16     0 8.027312e-17</span></span>
+<span><span class="co">#&gt; 21: -5.400668e-18 -2.188016e-16     0 1.102120e-16</span></span>
+<span><span class="co">#&gt; 22: -5.446679e-18 -2.223487e-16     0 1.115608e-16</span></span>
+<span><span class="co">#&gt; 23: -5.667229e-18 -2.266835e-16     0 1.136682e-16</span></span>
+<span><span class="co">#&gt; 24: -5.567773e-18 -2.223330e-16     0 1.121876e-16</span></span>
+<span><span class="co">#&gt; 25: -5.848363e-18 -2.341158e-16     0 1.167933e-16</span></span>
+<span><span class="co">#&gt; 26: -5.889820e-18 -2.349090e-16     0 1.174513e-16</span></span>
+<span><span class="co">#&gt; 27: -5.330298e-18 -2.187891e-16     0 1.106687e-16</span></span>
+<span><span class="co">#&gt; 28: -5.559140e-18 -2.258755e-16     0 1.134763e-16</span></span>
+<span><span class="co">#&gt;              mean          q2_5   q50        q97_5</span></span>
+<span><span class="co">#&gt;             &lt;num&gt;         &lt;num&gt; &lt;num&gt;        &lt;num&gt;</span></span></code></pre></div>
 <div class="section level4">
 <h4 id="state-level-coverage-trajectory">State-Level Coverage Trajectory<a class="anchor" aria-label="anchor" href="#state-level-coverage-trajectory"></a>
 </h4>
