@@ -108,10 +108,10 @@ The package enables researchers and public health analysts to synthesize across 
 
 ### Core Model Intuition
 
-The core `imuGAP` model represents each target population slice $(i, a)$ (location $i$, birth cohort $a$) as having an underlying non-uptake rate $\phi_{i,a}$, with complementary uptake propensity $1 - \phi_{i,a}$. Given a dose eligibility schedule $\nu(s)$ and a force-of-vaccination rate $\lambda(s)$, cumulative coverage at age $t$ for the first dose is modeled as:
+The core `imuGAP` model represents each target population slice $(i, a)$ (location $i$, cohort born at time $a$) as having an underlying non-uptake probability $\phi_{i,a}$, with complementary uptake probability $1 - \phi_{i,a}$. Given a dose eligibility schedule $\nu(\tau)$ (in terms of time-in-life) and a force-of-vaccination rate $\lambda(t)$ (in terms of absolute time), cumulative coverage at age $t$ for the first dose is modeled as:
 
 $$
-P(\ge\textrm{1 dose}) = \left(1 - \phi_{i, a}\right) \left(1 - \exp\left\{-\int_a^{t} \lambda_{i, a}(s)\nu(s) d\textrm{s}\right\}\right)
+\Pr_{i, a}(\ge\textrm{1 dose}\mid t) = \left(1 - \phi_{i, a}\right) \left(1 - \exp\left\{-\int_a^{t} \lambda(s)\nu(s-a) \mathrm{d}s\right\}\right)
 $$
 
 This formulation extends sequentially to multiple vaccine doses, conditional on receipt of prior doses. Sequential multi-dose regimens (e.g. Dose 1 at $\ge 12$ months, Dose 2 at $\ge 4$ years) are modeled as a continuous-time Markov transition process.
