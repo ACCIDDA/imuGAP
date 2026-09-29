@@ -24,10 +24,10 @@
     and PDF visual assets with dark-mode compatibility.
 
 - **Structured Input Errors** (#156):
-  - Errors raised by imuGAP now have class `imugap_error` (still an `error`), carrying an `id`
-    (the message template name, e.g. `"ERR_OBS_NA_ID"`) and the values the message was built
-    from as fields. Front-ends can catch `imugap_error` and read fields instead of parsing
-    message text.
+  - Errors raised through `stop_fmt_if()` have class `imugap_error` (still an `error`),
+    carrying an `id` (the message template name, e.g. `"ERR_OBS_NA_ID"`) and raw values
+    in `fields`. Front-ends can catch these errors and read fields instead of parsing
+    message text. Errors passed through from Stan backends retain their own classes.
   - Canonicalizer column checks report the offending rows in a `rows` field (1-based indices
     into the table the caller passed), and name the caller's table (`observations`,
     `populations`) instead of the internal `dt`.

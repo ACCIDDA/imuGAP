@@ -59,13 +59,20 @@ format_message <- function(fmt, ..., width = 80L) {
 #' @param call the call to attribute the error to (default: `NULL`).
 #'
 #' @return a condition of class `c("imugap_error", "error", "condition")`, with
-#'   elements `message`, `call`, `id`, and each element of `fields`.
+#'   elements `message`, `call`, `id`, and `fields`. Non-reserved fields are also
+#'   available directly on the condition. Names `message`, `call`, `id`, and
+#'   `fields` are reserved and available only through the `fields` list.
 #'
 #' @keywords internal
 #' @noRd
 imugap_error <- function(message, id, fields = list(), call = NULL) {
+  reserved <- c("message", "call", "id", "fields")
+  direct_fields <- fields[!names(fields) %in% reserved]
   structure(
-    c(list(message = message, call = call, id = id), fields),
+    c(
+      list(message = message, call = call, id = id, fields = fields),
+      direct_fields
+    ),
     class = c("imugap_error", "error", "condition")
   )
 }
@@ -76,7 +83,8 @@ imugap_error <- function(message, id, fields = list(), call = NULL) {
 #' Evaluates `cond` and if `TRUE`, raises an `imugap_error` formatted with
 #' `format_message()`. The error's `id` is the name of the template passed as
 #' `fmt`, and each named argument in `...` is attached as a field with its raw
-#' value, whether or not the template prints it.
+#' value, whether or not the template prints it. All values are available in
+#' the error's `fields` list; non-reserved names are also available directly.
 #'
 #' @param cond logical expression to evaluate.
 #' @param fmt character format string, passed as a template constant (e.g.

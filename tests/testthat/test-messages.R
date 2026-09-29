@@ -111,6 +111,7 @@ test_that("stop_fmt_if raises an imugap_error carrying the template id and field
   expect_identical(err$name, "observations")
   expect_identical(err$col, "positive")
   expect_identical(err$rows, c(2L, 7L))
+  expect_identical(err$fields$rows, c(2L, 7L))
   # fields absent from the template are carried but not printed
   expect_match(
     conditionMessage(err),
@@ -130,10 +131,42 @@ test_that("an imugap_error is caught by class and by plain error handlers", {
   expect_error(signal(), err_pattern(ERR_OBS_CENSORED_NUMERIC))
 })
 
+test_that("reserved field names do not shadow condition metadata", {
+  err <- tryCatch(
+    stop_fmt_if(
+      TRUE,
+      ERR_CANNOT_HAVE_NA,
+      name = "observations",
+      col = "positive",
+      message = "raw message",
+      call = "raw call",
+      id = "raw id",
+      fields = "raw fields"
+    ),
+    error = identity
+  )
+
+  expect_identical(err$id, "ERR_CANNOT_HAVE_NA")
+  expect_identical(
+    err$message,
+    "`observations` column 'positive' cannot contain NA values"
+  )
+  expect_true(is.call(err$call))
+  expect_identical(err$fields$message, "raw message")
+  expect_identical(err$fields$call, "raw call")
+  expect_identical(err$fields$id, "raw id")
+  expect_identical(err$fields$fields, "raw fields")
+  expect_identical(err$name, "observations")
+  expect_named(
+    unclass(err),
+    c("message", "call", "id", "fields", "name", "col")
+  )
+})
+
 test_that("stop_fmt_if gives a non-symbol template an NA id and keeps only named fields", {
   err <- tryCatch(stop_fmt_if(TRUE, "found %d errors", 3L), error = identity)
   expect_s3_class(err, "imugap_error")
   expect_identical(err$id, NA_character_)
   expect_identical(conditionMessage(err), "found 3 errors")
-  expect_named(unclass(err), c("message", "call", "id"))
+  expect_named(unclass(err), c("message", "call", "id", "fields"))
 })
