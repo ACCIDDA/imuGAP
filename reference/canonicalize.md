@@ -28,7 +28,8 @@ canonicalize_populations(
 - locations:
 
   a `[data.frame()]` with columns `loc_id` and `parent_id` of matching
-  types. See Details for restrictions.
+  types, and optionally a `population` column of numeric counts. See
+  Details for restrictions.
 
 - observations:
 
@@ -105,6 +106,11 @@ a `[data.table()]`, with:
 - `layer_bound` column, an integer starting from 1 by layer. This
   provides index slice information used in the stan model.
 
+- `population` column (optional), positive numeric population totals,
+  preserved and validated for hierarchical sum consistency across
+  parent-child nodes (with missing parent populations automatically
+  imputed from child sums).
+
 a `[data.table()]`, canonical observation object with:
 
 - an `obs_c_id` column, an integer sequence from 1; the order
@@ -165,6 +171,11 @@ version. In that version, all ids run from 1:N, where N is the number of
 distinct ids. That order is determined by layer order, then position of
 parent within its layer, then "natural" order (i.e., whatever base R
 [`sort()`](https://rdrr.io/r/base/sort.html) yields).
+
+If the optional `population` column is provided, child location
+populations must sum to their parent location's population at every
+hierarchy layer. A parent with an `NA` population will automatically
+take on the sum of all child locations.
 
 ### Observations (`canonicalize_observations`)
 

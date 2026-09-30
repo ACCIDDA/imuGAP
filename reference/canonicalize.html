@@ -79,7 +79,8 @@ by the <code>[sampling()]</code> sampler and the underlying Stan models.</p>
 
 <dl><dt id="arg-locations">locations<a class="anchor" aria-label="anchor" href="#arg-locations"></a></dt>
 <dd><p>a <code>[data.frame()]</code> with columns <code>loc_id</code> and <code>parent_id</code>
-of matching types. See Details for restrictions.</p></dd>
+of matching types, and optionally a <code>population</code> column of numeric counts.
+See Details for restrictions.</p></dd>
 
 
 <dt id="arg-observations">observations<a class="anchor" aria-label="anchor" href="#arg-observations"></a></dt>
@@ -137,6 +138,9 @@ representing the order that will be used in the sampler</p></li>
 3 (grandchildren), &amp;c</p></li>
 <li><p><code>layer_bound</code> column, an integer starting from 1 by layer. This provides
 index slice information used in the stan model.</p></li>
+<li><p><code>population</code> column (optional), positive numeric population totals, preserved and
+validated for hierarchical sum consistency across parent-child nodes
+(with missing parent populations automatically imputed from child sums).</p></li>
 </ul><p>a <code>[data.table()]</code>, canonical observation object with:</p><ul><li><p>an <code>obs_c_id</code> column, an integer sequence from 1; the order observations
 will be passed to estimation</p></li>
 <li><p>the original <code>obs_id</code> column, possibly reordered</p></li>
@@ -176,6 +180,10 @@ In that version, all ids run from 1:N, where N is the number of distinct
 ids. That order is determined by layer order, then position of parent
 within its layer, then "natural" order (i.e., whatever base R <code><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort()</a></code>
 yields).</p>
+<p>If the optional <code>population</code> column is provided, child location populations
+must sum to their parent location's population at every hierarchy layer. A
+parent with an <code>NA</code> population will automatically take on the sum of all
+child locations.</p>
 </div>
 
 <div class="section">

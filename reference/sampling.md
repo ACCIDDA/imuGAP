@@ -59,7 +59,8 @@ sampling(
 - locations:
 
   a `[data.frame()]` with columns `loc_id` and `parent_id` of matching
-  types. See Details for restrictions.
+  types, and optionally a `population` column of numeric counts. See
+  Details for restrictions.
 
 - imugap_opts:
 
