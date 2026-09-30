@@ -105,6 +105,10 @@ We use [`just`](https://github.com/casey/just) to automate development tasks. Th
   * When multiple functions or methods share a common topic via `@rdname`, prefix each `@return` description with the specific function or method being documented (e.g. `for \`func_name()\`: a [data.table()], with...`) so rendered Rd Value sections clearly disambiguate return values across functions.
   * For side-effect or validation functions, state invisible returns explicitly (e.g. `invisibly returns \`TRUE\` on success.`).
   * For multi-element lists, use an indented markdown bullet list detailing element names in backticks and types.
+* **External Generic Extensions (`@exportS3Method`)**:
+  * When extending generics defined in external or suggested packages (e.g. `{loo}`), do not define redundant standalone generics in `imuGAP`.
+  * Register methods with `@exportS3Method <pkg>::<generic>` (e.g. `@exportS3Method loo::log_lik`, `@exportS3Method loo::loo`).
+  * Modern R ($\ge 3.6.0$) and `roxygen2` handle delayed method registration natively; avoid legacy `@rawNamespace` or `@exportS3Method NULL` workarounds.
 * **Markdown Formatting**: `roxygen2` markdown mode is enabled (`Roxygen: list(markdown = TRUE)`). Prefer standard markdown syntax:
   * Use backticks for code identifiers, arguments, and return types (e.g. `` `locations` ``, `` `data.table` ``).
   * Use cross-reference markdown links (e.g. `[sampling()]`, `[flexstanr::stan_options()]`).

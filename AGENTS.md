@@ -56,6 +56,10 @@ This document provides concise instructions and rules for AI coding assistants w
     * **Flag Parameters**: Frame descriptions for boolean/logical flags as questions (e.g. `logical scalar; drop extraneous columns? (default: \`TRUE\`).`, `logical; allow \`NA\` values? (default: \`FALSE\`).`).
     * **Ellipsis (`...`)**: Document `...` explicitly as forwarded (`additional arguments passed to [func_name()].`) or ignored (`additional arguments (currently ignored).`), or document forwarded dots via `@inheritDotParams <pkg>::<fn>`.
     * **`@return` Conventions**: Describe the return type and structure leading with `a <type>, ...explanation...` in lowercase (e.g. `a [data.table()], containing...`, `an object of class \`imugap_predict\`, wrapping...`, `a logical scalar, indicating whether...`). When multiple functions share a common documentation topic via `@rdname`, prefix each `@return` description with the specific function or method it applies to (e.g. `for \`func_name()\`: a [data.table()], ...`). For side-effect or validation functions, state invisible returns explicitly (e.g. `invisibly returns \`TRUE\` on success.`). For structured lists, use an indented markdown bullet list detailing element names in backticks and types.
+  * **External Generic Extensions (`@exportS3Method`)**:
+    * When extending generics defined in external or suggested packages (e.g. `{loo}`), do not define redundant standalone generics in `imuGAP`.
+    * Register methods with `@exportS3Method <pkg>::<generic>` (e.g. `@exportS3Method loo::log_lik`, `@exportS3Method loo::loo`).
+    * Modern R ($\ge 3.6.0$) and `roxygen2` handle delayed method registration natively; avoid legacy `@rawNamespace` or `@exportS3Method NULL` workarounds.
 * **Roxygen Examples**:
   * For computationally expensive functions (e.g. `sampling()`, multi-draw `predict()`), **always combine `@examplesIf interactive()` with `\donttest{ ... }`**:
     ```r
