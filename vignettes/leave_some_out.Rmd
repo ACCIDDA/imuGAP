@@ -1,0 +1,240 @@
+---
+title: "Model Evaluation & PSIS-LOO Cross-Validation"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+link-citations: true
+vignette: >
+  %\VignetteIndexEntry{Model Evaluation & PSIS-LOO Cross-Validation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4.5,
+  out.width = "100%",
+  dev.args = list(bg = "white")
+)
+```
+
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+if (requireNamespace("thematic", quietly = TRUE)) {
+  thematic::thematic_off()
+}
+
+# Define a knitr hook to fold source code into a <details> block below the plot
+local({
+  hook_source <- knitr::knit_hooks$get("source")
+  knitr::knit_hooks$set(source = function(x, options) {
+    res <- hook_source(x, options)
+    if (isTRUE(options$fold) || !is.null(options$code_summary)) {
+      label <- options$code_summary
+      if (is.null(label)) label <- "Show code"
+      sprintf("\n<details><summary><b>%s</b></summary>\n\n%s\n</details>\n", label, res)
+    } else {
+      res
+    }
+  })
+
+  hook_chunk <- knitr::knit_hooks$get("chunk")
+  knitr::knit_hooks$set(chunk = function(x, options) {
+    res <- hook_chunk(x, options)
+    if (isTRUE(options$fold)) {
+      sprintf("\n<div class=\"chunk-plot-first\">\n%s\n</div>\n", res)
+    } else {
+      res
+    }
+  })
+})
+
+# List all suggested packages needed for this vignette
+required_pkgs <- c(
+  "imuGAP", "data.table", "ggplot2", "loo"
+)
+
+# Check if they are available
+pkgs_available <- all(sapply(required_pkgs, requireNamespace, quietly = TRUE))
+
+if (!pkgs_available) {
+  knitr::opts_chunk$set(eval = FALSE)
+  message("Some suggested packages are missing. Vignette code will not be executed.")
+} else {
+  chk <- suppressPackageStartupMessages(
+    sapply(required_pkgs, require, character.only = TRUE)
+  )
+
+  # Always enforce white background and black text on plots per AGENTS.md
+  ggplot2::theme_set(
+    ggplot2::theme_bw() +
+      ggplot2::theme(
+        plot.background = ggplot2::element_rect(fill = "white", colour = NA),
+        panel.background = ggplot2::element_rect(fill = "white", colour = NA),
+        legend.background = ggplot2::element_rect(fill = "white", colour = NA),
+        legend.box.background = ggplot2::element_blank(),
+        text = ggplot2::element_text(colour = "black"),
+        axis.text = ggplot2::element_text(colour = "black"),
+        axis.title = ggplot2::element_text(colour = "black"),
+        plot.title = ggplot2::element_text(colour = "black", face = "bold"),
+        plot.subtitle = ggplot2::element_text(colour = "black"),
+        strip.text = ggplot2::element_text(colour = "black"),
+        strip.background = ggplot2::element_rect(fill = "grey90", colour = "grey20")
+      )
+  )
+}
+```
+
+# Introduction
+
+When evaluating model fit, you can use leave-one-out cross-validation (LOO-CV) to estimate out-of-sample predictive performance and identify highly influential observations without having to refit the MCMC model for every observation.
+
+`imuGAP` provides S3 methods for `log_lik()` and `loo()`, enabling integration with the [`{loo}`](https://cran.r-project.org/package=loo) package [@vehtari2017; @vehtari2024] to compute Pareto Smoothed Importance Sampling Leave-One-Out (PSIS-LOO) diagnostics.
+
+---
+
+# Computing the Pointwise Log-Likelihood
+
+The `log_lik()` method extracts the pointwise log-likelihood matrix for all $N$ observations across the $S$ posterior draws. For uncensored observations, it computes the binomial log probability mass; for left- or right-censored observations, it computes the corresponding cumulative log probability:
+
+```{r load-data}
+data("fit_sim", package = "imuGAP")
+data("observations_sim", package = "imuGAP")
+data("locations_sim", package = "imuGAP")
+```
+
+```{r compute-log-lik}
+# Compute log-likelihood matrix (Draws x Observations)
+ll_mat <- log_lik(fit_sim)
+dim(ll_mat)
+```
+
+---
+
+# Running PSIS-LOO and Inspecting Diagnostics
+
+You can compute the Expected Log Pointwise Predictive Density ($\text{elpd}_{\text{loo}}$) and Pareto shape parameter $\hat{k}$ diagnostics by calling `loo()` directly on an `imugap_fit` object:
+
+```{r run-loo}
+loo_res <- loo(fit_sim)
+print(loo_res)
+```
+
+The Pareto shape parameter $\hat{k}$ diagnostic indicates whether importance weights have finite variance and gauges the reliability of the PSIS approximation [@vehtari2017; @vehtari2024]:
+
+- $\hat{k} < 0.5$ (including $< 0$): High reliability; importance weights have finite variance, and the central limit theorem holds.
+- $0.5 \le \hat{k} < 0.7$: Moderate reliability; variance is finite, but convergence is slower.
+- $\hat{k} \ge 0.7$: Influential observation; raw importance weights have high or infinite variance, meaning importance sampling estimates may be unreliable without exact refitting or moment matching.
+
+In practice, if all observations have $\hat{k} < 0.7$, PSIS-LOO provides a fast and reliable leave-one-out cross-validation approximation without refitting.
+
+---
+
+# Visualizing Pareto $\hat{k}$ Diagnostics
+
+You can visualize the $\hat{k}$ diagnostics across all observations to check whether any specific surveillance streams or data sources exhibit high influence:
+
+```{r plot-loo-k, fold = TRUE, code_summary = "Show plot code", fig.cap = "Pareto k influence diagnostics across surveillance streams"}
+# Map observations to surveillance stream / layer type
+loc_map <- canonicalize_locations(locations_sim)[, .(loc_id, layer)]
+obs_meta <- canonicalize_observations(observations_sim, drop_extra = FALSE)
+obs_meta <- merge(obs_meta, loc_map, by = "loc_id")
+data.table::setorder(obs_meta, obs_c_id)
+
+obs_meta[, stream := data.table::fcase(
+  layer == 1L, "State Surveys",
+  layer == 2L, "County Surveys (Censored)",
+  layer == 3L, "School Entry"
+)]
+
+k_df <- data.frame(
+  obs_idx = seq_along(loo_res$diagnostics$pareto_k),
+  pareto_k = loo_res$diagnostics$pareto_k,
+  stream = factor(obs_meta$stream, levels = c(
+    "School Entry",
+    "State Surveys",
+    "County Surveys (Censored)"
+  ))
+)
+
+ggplot(k_df, aes(x = obs_idx, y = pareto_k, color = stream)) +
+  # Painted background regions for k thresholds
+  annotate(
+    "rect",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = -Inf,
+    ymax = 0.5,
+    fill = "#2ca02c",
+    alpha = 0.07
+  ) +
+  annotate(
+    "rect",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = 0.5,
+    ymax = 0.7,
+    fill = "#e6ab02",
+    alpha = 0.12
+  ) +
+  annotate(
+    "rect",
+    xmin = -Inf,
+    xmax = Inf,
+    ymin = 0.7,
+    ymax = Inf,
+    fill = "#d95f02",
+    alpha = 0.15
+  ) +
+  # Pareto k quantitative region labels
+  annotate(
+    "label",
+    x = 10L,
+    y = 0.75,
+    label = "Influential (k >= 0.7)",
+    hjust = 0,
+    size = 3.2,
+    fontface = "italic",
+    color = "#b30000",
+    fill = ggplot2::alpha("white", 0.6)
+  ) +
+  annotate(
+    "label",
+    x = 10L,
+    y = 0.60,
+    label = "Moderate (0.5 <= k < 0.7)",
+    hjust = 0,
+    size = 3.2,
+    fontface = "italic",
+    color = "#b37400",
+    fill = ggplot2::alpha("white", 0.6)
+  ) +
+  annotate(
+    "label",
+    x = 10L,
+    y = 0.40,
+    label = "Reliable (k < 0.5)",
+    hjust = 0,
+    size = 3.2,
+    fontface = "italic",
+    color = "#006600",
+    fill = ggplot2::alpha("white", 0.6)
+  ) +
+  geom_hline(yintercept = c(0.5, 0.7), linetype = "dashed", color = "grey40") +
+  geom_point(alpha = 0.8, size = 2) +
+  coord_cartesian(ylim = c(min(k_df$pareto_k, 0) - 0.05, max(k_df$pareto_k, 0.8) + 0.05)) +
+  scale_color_brewer(palette = "Set2") +
+  labs(
+    title = "PSIS-LOO Pareto k Diagnostics",
+    subtitle = "Observation influence diagnostic by surveillance stream",
+    x = "Observation Index (Canonical ID)",
+    y = "Pareto Shape Parameter (k)",
+    color = "Surveillance Stream"
+  ) +
+  theme(legend.position = "bottom")
+```
+
+---
+
+# References

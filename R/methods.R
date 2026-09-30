@@ -279,6 +279,18 @@ summary.imugap_predict <- function(object, probs = c(0.025, 0.5, 0.975), ...) {
   draws <- object$draws
   target <- data.table::copy(object$target)
 
+  if (nrow(target) == 0L || length(draws) == 0L) {
+    quantile_names <- sprintf("q%g", probs * 100)
+    quantile_names <- gsub("\\.", "_", quantile_names)
+    stats_dt <- as.data.table(matrix(
+      numeric(0),
+      nrow = 0,
+      ncol = 1L + length(probs),
+      dimnames = list(NULL, c("mean", quantile_names))
+    ))
+    return(cbind(target, stats_dt))
+  }
+
   if (length(dim(draws)) == 3L) {
     mean_vals <- colMeans(draws, dims = 2L)
     quantiles <- t(apply(
