@@ -39,7 +39,10 @@
 #' If the optional `population` column is provided, child location populations
 #' must sum to their parent location's population at every hierarchy layer. A
 #' parent with an `NA` population will automatically take on the sum of all
-#' child locations.
+#' child locations. If the column is not provided, outermost leaves will be
+#' will all be assigned an equal size, and then accumulated up to parent entities.
+#' This assumption treats the outermost entities as equally contributing, though
+#' intermediate entities will be weighted by their number of offspring.
 #'
 #' ## Observations (`canonicalize_observations`)
 #' The observations object documents observations used to fit the
@@ -148,7 +151,7 @@ is_canonical <- function(dt, target_class) {
 }
 
 #' @rdname canonicalize
-#' @return a `[data.table()]`, with:
+#' @return for `canonicalize_locations()`: a `[data.table()]`, with:
 #'  - `loc_id`, `parent_id` columns as originally supplied, possibly reordered
 #'  - `loc_c_id`, `loc_cp_id` columns, canonicalized id/parent_id columns,
 #'    representing the order that will be used in the sampler
@@ -159,6 +162,8 @@ is_canonical <- function(dt, target_class) {
 #'  - `population` column (optional), positive numeric population totals, preserved and
 #'    validated for hierarchical sum consistency across parent-child nodes
 #'    (with missing parent populations automatically imputed from child sums).
+#'    If not present, the highest resolution entities (i.e. those with no offspring)
+#'    will be assigned an identical weight.
 #'
 #' @examples
 #' # --- canonicalize_locations ---
@@ -360,7 +365,7 @@ validate_location_populations <- function(locations) {
 }
 
 #' @rdname canonicalize
-#' @return a `[data.table()]`, canonical observation object with:
+#' @return for `canonicalize_observations()`: a `[data.table()]`, canonical observation object with:
 #'  - an `obs_c_id` column, an integer sequence from 1; the order observations
 #'    will be passed to estimation
 #'  - the original `obs_id` column, possibly reordered
@@ -488,7 +493,8 @@ validate_dose_schedule <- function(dose_schedule, wts) {
 }
 
 #' @rdname canonicalize
-#' @return a `[data.table()]`, canonical populations object mirroring the input `populations` with:
+#' @return for `canonicalize_populations()`: a `[data.table()]`, canonical populations object
+#'  mirroring the input `populations` with:
 #'  - `obs_c_id`, the observation id the row concerns, canonicalized to match
 #'    the canonical observation ids
 #'  - `loc_c_id`, the location id the row concerns, canonicalized to match

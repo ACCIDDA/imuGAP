@@ -102,6 +102,7 @@ We use [`just`](https://github.com/casey/just) to automate development tasks. Th
   * **Ellipsis (`...`)**: Document `...` explicitly as forwarded (`additional arguments passed to [target_fn()].`) or ignored (`additional arguments (currently ignored).`), or document forwarded dots via `@inheritDotParams <pkg>::<fn>`.
 * **Return Value (`@return`) Formatting**:
   * Always document the return type and structure leading with `a <type>, ...explanation...` in lowercase (e.g. `a [data.table()], containing...`, `an object of class \`imugap_predict\`, wrapping...`, `a logical scalar, indicating whether...`).
+  * When multiple functions or methods share a common topic via `@rdname`, prefix each `@return` description with the specific function or method being documented (e.g. `for \`func_name()\`: a [data.table()], with...`) so rendered Rd Value sections clearly disambiguate return values across functions.
   * For side-effect or validation functions, state invisible returns explicitly (e.g. `invisibly returns \`TRUE\` on success.`).
   * For multi-element lists, use an indented markdown bullet list detailing element names in backticks and types.
 * **Markdown Formatting**: `roxygen2` markdown mode is enabled (`Roxygen: list(markdown = TRUE)`). Prefer standard markdown syntax:
