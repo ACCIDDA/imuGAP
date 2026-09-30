@@ -276,6 +276,55 @@ ERR_LOCATIONS_OFFSPRING_COUNT <- paste0(
   "use `subset(locations, parent_id %in% c({locations}))` to resolve single-child chains"
 )
 
+#' @title Location Population Column Numeric Error
+#' @description Raised when `locations` column 'population' is not numeric.
+#' @param {class} actual class of population column.
+#' @keywords internal
+#' @noRd
+ERR_LOCATIONS_POP_NUMERIC <- paste0(
+  "`locations` column 'population' must be numeric; found class '{class}'"
+)
+
+#' @title Location Population Positive Error
+#' @description Raised when non-NA values in `population` are not strictly positive numbers.
+#' @param {n_invalid} count of non-positive or non-finite population entries.
+#' @keywords internal
+#' @noRd
+ERR_LOCATIONS_POP_POSITIVE <- paste0(
+  "`locations` column 'population' must contain strictly positive numbers; ",
+  "found {n_invalid} invalid value(s); ",
+  "use `subset(locations, !is.na(population) & (population <= 0 | !is.finite(population)))` ",
+  "to resolve invalid entries"
+)
+
+#' @title Location Leaf Population NA Error
+#' @description Raised when leaf location nodes have missing population values.
+#' @param {n_locations} number of leaf locations with NA population.
+#' @param {locations} string list of leaf location IDs.
+#' @keywords internal
+#' @noRd
+ERR_LOCATIONS_POP_LEAF_NA <- paste0(
+  "`locations` leaf location(s) cannot have missing ('NA') population values; ",
+  "found {n_locations} leaf location(s) with NA: {locations}; ",
+  "use `subset(locations, !loc_id %in% parent_id & is.na(population))` ",
+  "to inspect invalid leaf entries"
+)
+
+#' @title Location Population Child Sum Mismatch Error
+#' @description Raised when child location populations do not sum to parent location population.
+#' @param {pid} parent location ID.
+#' @param {child_sum} sum of child location populations.
+#' @param {parent_pop} parent location population.
+#' @keywords internal
+#' @noRd
+ERR_LOCATIONS_POP_SUM_MISMATCH <- paste0(
+  "`locations` child location populations for parent '{pid}' sum to {child_sum}, ",
+  "which does not equal parent population {parent_pop} (halted on first mismatch; ",
+  "additional mismatches may be present); ",
+  "use `subset(locations, loc_id == '{pid}' | parent_id == '{pid}')` ",
+  "to resolve population mismatch"
+)
+
 # ------------------------------------------------------------------------------
 # 4. Observation Data Templates
 # ------------------------------------------------------------------------------

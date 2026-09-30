@@ -283,6 +283,38 @@ test_that("canonicalize_locations imputes NA root population from children sum",
   expect_equal(res[loc_id == "state", population], 300)
 })
 
+test_that("canonicalize_locations recursively imputes NA parent populations across multi-layers", {
+  # 3-layer: root (NA) -> state1 (NA), state2 (200) ->
+  #   cnty1a (40), cnty1b (60), cnty2a (80), cnty2b (120)
+  locs_pop <- data.frame(
+    loc_id = c(
+      "root",
+      "state1",
+      "state2",
+      "cnty1a",
+      "cnty1b",
+      "cnty2a",
+      "cnty2b"
+    ),
+    parent_id = c(NA, "root", "root", "state1", "state1", "state2", "state2"),
+    population = c(NA, NA, 200, 40, 60, 80, 120)
+  )
+  res <- canonicalize_locations(locs_pop)
+  expect_equal(res[loc_id == "state1", population], 100)
+  expect_equal(res[loc_id == "state2", population], 200)
+  expect_equal(res[loc_id == "root", population], 300)
+})
+
+test_that("canonicalize_locations imputes implicit root population from child sums", {
+  locs_no_root <- data.frame(
+    loc_id = c("state1", "state2"),
+    parent_id = c("USA", "USA"),
+    population = c(150, 250)
+  )
+  res <- canonicalize_locations(locs_no_root)
+  expect_equal(res[loc_id == "USA", population], 400)
+})
+
 test_that("canonicalize_locations validates consistent multi-layer population sums", {
   locs_pop <- data.frame(
     loc_id = c("state", "cnty1", "cnty2", "schl1", "schl2"),
@@ -294,14 +326,75 @@ test_that("canonicalize_locations validates consistent multi-layer population su
   expect_equal(res[loc_id == "cnty1", population], 100)
 })
 
+test_that("canonicalize_locations errors when population column is non-numeric", {
+  locs_char_pop <- data.frame(
+    loc_id = c("state", "cnty1", "cnty2"),
+    parent_id = c(NA, "state", "state"),
+    population = c("300", "100", "200")
+  )
+  expect_error(
+    canonicalize_locations(locs_char_pop),
+    err_pattern(ERR_LOCATIONS_POP_NUMERIC, class = "character")
+  )
+})
+
+test_that("canonicalize_locations errors when population contains non-positive numbers", {
+  locs_neg_pop <- data.frame(
+    loc_id = c("state", "cnty1", "cnty2"),
+    parent_id = c(NA, "state", "state"),
+    population = c(300, -100, 400)
+  )
+  err_neg <- expect_error(
+    canonicalize_locations(locs_neg_pop),
+    err_pattern(ERR_LOCATIONS_POP_POSITIVE, n_invalid = 1L)
+  )
+  diag_neg <- eval_err_diagnostic(err_neg, list(locations = locs_neg_pop))
+  expect_equal(diag_neg$loc_id, "cnty1")
+
+  locs_zero_pop <- data.frame(
+    loc_id = c("state", "cnty1", "cnty2"),
+    parent_id = c(NA, "state", "state"),
+    population = c(200, 0, 200)
+  )
+  expect_error(
+    canonicalize_locations(locs_zero_pop),
+    err_pattern(ERR_LOCATIONS_POP_POSITIVE, n_invalid = 1L)
+  )
+})
+
+test_that("canonicalize_locations errors when leaf nodes have NA population", {
+  locs_leaf_na <- data.frame(
+    loc_id = c("state", "cnty1", "cnty2"),
+    parent_id = c(NA, "state", "state"),
+    population = c(300, NA, 200)
+  )
+  err_leaf <- expect_error(
+    canonicalize_locations(locs_leaf_na),
+    err_pattern(
+      ERR_LOCATIONS_POP_LEAF_NA,
+      n_locations = 1L,
+      locations = "'cnty1'"
+    )
+  )
+  diag_leaf <- eval_err_diagnostic(err_leaf, list(locations = locs_leaf_na))
+  expect_equal(diag_leaf$loc_id, "cnty1")
+})
+
 test_that("canonicalize_locations errors when child populations do not sum to parent", {
   locs_bad_pop <- data.frame(
     loc_id = c("state", "cnty1", "cnty2", "schl1", "schl2"),
     parent_id = c(NA, "state", "state", "cnty1", "cnty1"),
     population = c(300, 100, 200, 60, 50)
   )
-  expect_error(
+  err_sum <- expect_error(
     canonicalize_locations(locs_bad_pop),
-    "populations for parent 'cnty1' sum to 110"
+    err_pattern(
+      ERR_LOCATIONS_POP_SUM_MISMATCH,
+      pid = "cnty1",
+      child_sum = 110,
+      parent_pop = 100
+    )
   )
+  diag_sum <- eval_err_diagnostic(err_sum, list(locations = locs_bad_pop))
+  expect_equal(diag_sum$loc_id, c("cnty1", "schl1", "schl2"))
 })

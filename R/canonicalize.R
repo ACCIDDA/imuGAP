@@ -36,6 +36,11 @@
 #' within its layer, then "natural" order (i.e., whatever base R `sort()`
 #' yields).
 #'
+#' If the optional `population` column is provided, child location populations
+#' must sum to their parent location's population at every hierarchy layer. A
+#' parent with an `NA` population will automatically take on the sum of all
+#' child locations.
+#'
 #' ## Observations (`canonicalize_observations`)
 #' The observations object documents observations used to fit the
 #' model. Conceptually, each row represents an observation of vaccination status
@@ -72,7 +77,8 @@
 #' estimation will work, and take on the unit meaning you used for input.
 #'
 #' @param locations a `[data.frame()]` with columns `loc_id` and `parent_id`
-#'   of matching types. See Details for restrictions.
+#'   of matching types, and optionally a `population` column of numeric counts.
+#'   See Details for restrictions.
 #' @param observations a `[data.frame()]` containing observed data, with at least
 #'   three columns:
 #'   - an `obs_id` column; any type, as long as unique, non-NA
@@ -150,6 +156,9 @@ is_canonical <- function(dt, target_class) {
 #'    3 (grandchildren), &c
 #'  - `layer_bound` column, an integer starting from 1 by layer. This provides
 #'    index slice information used in the stan model.
+#'  - `population` column (optional), positive numeric population totals, preserved and
+#'    validated for hierarchical sum consistency across parent-child nodes
+#'    (with missing parent populations automatically imputed from child sums).
 #'
 #' @examples
 #' # --- canonicalize_locations ---
@@ -251,36 +260,7 @@ canonicalize_locations <- function(locations) {
   )
 
   # Validate population hierarchy if population column is present
-  if ("population" %in% names(locations)) {
-    if (is.na(locations[loc_id == potential_root, population])) {
-      child_sum <- locations[
-        parent_id == potential_root,
-        sum(population, na.rm = TRUE)
-      ]
-      locations[loc_id == potential_root, population := child_sum]
-    }
-    max_layer <- max(locations$layer)
-    if (max_layer >= 2L) {
-      for (lyr in seq(max_layer, 2L, by = -1L)) {
-        parents_at_layer <- locations[layer == lyr, unique(parent_id)]
-        for (pid in parents_at_layer) {
-          parent_pop <- locations[loc_id == pid, population]
-          child_sum <- locations[parent_id == pid, sum(population)]
-          if (!is.na(parent_pop) && abs(child_sum - parent_pop) > 1e-6) {
-            stop(
-              "Child location populations for parent '",
-              pid,
-              "' sum to ",
-              child_sum,
-              ", which does not equal parent population ",
-              parent_pop,
-              "."
-            )
-          }
-        }
-      }
-    }
-  }
+  locations <- validate_location_populations(locations)
 
   # canonicalize ids, by layer, then parent position, then natural order
 
@@ -296,6 +276,87 @@ canonicalize_locations <- function(locations) {
   locations[, layer_bound := min(layer_bound), by = loc_cp_id]
 
   mark_canonical(locations, "locations")
+}
+
+#' @title Impute and validate location population hierarchy
+#'
+#' @description
+#' Imputes missing parent populations from child location sums and validates
+#' that child location populations sum to their parent location's population at
+#' every layer of the hierarchy.
+#'
+#' @param locations a `[data.table()]` with columns `loc_id`, `parent_id`, `layer`,
+#'   and optionally `population`.
+#'
+#' @return a `[data.table()]`, `locations` with missing parent populations imputed
+#'   and hierarchy consistency validated.
+#'
+#' @keywords internal
+#' @noRd
+validate_location_populations <- function(locations) {
+  if (!"population" %in% names(locations)) {
+    return(locations)
+  }
+
+  stop_fmt_if(
+    !is.numeric(locations$population),
+    ERR_LOCATIONS_POP_NUMERIC,
+    class = class(locations$population)[1L]
+  )
+
+  locations[, population := as.numeric(population)]
+
+  # Check that existing non-NA populations are positive and finite
+  invalid_pop <- locations[
+    !is.na(population) & (population <= 0 | !is.finite(population)),
+    .N
+  ]
+  stop_fmt_if(
+    invalid_pop > 0L,
+    ERR_LOCATIONS_POP_POSITIVE,
+    n_invalid = invalid_pop
+  )
+
+  # Identify parents vs leaves
+  parent_ids <- locations[!is.na(parent_id), unique(parent_id)]
+  leaf_ids <- setdiff(locations$loc_id, parent_ids)
+
+  # Leaves cannot have NA population
+  na_leaves <- locations[loc_id %in% leaf_ids & is.na(population), loc_id]
+  stop_fmt_if(
+    length(na_leaves) > 0L,
+    ERR_LOCATIONS_POP_LEAF_NA,
+    n_locations = length(na_leaves),
+    locations = paste0("'", na_leaves, "'", collapse = ", ")
+  )
+
+  # Bottom-up recursion across layers: from max_layer down to 1
+  max_layer <- max(locations$layer, na.rm = TRUE)
+  if (max_layer >= 2L) {
+    for (lyr in seq(max_layer, 1L, by = -1L)) {
+      parents_at_layer <- locations[
+        layer == lyr & loc_id %in% parent_ids,
+        unique(loc_id)
+      ]
+      for (pid in parents_at_layer) {
+        child_sum <- locations[parent_id == pid, sum(population)]
+        parent_pop <- locations[loc_id == pid, population]
+        if (is.na(parent_pop)) {
+          locations[loc_id == pid, population := child_sum]
+        } else {
+          stop_fmt_if(
+            abs(child_sum - parent_pop) > 1e-6,
+            ERR_LOCATIONS_POP_SUM_MISMATCH,
+            pid = pid,
+            child_sum = child_sum,
+            parent_pop = parent_pop
+          )
+        }
+      }
+    }
+  }
+
+  locations
 }
 
 #' @rdname canonicalize
