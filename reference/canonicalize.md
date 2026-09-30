@@ -92,7 +92,7 @@ canonicalize_populations(
 
 ## Value
 
-a `[data.table()]`, with:
+for `canonicalize_locations()`: a `[data.table()]`, with:
 
 - `loc_id`, `parent_id` columns as originally supplied, possibly
   reordered
@@ -109,9 +109,12 @@ a `[data.table()]`, with:
 - `population` column (optional), positive numeric population totals,
   preserved and validated for hierarchical sum consistency across
   parent-child nodes (with missing parent populations automatically
-  imputed from child sums).
+  imputed from child sums). If not present, the highest resolution
+  entities (i.e. those with no offspring) will be assigned an identical
+  weight.
 
-a `[data.table()]`, canonical observation object with:
+for `canonicalize_observations()`: a `[data.table()]`, canonical
+observation object with:
 
 - an `obs_c_id` column, an integer sequence from 1; the order
   observations will be passed to estimation
@@ -123,8 +126,8 @@ a `[data.table()]`, canonical observation object with:
 - a `censored` column; all `NA`, if not present in original
   `observations` argument
 
-a `[data.table()]`, canonical populations object mirroring the input
-`populations` with:
+for `canonicalize_populations()`: a `[data.table()]`, canonical
+populations object mirroring the input `populations` with:
 
 - `obs_c_id`, the observation id the row concerns, canonicalized to
   match the canonical observation ids
@@ -175,7 +178,11 @@ parent within its layer, then "natural" order (i.e., whatever base R
 If the optional `population` column is provided, child location
 populations must sum to their parent location's population at every
 hierarchy layer. A parent with an `NA` population will automatically
-take on the sum of all child locations.
+take on the sum of all child locations. If the column is not provided,
+outermost leaves will be will all be assigned an equal size, and then
+accumulated up to parent entities. This assumption treats the outermost
+entities as equally contributing, though intermediate entities will be
+weighted by their number of offspring.
 
 ### Observations (`canonicalize_observations`)
 

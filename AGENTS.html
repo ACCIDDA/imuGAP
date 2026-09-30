@@ -122,7 +122,7 @@
 <li>
 <strong>Ellipsis (<code>...</code>)</strong>: Document <code>...</code> explicitly as forwarded (<code>additional arguments passed to [func_name()].</code>) or ignored (<code>additional arguments (currently ignored).</code>), or document forwarded dots via <code>@inheritDotParams &lt;pkg&gt;::&lt;fn&gt;</code>.</li>
 <li>
-<strong><code>@return</code> Conventions</strong>: Describe the return type and structure leading with <code>a &lt;type&gt;, ...explanation...</code> in lowercase (e.g. <code>a [data.table()], containing...</code>, <code>an object of class \</code>imugap_predict`, wrapping…<code>,</code>a logical scalar, indicating whether…<code>). For side-effect or validation functions, state invisible returns explicitly (e.g.</code>invisibly returns `TRUE` on success.`). For structured lists, use an indented markdown bullet list detailing element names in backticks and types.</li>
+<strong><code>@return</code> Conventions</strong>: Describe the return type and structure leading with <code>a &lt;type&gt;, ...explanation...</code> in lowercase (e.g. <code>a [data.table()], containing...</code>, <code>an object of class \</code>imugap_predict`, wrapping…<code>,</code>a logical scalar, indicating whether…<code>). When multiple functions share a common documentation topic via</code>@rdname<code>, prefix each</code>@return<code>description with the specific function or method it applies to (e.g.</code>for `func_name()`: a [data.table()], …<code>). For side-effect or validation functions, state invisible returns explicitly (e.g.</code>invisibly returns `TRUE` on success.`). For structured lists, use an indented markdown bullet list detailing element names in backticks and types.</li>
 </ul></li>
 </ul></li>
 <li>

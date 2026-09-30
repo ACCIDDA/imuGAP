@@ -180,6 +180,11 @@ across both local development and GitHub Actions CI:
     (e.g. `a [data.table()], containing...`,
     `an object of class \`imugap_predict\`, wrapping…`,`a logical
     scalar, indicating whether…\`).
+  - When multiple functions or methods share a common topic via
+    `@rdname`, prefix each `@return` description with the specific
+    function or method being documented (e.g. `for \`func_name()\`: a
+    \[data.table()\], with…\`) so rendered Rd Value sections clearly
+    disambiguate return values across functions.
   - For side-effect or validation functions, state invisible returns
     explicitly (e.g. `invisibly returns \`TRUE\` on success.\`).
   - For multi-element lists, use an indented markdown bullet list

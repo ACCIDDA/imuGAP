@@ -217,6 +217,7 @@
 <li>
 <strong>Return Value (<code>@return</code>) Formatting</strong>:
 <ul><li>Always document the return type and structure leading with <code>a &lt;type&gt;, ...explanation...</code> in lowercase (e.g. <code>a [data.table()], containing...</code>, <code>an object of class \</code>imugap_predict`, wrapping…<code>,</code>a logical scalar, indicating whether…`).</li>
+<li>When multiple functions or methods share a common topic via <code>@rdname</code>, prefix each <code>@return</code> description with the specific function or method being documented (e.g. <code>for \</code>func_name()`: a [data.table()], with…`) so rendered Rd Value sections clearly disambiguate return values across functions.</li>
 <li>For side-effect or validation functions, state invisible returns explicitly (e.g. <code>invisibly returns \</code>TRUE` on success.`).</li>
 <li>For multi-element lists, use an indented markdown bullet list detailing element names in backticks and types.</li>
 </ul></li>

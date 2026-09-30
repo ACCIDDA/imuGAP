@@ -131,7 +131,7 @@ observation. Optional if each population row has a unique <code>obs_id</code>.</
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>a <code>[data.table()]</code>, with:</p><ul><li><p><code>loc_id</code>, <code>parent_id</code> columns as originally supplied, possibly reordered</p></li>
+    <p>for <code>canonicalize_locations()</code>: a <code>[data.table()]</code>, with:</p><ul><li><p><code>loc_id</code>, <code>parent_id</code> columns as originally supplied, possibly reordered</p></li>
 <li><p><code>loc_c_id</code>, <code>loc_cp_id</code> columns, canonicalized id/parent_id columns,
 representing the order that will be used in the sampler</p></li>
 <li><p><code>layer</code> column, an integer from 1 (root), 2 (root children),
@@ -140,14 +140,17 @@ representing the order that will be used in the sampler</p></li>
 index slice information used in the stan model.</p></li>
 <li><p><code>population</code> column (optional), positive numeric population totals, preserved and
 validated for hierarchical sum consistency across parent-child nodes
-(with missing parent populations automatically imputed from child sums).</p></li>
-</ul><p>a <code>[data.table()]</code>, canonical observation object with:</p><ul><li><p>an <code>obs_c_id</code> column, an integer sequence from 1; the order observations
+(with missing parent populations automatically imputed from child sums).
+If not present, the highest resolution entities (i.e. those with no offspring)
+will be assigned an identical weight.</p></li>
+</ul><p>for <code>canonicalize_observations()</code>: a <code>[data.table()]</code>, canonical observation object with:</p><ul><li><p>an <code>obs_c_id</code> column, an integer sequence from 1; the order observations
 will be passed to estimation</p></li>
 <li><p>the original <code>obs_id</code> column, possibly reordered</p></li>
 <li><p><code>positive</code> and <code>sample_n</code> columns, possibly reordered</p></li>
 <li><p>a <code>censored</code> column; all <code>NA</code>, if not present in original <code>observations</code>
 argument</p></li>
-</ul><p>a <code>[data.table()]</code>, canonical populations object mirroring the input <code>populations</code> with:</p><ul><li><p><code>obs_c_id</code>, the observation id the row concerns, canonicalized to match
+</ul><p>for <code>canonicalize_populations()</code>: a <code>[data.table()]</code>, canonical populations object
+mirroring the input <code>populations</code> with:</p><ul><li><p><code>obs_c_id</code>, the observation id the row concerns, canonicalized to match
 the canonical observation ids</p></li>
 <li><p><code>loc_c_id</code>, the location id the row concerns, canonicalized to match</p></li>
 <li><p>reordered to <code>obs_c_id</code> order</p></li>
@@ -183,7 +186,10 @@ yields).</p>
 <p>If the optional <code>population</code> column is provided, child location populations
 must sum to their parent location's population at every hierarchy layer. A
 parent with an <code>NA</code> population will automatically take on the sum of all
-child locations.</p>
+child locations. If the column is not provided, outermost leaves will be
+will all be assigned an equal size, and then accumulated up to parent entities.
+This assumption treats the outermost entities as equally contributing, though
+intermediate entities will be weighted by their number of offspring.</p>
 </div>
 
 <div class="section">

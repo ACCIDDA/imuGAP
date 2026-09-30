@@ -118,7 +118,9 @@ documentation and CI architecture, see
       (e.g. `a [data.table()], containing...`,
       `an object of class \`imugap_predict\`, wrapping…`,`a logical
       scalar, indicating
-      whether…`). For side-effect or validation functions, state invisible returns explicitly (e.g.`invisibly
+      whether…`). When multiple functions share a common documentation topic via`@rdname`, prefix each`@return`description with the specific function or method it applies to (e.g.`for
+      \`func_name()\`: a \[data.table()\],
+      …`). For side-effect or validation functions, state invisible returns explicitly (e.g.`invisibly
       returns \`TRUE\` on success.\`). For structured lists, use an
       indented markdown bullet list detailing element names in backticks
       and types.
