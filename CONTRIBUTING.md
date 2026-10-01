@@ -107,7 +107,7 @@ We use [`just`](https://github.com/casey/just) to automate development tasks. Th
   * For multi-element lists, use an indented markdown bullet list detailing element names in backticks and types.
 * **External Generic Extensions (`@exportS3Method`)**:
   * When extending generics defined in external or suggested packages (e.g. `{loo}`), do not define redundant standalone generics in `imuGAP`.
-  * Register methods with `@exportS3Method <pkg>::<generic>` (e.g. `@exportS3Method loo::log_lik`, `@exportS3Method loo::loo`).
+  * Register methods with `@exportS3Method <pkg>::<generic>` (e.g. `@exportS3Method rstantools::log_lik`, `@exportS3Method loo::loo`).
   * Modern R ($\ge 3.6.0$) and `roxygen2` handle delayed method registration natively; avoid legacy `@rawNamespace` or `@exportS3Method NULL` workarounds.
 * **Markdown Formatting**: `roxygen2` markdown mode is enabled (`Roxygen: list(markdown = TRUE)`). Prefer standard markdown syntax:
   * Use backticks for code identifiers, arguments, and return types (e.g. `` `locations` ``, `` `data.table` ``).
