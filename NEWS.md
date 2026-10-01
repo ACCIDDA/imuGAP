@@ -23,11 +23,11 @@
   - Added automated Mermaid diagram compilation pipeline (`just diagrams`) generating SVG
     and PDF visual assets with dark-mode compatibility.
 
-- **Structured Input Errors** (#156):
-  - Errors raised through `stop_fmt_if()` have class `imugap_error` (still an `error`),
-    carrying an `id` (the message template name, e.g. `"ERR_OBS_NA_ID"`) and raw values
-    in `fields`. Front-ends can catch these errors and read fields instead of parsing
-    message text. Errors passed through from Stan backends retain their own classes.
+- **Structured Input Conditions** (#156):
+  - Errors raised through `stop_fmt_if()` have class `imugap_error`; warnings from
+    `warn_fmt_if()` have class `imugap_warning`. Both retain their base condition classes
+    and carry a template `id` and raw values in `fields`. Front-ends can read these fields
+    instead of parsing message text. Stan backend errors retain their own classes.
   - Canonicalizer column checks report the offending rows in a `rows` field (1-based indices
     into the table the caller passed), and name the caller's table (`observations`,
     `populations`) instead of the internal `dt`.

@@ -66,8 +66,46 @@ test_that("warn_fmt_if works with named placeholders and returns boolean", {
   expect_false(expect_silent(test_fn(FALSE, 1L)))
 
   warn_obj <- tryCatch(test_fn(TRUE, 5L), warning = identity)
-  expect_s3_class(warn_obj, "warning")
+  expect_s3_class(
+    warn_obj,
+    c("imugap_warning", "warning", "condition"),
+    exact = TRUE
+  )
+  expect_identical(warn_obj$id, NA_character_)
+  expect_identical(warn_obj$item, 5L)
   expect_identical(warn_obj$message, "warning for item 5")
+})
+
+test_that("warn_fmt_if carries template id and raw diagnostic fields", {
+  test_fn <- function(extra_cols) {
+    warn_fmt_if(
+      TRUE,
+      MSG_EXTRA_COLS,
+      name = "observations",
+      extra = extra_cols,
+      rows = c(2L, 3L)
+    )
+  }
+  warn <- tryCatch(test_fn(c("x", "y")), warning = identity)
+
+  expect_s3_class(
+    warn,
+    c("imugap_warning", "warning", "condition"),
+    exact = TRUE
+  )
+  expect_identical(warn$id, "MSG_EXTRA_COLS")
+  expect_identical(warn$extra, c("x", "y"))
+  expect_identical(warn$fields$rows, c(2L, 3L))
+  expect_identical(warn$rows, c(2L, 3L))
+  expect_match(
+    conditionMessage(warn),
+    err_pattern(MSG_EXTRA_COLS, name = "observations")
+  )
+  expect_equal(deparse(warn$call), "test_fn(c(\"x\", \"y\"))")
+  expect_identical(
+    tryCatch(test_fn("x"), imugap_warning = function(w) w$id),
+    "MSG_EXTRA_COLS"
+  )
 })
 
 test_that("eval_err_diagnostic extracts and executes subset diagnostic correctly", {
