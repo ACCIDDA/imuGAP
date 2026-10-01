@@ -24,6 +24,7 @@
     <li><a class="dropdown-item" href="articles/example_data.html">Included Example Data &amp; Validation</a></li>
     <li><a class="dropdown-item" href="articles/user_specified_layers.html">Flexible Location Layers</a></li>
     <li><a class="dropdown-item" href="articles/examining_fits.html">Fit Inspection &amp; Stan Diagnostics</a></li>
+    <li><a class="dropdown-item" href="articles/leave_some_out.html">Model Evaluation &amp; PSIS-LOO Cross-Validation</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -220,6 +221,12 @@
 <li>When multiple functions or methods share a common topic via <code>@rdname</code>, prefix each <code>@return</code> description with the specific function or method being documented (e.g. <code>for \</code>func_name()`: a [data.table()], with…`) so rendered Rd Value sections clearly disambiguate return values across functions.</li>
 <li>For side-effect or validation functions, state invisible returns explicitly (e.g. <code>invisibly returns \</code>TRUE` on success.`).</li>
 <li>For multi-element lists, use an indented markdown bullet list detailing element names in backticks and types.</li>
+</ul></li>
+<li>
+<strong>External Generic Extensions (<code>@exportS3Method</code>)</strong>:
+<ul><li>When extending generics defined in external or suggested packages (e.g. <a href="https://mc-stan.org/loo/" class="external-link">loo</a>), do not define redundant standalone generics in <code>imuGAP</code>.</li>
+<li>Register methods with <code>@exportS3Method &lt;pkg&gt;::&lt;generic&gt;</code> (e.g. <code>@exportS3Method rstantools::log_lik</code>, <code>@exportS3Method loo::loo</code>).</li>
+<li>Modern R (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≥</mo><mn>3.6</mn><mn>.0</mn></mrow><annotation encoding="application/x-tex">\ge 3.6.0</annotation></semantics></math>) and <code>roxygen2</code> handle delayed method registration natively; avoid legacy <code>@rawNamespace</code> or <code>@exportS3Method NULL</code> workarounds.</li>
 </ul></li>
 <li>
 <strong>Markdown Formatting</strong>: <code>roxygen2</code> markdown mode is enabled (<code>Roxygen: list(markdown = TRUE)</code>). Prefer standard markdown syntax:

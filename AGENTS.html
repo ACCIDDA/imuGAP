@@ -24,6 +24,7 @@
     <li><a class="dropdown-item" href="articles/example_data.html">Included Example Data &amp; Validation</a></li>
     <li><a class="dropdown-item" href="articles/user_specified_layers.html">Flexible Location Layers</a></li>
     <li><a class="dropdown-item" href="articles/examining_fits.html">Fit Inspection &amp; Stan Diagnostics</a></li>
+    <li><a class="dropdown-item" href="articles/leave_some_out.html">Model Evaluation &amp; PSIS-LOO Cross-Validation</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -123,6 +124,12 @@
 <strong>Ellipsis (<code>...</code>)</strong>: Document <code>...</code> explicitly as forwarded (<code>additional arguments passed to [func_name()].</code>) or ignored (<code>additional arguments (currently ignored).</code>), or document forwarded dots via <code>@inheritDotParams &lt;pkg&gt;::&lt;fn&gt;</code>.</li>
 <li>
 <strong><code>@return</code> Conventions</strong>: Describe the return type and structure leading with <code>a &lt;type&gt;, ...explanation...</code> in lowercase (e.g. <code>a [data.table()], containing...</code>, <code>an object of class \</code>imugap_predict`, wrapping…<code>,</code>a logical scalar, indicating whether…<code>). When multiple functions share a common documentation topic via</code>@rdname<code>, prefix each</code>@return<code>description with the specific function or method it applies to (e.g.</code>for `func_name()`: a [data.table()], …<code>). For side-effect or validation functions, state invisible returns explicitly (e.g.</code>invisibly returns `TRUE` on success.`). For structured lists, use an indented markdown bullet list detailing element names in backticks and types.</li>
+</ul></li>
+<li>
+<strong>External Generic Extensions (<code>@exportS3Method</code>)</strong>:
+<ul><li>When extending generics defined in external or suggested packages (e.g. <a href="https://mc-stan.org/loo/" class="external-link">loo</a>), do not define redundant standalone generics in <code>imuGAP</code>.</li>
+<li>Register methods with <code>@exportS3Method &lt;pkg&gt;::&lt;generic&gt;</code> (e.g. <code>@exportS3Method rstantools::log_lik</code>, <code>@exportS3Method loo::loo</code>).</li>
+<li>Modern R (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≥</mo><mn>3.6</mn><mn>.0</mn></mrow><annotation encoding="application/x-tex">\ge 3.6.0</annotation></semantics></math>) and <code>roxygen2</code> handle delayed method registration natively; avoid legacy <code>@rawNamespace</code> or <code>@exportS3Method NULL</code> workarounds.</li>
 </ul></li>
 </ul></li>
 <li>

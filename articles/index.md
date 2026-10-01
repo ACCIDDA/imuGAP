@@ -8,5 +8,7 @@
   Validation](https://accidda.github.io/imuGAP/articles/example_data.md):
 - [Getting Started with
   imuGAP](https://accidda.github.io/imuGAP/articles/imuGAP.md):
+- [Model Evaluation & PSIS-LOO
+  Cross-Validation](https://accidda.github.io/imuGAP/articles/leave_some_out.md):
 - [Flexible Location Layers in
   imuGAP](https://accidda.github.io/imuGAP/articles/user_specified_layers.md):

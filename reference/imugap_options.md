@@ -5,7 +5,12 @@ Configures model-side options for `imuGAP` estimation.
 ## Usage
 
 ``` r
-imugap_options(df = 5L, dose_schedule = c(1, 4), model = c("default"))
+imugap_options(
+  df = 5L,
+  dose_schedule = c(1, 4),
+  compute_log_lik = FALSE,
+  model = c("default")
+)
 ```
 
 ## Arguments
@@ -19,6 +24,11 @@ imugap_options(df = 5L, dose_schedule = c(1, 4), model = c("default"))
 
   ascending integer vector of ages at which each dose `1..n` becomes
   eligible (default: `c(1, 4)` for 2-dose vaccines).
+
+- compute_log_lik:
+
+  logical scalar; compute pointwise log-likelihood during sampling?
+  (default: `FALSE`).
 
 - model:
 
@@ -40,6 +50,9 @@ imugap_options()
 #> $dose_schedule
 #> [1] 1 4
 #> 
+#> $compute_log_lik
+#> [1] FALSE
+#> 
 #> $model
 #> [1] "default"
 #> 
@@ -49,6 +62,9 @@ imugap_options(dose_schedule = c(1, 3))
 #> 
 #> $dose_schedule
 #> [1] 1 3
+#> 
+#> $compute_log_lik
+#> [1] FALSE
 #> 
 #> $model
 #> [1] "default"

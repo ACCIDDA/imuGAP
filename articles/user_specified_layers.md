@@ -135,27 +135,27 @@ fit_sim_2layer
 #> post-warmup draws per chain=500, total post-warmup draws=2000.
 #> 
 #>                     mean se_mean   sd      2.5%       25%       50%       75%
-#> beta_bs[1]         -1.69    0.00 0.04     -1.75     -1.71     -1.69     -1.66
+#> beta_bs[1]         -1.68    0.00 0.03     -1.75     -1.71     -1.68     -1.66
 #> beta_bs[2]         -1.89    0.00 0.06     -2.00     -1.93     -1.89     -1.86
-#> beta_bs[3]         -2.49    0.01 0.10     -2.70     -2.56     -2.49     -2.43
-#> beta_bs[4]         -3.24    0.00 0.11     -3.47     -3.31     -3.23     -3.16
-#> beta_bs[5]         -2.63    0.01 0.11     -2.88     -2.70     -2.63     -2.56
-#> sigma_layer[1]      0.68    0.02 0.34      0.24      0.44      0.60      0.84
-#> lambda_raw[1]       1.00    0.00 0.03      0.94      0.98      1.00      1.02
-#> lambda_raw[2]       1.01    0.00 0.01      0.98      1.00      1.01      1.02
-#> lp__           -79930.90    0.10 2.48 -79936.70 -79932.36 -79930.58 -79929.07
+#> beta_bs[3]         -2.49    0.00 0.09     -2.67     -2.55     -2.48     -2.42
+#> beta_bs[4]         -3.23    0.00 0.11     -3.45     -3.31     -3.23     -3.16
+#> beta_bs[5]         -2.63    0.00 0.10     -2.82     -2.70     -2.63     -2.56
+#> sigma_layer[1]      0.64    0.02 0.31      0.24      0.41      0.57      0.82
+#> lambda_raw[1]       1.00    0.00 0.03      0.95      0.98      1.00      1.02
+#> lambda_raw[2]       1.01    0.00 0.01      0.99      1.00      1.01      1.02
+#> lp__           -79930.84    0.12 2.51 -79936.88 -79932.27 -79930.51 -79929.02
 #>                    97.5% n_eff Rhat
-#> beta_bs[1]         -1.62   655 1.01
-#> beta_bs[2]         -1.79   687 1.01
-#> beta_bs[3]         -2.30   356 1.01
-#> beta_bs[4]         -3.03   546 1.01
-#> beta_bs[5]         -2.44   280 1.01
-#> sigma_layer[1]      1.57   297 1.00
-#> lambda_raw[1]       1.06   379 1.01
-#> lambda_raw[2]       1.04   670 1.00
-#> lp__           -79927.06   613 1.00
+#> beta_bs[1]         -1.62   929 1.00
+#> beta_bs[2]         -1.79   775 1.01
+#> beta_bs[3]         -2.32   743 1.00
+#> beta_bs[4]         -3.03   683 1.01
+#> beta_bs[5]         -2.44   734 1.00
+#> sigma_layer[1]      1.43   361 1.01
+#> lambda_raw[1]       1.06   523 1.01
+#> lambda_raw[2]       1.04   460 1.02
+#> lp__           -79926.97   423 1.01
 #> 
-#> Samples were drawn using NUTS(diag_e) at Wed Sep 30 17:56:44 2026.
+#> Samples were drawn using NUTS(diag_e) at Thu Oct  1 20:28:51 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).

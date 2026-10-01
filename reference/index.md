@@ -44,6 +44,16 @@
 - [`locations_sim`](https://accidda.github.io/imuGAP/reference/locations_sim.md)
   : Example Location Data
 
+- [`log_lik(`*`<imugap_fit>`*`)`](https://accidda.github.io/imuGAP/reference/log_lik.imugap_fit.md)
+  :
+
+  Pointwise log-likelihood matrix for `imugap_fit`
+
+- [`loo(`*`<imugap_fit>`*`)`](https://accidda.github.io/imuGAP/reference/loo.imugap_fit.md)
+  :
+
+  Leave-one-out cross-validation for `imugap_fit`
+
 - [`observations_sim`](https://accidda.github.io/imuGAP/reference/observations_sim.md)
   : Example Observation Data
 
