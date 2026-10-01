@@ -195,6 +195,7 @@ test_that("sampling assembles stan_opts$data with all expected fields", {
     "w_loc_mixed_left",
     "weights_mixed_left",
     "predict_mode",
+    "compute_log_lik",
     "num_threads"
   )
   expect_true(all(expected_fields %in% names(d)))
@@ -340,7 +341,7 @@ test_that("sampling returns a structured imugap_fit object", {
   )
   expect_named(
     fit$settings$imugap_opts,
-    c("df", "dose_schedule", "model", "model_name"),
+    c("compute_log_lik", "df", "dose_schedule", "model", "model_name"),
     ignore.order = TRUE
   )
 })

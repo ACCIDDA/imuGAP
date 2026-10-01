@@ -64,3 +64,60 @@ test_that("loo.imugap_fit works with loo package", {
   expect_true("p_loo" %in% rownames(loo_res$estimates))
   expect_true("looic" %in% rownames(loo_res$estimates))
 })
+
+test_that("predict(compute_log_lik = TRUE) and pre-computed log_lik extraction work", {
+  data("fit_sim", package = "imuGAP")
+
+  # Test predict with compute_log_lik = TRUE
+  pred_ll <- suppressWarnings(predict(
+    fit_sim,
+    posterior_size = 50,
+    compute_log_lik = TRUE
+  ))
+  expect_s3_class(pred_ll, "imugap_predict")
+  expect_equal(dim(pred_ll$draws)[1], 13L) # 52 draws / 4 chains
+  expect_equal(dim(pred_ll$draws)[2], 4L)
+
+  # Test extraction when log_lik is pre-computed in fit draws
+  fake_fit <- fit_sim
+  raw_draws <- flexstanr::backend_draws_array(fake_fit$raw_fit)
+  n_obs_total <- dim(pred_ll$draws)[3]
+  ll_names <- paste0("log_lik[", seq_len(n_obs_total), "]")
+  fake_ll_draws <- array(
+    -runif(dim(raw_draws)[1] * dim(raw_draws)[2] * n_obs_total),
+    dim = c(dim(raw_draws)[1], dim(raw_draws)[2], n_obs_total),
+    dimnames = list(NULL, NULL, ll_names)
+  )
+  combined_draws <- abind::abind(raw_draws, fake_ll_draws, along = 3)
+  # Mock backend_draws_array to return combined_draws containing log_lik parameters
+  testthat::with_mocked_bindings(
+    {
+      ll_extracted <- suppressWarnings(log_lik.imugap_fit(
+        fake_fit,
+        posterior_size = 50
+      ))
+      expect_true(is.matrix(ll_extracted))
+      expect_equal(nrow(ll_extracted), 52L)
+      expect_equal(ncol(ll_extracted), n_obs_total)
+      expect_equal(
+        colnames(ll_extracted),
+        paste0("obs[", seq_len(n_obs_total), "]")
+      )
+      expect_equal(
+        unname(ll_extracted),
+        unname(apply(
+          combined_draws[
+            seq.int(dim(raw_draws)[1] - 13L + 1L, dim(raw_draws)[1]),
+            seq_len(dim(raw_draws)[2]),
+            ll_names,
+            drop = FALSE
+          ],
+          3L,
+          c
+        ))
+      )
+    },
+    backend_draws_array = function(...) combined_draws,
+    .package = "imuGAP"
+  )
+})

@@ -26,8 +26,14 @@ model {
 }
 generated quantities {
   vector[predict_mode ? n_obs_unmixed_uncensored : 0] p_obs;
-  if (predict_mode) {
+  vector[compute_log_lik ? (n_obs_unmixed_uncensored + n_obs_mixed_uncensored + n_obs_unmixed_right + n_obs_mixed_right + n_obs_unmixed_left + n_obs_mixed_left) : 0] log_lik;
+  if (predict_mode || compute_log_lik) {
     #include model/single_phi.stan
-    p_obs = p_obs_unmixed_uncensored;
+    if (predict_mode) {
+      p_obs = p_obs_unmixed_uncensored;
+    }
+    if (compute_log_lik) {
+      #include generated_quantities/pointwise_log_lik.stan
+    }
   }
 }

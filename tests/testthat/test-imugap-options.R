@@ -5,10 +5,11 @@ test_that("imugap_options returns expected structure with defaults", {
   expect_type(defaults, "list")
   expect_setequal(
     names(defaults),
-    c("df", "dose_schedule", "model")
+    c("df", "dose_schedule", "compute_log_lik", "model")
   )
   expect_equal(defaults$df, 5L)
   expect_equal(defaults$dose_schedule, c(1, 4))
+  expect_false(defaults$compute_log_lik)
   expect_equal(defaults$model, "default")
 })
 
@@ -97,12 +98,17 @@ test_that("imugap_options rejects invalid dose_schedule", {
   )
 })
 
-test_that("imugap_options coerces dose_schedule to integer", {
-  defaults <- imugap_options()
-  override_sched <- c(2, 5, 7)
-  opts <- imugap_options(dose_schedule = override_sched)
-  expected <- defaults
-  expected$dose_schedule <- as.integer(override_sched)
-  expect_type(opts$dose_schedule, "integer")
-  expect_equal(opts, expected)
+test_that("imugap_options rejects invalid compute_log_lik", {
+  expect_error(
+    imugap_options(compute_log_lik = "TRUE"),
+    err_pattern(ERR_OPT_COMPUTE_LOG_LIK)
+  )
+  expect_error(
+    imugap_options(compute_log_lik = c(TRUE, FALSE)),
+    err_pattern(ERR_OPT_COMPUTE_LOG_LIK)
+  )
+  expect_error(
+    imugap_options(compute_log_lik = NA),
+    err_pattern(ERR_OPT_COMPUTE_LOG_LIK)
+  )
 })

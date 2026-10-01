@@ -443,3 +443,56 @@ assemble_layer_data <- function(loc_info) {
     loc_population = as.array(as.numeric(loc_population))
   )
 }
+
+#' @title Validate and subset posterior draws array
+#'
+#' @description
+#' Validates the requested posterior sample size against chain count and available draws,
+#' rounding up to a multiple of chains with a warning if needed, and extracts the converged tail.
+#'
+#' @param draws_array a 3D array of posterior draws (iterations x chains x parameters).
+#' @param posterior_size optional integer scalar; how many draws to use from the end of each chain
+#'   (default: `NULL`, which returns all draws).
+#'
+#' @return a 3D array, containing the subsetted posterior draws.
+#'
+#' @keywords internal
+#' @noRd
+subset_draws_tail <- function(draws_array, posterior_size = NULL) {
+  if (is.null(posterior_size)) {
+    return(draws_array)
+  }
+
+  n_iter <- dim(draws_array)[1]
+  n_chains <- dim(draws_array)[2]
+  n_avail <- n_iter * n_chains
+
+  posterior_size <- assert_positive_int(posterior_size, "posterior_size")
+  stop_fmt_if(length(posterior_size) != 1L, ERR_POSTERIOR_SIZE_SINGLE)
+
+  rounded <- as.integer(ceiling(posterior_size / n_chains) * n_chains)
+  warn_fmt_if(
+    posterior_size != rounded,
+    MSG_POSTERIOR_SIZE_ROUNDED,
+    posterior_size = posterior_size,
+    n_chains = n_chains,
+    adjusted_size = rounded
+  )
+  posterior_size <- rounded
+
+  stop_fmt_if(
+    posterior_size > n_avail,
+    ERR_POSTERIOR_SIZE_EXCEEDS,
+    posterior_size = posterior_size,
+    n_draws = n_avail
+  )
+
+  warn_fmt_if(
+    TRUE,
+    MSG_POSTERIOR_SUBSAMPLE_WARN,
+    posterior_size = posterior_size
+  )
+
+  keep <- posterior_size %/% n_chains
+  draws_array[seq.int(n_iter - keep + 1L, n_iter), , , drop = FALSE]
+}

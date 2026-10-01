@@ -72,6 +72,7 @@ test_that("single_phi.stan computes observation probabilities accurately", {
       dose_sched = dose_sched,
       age_to_interval_map = seq_len(nrow(dose_sched)),
       predict_mode = 0L,
+      compute_log_lik = 0L,
       num_threads = 1L,
       n_obs_unmixed_uncensored = 1L,
       y_obs_unmixed_uncensored = as.array(10L),
