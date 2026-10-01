@@ -353,6 +353,7 @@ sampling <- function(
     st_left,
     list(
       predict_mode = 0L,
+      compute_log_lik = as.integer(isTRUE(imugap_opts$compute_log_lik)),
       num_threads = as.integer(stan_opts$threads_per_chain %||% 1L)
     )
   )

@@ -1,3 +1,65 @@
+#' @title Build an empty observation stream structure
+#'
+#' @description
+#' Constructs an empty observation stream list with zero counts and empty vectors
+#' matching the Stan data layout for unmixed and mixed observation components.
+#'
+#' @param suffix character suffix for variable names (e.g. `"right"`, `"left"`).
+#'
+#' @return a named [list()] containing empty observation stream elements.
+#'
+#' @keywords internal
+#' @noRd
+make_empty_stream <- function(suffix) {
+  stats::setNames(
+    list(
+      0L,
+      integer(0),
+      integer(0),
+      integer(0),
+      integer(0),
+      integer(0),
+      integer(0),
+      0L,
+      integer(0),
+      integer(0),
+      0L,
+      integer(0),
+      integer(0),
+      integer(0),
+      integer(0),
+      integer(0),
+      numeric(0)
+    ),
+    paste0(
+      c(
+        "n_obs_unmixed",
+        "y_obs_unmixed",
+        "y_smp_unmixed",
+        "w_cohort_unmixed",
+        "w_age_unmixed",
+        "w_dose_unmixed",
+        "w_loc_unmixed",
+        "n_obs_mixed",
+        "y_obs_mixed",
+        "y_smp_mixed",
+        "n_weights_mixed",
+        "obs_bounds_mixed",
+        "w_cohort_mixed",
+        "w_age_mixed",
+        "w_dose_mixed",
+        "w_loc_mixed",
+        "weights_mixed"
+      ),
+      "_",
+      suffix
+    )
+  )
+}
+
+empty_stream_right <- make_empty_stream("right")
+empty_stream_left <- make_empty_stream("left")
+
 #' @title Predict coverage probabilities
 #'
 #' @description
@@ -5,12 +67,15 @@
 #' predicted coverage probabilities.
 #'
 #' @param object an object of class `imugap_fit` returned by `[sampling()]`.
-#' @param target a `[data.frame()]` of target populations to predict for.
+#' @param target a `[data.frame()]` of target populations to predict for (optional
+#'   when `compute_log_lik = TRUE`).
 #' @param posterior_size optional single positive integer. When set, predict
 #'   over only this many draws, taken from the end of each chain (the converged
 #'   tail). Must be a multiple of the number of chains; a value that isn't is
 #'   rounded up to the next multiple, with a warning. Must not exceed the number
 #'   of draws in the fit (default: `NULL`, which uses every draw).
+#' @param compute_log_lik logical scalar; compute pointwise log-likelihood for
+#'   observed data in generated quantities? (default: `FALSE`).
 #' @param ... additional arguments (currently ignored).
 #'
 #' @details
@@ -48,8 +113,9 @@
 #' @importFrom data.table as.data.table copy data.table
 predict.imugap_fit <- function(
   object,
-  target,
+  target = NULL,
   posterior_size = NULL,
+  compute_log_lik = FALSE,
   ...
 ) {
   stop_fmt_if(
@@ -62,87 +128,46 @@ predict.imugap_fit <- function(
 
   # Posterior draws as a 3D array: iterations x chains x parameters.
   draws_array <- backend_draws_array(raw_fit)
-  n_iter <- dim(draws_array)[1]
-  n_chains <- dim(draws_array)[2]
-  n_avail <- n_iter * n_chains
+  draws_sub <- subset_draws_tail(draws_array, posterior_size)
+  n_keep <- dim(draws_sub)[1]
+  n_chains <- dim(draws_sub)[2]
 
-  if (!is.null(posterior_size)) {
-    posterior_size <- assert_positive_int(posterior_size, "posterior_size")
-    stop_fmt_if(length(posterior_size) != 1L, ERR_POSTERIOR_SIZE_SINGLE)
-    # The slice keeps an equal number of draws from the end of each chain, so
-    # the size must be a multiple of the chain count; round up if it isn't.
-    rounded <- as.integer(ceiling(posterior_size / n_chains) * n_chains)
-    warn_fmt_if(
-      posterior_size != rounded,
-      MSG_POSTERIOR_SIZE_ROUNDED,
-      posterior_size = posterior_size,
-      n_chains = n_chains,
-      adjusted_size = rounded
-    )
-    posterior_size <- rounded
+  # Stan model name for generated quantities (required by cmdstanr)
+  model_name <- object$settings$imugap_opts$model_name
 
-    stop_fmt_if(
-      posterior_size > n_avail,
-      ERR_POSTERIOR_SIZE_EXCEEDS,
-      posterior_size = posterior_size,
-      n_draws = n_avail
+  # Flatten to the 2D draws matrix gqs expects (rows = draws, cols = params).
+  draws_mat <- apply(draws_sub, 3L, c)
+
+  if (isTRUE(compute_log_lik)) {
+    dat_stan <- object$data
+    dat_stan$predict_mode <- 0L
+    dat_stan$compute_log_lik <- 1L
+
+    ll_mat <- backend_generate_quantities(
+      raw_fit,
+      dat_stan,
+      draws_mat,
+      "log_lik",
+      model_name = model_name
     )
-    # No adequacy check (mixing, ESS); warn only when a sub-sample is taken.
-    warn_fmt_if(
-      TRUE,
-      MSG_POSTERIOR_SUBSAMPLE_WARN,
-      posterior_size = posterior_size
-    )
+    ll_draws <- array(ll_mat, dim = c(n_keep, n_chains, ncol(ll_mat)))
+    target_dt <- if (!is.null(target)) {
+      canonicalize_target(target, object)
+    } else if (!is.null(object$observations)) {
+      data.table::copy(object$observations)
+    } else {
+      data.table::data.table()
+    }
+    return(structure(
+      list(
+        draws = ll_draws,
+        target = target_dt
+      ),
+      class = "imugap_predict"
+    ))
   }
 
   target <- canonicalize_target(target, object)
-
-  empty_stream <- function(suffix) {
-    stats::setNames(
-      list(
-        0L,
-        integer(0),
-        integer(0),
-        integer(0),
-        integer(0),
-        integer(0),
-        integer(0),
-        0L,
-        integer(0),
-        integer(0),
-        0L,
-        integer(0),
-        integer(0),
-        integer(0),
-        integer(0),
-        integer(0),
-        numeric(0)
-      ),
-      paste0(
-        c(
-          "n_obs_unmixed",
-          "y_obs_unmixed",
-          "y_smp_unmixed",
-          "w_cohort_unmixed",
-          "w_age_unmixed",
-          "w_dose_unmixed",
-          "w_loc_unmixed",
-          "n_obs_mixed",
-          "y_obs_mixed",
-          "y_smp_mixed",
-          "n_weights_mixed",
-          "obs_bounds_mixed",
-          "w_cohort_mixed",
-          "w_age_mixed",
-          "w_dose_mixed",
-          "w_loc_mixed",
-          "weights_mixed"
-        ),
-        "_",
-        suffix
-      )
-    )
-  }
 
   target_stream <- stats::setNames(
     list(
@@ -200,27 +225,11 @@ predict.imugap_fit <- function(
     list(n_yr = length(target_sched$age_to_interval_map)),
     target_sched,
     target_stream,
-    empty_stream("right"),
-    empty_stream("left"),
-    list(predict_mode = 1L)
+    empty_stream_right,
+    empty_stream_left,
+    list(predict_mode = 1L, compute_log_lik = 0L)
   )
   dat_stan[names(updates)] <- updates
-
-  # Slice the iterations dimension, keeping an equal number of draws from the
-  # end of each chain (the converged tail); otherwise use every draw.
-  draws_sub <- if (is.null(posterior_size)) {
-    draws_array
-  } else {
-    keep <- posterior_size %/% n_chains
-    draws_array[seq.int(n_iter - keep + 1L, n_iter), , , drop = FALSE]
-  }
-  n_keep <- dim(draws_sub)[1]
-
-  # Stan model name for generated quantities (required by cmdstanr)
-  model_name <- object$settings$imugap_opts$model_name
-
-  # Flatten to the 2D draws matrix gqs expects (rows = draws, cols = params).
-  draws_mat <- apply(draws_sub, 3L, c)
 
   # Predicted coverage via the backend's generated-quantities run, reshaped to
   # iterations x chains x targets so the per-chain structure is preserved.
