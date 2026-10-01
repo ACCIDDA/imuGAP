@@ -121,3 +121,48 @@ test_that("summary handles 2D draws matrix and 1D draws vector", {
   expect_equal(nrow(s_1d), 1L)
   expect_equal(s_1d$mean, mean(draws_1d))
 })
+
+test_that("summary handles empty target and empty draws", {
+  # Empty target table with zero rows
+  target_0 <- data.table::data.table(
+    obs_c_id = integer(0),
+    loc_id = character(0),
+    age = integer(0),
+    cohort = integer(0),
+    dose = integer(0)
+  )
+  pred_empty <- structure(
+    list(draws = matrix(numeric(0), nrow = 10, ncol = 0), target = target_0),
+    class = "imugap_predict"
+  )
+  s_empty <- summary(pred_empty)
+  expect_s3_class(s_empty, "data.table")
+  expect_equal(nrow(s_empty), 0L)
+  expect_true(all(
+    c(
+      "obs_c_id",
+      "loc_id",
+      "age",
+      "cohort",
+      "dose",
+      "mean",
+      "q2_5",
+      "q50",
+      "q97_5"
+    ) %in%
+      names(s_empty)
+  ))
+
+  # Empty vector draws
+  pred_empty_vec <- structure(
+    list(draws = numeric(0), target = target_0),
+    class = "imugap_predict"
+  )
+  s_empty_vec <- summary(pred_empty_vec, probs = c(0.1, 0.9))
+  expect_s3_class(s_empty_vec, "data.table")
+  expect_equal(nrow(s_empty_vec), 0L)
+  expect_true(all(
+    c("obs_c_id", "loc_id", "age", "cohort", "dose", "mean", "q10", "q90") %in%
+      names(s_empty_vec)
+  ))
+})

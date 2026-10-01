@@ -1,4 +1,4 @@
-#' @title Pointwise log-likelihood matrix for imugap_fit
+#' @title Pointwise log-likelihood matrix for `imugap_fit`
 #'
 #' @description
 #' Computes the pointwise log-likelihood matrix for an `imugap_fit` object across
@@ -267,7 +267,7 @@ log_lik.imugap_fit <- function(object, posterior_size = NULL, ...) {
   res
 }
 
-#' @title Leave-one-out cross-validation for imugap_fit
+#' @title Leave-one-out cross-validation for `imugap_fit`
 #'
 #' @description
 #' Computes approximate leave-one-out cross-validation (LOO-CV) using Pareto

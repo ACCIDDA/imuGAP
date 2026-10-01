@@ -90,13 +90,13 @@ if (!pkgs_available) {
 
 When evaluating model fit, you can use leave-one-out cross-validation (LOO-CV) to estimate out-of-sample predictive performance and identify highly influential observations without having to refit the MCMC model for every observation.
 
-`imuGAP` provides S3 methods for `log_lik()` and `loo()`, enabling integration with the [`{loo}`](https://cran.r-project.org/package=loo) package [@vehtari2017; @vehtari2024] to compute Pareto Smoothed Importance Sampling Leave-One-Out (PSIS-LOO) diagnostics.
+`imuGAP` provides S3 methods for `rstantools::log_lik()` and `loo::loo()`, enabling integration with the [`{loo}`](https://cran.r-project.org/package=loo) package [@vehtari2017; @vehtari2024] to compute Pareto Smoothed Importance Sampling Leave-One-Out (PSIS-LOO) diagnostics.
 
 ---
 
 # Computing the Pointwise Log-Likelihood
 
-The `log_lik()` method extracts the pointwise log-likelihood matrix for all $N$ observations across the $S$ posterior draws. For uncensored observations, it computes the binomial log probability mass; for left- or right-censored observations, it computes the corresponding cumulative log probability:
+The `rstantools::log_lik()` method extracts the pointwise log-likelihood matrix for all $N$ observations across the $S$ posterior draws. For uncensored observations, it computes the binomial log probability mass; for left- or right-censored observations, it computes the corresponding cumulative log probability:
 
 ```{r load-data}
 data("fit_sim", package = "imuGAP")
@@ -106,7 +106,7 @@ data("locations_sim", package = "imuGAP")
 
 ```{r compute-log-lik}
 # Compute log-likelihood matrix (Draws x Observations)
-ll_mat <- log_lik(fit_sim)
+ll_mat <- rstantools::log_lik(fit_sim)
 dim(ll_mat)
 ```
 
