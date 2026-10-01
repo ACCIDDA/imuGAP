@@ -45,27 +45,29 @@ format_message <- function(fmt, ..., width = 80L) {
   }
 }
 
-#' @title Construct an imuGAP error condition
+#' @title Construct an imuGAP validation condition
 #'
 #' @description
-#' Builds an error condition of class `imugap_error` that carries structured
-#' data alongside its message, so callers (e.g. front-ends) can read fields
-#' instead of parsing message text.
+#' Builds an error or warning condition carrying structured data alongside its
+#' message, so callers can read fields instead of parsing message text.
 #'
-#' @param message character scalar; the formatted error message.
+#' @param type character scalar; 'error' or 'warning'.
+#' @param message character scalar; the formatted condition message.
 #' @param id character scalar; the name of the message template (e.g.
 #'   `"ERR_OBS_NA_ID"`), or `NA` if unknown.
 #' @param fields a named list of additional fields to attach (default: `list()`).
-#' @param call the call to attribute the error to (default: `NULL`).
+#' @param call the call to attribute the condition to (default: `NULL`).
 #'
-#' @return a condition of class `c("imugap_error", "error", "condition")`, with
-#'   elements `message`, `call`, `id`, and `fields`. Non-reserved fields are also
-#'   available directly on the condition. Names `message`, `call`, `id`, and
-#'   `fields` are reserved and available only through the `fields` list.
+#' @return a condition of class `imugap_error` or `imugap_warning`, also
+#'   inheriting from `error` or `warning`, with elements `message`, `call`,
+#'   `id`, and `fields`. Non-reserved fields are also available directly on the
+#'   condition. Names `message`, `call`, `id`, and `fields` are reserved and
+#'   available only through `fields`.
 #'
 #' @keywords internal
 #' @noRd
-imugap_error <- function(message, id, fields = list(), call = NULL) {
+imugap_condition <- function(type, message, id, fields = list(), call = NULL) {
+  type <- match.arg(type, c("error", "warning"))
   reserved <- c("message", "call", "id", "fields")
   direct_fields <- fields[!names(fields) %in% reserved]
   structure(
@@ -73,7 +75,7 @@ imugap_error <- function(message, id, fields = list(), call = NULL) {
       list(message = message, call = call, id = id, fields = fields),
       direct_fields
     ),
-    class = c("imugap_error", "error", "condition")
+    class = c(paste0("imugap_", type), type, "condition")
   )
 }
 
@@ -102,17 +104,26 @@ stop_fmt_if <- function(cond, fmt, ..., n = 1L) {
     id <- if (is.name(fmt_expr)) as.character(fmt_expr) else NA_character_
     args <- list(...)
     fields <- if (is.null(names(args))) list() else args[nzchar(names(args))]
-    stop(imugap_error(format_message(fmt, ...), id, fields, call_obj))
+    stop(imugap_condition(
+      "error",
+      format_message(fmt, ...),
+      id,
+      fields,
+      call_obj
+    ))
   }
 }
 
 #' @title Signal a warning if a condition is met with formatted message
 #'
 #' @description
-#' Evaluates `cond` and if `TRUE`, signals a warning formatted with `format_message()`.
+#' Evaluates `cond` and if `TRUE`, signals an `imugap_warning` formatted with
+#' `format_message()`. The template name is recorded as `id`, and named
+#' arguments in `...` are attached as raw fields.
 #'
 #' @param cond logical expression to evaluate.
-#' @param fmt character format string.
+#' @param fmt character format string, passed as a template constant so its
+#'   name can be recorded as the warning `id`.
 #' @param ... additional arguments passed to `format_message()`.
 #' @param n frame offset integer specifying call stack depth for call attribution
 #'   (default: `1L`). If `n <= 0L`, call attribution is suppressed (`NULL`).
@@ -125,7 +136,17 @@ warn_fmt_if <- function(cond, fmt, ..., n = 1L) {
   cond_val <- isTRUE(cond)
   if (cond_val) {
     call_obj <- if (n > 0L) sys.call(-n) else NULL
-    warning(simpleWarning(format_message(fmt, ...), call = call_obj))
+    fmt_expr <- substitute(fmt)
+    id <- if (is.name(fmt_expr)) as.character(fmt_expr) else NA_character_
+    args <- list(...)
+    fields <- if (is.null(names(args))) list() else args[nzchar(names(args))]
+    warning(imugap_condition(
+      "warning",
+      format_message(fmt, ...),
+      id,
+      fields,
+      call_obj
+    ))
   }
   cond_val
 }
