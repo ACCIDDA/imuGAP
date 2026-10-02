@@ -13,6 +13,9 @@ test_that("src/RcppExports.cpp is synchronized with Stan models and Rcpp attribu
   )
 
   before <- readLines(cpp_file)
+  old_collate <- Sys.getlocale("LC_COLLATE")
+  on.exit(Sys.setlocale("LC_COLLATE", old_collate), add = TRUE)
+  Sys.setlocale("LC_COLLATE", "C")
   rstantools::rstan_config(pkg_dir)
   Rcpp::compileAttributes(pkg_dir)
   after <- readLines(cpp_file)

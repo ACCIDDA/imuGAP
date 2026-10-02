@@ -62,6 +62,7 @@ diagrams:
 [doc('Regenerate roxygen output: man/*.Rd, NAMESPACE, and R/globals.R (all untracked)')]
 docs: bootstrap-namespace diagrams
 	#!/usr/bin/env Rscript
+	Sys.setlocale("LC_COLLATE", "C")
 	if (requireNamespace("rstantools", quietly = TRUE)) rstantools::rstan_config()
 	if (requireNamespace("Rcpp", quietly = TRUE)) Rcpp::compileAttributes()
 	if (require(roxygen2)) roxygen2::roxygenize() else stop("missing 'roxygen2'")
@@ -77,7 +78,7 @@ lint: lintair lintr check-rcpp
 check-rcpp:
 	#!/usr/bin/env bash
 	set -euo pipefail
-	Rscript -e "if (requireNamespace('rstantools', quietly = TRUE)) rstantools::rstan_config() else stop(\"missing 'rstantools'\"); if (requireNamespace('Rcpp', quietly = TRUE)) Rcpp::compileAttributes() else stop(\"missing 'Rcpp'\")"
+	LC_ALL=C Rscript -e "Sys.setlocale('LC_COLLATE', 'C'); if (requireNamespace('rstantools', quietly = TRUE)) rstantools::rstan_config() else stop(\"missing 'rstantools'\"); if (requireNamespace('Rcpp', quietly = TRUE)) Rcpp::compileAttributes() else stop(\"missing 'Rcpp'\")"
 	if [ -n "$(git status --porcelain -- src/RcppExports.cpp)" ]; then
 		echo "Error: src/RcppExports.cpp is out of date. Run 'just docs' or 'Rcpp::compileAttributes()' and commit the changes." >&2
 		git diff -- src/RcppExports.cpp 2>/dev/null || true

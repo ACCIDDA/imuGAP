@@ -240,8 +240,13 @@ You can compute vaccination coverage estimate summary statistics (posterior mean
 ```{r summarize-predictions}
 summary_predict <- summary(predict_sim)
 
-# Filter coverage estimate statistics to a specific target slice (e.g. age 4, dose 2)
-summary_predict[age == 4 & dose == 2]
+# Filter coverage estimate statistics to a specific target slice (e.g. age 5, dose 2)
+subset(
+  summary_predict,
+  age == 5 & dose == 2,
+  select = -c(age, dose, weight, cohort, obs_c_id, loc_c_id)
+) |>
+  print(row.names = FALSE)
 ```
 
 ### State-Level Coverage Trajectory
