@@ -18,22 +18,34 @@ extract_log_lik_array <- function(object, posterior_size = NULL) {
   param_names <- dimnames(draws_array)[[3]]
   ll_param_idx <- grep("^log_lik\\[", param_names)
 
+  draws_sub <- subset_draws_tail(draws_array, posterior_size)
+
   if (length(ll_param_idx) > 0L) {
     # log_lik was already computed during sampling
-    draws_sub <- subset_draws_tail(draws_array, posterior_size)
     draws_sub[,
       seq_len(dim(draws_sub)[2]),
       ll_param_idx,
       drop = FALSE
     ]
   } else {
-    # Compute log-likelihood via generated quantities through predict
-    pred <- predict(
-      object,
-      posterior_size = posterior_size,
-      compute_log_lik = TRUE
+    # Compute log-likelihood via generated quantities directly
+    n_keep <- dim(draws_sub)[1]
+    n_chains <- dim(draws_sub)[2]
+    model_name <- object$settings$imugap_opts$model_name
+    draws_mat <- apply(draws_sub, 3L, c)
+
+    dat_stan <- object$data
+    dat_stan$predict_mode <- 0L
+    dat_stan$compute_log_lik <- 1L
+
+    ll_mat <- backend_generate_quantities(
+      raw_fit,
+      dat_stan,
+      draws_mat,
+      "log_lik",
+      model_name = model_name
     )
-    pred$draws
+    array(ll_mat, dim = c(n_keep, n_chains, ncol(ll_mat)))
   }
 }
 

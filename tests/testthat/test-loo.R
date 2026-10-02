@@ -79,23 +79,22 @@ test_that("loo.imugap_fit works with loo package and accounts for r_eff", {
   expect_equal(loo_custom$diagnostics$r_eff, custom_reff)
 })
 
-test_that("predict(compute_log_lik = TRUE) and pre-computed log_lik extraction work", {
+test_that("log_lik.imugap_fit() generates and extracts pointwise log-likelihood", {
   data("fit_sim", package = "imuGAP")
 
-  # Test predict with compute_log_lik = TRUE
-  pred_ll <- suppressWarnings(predict(
+  # Test log_lik on fit_sim where log_lik was not pre-computed during sampling
+  ll_mat <- suppressWarnings(rstantools::log_lik(
     fit_sim,
-    posterior_size = 50,
-    compute_log_lik = TRUE
+    posterior_size = 50
   ))
-  expect_s3_class(pred_ll, "imugap_predict")
-  expect_equal(dim(pred_ll$draws)[1], 13L) # 52 draws / 4 chains
-  expect_equal(dim(pred_ll$draws)[2], 4L)
+  expect_true(is.matrix(ll_mat))
+  expect_equal(nrow(ll_mat), 52L) # 52 draws (13 * 4 chains)
+  expect_equal(ncol(ll_mat), nrow(fit_sim$observations))
 
   # Test extraction when log_lik is pre-computed in fit draws
   fake_fit <- fit_sim
   raw_draws <- flexstanr::backend_draws_array(fake_fit$raw_fit)
-  n_obs_total <- dim(pred_ll$draws)[3]
+  n_obs_total <- ncol(ll_mat)
   ll_names <- paste0("log_lik[", seq_len(n_obs_total), "]")
   fake_ll_draws <- array(
     -runif(dim(raw_draws)[1] * dim(raw_draws)[2] * n_obs_total),
@@ -106,7 +105,7 @@ test_that("predict(compute_log_lik = TRUE) and pre-computed log_lik extraction w
   # Mock backend_draws_array to return combined_draws containing log_lik parameters
   testthat::with_mocked_bindings(
     {
-      ll_extracted <- suppressWarnings(log_lik.imugap_fit(
+      ll_extracted <- suppressWarnings(rstantools::log_lik(
         fake_fit,
         posterior_size = 50
       ))

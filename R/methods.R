@@ -67,15 +67,12 @@ empty_stream_left <- make_empty_stream("left")
 #' predicted coverage probabilities.
 #'
 #' @param object an object of class `imugap_fit` returned by `[sampling()]`.
-#' @param target a `[data.frame()]` of target populations to predict for (optional
-#'   when `compute_log_lik = TRUE`).
+#' @param target a `[data.frame()]` of target populations to predict for.
 #' @param posterior_size optional single positive integer. When set, predict
 #'   over only this many draws, taken from the end of each chain (the converged
 #'   tail). Must be a multiple of the number of chains; a value that isn't is
 #'   rounded up to the next multiple, with a warning. Must not exceed the number
 #'   of draws in the fit (default: `NULL`, which uses every draw).
-#' @param compute_log_lik logical scalar; compute pointwise log-likelihood for
-#'   observed data in generated quantities? (default: `FALSE`).
 #' @param ... additional arguments (currently ignored).
 #'
 #' @details
@@ -115,7 +112,6 @@ predict.imugap_fit <- function(
   object,
   target = NULL,
   posterior_size = NULL,
-  compute_log_lik = FALSE,
   ...
 ) {
   stop_fmt_if(
@@ -137,35 +133,6 @@ predict.imugap_fit <- function(
 
   # Flatten to the 2D draws matrix gqs expects (rows = draws, cols = params).
   draws_mat <- apply(draws_sub, 3L, c)
-
-  if (isTRUE(compute_log_lik)) {
-    dat_stan <- object$data
-    dat_stan$predict_mode <- 0L
-    dat_stan$compute_log_lik <- 1L
-
-    ll_mat <- backend_generate_quantities(
-      raw_fit,
-      dat_stan,
-      draws_mat,
-      "log_lik",
-      model_name = model_name
-    )
-    ll_draws <- array(ll_mat, dim = c(n_keep, n_chains, ncol(ll_mat)))
-    target_dt <- if (!is.null(target)) {
-      canonicalize_target(target, object)
-    } else if (!is.null(object$observations)) {
-      data.table::copy(object$observations)
-    } else {
-      data.table::data.table()
-    }
-    return(structure(
-      list(
-        draws = ll_draws,
-        target = target_dt
-      ),
-      class = "imugap_predict"
-    ))
-  }
 
   target <- canonicalize_target(target, object)
 
