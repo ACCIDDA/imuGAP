@@ -51,10 +51,11 @@ test_that("loo.imugap_fit errors informatively when loo package is not available
   )
 })
 
-test_that("loo.imugap_fit works with loo package", {
+test_that("loo.imugap_fit works with loo package and accounts for r_eff", {
   skip_if_not_installed("loo")
   data("fit_sim", package = "imuGAP")
 
+  # Auto-computed r_eff for multi-chain fit
   loo_res <- suppressWarnings(loo::loo(fit_sim, posterior_size = 100))
   expect_s3_class(loo_res, "loo")
   expect_true(all(
@@ -63,6 +64,19 @@ test_that("loo.imugap_fit works with loo package", {
   expect_true("elpd_loo" %in% rownames(loo_res$estimates))
   expect_true("p_loo" %in% rownames(loo_res$estimates))
   expect_true("looic" %in% rownames(loo_res$estimates))
+  expect_false(is.null(loo_res$diagnostics$r_eff))
+  expect_true(all(is.finite(loo_res$diagnostics$r_eff)))
+  expect_true(all(loo_res$diagnostics$r_eff > 0))
+
+  # User override of r_eff is respected
+  custom_reff <- rep(0.5, length(loo_res$diagnostics$r_eff))
+  loo_custom <- suppressWarnings(loo::loo(
+    fit_sim,
+    posterior_size = 100,
+    r_eff = custom_reff
+  ))
+  expect_s3_class(loo_custom, "loo")
+  expect_equal(loo_custom$diagnostics$r_eff, custom_reff)
 })
 
 test_that("predict(compute_log_lik = TRUE) and pre-computed log_lik extraction work", {
