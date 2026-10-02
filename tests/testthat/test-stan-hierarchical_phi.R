@@ -20,6 +20,7 @@ skip_if_stan_unchanged(c(
   "transformed_data/common_indices.stan",
   "transformed_data/layer_indices.stan",
   "transformed_data/layer_phi_lookup.stan",
+  "transformed_parameters/bspline.stan",
   "model/common_phi.stan",
   target
 ))
@@ -53,6 +54,9 @@ transformed data {
 }
 parameters {
   real dummy;
+}
+transformed parameters {
+  #include transformed_parameters/bspline.stan
 }
 model {
   dummy ~ normal(0, 1);
@@ -216,9 +220,9 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
   }
 
   # 2. Compute individual weight contributions and aggregate per observation slice
-  logit_phi_st <- as.vector(bs %*% beta_bs)
+  raw_phi_root <- as.vector(bs %*% beta_bs)
   phi_inv <- 1.0 -
-    stats::plogis(logit_phi_st[w_cohort] + expected_logit_phi_loc[w_loc])
+    stats::plogis(raw_phi_root[w_cohort] + expected_logit_phi_loc[w_loc])
   cdfs <- 1.0 - exp(-lambda_val * w_life_year)
   weighted <- weights * phi_inv * cdfs
 

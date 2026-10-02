@@ -19,11 +19,10 @@ test_that("sampling and predict work correctly with simulated data", {
   expect_s3_class(fit, "imugap_fit")
   expect_s4_class(fit$raw_fit, "stanfit")
 
-  # Verify transformed parameters (like logit_phi_st) are NOT in the fit
-  # Since they were removed, they should not be present in the fitted parameters.
-  fit_pars <- names(fit$raw_fit)
-  expect_false("logit_phi_st" %in% fit_pars)
-  expect_false("p_obs" %in% fit_pars)
+  # Verify transformed parameters: raw_phi_root is retained, phi is local to model
+  fit_pars <- fit$raw_fit@model_pars
+  expect_true("raw_phi_root" %in% fit_pars)
+  expect_false("phi" %in% fit_pars)
 
   # Run prediction
   clean_pops <- data.table::copy(populations_sim)

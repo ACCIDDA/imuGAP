@@ -19,13 +19,13 @@ vector accumulate_layer_offsets(
 
 // Combine cohort baseline spline effect with location hierarchy effects
 vector compute_hierarchical_phi(
-  vector logit_phi_st,
+  vector raw_phi_root,
   vector logit_phi_loc,
   int n_cohort,
   int n_locs
 ) {
   matrix[n_cohort, n_locs] logit_phi_mat =
-    rep_matrix(logit_phi_st, n_locs) + rep_matrix(logit_phi_loc', n_cohort);
+    rep_matrix(raw_phi_root, n_locs) + rep_matrix(logit_phi_loc', n_cohort);
   return to_vector(inv_logit(logit_phi_mat));
 }
 

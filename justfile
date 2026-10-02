@@ -234,5 +234,20 @@ site-preview item="" port="8000": bootstrap-namespace docs
 	  browse = interactive() || nzchar(Sys.getenv("BROWSER"))
 	)
 
-
+[group('git')]
+[doc('Fetch, prune remote tracking references, and delete merged local branches (including squash-merged PRs)')]
+prune-branches:
+	#!/usr/bin/env bash
+	set -euo pipefail
+	git fetch --prune
+	merged=$(git branch --merged main | grep -v '^\*\|main' || true)
+	gone=$(git for-each-ref --format='%(refname:short) %(upstream:track)' refs/heads | awk '$2 == "[gone]" && $1 != "main" {print $1}' || true)
+	to_delete=$(echo -e "${merged}\n${gone}" | sed '/^$/d' | sort -u || true)
+	if [ -n "$to_delete" ]; then
+		echo "Pruning merged / stale local branches:"
+		echo "$to_delete"
+		echo "$to_delete" | xargs -r git branch -D
+	else
+		echo "No merged or stale local branches to prune."
+	fi
 

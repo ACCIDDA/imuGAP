@@ -16,6 +16,9 @@ parameters {
   #include parameters/bspline.stan
   #include parameters/static_lambda.stan
 }
+transformed parameters {
+  #include transformed_parameters/bspline.stan
+}
 model {
   if (!predict_mode) {
     #include model/bspline.stan
