@@ -70,6 +70,16 @@ documentation and CI architecture, see
   - Use `stop_fmt_if()` and `warn_fmt_if()` for assertions, passing
     named arguments matching `{var}` placeholders
     (e.g. `stop_fmt_if(..., ERR_..., dose = k, sched_age = sched[k])`).
+  - These helpers signal `imugap_error` and `imugap_warning` conditions,
+    respectively. Pass useful raw diagnostics as named arguments even
+    when the template does not print them (for example, 1-based
+    offending `rows` in the caller’s input table).
+  - Consumers should branch on `condition$id` (the `ERR_*` or `MSG_*`
+    template name) and read raw values from `condition$fields`, rather
+    than parsing
+    [`conditionMessage()`](https://rdrr.io/r/base/conditions.html). The
+    names `message`, `call`, `id`, and `fields` are reserved on the
+    condition itself.
   - **Typography**: Use backticks (`` `code` ``) for
     function/argument/symbol names and single quotes (`'value'`) for
     user string values, column names, and model names.

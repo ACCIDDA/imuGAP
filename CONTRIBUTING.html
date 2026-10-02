@@ -433,13 +433,22 @@
 <span><span class="op">)</span></span></code></pre></div>
 </li>
 <li><p>Use the parameter <code>n</code> to adjust the call stack offset so the error is attributed to the user’s top-level function call rather than internal helper functions.</p></li>
+<li><p><code>stop_fmt_if()</code> raises <code>imugap_error</code>; <code>warn_fmt_if()</code> signals <code>imugap_warning</code> and still returns a logical flag. Both also inherit from base <code>error</code> or <code>warning</code>. Pass useful diagnostics as named arguments, including values not printed by the template (for example, <code>rows = which(invalid)</code> using 1-based indices in the caller’s input table).</p></li>
+<li>
+<p>Consumers can catch these classes and use <code>condition$id</code> to identify the <code>ERR_*</code> or <code>MSG_*</code> template and <code>condition$fields</code> for raw named values. Non-reserved values are also available directly (for example, <code>condition$rows</code>). Use <code><a href="https://rdrr.io/r/base/conditions.html" class="external-link">conditionMessage()</a></code> for display, not for parsing. The condition’s <code>message</code>, <code>call</code>, <code>id</code>, and <code>fields</code> names are reserved; arguments with those names are available only inside <code>condition$fields</code>. A literal template has <code>NA</code> as its <code>id</code>, so use a named template constant when callers need a stable identifier.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">observations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>obs_id <span class="op">=</span> <span class="st">"a"</span>, positive <span class="op">=</span> <span class="cn">NA_integer_</span>, sample_n <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span>
+<span><span class="va">err</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span><span class="fu"><a href="reference/canonicalize.html">canonicalize_observations</a></span><span class="op">(</span><span class="va">observations</span><span class="op">)</span>, imugap_error <span class="op">=</span> <span class="va">identity</span><span class="op">)</span></span>
+<span><span class="va">err</span><span class="op">$</span><span class="va">id</span>           <span class="co"># "ERR_CANNOT_HAVE_NA"</span></span>
+<span><span class="va">err</span><span class="op">$</span><span class="va">fields</span><span class="op">$</span><span class="va">rows</span>  <span class="co"># 1L</span></span></code></pre></div>
+</li>
 </ul></div>
 <div class="section level3">
 <h3 id="id_3-error-message-unit-testing-via-err_pattern">3. Error Message Unit Testing via <code>err_pattern</code>
 <a class="anchor" aria-label="anchor" href="#id_3-error-message-unit-testing-via-err_pattern"></a></h3>
 <ul><li>
 <p>In unit tests (<code>tests/testthat/</code>), verify error and warning messages using the test helper <code>err_pattern(ERR_..., ...)</code>:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">expect_error</span><span class="op">(</span></span>
 <span>  <span class="fu">validate_dose_schedule</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">4L</span><span class="op">)</span>, <span class="va">wts_unmixed</span><span class="op">)</span>,</span>
 <span>  <span class="fu">err_pattern</span><span class="op">(</span><span class="va">ERR_POP_DOSE_INCOMPATIBLE</span>, dose <span class="op">=</span> <span class="fl">2L</span>, sched_age <span class="op">=</span> <span class="fl">4L</span><span class="op">)</span></span>

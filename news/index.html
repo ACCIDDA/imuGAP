@@ -65,6 +65,13 @@
 <strong>Automated Diagram Pipeline</strong>:
 <ul><li>Added automated Mermaid diagram compilation pipeline (<code>just diagrams</code>) generating SVG and PDF visual assets with dark-mode compatibility.</li>
 </ul></li>
+<li>
+<strong>Structured Input Conditions</strong> (<a href="https://github.com/ACCIDDA/imuGAP/issues/156" class="external-link">#156</a>):
+<ul><li>Errors raised through <code>stop_fmt_if()</code> have class <code>imugap_error</code>; warnings from <code>warn_fmt_if()</code> have class <code>imugap_warning</code>. Both retain their base condition classes and carry a template <code>id</code> and raw values in <code>fields</code>. Front-ends can read these fields instead of parsing message text. Stan backend errors retain their own classes.</li>
+<li>Canonicalizer column checks report the offending rows in a <code>rows</code> field (1-based indices into the table the caller passed), and name the caller’s table (<code>observations</code>, <code>populations</code>) instead of the internal <code>dt</code>.</li>
+<li>
+<code><a href="../reference/canonicalize.html">canonicalize_locations()</a></code> now rejects <code>NA</code> in <code>loc_id</code>, and <code><a href="../reference/canonicalize.html">canonicalize_observations()</a></code> accepts an all-<code>NA</code> logical <code>censored</code> column (as <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> gives) as none censored. An <code>NA</code> in a subset-checked column is reported as a missing value, not as “missing NA”.</li>
+</ul></li>
 </ul></div>
 <div class="section level3">
 <h3 id="performance--stan-model-improvements-0-3-0">Performance &amp; Stan Model Improvements<a class="anchor" aria-label="anchor" href="#performance--stan-model-improvements-0-3-0"></a></h3>

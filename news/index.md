@@ -29,6 +29,24 @@
   - Added automated Mermaid diagram compilation pipeline
     (`just diagrams`) generating SVG and PDF visual assets with
     dark-mode compatibility.
+- **Structured Input Conditions**
+  ([\#156](https://github.com/ACCIDDA/imuGAP/issues/156)):
+  - Errors raised through `stop_fmt_if()` have class `imugap_error`;
+    warnings from `warn_fmt_if()` have class `imugap_warning`. Both
+    retain their base condition classes and carry a template `id` and
+    raw values in `fields`. Front-ends can read these fields instead of
+    parsing message text. Stan backend errors retain their own classes.
+  - Canonicalizer column checks report the offending rows in a `rows`
+    field (1-based indices into the table the caller passed), and name
+    the caller’s table (`observations`, `populations`) instead of the
+    internal `dt`.
+  - [`canonicalize_locations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md)
+    now rejects `NA` in `loc_id`, and
+    [`canonicalize_observations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md)
+    accepts an all-`NA` logical `censored` column (as
+    [`read.csv()`](https://rdrr.io/r/utils/read.table.html) gives) as
+    none censored. An `NA` in a subset-checked column is reported as a
+    missing value, not as “missing NA”.
 
 ### Performance & Stan Model Improvements
 

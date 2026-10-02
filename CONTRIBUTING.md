@@ -454,6 +454,32 @@ standards:
   attributed to the user’s top-level function call rather than internal
   helper functions.
 
+- `stop_fmt_if()` raises `imugap_error`; `warn_fmt_if()` signals
+  `imugap_warning` and still returns a logical flag. Both also inherit
+  from base `error` or `warning`. Pass useful diagnostics as named
+  arguments, including values not printed by the template (for example,
+  `rows = which(invalid)` using 1-based indices in the caller’s input
+  table).
+
+- Consumers can catch these classes and use `condition$id` to identify
+  the `ERR_*` or `MSG_*` template and `condition$fields` for raw named
+  values. Non-reserved values are also available directly (for example,
+  `condition$rows`). Use
+  [`conditionMessage()`](https://rdrr.io/r/base/conditions.html) for
+  display, not for parsing. The condition’s `message`, `call`, `id`, and
+  `fields` names are reserved; arguments with those names are available
+  only inside `condition$fields`. A literal template has `NA` as its
+  `id`, so use a named template constant when callers need a stable
+  identifier.
+
+  ``` r
+
+  observations <- data.frame(obs_id = "a", positive = NA_integer_, sample_n = 1L)
+  err <- tryCatch(canonicalize_observations(observations), imugap_error = identity)
+  err$id           # "ERR_CANNOT_HAVE_NA"
+  err$fields$rows  # 1L
+  ```
+
 ### 3. Error Message Unit Testing via `err_pattern`
 
 - In unit tests (`tests/testthat/`), verify error and warning messages

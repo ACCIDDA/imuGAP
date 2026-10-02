@@ -94,6 +94,8 @@
 <strong>Error Handling, Message Templates &amp; Assertions</strong>:
 <ul><li>Define error format strings as module constants (<code>ERR_*</code>, <code>MSG_*</code>) at the top of each file using named <code>{var}</code> placeholders (e.g. <code>"{n_doses}"</code>, <code>"{dose}"</code>, <code>"{sched_age}"</code>) for self-documenting readability.</li>
 <li>Use <code>stop_fmt_if()</code> and <code>warn_fmt_if()</code> for assertions, passing named arguments matching <code>{var}</code> placeholders (e.g. <code>stop_fmt_if(..., ERR_..., dose = k, sched_age = sched[k])</code>).</li>
+<li>These helpers signal <code>imugap_error</code> and <code>imugap_warning</code> conditions, respectively. Pass useful raw diagnostics as named arguments even when the template does not print them (for example, 1-based offending <code>rows</code> in the caller’s input table).</li>
+<li>Consumers should branch on <code>condition$id</code> (the <code>ERR_*</code> or <code>MSG_*</code> template name) and read raw values from <code>condition$fields</code>, rather than parsing <code><a href="https://rdrr.io/r/base/conditions.html" class="external-link">conditionMessage()</a></code>. The names <code>message</code>, <code>call</code>, <code>id</code>, and <code>fields</code> are reserved on the condition itself.</li>
 <li>
 <strong>Typography</strong>: Use backticks (<code>`code`</code>) for function/argument/symbol names and single quotes (<code>'value'</code>) for user string values, column names, and model names.</li>
 </ul></li>

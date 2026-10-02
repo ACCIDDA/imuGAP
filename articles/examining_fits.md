@@ -46,29 +46,29 @@ fit_sim
 #> post-warmup draws per chain=500, total post-warmup draws=2000.
 #> 
 #>                     mean se_mean   sd      2.5%       25%       50%       75%
-#> beta_bs[1]         -1.68    0.00 0.03     -1.74     -1.70     -1.68     -1.65
-#> beta_bs[2]         -1.88    0.00 0.05     -1.98     -1.91     -1.88     -1.85
-#> beta_bs[3]         -2.48    0.00 0.08     -2.65     -2.53     -2.48     -2.42
-#> beta_bs[4]         -3.13    0.00 0.09     -3.31     -3.19     -3.12     -3.06
-#> beta_bs[5]         -2.59    0.00 0.09     -2.77     -2.65     -2.59     -2.53
-#> sigma_layer[1]      0.54    0.01 0.28      0.20      0.33      0.47      0.68
-#> sigma_layer[2]      0.73    0.01 0.12      0.54      0.65      0.72      0.80
-#> lambda_raw[1]       1.02    0.00 0.03      0.97      1.00      1.02      1.04
-#> lambda_raw[2]       1.06    0.00 0.01      1.03      1.05      1.06      1.07
-#> lp__           -78865.17    0.30 5.17 -78876.68 -78868.33 -78864.81 -78861.51
+#> beta_bs[1]         -1.67    0.00 0.03     -1.74     -1.69     -1.67     -1.65
+#> beta_bs[2]         -1.88    0.00 0.05     -1.99     -1.92     -1.88     -1.85
+#> beta_bs[3]         -2.48    0.00 0.08     -2.63     -2.53     -2.48     -2.42
+#> beta_bs[4]         -3.13    0.00 0.09     -3.32     -3.19     -3.12     -3.05
+#> beta_bs[5]         -2.59    0.00 0.08     -2.76     -2.64     -2.59     -2.54
+#> sigma_layer[1]      0.73    0.14 0.60      0.19      0.34      0.51      0.83
+#> sigma_layer[2]      0.74    0.02 0.14      0.55      0.64      0.73      0.83
+#> lambda_raw[1]       1.02    0.00 0.03      0.97      1.00      1.01      1.03
+#> lambda_raw[2]       1.06    0.00 0.01      1.04      1.05      1.06      1.07
+#> lp__           -78865.34    0.45 5.32 -78875.41 -78869.42 -78865.13 -78861.48
 #>                    97.5% n_eff Rhat
-#> beta_bs[1]         -1.62  1629 1.00
-#> beta_bs[2]         -1.78  1195 1.00
-#> beta_bs[3]         -2.32  1222 1.00
-#> beta_bs[4]         -2.96  1062 1.00
-#> beta_bs[5]         -2.42  1751 1.00
-#> sigma_layer[1]      1.25   719 1.00
-#> sigma_layer[2]      1.03   204 1.05
-#> lambda_raw[1]       1.07  1656 1.00
-#> lambda_raw[2]       1.09  1222 1.00
-#> lp__           -78855.94   303 1.03
+#> beta_bs[1]         -1.61   158 1.03
+#> beta_bs[2]         -1.78   476 1.01
+#> beta_bs[3]         -2.31   686 1.00
+#> beta_bs[4]         -2.96   399 1.02
+#> beta_bs[5]         -2.42   940 1.01
+#> sigma_layer[1]      2.41    18 1.28
+#> sigma_layer[2]      1.05    84 1.06
+#> lambda_raw[1]       1.07   888 1.01
+#> lambda_raw[2]       1.09   411 1.01
+#> lp__           -78855.54   142 1.04
 #> 
-#> Samples were drawn using NUTS(diag_e) at Fri Oct  2 14:40:11 2026.
+#> Samples were drawn using NUTS(diag_e) at Fri Oct  2 14:52:18 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
@@ -83,7 +83,7 @@ To extract posterior draws for specific model parameters, use
 beta_draws <- extract_imugap(fit_sim, pars = "beta_bs")
 str(beta_draws)
 #> List of 1
-#>  $ beta_bs: num [1:2000, 1:5] -1.65 -1.68 -1.63 -1.67 -1.71 ...
+#>  $ beta_bs: num [1:2000, 1:5] -1.61 -1.68 -1.69 -1.66 -1.68 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ iterations: NULL
 #>   .. ..$           : NULL
@@ -92,7 +92,7 @@ str(beta_draws)
 lambda_draws <- extract_imugap(fit_sim, pars = "lambda_raw")
 str(lambda_draws)
 #> List of 1
-#>  $ lambda_raw: num [1:2000, 1:2] 1.05 1.05 1.07 1 1.04 ...
+#>  $ lambda_raw: num [1:2000, 1:2] 1.092 1.01 1.032 1.019 0.986 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ iterations: NULL
 #>   .. ..$           : NULL

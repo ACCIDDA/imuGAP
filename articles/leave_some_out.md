@@ -39,7 +39,7 @@ data("locations_sim", package = "imuGAP")
 # Compute log-likelihood matrix (Draws x Observations)
 ll_mat <- rstantools::log_lik(fit_sim)
 #> 
-#>  Elapsed Time: 0.217 seconds (Generated Quantities)
+#>  Elapsed Time: 0.273 seconds (Generated Quantities)
 dim(ll_mat)
 #> [1] 2000  841
 ```
@@ -56,15 +56,15 @@ diagnostics by calling `loo()` directly on an `imugap_fit` object:
 
 loo_res <- loo(fit_sim)
 #> 
-#>  Elapsed Time: 0.223 seconds (Generated Quantities)
+#>  Elapsed Time: 0.274 seconds (Generated Quantities)
 print(loo_res)
 #> 
 #> Computed from 2000 by 841 log-likelihood matrix.
 #> 
 #>          Estimate   SE
-#> elpd_loo  -2104.6 32.2
-#> p_loo        28.2  1.6
-#> looic      4209.3 64.3
+#> elpd_loo  -2104.7 32.1
+#> p_loo        28.0  1.5
+#> looic      4209.4 64.3
 #> ------
 #> MCSE of elpd_loo is 0.1.
 #> MCSE and ESS estimates assume independent draws (r_eff=1).
