@@ -163,29 +163,29 @@ fit_sim
 #> post-warmup draws per chain=500, total post-warmup draws=2000.
 #> 
 #>                     mean se_mean   sd      2.5%       25%       50%       75%
-#> beta_bs[1]         -1.68    0.00 0.03     -1.75     -1.70     -1.67     -1.65
-#> beta_bs[2]         -1.88    0.00 0.05     -1.98     -1.91     -1.88     -1.84
-#> beta_bs[3]         -2.48    0.00 0.09     -2.64     -2.54     -2.48     -2.42
-#> beta_bs[4]         -3.12    0.00 0.10     -3.32     -3.19     -3.12     -3.06
-#> beta_bs[5]         -2.59    0.00 0.09     -2.76     -2.64     -2.59     -2.53
-#> sigma_layer[1]      0.54    0.02 0.29      0.18      0.32      0.47      0.69
-#> sigma_layer[2]      0.74    0.01 0.12      0.54      0.65      0.72      0.81
+#> beta_bs[1]         -1.68    0.00 0.03     -1.74     -1.70     -1.68     -1.65
+#> beta_bs[2]         -1.88    0.00 0.05     -1.98     -1.91     -1.88     -1.85
+#> beta_bs[3]         -2.48    0.00 0.08     -2.65     -2.53     -2.48     -2.42
+#> beta_bs[4]         -3.13    0.00 0.09     -3.31     -3.19     -3.12     -3.06
+#> beta_bs[5]         -2.59    0.00 0.09     -2.77     -2.65     -2.59     -2.53
+#> sigma_layer[1]      0.54    0.01 0.28      0.20      0.33      0.47      0.68
+#> sigma_layer[2]      0.73    0.01 0.12      0.54      0.65      0.72      0.80
 #> lambda_raw[1]       1.02    0.00 0.03      0.97      1.00      1.02      1.04
-#> lambda_raw[2]       1.06    0.00 0.02      1.03      1.05      1.06      1.07
-#> lp__           -78865.21    0.27 5.22 -78876.68 -78868.27 -78864.85 -78861.52
+#> lambda_raw[2]       1.06    0.00 0.01      1.03      1.05      1.06      1.07
+#> lp__           -78865.17    0.30 5.17 -78876.68 -78868.33 -78864.81 -78861.51
 #>                    97.5% n_eff Rhat
-#> beta_bs[1]         -1.61  1374 1.00
-#> beta_bs[2]         -1.78   911 1.00
-#> beta_bs[3]         -2.31   926 1.00
-#> beta_bs[4]         -2.93   761 1.01
-#> beta_bs[5]         -2.42  1386 1.00
-#> sigma_layer[1]      1.26   380 1.02
-#> sigma_layer[2]      1.00   253 1.00
-#> lambda_raw[1]       1.07  1106 1.01
-#> lambda_raw[2]       1.09   933 1.00
-#> lp__           -78856.17   362 1.00
+#> beta_bs[1]         -1.62  1629 1.00
+#> beta_bs[2]         -1.78  1195 1.00
+#> beta_bs[3]         -2.32  1222 1.00
+#> beta_bs[4]         -2.96  1062 1.00
+#> beta_bs[5]         -2.42  1751 1.00
+#> sigma_layer[1]      1.25   719 1.00
+#> sigma_layer[2]      1.03   204 1.05
+#> lambda_raw[1]       1.07  1656 1.00
+#> lambda_raw[2]       1.09  1222 1.00
+#> lp__           -78855.94   303 1.03
 #> 
-#> Samples were drawn using NUTS(diag_e) at Thu Oct  1 20:28:29 2026.
+#> Samples were drawn using NUTS(diag_e) at Fri Oct  2 14:40:11 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
@@ -262,72 +262,45 @@ You can compute vaccination coverage estimate summary statistics
 
 summary_predict <- summary(predict_sim)
 
-# Filter coverage estimate statistics to a specific target slice (e.g. age 4, dose 2)
-summary_predict[age == 4 & dose == 2]
-#>     obs_c_id                    loc_id   age cohort  dose weight loc_c_id
-#>        <int>                    <char> <int>  <num> <num>  <num>    <int>
-#>  1:      589                     State     4     26     2      1        1
-#>  2:      590                   Scruggs     4     26     2      1        2
-#>  3:      591                    Simone     4     26     2      1        3
-#>  4:      592                    Watson     4     26     2      1        4
-#>  5:      593      Chickadee Elementary     4     26     2      1        8
-#>  6:      594          Nuthatch Academy     4     26     2      1       11
-#>  7:      595         Blue Heron School     4     26     2      1        5
-#>  8:      596     Flycatcher Elementary     4     26     2      1       10
-#>  9:      597  Bluebird Learning Center     4     26     2      1        6
-#> 10:      598           Catbird Academy     4     26     2      1        7
-#> 11:      599          Finch Elementary     4     26     2      1        9
-#> 12:      600            Sparrow School     4     26     2      1       12
-#> 13:      601 Towhee Children's Academy     4     26     2      1       13
-#> 14:      602        Warbler Elementary     4     26     2      1       14
-#> 15:      603          Egret Elementary     4     26     2      1       17
-#> 16:      604          Cardinal Academy     4     26     2      1       16
-#> 17:      605            Bunting School     4     26     2      1       15
-#> 18:      606           Tanager Academy     4     26     2      1       21
-#> 19:      607      Oriole Youth Academy     4     26     2      1       20
-#> 20:      608  Grosbeak Learning Center     4     26     2      1       18
-#> 21:      609          Junco Elementary     4     26     2      1       19
-#> 22:      610         Meadowlark School     4     26     2      1       26
-#> 23:      611      Goldfinch Elementary     4     26     2      1       23
-#> 24:      612       Mockingbird Academy     4     26     2      1       27
-#> 25:      613   Kinglet Learning Center     4     26     2      1       25
-#> 26:      614              Vireo School     4     26     2      1       28
-#> 27:      615        Kingfisher Academy     4     26     2      1       24
-#> 28:      616      Cormorant Elementary     4     26     2      1       22
-#>     obs_c_id                    loc_id   age cohort  dose weight loc_c_id
-#>        <int>                    <char> <int>  <num> <num>  <num>    <int>
-#>             mean          q2_5   q50        q97_5
-#>            <num>         <num> <num>        <num>
-#>  1: 3.356880e-18 -2.241332e-16     0 1.122310e-16
-#>  2: 3.371394e-18 -2.246324e-16     0 1.125634e-16
-#>  3: 3.228399e-18 -2.187418e-16     0 1.095811e-16
-#>  4: 3.429768e-18 -2.276222e-16     0 1.142060e-16
-#>  5: 3.415503e-18 -2.285310e-16     0 1.147295e-16
-#>  6: 3.396485e-18 -2.252924e-16     0 1.130540e-16
-#>  7: 3.392767e-18 -2.280742e-16     0 1.144694e-16
-#>  8: 3.504316e-18 -2.323378e-16     0 1.170467e-16
-#>  9: 3.504842e-18 -2.308667e-16     0 1.165897e-16
-#> 10: 3.345622e-18 -2.220838e-16     0 1.114959e-16
-#> 11: 3.355747e-18 -2.245580e-16     0 1.130928e-16
-#> 12: 3.466849e-18 -2.296760e-16     0 1.156057e-16
-#> 13: 3.082040e-18 -2.078512e-16     0 1.045754e-16
-#> 14: 3.202760e-18 -2.114598e-16     0 1.078261e-16
-#> 15: 3.412410e-18 -2.300866e-16     0 1.152193e-16
-#> 16: 2.569972e-18 -1.623919e-16     0 8.392476e-17
-#> 17: 2.825972e-18 -1.882542e-16     0 9.497210e-17
-#> 18: 3.524275e-18 -2.329819e-16     0 1.174965e-16
-#> 19: 3.126312e-18 -2.145449e-16     0 1.072773e-16
-#> 20: 2.120630e-18 -1.622125e-16     0 8.162123e-17
-#> 21: 3.254587e-18 -2.201818e-16     0 1.105195e-16
-#> 22: 3.322853e-18 -2.211127e-16     0 1.113320e-16
-#> 23: 3.385399e-18 -2.278877e-16     0 1.139555e-16
-#> 24: 3.382815e-18 -2.219305e-16     0 1.120009e-16
-#> 25: 3.534049e-18 -2.330493e-16     0 1.172375e-16
-#> 26: 3.540650e-18 -2.335205e-16     0 1.176913e-16
-#> 27: 3.336102e-18 -2.193582e-16     0 1.105300e-16
-#> 28: 3.363036e-18 -2.258696e-16     0 1.133132e-16
-#>             mean          q2_5   q50        q97_5
-#>            <num>         <num> <num>        <num>
+# Filter coverage estimate statistics to a specific target slice (e.g. age 5, dose 2)
+subset(
+  summary_predict,
+  age == 5 & dose == 2,
+  select = -c(age, dose, weight, cohort, obs_c_id, loc_c_id)
+) |>
+  print(row.names = FALSE)
+#>                     loc_id      mean      q2_5       q50     q97_5
+#>                     <char>     <num>     <num>     <num>     <num>
+#>                      State 0.8937532 0.8917752 0.8935799 0.8965204
+#>                    Scruggs 0.8953011 0.8930026 0.8951455 0.8981017
+#>                     Simone 0.8715545 0.8656466 0.8714774 0.8768219
+#>                     Watson 0.9093453 0.9064332 0.9093152 0.9130300
+#>       Chickadee Elementary 0.9104249 0.9038840 0.9105810 0.9158894
+#>           Nuthatch Academy 0.8991954 0.8958546 0.8992796 0.9029854
+#>          Blue Heron School 0.9098140 0.9029678 0.9098632 0.9161555
+#>      Flycatcher Elementary 0.9275454 0.9219800 0.9272048 0.9342030
+#>   Bluebird Learning Center 0.9226153 0.9139163 0.9228108 0.9304542
+#>            Catbird Academy 0.8858356 0.8811738 0.8860899 0.8904062
+#>           Finch Elementary 0.8924869 0.8754141 0.8929719 0.9047496
+#>             Sparrow School 0.9185222 0.9112856 0.9182099 0.9253984
+#>  Towhee Children's Academy 0.8291879 0.8223283 0.8292055 0.8382984
+#>         Warbler Elementary 0.8481992 0.8287248 0.8491705 0.8634285
+#>           Egret Elementary 0.9150607 0.9094418 0.9151663 0.9201529
+#>           Cardinal Academy 0.6536101 0.6162001 0.6542225 0.6874443
+#>             Bunting School 0.7555316 0.7389231 0.7553211 0.7713316
+#>            Tanager Academy 0.9331258 0.9225213 0.9338355 0.9404860
+#>       Oriole Youth Academy 0.8511857 0.8427624 0.8513959 0.8612966
+#>   Grosbeak Learning Center 0.6338675 0.6040332 0.6333394 0.6598722
+#>           Junco Elementary 0.8758110 0.8696818 0.8759998 0.8816810
+#>          Meadowlark School 0.8830822 0.8721095 0.8835664 0.8927760
+#>       Goldfinch Elementary 0.9056493 0.8989364 0.9057133 0.9117414
+#>        Mockingbird Academy 0.8857986 0.8765183 0.8856001 0.8938231
+#>    Kinglet Learning Center 0.9314687 0.9245190 0.9314427 0.9375068
+#>               Vireo School 0.9335920 0.9269655 0.9336678 0.9401709
+#>         Kingfisher Academy 0.8768774 0.8685692 0.8770229 0.8843303
+#>       Cormorant Elementary 0.9009528 0.8954577 0.9010571 0.9069089
+#>                     loc_id      mean      q2_5       q50     q97_5
+#>                     <char>     <num>     <num>     <num>     <num>
 ```
 
 #### State-Level Coverage Trajectory
