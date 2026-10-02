@@ -13,6 +13,7 @@ skip_if_stan_unchanged(c(
   "data/bspline.stan",
   "transformed_data/common_indices.stan",
   "transformed_data/single_phi_lookup.stan",
+  "transformed_parameters/bspline.stan",
   "model/common_phi.stan",
   target
 ))
@@ -38,6 +39,9 @@ transformed data {
 }
 parameters {
   real dummy;
+}
+transformed parameters {
+  #include transformed_parameters/bspline.stan
 }
 model {
   dummy ~ normal(0, 1);

@@ -22,7 +22,7 @@ data {
   vector[n_locs - 1] off_layer;
 
   int n_cohort;
-  vector[n_cohort] logit_phi_st;
+  vector[n_cohort] raw_phi_root;
 
   int n_unconstrained;
   int n_qr_entries;
@@ -46,7 +46,7 @@ generated quantities {
     n_locs, n_parent_locs, parent_child_bounds, parent_loc_id, off_layer
   );
   vector[n_cohort * n_locs] out_phi = compute_hierarchical_phi(
-    logit_phi_st, out_logit_phi_loc, n_cohort, n_locs
+    raw_phi_root, out_logit_phi_loc, n_cohort, n_locs
   );
   matrix[3, 2] out_qr_test = get_weighted_qr_basis([0.2, 0.3, 0.5]');
   vector[n_locs - 1] out_computed_offsets = compute_layer_offsets(
@@ -66,12 +66,12 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
 
   set.seed(42)
   off_layer <- rnorm(ld_sim$n_locs - 1L)
-  logit_phi_st <- c(-0.5, 0.2, 1.0)
+  raw_phi_root <- c(-0.5, 0.2, 1.0)
 
   # the hierarchical phi should be:
-  #  - layer 1 should be expit(logit_phi_st) (i.e. inverse logit of cohort series)
-  #  - a layer 2 location should be expit(logit_phi_st + delta)
-  #  - a layer k location should be expit(logit_phi_st + sum(delta)), where
+  #  - layer 1 should be expit(raw_phi_root) (i.e. inverse logit of cohort series)
+  #  - a layer 2 location should be expit(raw_phi_root + delta)
+  #  - a layer k location should be expit(raw_phi_root + sum(delta)), where
   #    sum(delta) is that location + all its ancestors' deltas
 
   parent_child_bounds <- matrix(
@@ -130,8 +130,8 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
     list(
       parent_child_bounds = parent_child_bounds,
       off_layer = off_layer,
-      n_cohort = length(logit_phi_st),
-      logit_phi_st = logit_phi_st,
+      n_cohort = length(raw_phi_root),
+      raw_phi_root = raw_phi_root,
       n_unconstrained = n_unconstrained,
       n_qr_entries = length(qr_entries),
       z_bounds = z_bounds,
@@ -177,7 +177,7 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
   expect_equal(logit_phi_loc, expected_logit_phi_loc, tolerance = 1e-6)
 
   # Check phi matrix expansion and flattening (column-major)
-  expected_mat <- outer(logit_phi_st, expected_logit_phi_loc, `+`)
+  expected_mat <- outer(raw_phi_root, expected_logit_phi_loc, `+`)
   expected_phi <- as.vector(stats::plogis(expected_mat))
 
   expect_equal(phi, expected_phi, tolerance = 1e-6)
