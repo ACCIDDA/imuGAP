@@ -81,6 +81,7 @@ test_that("loo.imugap_fit works with loo package and accounts for r_eff", {
 
 test_that("log_lik.imugap_fit() generates and extracts pointwise log-likelihood", {
   data("fit_sim", package = "imuGAP")
+  data("observations_sim", package = "imuGAP")
 
   # Test log_lik on fit_sim where log_lik was not pre-computed during sampling
   ll_mat <- suppressWarnings(rstantools::log_lik(
@@ -89,7 +90,7 @@ test_that("log_lik.imugap_fit() generates and extracts pointwise log-likelihood"
   ))
   expect_true(is.matrix(ll_mat))
   expect_equal(nrow(ll_mat), 52L) # 52 draws (13 * 4 chains)
-  expect_equal(ncol(ll_mat), nrow(fit_sim$observations))
+  expect_equal(ncol(ll_mat), nrow(observations_sim))
 
   # Test extraction when log_lik is pre-computed in fit draws
   fake_fit <- fit_sim
@@ -101,7 +102,15 @@ test_that("log_lik.imugap_fit() generates and extracts pointwise log-likelihood"
     dim = c(dim(raw_draws)[1], dim(raw_draws)[2], n_obs_total),
     dimnames = list(NULL, NULL, ll_names)
   )
-  combined_draws <- abind::abind(raw_draws, fake_ll_draws, along = 3)
+  combined_draws <- array(
+    c(raw_draws, fake_ll_draws),
+    dim = c(
+      dim(raw_draws)[1],
+      dim(raw_draws)[2],
+      dim(raw_draws)[3] + n_obs_total
+    ),
+    dimnames = list(NULL, NULL, c(dimnames(raw_draws)[[3]], ll_names))
+  )
   # Mock backend_draws_array to return combined_draws containing log_lik parameters
   testthat::with_mocked_bindings(
     {

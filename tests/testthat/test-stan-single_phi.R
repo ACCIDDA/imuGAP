@@ -6,6 +6,7 @@ skip_if_not_installed("rstan")
 target <- "model/single_phi.stan"
 
 skip_if_stan_unchanged(c(
+  "functions/link/logit.stan",
   "functions/unrolled_dose_static_lambda.stan",
   "functions/bounds_to_range.stan",
   "functions/lookups.stan",
@@ -21,6 +22,7 @@ skip_if_stan_unchanged(c(
 model_single_phi <- sprintf(
   "
 functions {
+  #include functions/link/logit.stan
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/bounds_to_range.stan
   #include functions/lookups.stan

@@ -7,26 +7,26 @@ vector accumulate_layer_offsets(
   array[] int parent_loc_id,
   vector off_layer
 ) {
-  vector[n_locs] logit_phi_loc;
-  logit_phi_loc[1] = 0.0;
+  vector[n_locs] raw_phi_loc;
+  raw_phi_loc[1] = 0.0;
   for (p in 1:n_parent_locs) {
     int st = parent_child_bounds[1, p];
     int en = parent_child_bounds[2, p];
-    logit_phi_loc[st:en] = logit_phi_loc[parent_loc_id[p]] + off_layer[(st - 1):(en - 1)];
+    raw_phi_loc[st:en] = raw_phi_loc[parent_loc_id[p]] + off_layer[(st - 1):(en - 1)];
   }
-  return logit_phi_loc;
+  return raw_phi_loc;
 }
 
 // Combine cohort baseline spline effect with location hierarchy effects
 vector compute_hierarchical_phi(
   vector raw_phi_root,
-  vector logit_phi_loc,
+  vector raw_phi_loc,
   int n_cohort,
   int n_locs
 ) {
-  matrix[n_cohort, n_locs] logit_phi_mat =
-    rep_matrix(raw_phi_root, n_locs) + rep_matrix(logit_phi_loc', n_cohort);
-  return to_vector(inv_logit(logit_phi_mat));
+  matrix[n_cohort, n_locs] raw_phi_mat =
+    rep_matrix(raw_phi_root, n_locs) + rep_matrix(raw_phi_loc', n_cohort);
+  return to_vector(inv_link(raw_phi_mat));
 }
 
 // Compute K x (K-1) orthonormal basis Q* orthogonal to weight vector w

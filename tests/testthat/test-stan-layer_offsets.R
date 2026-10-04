@@ -7,11 +7,12 @@ skip_if_not_installed("rstan")
 
 target <- "functions/layer_offsets.stan"
 
-skip_if_stan_unchanged(target)
+skip_if_stan_unchanged(c("functions/link/logit.stan", target))
 
 model_layer_offsets <- sprintf(
   "
 functions {
+  #include functions/link/logit.stan
   #include %s
 }
 data {
@@ -42,11 +43,11 @@ model {
   dummy ~ normal(0, 1);
 }
 generated quantities {
-  vector[n_locs] out_logit_phi_loc = accumulate_layer_offsets(
+  vector[n_locs] out_raw_phi_loc = accumulate_layer_offsets(
     n_locs, n_parent_locs, parent_child_bounds, parent_loc_id, off_layer
   );
   vector[n_cohort * n_locs] out_phi = compute_hierarchical_phi(
-    raw_phi_root, out_logit_phi_loc, n_cohort, n_locs
+    raw_phi_root, out_raw_phi_loc, n_cohort, n_locs
   );
   matrix[3, 2] out_qr_test = get_weighted_qr_basis([0.2, 0.3, 0.5]');
   vector[n_locs - 1] out_computed_offsets = compute_layer_offsets(
@@ -144,10 +145,10 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
     )
   )
 
-  logit_phi_loc <- run_stan_harness(
+  raw_phi_loc <- run_stan_harness(
     model_layer_offsets,
     data = data_list,
-    out_logit_phi_loc
+    out_raw_phi_loc
   )
 
   phi <- run_stan_harness(
@@ -162,22 +163,22 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
     out_computed_offsets
   )
 
-  # Check logit_phi_loc manual accumulation
-  expected_logit_phi_loc <- numeric(ld_sim$n_locs)
-  expected_logit_phi_loc[1] <- 0.0
+  # Check raw_phi_loc manual accumulation
+  expected_raw_phi_loc <- numeric(ld_sim$n_locs)
+  expected_raw_phi_loc[1] <- 0.0
   for (p in seq_len(ld_sim$n_parent_locs)) {
     st <- parent_child_bounds[1, p]
     en <- parent_child_bounds[2, p]
-    expected_logit_phi_loc[
+    expected_raw_phi_loc[
       st:en
-    ] <- expected_logit_phi_loc[ld_sim$parent_loc_id[p]] +
+    ] <- expected_raw_phi_loc[ld_sim$parent_loc_id[p]] +
       off_layer[(st - 1L):(en - 1L)]
   }
 
-  expect_equal(logit_phi_loc, expected_logit_phi_loc, tolerance = 1e-6)
+  expect_equal(raw_phi_loc, expected_raw_phi_loc, tolerance = 1e-6)
 
   # Check phi matrix expansion and flattening (column-major)
-  expected_mat <- outer(raw_phi_root, expected_logit_phi_loc, `+`)
+  expected_mat <- outer(raw_phi_root, expected_raw_phi_loc, `+`)
   expected_phi <- as.vector(stats::plogis(expected_mat))
 
   expect_equal(phi, expected_phi, tolerance = 1e-6)

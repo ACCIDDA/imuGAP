@@ -304,6 +304,7 @@ canonicalize_locations <- function(locations) {
 #' @return a `[data.table()]`, `locations` with missing parent populations imputed
 #'   and hierarchy consistency validated.
 #'
+#' @autoglobal
 #' @keywords internal
 #' @noRd
 validate_location_populations <- function(locations) {

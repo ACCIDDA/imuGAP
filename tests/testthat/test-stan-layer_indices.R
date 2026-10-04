@@ -6,6 +6,7 @@ skip_if_not_installed("rstan")
 target <- "transformed_data/layer_indices.stan"
 
 skip_if_stan_unchanged(c(
+  "functions/link/logit.stan",
   "functions/bounds_to_range.stan",
   "functions/layer_offsets.stan",
   target
@@ -14,6 +15,7 @@ skip_if_stan_unchanged(c(
 model_layer_indices <- sprintf(
   "
 functions {
+  #include functions/link/logit.stan
   #include functions/bounds_to_range.stan
   #include functions/layer_offsets.stan
 }

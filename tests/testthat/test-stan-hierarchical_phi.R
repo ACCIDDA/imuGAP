@@ -7,6 +7,7 @@ skip_if_not_installed("rstan")
 target <- "model/hierarchical_phi.stan"
 
 skip_if_stan_unchanged(c(
+  "functions/link/logit.stan",
   "functions/unrolled_dose_static_lambda.stan",
   "functions/bounds_to_range.stan",
   "functions/lookups.stan",
@@ -28,6 +29,7 @@ skip_if_stan_unchanged(c(
 model_hierarchical_phi <- sprintf(
   "
 functions {
+  #include functions/link/logit.stan
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/bounds_to_range.stan
   #include functions/lookups.stan
@@ -204,8 +206,8 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
   off_layer <- as.vector((qr_basis %*% z_layer) * loc_pop_scale) *
     sigma_layer[loc_layer_idx]
 
-  expected_logit_phi_loc <- numeric(ld_sim$n_locs)
-  expected_logit_phi_loc[1] <- 0.0
+  expected_raw_phi_loc <- numeric(ld_sim$n_locs)
+  expected_raw_phi_loc[1] <- 0.0
   for (p in seq_len(ld_sim$n_parent_locs)) {
     st <- ld_sim$parent_child_starts[p]
     en <- if (p < ld_sim$n_parent_locs) {
@@ -213,16 +215,16 @@ test_that("hierarchical_phi.stan computes observation probabilities across hiera
     } else {
       ld_sim$n_locs
     }
-    expected_logit_phi_loc[
+    expected_raw_phi_loc[
       st:en
-    ] <- expected_logit_phi_loc[ld_sim$parent_loc_id[p]] +
+    ] <- expected_raw_phi_loc[ld_sim$parent_loc_id[p]] +
       off_layer[(st - 1L):(en - 1L)]
   }
 
   # 2. Compute individual weight contributions and aggregate per observation slice
   raw_phi_root <- as.vector(bs %*% beta_bs)
   phi_inv <- 1.0 -
-    stats::plogis(raw_phi_root[w_cohort] + expected_logit_phi_loc[w_loc])
+    stats::plogis(raw_phi_root[w_cohort] + expected_raw_phi_loc[w_loc])
   cdfs <- 1.0 - exp(-lambda_val * w_life_year)
   weighted <- weights * phi_inv * cdfs
 

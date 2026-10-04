@@ -1,3 +1,3 @@
-vector[n_cohort] phi = inv_logit(raw_phi_root);
+vector[n_cohort] phi = inv_link(raw_phi_root);
 
 #include model/common_phi.stan
