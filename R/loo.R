@@ -120,7 +120,7 @@ loo.imugap_fit <- function(x, posterior_size = NULL, ...) {
   ll_mat <- apply(ll_arr, 3L, c)
   colnames(ll_mat) <- paste0("obs[", seq_len(ncol(ll_mat)), "]")
 
-  if (!("r_eff" %in% names(dots)) && n_chains > 1L) {
+  if (!("r_eff" %in% names(dots))) {
     r_eff <- loo::relative_eff(exp(ll_arr))
     loo::loo(ll_mat, r_eff = r_eff, ...)
   } else {
