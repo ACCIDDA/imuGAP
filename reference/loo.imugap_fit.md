@@ -26,7 +26,10 @@ loo(x, posterior_size = NULL, ...)
 
   additional arguments passed to
   [`loo::loo()`](https://mc-stan.org/loo/reference/loo.html) (e.g.
-  `cores`, `r_eff`).
+  `cores`, `r_eff`). When `r_eff` is omitted and the fit contains
+  multiple chains, relative effective sample size is automatically
+  calculated via
+  [`loo::relative_eff()`](https://mc-stan.org/loo/reference/relative_eff.html).
 
 ## Value
 

@@ -117,7 +117,7 @@ computes the corresponding cumulative log probability:</p>
 <code class="sourceCode R"><span><span class="co"># Compute log-likelihood matrix (Draws x Observations)</span></span>
 <span><span class="va">ll_mat</span> <span class="op">&lt;-</span> <span class="fu">rstantools</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstantools/reference/log_lik.html" class="external-link">log_lik</a></span><span class="op">(</span><span class="va">fit_sim</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Elapsed Time: 0.273 seconds (Generated Quantities)</span></span>
+<span><span class="co">#&gt;  Elapsed Time: 0.257 seconds (Generated Quantities)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">ll_mat</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 2000  841</span></span></code></pre></div>
 <hr>
@@ -134,18 +134,18 @@ diagnostics by calling <code>loo()</code> directly on an
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">loo_res</span> <span class="op">&lt;-</span> <span class="fu">loo</span><span class="op">(</span><span class="va">fit_sim</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Elapsed Time: 0.274 seconds (Generated Quantities)</span></span>
+<span><span class="co">#&gt;  Elapsed Time: 0.255 seconds (Generated Quantities)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">loo_res</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Computed from 2000 by 841 log-likelihood matrix.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;          Estimate   SE</span></span>
-<span><span class="co">#&gt; elpd_loo  -2104.7 32.1</span></span>
-<span><span class="co">#&gt; p_loo        28.0  1.5</span></span>
-<span><span class="co">#&gt; looic      4209.4 64.3</span></span>
+<span><span class="co">#&gt; elpd_loo  -2104.9 32.2</span></span>
+<span><span class="co">#&gt; p_loo        28.4  1.6</span></span>
+<span><span class="co">#&gt; looic      4209.9 64.3</span></span>
 <span><span class="co">#&gt; ------</span></span>
 <span><span class="co">#&gt; MCSE of elpd_loo is 0.1.</span></span>
-<span><span class="co">#&gt; MCSE and ESS estimates assume independent draws (r_eff=1).</span></span>
+<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.3, 2.0]).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; All Pareto k estimates are good (k &lt; 0.7).</span></span>
 <span><span class="co">#&gt; See help('pareto-k-diagnostic') for details.</span></span></code></pre></div>

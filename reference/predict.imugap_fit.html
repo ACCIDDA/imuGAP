@@ -57,13 +57,7 @@ predicted coverage probabilities.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'imugap_fit'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span></span>
-<span>  <span class="va">object</span>,</span>
-<span>  target <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  posterior_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  compute_log_lik <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  <span class="va">...</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">object</span>, target <span class="op">=</span> <span class="cn">NULL</span>, posterior_size <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -75,8 +69,7 @@ predicted coverage probabilities.</p>
 
 
 <dt id="arg-target">target<a class="anchor" aria-label="anchor" href="#arg-target"></a></dt>
-<dd><p>a <code>[data.frame()]</code> of target populations to predict for (optional
-when <code>compute_log_lik = TRUE</code>).</p></dd>
+<dd><p>a <code>[data.frame()]</code> of target populations to predict for.</p></dd>
 
 
 <dt id="arg-posterior-size">posterior_size<a class="anchor" aria-label="anchor" href="#arg-posterior-size"></a></dt>
@@ -85,11 +78,6 @@ over only this many draws, taken from the end of each chain (the converged
 tail). Must be a multiple of the number of chains; a value that isn't is
 rounded up to the next multiple, with a warning. Must not exceed the number
 of draws in the fit (default: <code>NULL</code>, which uses every draw).</p></dd>
-
-
-<dt id="arg-compute-log-lik">compute_log_lik<a class="anchor" aria-label="anchor" href="#arg-compute-log-lik"></a></dt>
-<dd><p>logical scalar; compute pointwise log-likelihood for
-observed data in generated quantities? (default: <code>FALSE</code>).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

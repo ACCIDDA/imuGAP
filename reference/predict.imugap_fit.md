@@ -7,13 +7,7 @@ predicted coverage probabilities.
 
 ``` r
 # S3 method for class 'imugap_fit'
-predict(
-  object,
-  target = NULL,
-  posterior_size = NULL,
-  compute_log_lik = FALSE,
-  ...
-)
+predict(object, target = NULL, posterior_size = NULL, ...)
 ```
 
 ## Arguments
@@ -24,8 +18,7 @@ predict(
 
 - target:
 
-  a `[data.frame()]` of target populations to predict for (optional when
-  `compute_log_lik = TRUE`).
+  a `[data.frame()]` of target populations to predict for.
 
 - posterior_size:
 
@@ -34,11 +27,6 @@ predict(
   Must be a multiple of the number of chains; a value that isn't is
   rounded up to the next multiple, with a warning. Must not exceed the
   number of draws in the fit (default: `NULL`, which uses every draw).
-
-- compute_log_lik:
-
-  logical scalar; compute pointwise log-likelihood for observed data in
-  generated quantities? (default: `FALSE`).
 
 - ...:
 

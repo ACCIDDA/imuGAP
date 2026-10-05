@@ -74,7 +74,9 @@ end of each chain? (default: <code>NULL</code>, which uses all draws).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>additional arguments passed to <code><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo::loo()</a></code> (e.g. <code>cores</code>, <code>r_eff</code>).</p></dd>
+<dd><p>additional arguments passed to <code><a href="https://mc-stan.org/loo/reference/loo.html" class="external-link">loo::loo()</a></code> (e.g. <code>cores</code>, <code>r_eff</code>).
+When <code>r_eff</code> is omitted and the fit contains multiple chains, relative
+effective sample size is automatically calculated via <code><a href="https://mc-stan.org/loo/reference/relative_eff.html" class="external-link">loo::relative_eff()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
