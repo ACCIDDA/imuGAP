@@ -1,20 +1,13 @@
 # Part A of the package-data pipeline: simulate the *_sim inputs and the static
-# latent-parameter fixture.
+# latent-parameter fixtures for both logit and probit links.
 #
 # This step depends on the private nc_measles dataset (read below) and so cannot
 # run in CI; the resulting *_sim inputs and latent_params_sim are tracked in git.
-# It also writes data-raw/sim_internals.rds, consumed by Part B
-# (data-raw/fit_data.R) to build the genuinely fit-derived artifacts
+# It also writes data-raw/sim_internals.rds and data-raw/sim_internals_probit.rds,
+# consumed by Part B (data-raw/fit_data.R) to build the genuinely fit-derived artifacts
 # (fit_sim/target_sim/predict_sim) without re-running this simulation.
-# latent_params_sim used to live in Part B, but its parameters and its
-# (analytic, fit-free) coverage are simulation properties, not fit outputs, so
-# it moved here as tracked static data (#105). Run with `just data` (or
-# `just data-inputs` for this step alone).
+# Run with `just data` (or `just data-inputs` for this step alone).
 
-# Load only the packages this script actually uses. If you attach e.g. the
-# full tidyverse, you'll pull in lubridate; lubridate then gets captured in the
-# fitted model's `@.MISC` environment and baked into data/fit_sim.rda, tripping
-# R CMD check's "namespace references in data files".
 library(data.table)
 
 if (requireNamespace("pkgload", quietly = TRUE)) {
@@ -26,28 +19,28 @@ if (requireNamespace("pkgload", quietly = TRUE)) {
 # Source simulation helper functions
 source("data-raw/dataset_helpers.R")
 
-# Run simulation pipeline under current latent model
+# Base simulation setup with fixed random seed and parameters
 setup <- get_simulation_setup(
   seed = 93254,
   sigma_sch = 0.8,
   sigma_cnty = 0.4
 )
-latent <- generate_latent_current(setup)
-sim_data <- simulate_observations_from_latent(
+
+# 1. Logit link simulation with systematic mu offset aggregation
+latent_logit <- generate_latent_current(setup, link = "logit")
+sim_data_logit <- simulate_observations_from_latent(
   setup,
-  latent,
+  latent_logit,
   uncensored = FALSE
 )
 
+observations_sim <- sim_data_logit$observations_sim
+populations_sim <- sim_data_logit$populations_sim
+locations_sim <- sim_data_logit$locations_sim
+latent_params_sim <- sim_data_logit$latent_params_sim
+sim_internals <- sim_data_logit$sim_internals
+target_sim <- sim_data_logit$target_sim
 
-observations_sim <- sim_data$observations_sim
-populations_sim <- sim_data$populations_sim
-locations_sim <- sim_data$locations_sim
-latent_params_sim <- sim_data$latent_params_sim
-sim_internals <- sim_data$sim_internals
-target_sim <- sim_data$target_sim
-
-# Create imugap input package data objects
 usethis::use_data(observations_sim, overwrite = TRUE, compress = "xz")
 usethis::use_data(populations_sim, overwrite = TRUE, compress = "xz")
 usethis::use_data(locations_sim, overwrite = TRUE, compress = "xz")
@@ -55,4 +48,28 @@ usethis::use_data(latent_params_sim, overwrite = TRUE, compress = "xz")
 
 saveRDS(sim_internals, "data-raw/sim_internals.rds")
 saveRDS(target_sim, file = "data-raw/target_sim.rds")
-cat("Package data objects updated successfully.\n")
+
+# 2. Probit link parallel simulation with systematic mu offset aggregation
+latent_probit <- generate_latent_current(setup, link = "probit")
+sim_data_probit <- simulate_observations_from_latent(
+  setup,
+  latent_probit,
+  uncensored = FALSE
+)
+
+observations_sim_probit <- sim_data_probit$observations_sim
+populations_sim_probit <- sim_data_probit$populations_sim
+locations_sim_probit <- sim_data_probit$locations_sim
+latent_params_sim_probit <- sim_data_probit$latent_params_sim
+sim_internals_probit <- sim_data_probit$sim_internals
+target_sim_probit <- sim_data_probit$target_sim
+
+usethis::use_data(observations_sim_probit, overwrite = TRUE, compress = "xz")
+usethis::use_data(populations_sim_probit, overwrite = TRUE, compress = "xz")
+usethis::use_data(locations_sim_probit, overwrite = TRUE, compress = "xz")
+usethis::use_data(latent_params_sim_probit, overwrite = TRUE, compress = "xz")
+
+saveRDS(sim_internals_probit, "data-raw/sim_internals_probit.rds")
+saveRDS(target_sim_probit, file = "data-raw/target_sim_probit.rds")
+
+cat("Package data objects for logit and probit links updated successfully.\n")

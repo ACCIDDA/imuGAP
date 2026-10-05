@@ -22,6 +22,23 @@ for (k in 1:(n_layers - 1)) {
   }
 }
 
+// Precomputed normalized population weights for children within each parent block
+vector[n_locs - 1] loc_child_weight;
+
+// Lookup from location ID to its index in parent_loc_id (1 .. n_parent_locs, or 0 if not a parent)
+array[n_locs] int<lower=0, upper=n_parent_locs> loc_parent_idx = rep_array(0, n_locs);
+for (p in 1:n_parent_locs) {
+  loc_parent_idx[parent_loc_id[p]] = p;
+}
+
+// Lookup from child location ID to its parent's index in 1 .. n_parent_locs (0 for root)
+array[n_locs] int<lower=0, upper=n_parent_locs> loc_to_parent_p_idx = rep_array(0, n_locs);
+for (p in 1:n_parent_locs) {
+  int st = parent_child_bounds[1, p];
+  int en = parent_child_bounds[2, p];
+  loc_to_parent_p_idx[st:en] = rep_array(p, en - st + 1);
+}
+
 // Precomputed per-parent block QR basis for weighted balanced offsets
 int n_unconstrained_offsets = (n_locs - 1) - n_parent_locs;
 
@@ -56,6 +73,7 @@ for (p in 1:n_parent_locs) {
   } else {
     w = rep_vector(1.0 / K, K);
   }
+  loc_child_weight[(st - 1):(en - 1)] = w;
   vector[K] w_prime = sqrt(w);
   matrix[K, K - 1] Q_star = get_weighted_qr_basis(w_prime);
   qr_entries[cur_qr:(cur_qr + K * (K - 1) - 1)] = to_vector(Q_star);
@@ -63,3 +81,4 @@ for (p in 1:n_parent_locs) {
   cur_z += (K - 1);
   cur_qr += K * (K - 1);
 }
+

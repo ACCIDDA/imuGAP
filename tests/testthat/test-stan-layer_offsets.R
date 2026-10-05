@@ -7,7 +7,11 @@ skip_if_not_installed("rstan")
 
 target <- "functions/layer_offsets.stan"
 
-skip_if_stan_unchanged(c("functions/link/logit.stan", target))
+skip_if_stan_unchanged(c(
+  "functions/link/logit.stan",
+  "functions/link/probit.stan",
+  target
+))
 
 model_layer_offsets <- sprintf(
   "
@@ -33,6 +37,7 @@ data {
   vector[n_qr_entries] qr_entries;
   vector[n_unconstrained] z_layer;
   vector[n_locs - 1] loc_pop_scale;
+  vector[n_locs - 1] loc_child_weight;
   vector[n_layers - 1] sigma_layer;
   array[n_locs - 1] int loc_layer_idx;
 }
@@ -54,6 +59,19 @@ generated quantities {
     n_locs, n_parent_locs, parent_child_bounds, z_bounds, qr_bounds, qr_entries,
     z_layer, loc_pop_scale, sigma_layer, loc_layer_idx
   );
+  matrix[n_cohort, n_locs] out_raw_phi_mat = accumulate_hierarchical_raw_phi(
+    raw_phi_root, off_layer, n_cohort, n_locs,
+    n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight
+  );
+  matrix[n_cohort, n_parent_locs] out_mu_offset = compute_mu_offsets(
+    out_raw_phi_mat, off_layer, n_cohort, n_locs,
+    n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight
+  );
+  vector[n_cohort * n_locs] out_phi_hierarchical = compute_hierarchical_phi(
+    raw_phi_root, off_layer, n_cohort, n_locs,
+    n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight
+  );
+  vector[2] out_test_mu = evaluate_mu_from_moments([0.3, 0.7]', [0.05, 0.01, 0.002]');
 }
 ",
   target
@@ -126,6 +144,14 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
   }
   qr_entries <- unlist(qr_list)
 
+  loc_child_weight <- numeric(ld_sim$n_locs - 1L)
+  for (p in seq_len(ld_sim$n_parent_locs)) {
+    st <- parent_child_bounds[1, p]
+    en <- parent_child_bounds[2, p]
+    pop_slice <- ld_sim$loc_population[st:en]
+    loc_child_weight[(st - 1L):(en - 1L)] <- pop_slice / sum(pop_slice)
+  }
+
   data_list <- c(
     ld_sim,
     list(
@@ -140,6 +166,7 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
       qr_entries = qr_entries,
       z_layer = z_layer,
       loc_pop_scale = loc_pop_scale,
+      loc_child_weight = loc_child_weight,
       sigma_layer = sigma_layer,
       loc_layer_idx = loc_layer_idx
     )
@@ -161,6 +188,18 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
     model_layer_offsets,
     data = data_list,
     out_computed_offsets
+  )
+
+  mu_offset <- run_stan_harness(
+    model_layer_offsets,
+    data = data_list,
+    out_mu_offset
+  )
+
+  phi_hierarchical <- run_stan_harness(
+    model_layer_offsets,
+    data = data_list,
+    out_phi_hierarchical
   )
 
   # Check raw_phi_loc manual accumulation
@@ -218,4 +257,71 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
   w_norm <- w / sqrt(sum(w^2))
   expect_equal(as.numeric(t(qr_test) %*% w_norm), c(0, 0), tolerance = 1e-6)
   expect_equal(t(qr_test) %*% qr_test, diag(2), tolerance = 1e-6)
+
+  # Check placeholder compute_mu_offsets returns all zeros
+  n_c <- length(raw_phi_root)
+  expected_mu_offset <- matrix(0.0, nrow = n_c, ncol = ld_sim$n_parent_locs)
+  expect_equal(as.matrix(mu_offset), expected_mu_offset, tolerance = 1e-6)
+
+  # Check evaluate_mu_from_moments functional signature
+  test_mu <- run_stan_harness(
+    model_layer_offsets,
+    data = data_list,
+    out_test_mu
+  )
+  expect_equal(as.numeric(test_mu), c(0.0, 0.0), tolerance = 1e-6)
+
+  # Check compute_hierarchical_phi with placeholder zeros matches expected_phi
+  expect_equal(as.numeric(phi_hierarchical), expected_phi, tolerance = 1e-6)
+})
+
+test_that("probit.stan defines inv_link and evaluate_mu_from_moments correctly", {
+  model_probit <- sprintf(
+    "
+functions {
+  #include functions/link/probit.stan
+}
+data {
+  real x_scalar;
+  vector[2] x_vec;
+}
+parameters {
+  real dummy;
+}
+model {
+  dummy ~ normal(0, 1);
+}
+generated quantities {
+  real out_scalar = inv_link(x_scalar);
+  vector[2] out_vec = inv_link(x_vec);
+  vector[2] out_mu = evaluate_mu_from_moments([0.3, 0.7]', [0.05, 0.01, 0.002]');
+}
+"
+  ) |>
+    compile_stan_harness()
+
+  res <- run_stan_harness(
+    model_probit,
+    data = list(x_scalar = 0.0, x_vec = c(-1.96, 1.96)),
+    out_scalar
+  )
+  expect_equal(res, 0.5, tolerance = 1e-6)
+
+  res_vec <- run_stan_harness(
+    model_probit,
+    data = list(x_scalar = 0.0, x_vec = c(-1.96, 1.96)),
+    out_vec
+  )
+  expect_equal(
+    as.numeric(res_vec),
+    stats::pnorm(c(-1.96, 1.96)),
+    tolerance = 1e-4
+  )
+
+  res_mu <- run_stan_harness(
+    model_probit,
+    data = list(x_scalar = 0.0, x_vec = c(-1.96, 1.96)),
+    out_mu
+  )
+  expect_equal(as.numeric(res_mu), c(0.0, 0.0), tolerance = 1e-6)
 })

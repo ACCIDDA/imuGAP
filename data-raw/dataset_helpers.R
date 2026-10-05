@@ -277,8 +277,9 @@ get_simulation_setup <- function(
   )
 }
 
-#' Generate latent probability matrices under current logit offset model
-generate_latent_current <- function(setup) {
+#' Generate latent probability matrices under link offset model with mu offset aggregation
+generate_latent_current <- function(setup, link = c("logit", "probit")) {
+  link <- match.arg(link)
   sch_per_cnty <- copy(setup$sch_per_cnty)
 
   # Enforce per-parent weighted balanced offsets and full-layer population scaling on county offsets
@@ -306,37 +307,89 @@ generate_latent_current <- function(setup) {
   delta_sch <- z_proj_sch * scale_sch * setup$sigma_sch
   names(delta_sch) <- setup$school_names
 
-  state_logit <- qlogis(setup$phi_st_target)
+  # Link and inverse link functions
+  link_fun <- if (link == "logit") stats::qlogis else stats::qnorm
+  inv_link_fun <- if (link == "logit") stats::plogis else stats::pnorm
 
-  # Expand school logit matrix: n_cohort x tot_sch
-  schl_prob_matrix <- matrix(0, nrow = setup$n_cohort, ncol = setup$tot_sch)
-  for (c_idx in seq_along(setup$county_names)) {
-    ll <- sch_per_cnty$ll[c_idx]
-    ul <- sch_per_cnty$ul[c_idx]
-    for (s in ll:ul) {
-      schl_logit <- state_logit + delta_cnty[c_idx] + delta_sch[s]
-      schl_prob_matrix[, s] <- plogis(schl_logit)
-    }
+  p_state <- setup$phi_st_target
+  state_link <- link_fun(p_state)
+
+  # Solve for mu offsets via rootfinding such that sum(w_i * invlink(link(p_enc) + mu + delta_i)) == p_enc
+  solve_mu_root <- function(p_enc, w_child, delta_child) {
+    vapply(
+      seq_along(p_enc),
+      function(t) {
+        p_t <- p_enc[t]
+        eta_t <- link_fun(p_t)
+        obj <- function(mu) {
+          sum(w_child * inv_link_fun(eta_t + mu + delta_child)) - p_t
+        }
+        stats::uniroot(
+          obj,
+          interval = c(-5, 5),
+          extendInt = "yes",
+          tol = 1e-12
+        )$root
+      },
+      numeric(1L)
+    )
   }
 
+  # County-level offsets under State (parent = State)
+  mu_state <- solve_mu_root(p_state, w_cnty, delta_cnty)
+
   # County prob matrix
+  cnty_link_matrix <- matrix(
+    0,
+    nrow = setup$n_cohort,
+    ncol = length(setup$county_names)
+  )
   cnty_prob_matrix <- matrix(
     0,
     nrow = setup$n_cohort,
     ncol = length(setup$county_names)
   )
   for (c_idx in seq_along(setup$county_names)) {
-    cnty_prob_matrix[, c_idx] <- plogis(state_logit + delta_cnty[c_idx])
+    cnty_link_matrix[, c_idx] <- state_link + mu_state + delta_cnty[c_idx]
+    cnty_prob_matrix[, c_idx] <- inv_link_fun(cnty_link_matrix[, c_idx])
+  }
+
+  # School prob matrix (parent = County)
+  schl_prob_matrix <- matrix(0, nrow = setup$n_cohort, ncol = setup$tot_sch)
+  mu_cnty_matrix <- matrix(
+    0,
+    nrow = setup$n_cohort,
+    ncol = length(setup$county_names)
+  )
+
+  for (c_idx in seq_along(setup$county_names)) {
+    ll <- sch_per_cnty$ll[c_idx]
+    ul <- sch_per_cnty$ul[c_idx]
+    pop_slice <- setup$nsch_base[ll:ul]
+    w_sch <- pop_slice / sum(pop_slice)
+    delta_sch_slice <- delta_sch[ll:ul]
+
+    p_cnty <- cnty_prob_matrix[, c_idx]
+    mu_cnty <- solve_mu_root(p_cnty, w_sch, delta_sch_slice)
+    mu_cnty_matrix[, c_idx] <- mu_cnty
+
+    for (s in ll:ul) {
+      schl_link <- cnty_link_matrix[, c_idx] + mu_cnty + delta_sch[s]
+      schl_prob_matrix[, s] <- inv_link_fun(schl_link)
+    }
   }
 
   list(
-    approach = "current",
-    approach_name = "Current Logit Offset Model",
+    approach = link,
+    approach_name = sprintf("Offset Model (%s link)", link),
+    link = link,
     phi_st = setup$phi_st_target,
     cnty_prob_matrix = cnty_prob_matrix,
     schl_prob_matrix = schl_prob_matrix,
     delta_cnty = delta_cnty,
-    delta_sch = delta_sch
+    delta_sch = delta_sch,
+    mu_state = mu_state,
+    mu_cnty = mu_cnty_matrix
   )
 }
 
