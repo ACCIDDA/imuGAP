@@ -250,6 +250,7 @@ get_simulation_setup <- function(
     nsch_base = nsch_base,
     nsch_matrix = nsch_matrix,
     other_vax_reduction = other_vax_reduction,
+    bsp = bsp,
     beta_bs = beta_bs,
     phi_st_target = phi_st_target,
     sch_per_cnty = sch_per_cnty,
@@ -311,8 +312,8 @@ generate_latent_current <- function(setup, link = c("logit", "probit")) {
   link_fun <- if (link == "logit") stats::qlogis else stats::qnorm
   inv_link_fun <- if (link == "logit") stats::plogis else stats::pnorm
 
-  p_state <- setup$phi_st_target
-  state_link <- link_fun(p_state)
+  state_link <- as.vector(setup$bsp %*% setup$beta_bs)
+  p_state <- inv_link_fun(state_link)
 
   # Solve for mu offsets via rootfinding such that sum(w_i * invlink(link(p_enc) + mu + delta_i)) == p_enc
   solve_mu_root <- function(p_enc, w_child, delta_child) {

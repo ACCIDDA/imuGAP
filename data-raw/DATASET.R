@@ -49,7 +49,7 @@ usethis::use_data(latent_params_sim, overwrite = TRUE, compress = "xz")
 saveRDS(sim_internals, "data-raw/sim_internals.rds")
 saveRDS(target_sim, file = "data-raw/target_sim.rds")
 
-# 2. Probit link parallel simulation with systematic mu offset aggregation
+# 2. Probit link simulation (shares identical locations_sim, populations_sim, and latent_params_sim)
 latent_probit <- generate_latent_current(setup, link = "probit")
 sim_data_probit <- simulate_observations_from_latent(
   setup,
@@ -58,16 +58,10 @@ sim_data_probit <- simulate_observations_from_latent(
 )
 
 observations_sim_probit <- sim_data_probit$observations_sim
-populations_sim_probit <- sim_data_probit$populations_sim
-locations_sim_probit <- sim_data_probit$locations_sim
-latent_params_sim_probit <- sim_data_probit$latent_params_sim
 sim_internals_probit <- sim_data_probit$sim_internals
 target_sim_probit <- sim_data_probit$target_sim
 
 usethis::use_data(observations_sim_probit, overwrite = TRUE, compress = "xz")
-usethis::use_data(populations_sim_probit, overwrite = TRUE, compress = "xz")
-usethis::use_data(locations_sim_probit, overwrite = TRUE, compress = "xz")
-usethis::use_data(latent_params_sim_probit, overwrite = TRUE, compress = "xz")
 
 saveRDS(sim_internals_probit, "data-raw/sim_internals_probit.rds")
 saveRDS(target_sim_probit, file = "data-raw/target_sim_probit.rds")

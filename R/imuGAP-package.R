@@ -133,40 +133,13 @@ NULL
 #' @keywords datasets
 NULL
 
-#' @title Example Location Data (Probit Link)
-#'
-#' @description
-#' A dataset providing example location input for the probit link model.
-#'
-#' @format A `[data.table()]` with 28 rows and 2 columns:
-#'  - `loc_id`, a string, the location
-#'  - `parent_id`, a string, the location parents
-#' @name locations_sim_probit
-#' @docType data
-#' @keywords datasets
-NULL
-
-#' @title Example Population Data (Probit Link)
-#'
-#' @description
-#' A dataset containing metadata about vaccine coverage observations for the probit
-#' link model.
-#'
-#' @format A `[data.table()]` with 750 rows and 6 columns:
-#'  - `obs_id`, a number, the observation (foreign key to observations)
-#'  - `loc_id`, a string, the location (foreign key to locations)
-#'  - `cohort`, a number, the birth cohort
-#'  - `age`, a number, the age of cohort at time of observation
-#'  - `dose`, a number, which dose the observation concerns
-#'  - `weight`, a number (0-1), fraction of the observation this row represents
-#' @name populations_sim_probit
-#' @docType data
-#' @keywords datasets
-NULL
 
 #' @title Example Observation Data (Probit Link)
 #'
-#' @description A dataset containing vaccine coverage observations for the probit link model.
+#' @description
+#' A dataset containing vaccine coverage observations simulated under the probit link model,
+#' sharing the common location hierarchy ([locations_sim]), population structure
+#' ([populations_sim]), and latent hyperparameters ([latent_params_sim]).
 #'
 #' @format A `[data.table()]` with 698 rows and 4+ columns:
 #'  - `obs_id`, a number, the observation id (primary key)
@@ -180,32 +153,6 @@ NULL
 #' @keywords datasets
 NULL
 
-#' @title Example Latent Parameter Values (Probit Link)
-#'
-#' @description
-#' A list containing the true/latent parameter values used to simulate the
-#' probit link example datasets (`locations_sim_probit`, `populations_sim_probit`,
-#' `observations_sim_probit`).
-#'
-#' @format A list with 9 components:
-#'  - `beta_bs`, a numeric vector of length 5 containing the true state-level
-#'    B-spline coefficients for baseline non-uptake propensity (`phi_state`).
-#'  - `phi_state`, a numeric vector of length 30 representing the state-specific
-#'    baseline vaccine uptake propensity over cohorts.
-#'  - `lambda`, a numeric vector of length 2 representing the rate parameters
-#'    for vaccine doses 1 and 2 respectively.
-#'  - `sigma_sch`, a number, the standard deviation of school-level random effects.
-#'  - `sigma_cnty`, a number, the standard deviation of county-level random effects.
-#'  - `off_sch`, a numeric vector of length 24 containing school-level random offsets.
-#'  - `off_cnty`, a numeric vector of length 3 containing county-level random offsets.
-#'  - `censor_reduction`, a number representing the censoring offset
-#'    multiplier applied to censored observations (0.95).
-#'  - `coverage`, a numeric vector of the true/background coverage for each row
-#'    of `target_sim_probit`, computed from the latent parameters above.
-#' @name latent_params_sim_probit
-#' @docType data
-#' @keywords datasets
-NULL
 
 #' @title Example Prediction Target Populations
 #'
