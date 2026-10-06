@@ -10,6 +10,7 @@ targets <- c(
   "data/structural.stan",
   "data/locations.stan",
   "data/shared.stan",
+  "transformed_data/n_obs.stan",
   "transformed_data/common_indices.stan",
   "transformed_data/layer_phi_lookup.stan"
 )
@@ -40,6 +41,7 @@ model {
   dummy ~ normal(0, 1);
 }
 generated quantities {
+  int out_n_obs = n_obs;
   array[2, n_obs_mixed_uncensored] int out_obs_map_unc = obs_map_mixed_uncensored;
   array[n_obs_unmixed_uncensored] int out_cdf_lookup_unmix_unc = cdf_lookup_unmixed_uncensored;
   array[n_weights_mixed_uncensored] int out_cdf_lookup_mix_unc = cdf_lookup_mixed_uncensored;
@@ -169,6 +171,10 @@ test_that("structural data and transformed indices create compliant lookup and r
   )
 
   # Uncensored range and lookups
+  expect_equal(
+    as.integer(results$out_n_obs),
+    obs_unmix_unc + length(obs_bounds_mix_unc)
+  )
   expect_equal(results$out_obs_map_unc[1, ], obs_bounds_mix_unc)
   expect_equal(
     results$out_obs_map_unc[2, ],

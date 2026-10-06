@@ -37,12 +37,12 @@ model {
   }
 }
 generated quantities {
-  vector[predict_mode ? n_obs_unmixed_uncensored : 0] p_obs;
-  vector[compute_log_lik ? (n_obs_unmixed_uncensored + n_obs_mixed_uncensored + n_obs_unmixed_right + n_obs_mixed_right + n_obs_unmixed_left + n_obs_mixed_left) : 0] log_lik;
+  vector[predict_mode ? n_obs : 0] p_obs;
+  vector[compute_log_lik ? n_obs : 0] log_lik;
   if (predict_mode || compute_log_lik) {
     #include model/hierarchical_phi.stan
     if (predict_mode) {
-      p_obs = p_obs_unmixed_uncensored;
+      #include generated_quantities/pointwise_p_obs.stan
     }
     if (compute_log_lik) {
       #include generated_quantities/pointwise_log_lik.stan

@@ -496,3 +496,31 @@ subset_draws_tail <- function(draws_array, posterior_size = NULL) {
   keep <- posterior_size %/% n_chains
   draws_array[seq.int(n_iter - keep + 1L, n_iter), , , drop = FALSE]
 }
+
+#' Ensure compatibility of raw_fit with renamed Stan models
+#'
+#' @param raw_fit a fitted Stan object (e.g. `stanfit` or `CmdStanMCMC`).
+#'
+#' @return the `raw_fit` with updated stanmodel reference if needed.
+#' @keywords internal
+#' @noRd
+ensure_stanmodel_compat <- function(raw_fit) {
+  if (
+    inherits(raw_fit, "stanfit") &&
+      exists("stanmodels", envir = asNamespace("imuGAP"))
+  ) {
+    model_name <- raw_fit@stanmodel@model_name
+    legacy_map <- c(
+      "impute_school_coverage_process_v6" = "bspline_static_offsets_logit",
+      "impute_school_coverage_process_v6_single_layer" = "bspline_single_logit"
+    )
+    if (model_name %in% names(legacy_map)) {
+      target_model <- legacy_map[[model_name]]
+      pkg_stanmodels <- get("stanmodels", envir = asNamespace("imuGAP"))
+      if (target_model %in% names(pkg_stanmodels)) {
+        raw_fit@stanmodel <- pkg_stanmodels[[target_model]]
+      }
+    }
+  }
+  raw_fit
+}

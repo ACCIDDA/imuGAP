@@ -13,7 +13,7 @@
 #' @keywords internal
 #' @noRd
 extract_log_lik_array <- function(object, posterior_size = NULL) {
-  raw_fit <- object$raw_fit
+  raw_fit <- ensure_stanmodel_compat(object$raw_fit)
   draws_array <- backend_draws_array(raw_fit)
   param_names <- dimnames(draws_array)[[3]]
   ll_param_idx <- grep("^log_lik\\[", param_names)

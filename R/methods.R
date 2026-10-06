@@ -120,7 +120,7 @@ predict.imugap_fit <- function(
     name = "object"
   )
 
-  raw_fit <- object$raw_fit
+  raw_fit <- ensure_stanmodel_compat(object$raw_fit)
 
   # Posterior draws as a 3D array: iterations x chains x parameters.
   draws_array <- backend_draws_array(raw_fit)

@@ -1,7 +1,15 @@
 /**
  * @file logit.stan
- * @brief Inverse logit link functions mapping unbounded latent scale -> (0, 1).
+ * @brief Logit and inverse logit link functions mapping latent scale <-> (0, 1).
  */
+
+real link_fn(real p) {
+  return logit(p);
+}
+
+vector link_fn(vector p) {
+  return logit(p);
+}
 
 real inv_link(real x) {
   return inv_logit(x);
@@ -13,6 +21,16 @@ vector inv_link(vector x) {
 
 matrix inv_link(matrix x) {
   return inv_logit(x);
+}
+
+vector d_inv_link(vector x) {
+  vector[num_elements(x)] p = inv_logit(x);
+  return p .* (1.0 - p);
+}
+
+vector d2_inv_link(vector x) {
+  vector[num_elements(x)] p = inv_logit(x);
+  return p .* (1.0 - p) .* (1.0 - 2.0 * p);
 }
 
 // Evaluate link-scale mu offset for logit link from enclosing parent probability and offset moments

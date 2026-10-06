@@ -293,7 +293,7 @@ sampling <- function(
   # check imugap_opts
   model <- imugap_opts$model %||% "default"
   stop_fmt_if(
-    !identical(model, "default"),
+    !model %in% c("default", "logit", "probit"),
     ERR_OPT_UNKNOWN_MODEL,
     model = model
   )
