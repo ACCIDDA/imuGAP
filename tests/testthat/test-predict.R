@@ -236,7 +236,7 @@ test_that("predict() accommodates cmdstanr (CmdStanMCMC) fits", {
   # Create a fit with CmdStanMCMC raw_fit
   cmdstan_fit <- fit_sim
   cmdstan_fit$raw_fit <- structure(list(), class = "CmdStanMCMC")
-  cmdstan_fit$settings$imugap_opts$model_name <- "impute_school_coverage_process_v6"
+  cmdstan_fit$settings$imugap_opts$model_name <- "bspline_static_offsets_logit"
 
   # Mock backend_draws_array and backend_generate_quantities
   fake_draws <- array(rnorm(10 * 2 * 5), dim = c(10, 2, 5))
@@ -257,7 +257,7 @@ test_that("predict() accommodates cmdstanr (CmdStanMCMC) fits", {
       model_name = NULL,
       package = NULL
     ) {
-      expect_equal(model_name, "impute_school_coverage_process_v6")
+      expect_equal(model_name, "bspline_static_offsets_logit")
       fake_p_obs
     },
     .package = "imuGAP"

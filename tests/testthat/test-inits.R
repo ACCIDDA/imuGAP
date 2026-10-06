@@ -146,6 +146,18 @@ test_that("generate_inits combines uncensored and right-censored observation dat
   expect_true(all(abs(inits$beta_bs - expected_center) < 0.5))
 })
 
+test_that("generate_inits supports model = 'logit' and model = 'probit'", {
+  dat <- make_test_stan_data(
+    y_obs_unmixed_uncensored = c(20L),
+    y_smp_unmixed_uncensored = c(50L)
+  )
+  inits_logit <- generate_inits(dat, model = "logit")
+  expect_true(all(abs(inits_logit$beta_bs - stats::qlogis(0.60)) < 0.5))
+
+  inits_probit <- generate_inits(dat, model = "probit")
+  expect_true(all(abs(inits_probit$beta_bs - stats::qnorm(0.60)) < 0.5))
+})
+
 test_that("generate_inits validates model argument", {
   dat <- make_test_stan_data()
   expect_error(

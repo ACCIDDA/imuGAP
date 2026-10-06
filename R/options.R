@@ -10,12 +10,14 @@
 #' @param compute_log_lik logical scalar; compute pointwise log-likelihood during
 #'   sampling? (default: `FALSE`).
 #' @param model character string specifying the model formulation (default: `"default"`).
-#'   Dispatch to optimized single versus multi-layer versions occurs automatically
-#'   within `[sampling()]`.
+#'   Options include `"default"` (or `"logit"`) for the logit link and `"probit"` for the
+#'   probit link. Dispatch to optimized single versus multi-layer versions occurs
+#'   automatically within `[sampling()]`.
 #'
 #' @examples
 #' imugap_options()
 #' imugap_options(dose_schedule = c(1, 3))
+#' imugap_options(model = "probit")
 #'
 #' @return a named list, of `imuGAP` model options.
 #' @export
@@ -23,7 +25,7 @@ imugap_options <- function(
   df = 5L,
   dose_schedule = c(1, 4),
   compute_log_lik = FALSE,
-  model = c("default")
+  model = c("default", "logit", "probit")
 ) {
   model <- match.arg(model)
 

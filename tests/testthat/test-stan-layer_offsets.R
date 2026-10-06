@@ -258,21 +258,46 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
   expect_equal(as.numeric(t(qr_test) %*% w_norm), c(0, 0), tolerance = 1e-6)
   expect_equal(t(qr_test) %*% qr_test, diag(2), tolerance = 1e-6)
 
-  # Check placeholder compute_mu_offsets returns all zeros
+  # Check compute_mu_offsets and hierarchical raw phi accumulation with moments
   n_c <- length(raw_phi_root)
+  expected_raw_phi_mat <- matrix(0.0, nrow = n_c, ncol = ld_sim$n_locs)
   expected_mu_offset <- matrix(0.0, nrow = n_c, ncol = ld_sim$n_parent_locs)
+  expected_raw_phi_mat[, 1] <- raw_phi_root
+  for (p in seq_len(ld_sim$n_parent_locs)) {
+    pid <- ld_sim$parent_loc_id[p]
+    st <- parent_child_bounds[1, p]
+    en <- parent_child_bounds[2, p]
+    w_slice <- loc_child_weight[(st - 1L):(en - 1L)]
+    off_slice <- off_layer[(st - 1L):(en - 1L)]
+    m2 <- sum(w_slice * off_slice^2)
+    p_enc <- stats::plogis(expected_raw_phi_mat[, pid])
+    mu_p <- 0.5 * m2 * (2.0 * p_enc - 1.0)
+    expected_mu_offset[, p] <- mu_p
+    for (i in st:en) {
+      expected_raw_phi_mat[, i] <- expected_raw_phi_mat[, pid] +
+        mu_p +
+        off_layer[i - 1L]
+    }
+  }
+
   expect_equal(as.matrix(mu_offset), expected_mu_offset, tolerance = 1e-6)
 
-  # Check evaluate_mu_from_moments functional signature
+  # Check evaluate_mu_from_moments functional signature (logit: 0.5 * m2 * (2 * p - 1))
   test_mu <- run_stan_harness(
     model_layer_offsets,
     data = data_list,
     out_test_mu
   )
-  expect_equal(as.numeric(test_mu), c(0.0, 0.0), tolerance = 1e-6)
+  expected_test_mu <- 0.5 * 0.05 * (2.0 * c(0.3, 0.7) - 1.0)
+  expect_equal(as.numeric(test_mu), expected_test_mu, tolerance = 1e-6)
 
-  # Check compute_hierarchical_phi with placeholder zeros matches expected_phi
-  expect_equal(as.numeric(phi_hierarchical), expected_phi, tolerance = 1e-6)
+  # Check compute_hierarchical_phi matches expected_phi_hierarchical
+  expected_phi_hierarchical <- as.vector(stats::plogis(expected_raw_phi_mat))
+  expect_equal(
+    as.numeric(phi_hierarchical),
+    expected_phi_hierarchical,
+    tolerance = 1e-6
+  )
 })
 
 test_that("probit.stan defines inv_link and evaluate_mu_from_moments correctly", {
@@ -323,5 +348,6 @@ generated quantities {
     data = list(x_scalar = 0.0, x_vec = c(-1.96, 1.96)),
     out_mu
   )
-  expect_equal(as.numeric(res_mu), c(0.0, 0.0), tolerance = 1e-6)
+  expected_probit_mu <- 0.5 * 0.05 * stats::qnorm(c(0.3, 0.7))
+  expect_equal(as.numeric(res_mu), expected_probit_mu, tolerance = 1e-6)
 })

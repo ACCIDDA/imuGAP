@@ -277,7 +277,7 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_multi$captured$object, "stanmodel")
   expect_equal(
     out_multi$captured$object@model_name,
-    "impute_school_coverage_process_v6"
+    "bspline_static_offsets_logit"
   )
 
   # 1-layer hierarchy dispatches to specialized single-layer Stan model
@@ -300,7 +300,34 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_single$captured$object, "stanmodel")
   expect_equal(
     out_single$captured$object@model_name,
-    "impute_school_coverage_process_v6_single_layer"
+    "bspline_single_logit"
+  )
+
+  # Probit model option dispatches to probit models
+  out_multi_probit <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs(),
+      imugap_opts = imugap_options(model = "probit")
+    )
+  ))
+  expect_equal(
+    out_multi_probit$captured$object@model_name,
+    "bspline_static_offsets_probit"
+  )
+
+  out_single_probit <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = pops1,
+      locations = locs1,
+      imugap_opts = imugap_options(model = "probit")
+    )
+  ))
+  expect_equal(
+    out_single_probit$captured$object@model_name,
+    "bspline_single_probit"
   )
 })
 

@@ -42,10 +42,16 @@ test_that("imugap_options errors on unknown model", {
   )
 })
 
-test_that("imugap_options accepts default keyword explicitly", {
+test_that("imugap_options accepts default, logit, and probit options", {
   defaults <- imugap_options()
-  opts <- imugap_options(model = "default")
-  expect_equal(opts, defaults)
+  opts_default <- imugap_options(model = "default")
+  expect_equal(opts_default, defaults)
+
+  opts_logit <- imugap_options(model = "logit")
+  expect_equal(opts_logit$model, "logit")
+
+  opts_probit <- imugap_options(model = "probit")
+  expect_equal(opts_probit$model, "probit")
 })
 
 test_that("imugap_options accepts numeric whole-number df", {

@@ -200,8 +200,12 @@ generate_inits <- function(dat_stan, model = "default") {
     )
   }
 
-  model_inits <- if (identical(model, "default")) {
+  model_inits <- if (model %in% c("default", "logit")) {
     init_beta <- rep(stats::qlogis(baseline_phi), dat_stan$k_bs) +
+      stats::rnorm(dat_stan$k_bs, 0, 0.05)
+    list(beta_bs = array(init_beta, dim = dat_stan$k_bs))
+  } else if (identical(model, "probit")) {
+    init_beta <- rep(stats::qnorm(baseline_phi), dat_stan$k_bs) +
       stats::rnorm(dat_stan$k_bs, 0, 0.05)
     list(beta_bs = array(init_beta, dim = dat_stan$k_bs))
   } else {
@@ -366,11 +370,17 @@ sampling <- function(
   # Select specialized Stan model based on model and hierarchy depth:
   # 1-layer uses the streamlined single-location model; >= 2 layers uses the full
   # hierarchical model.
-  model_name <- if (identical(model, "default")) {
+  model_name <- if (model %in% c("default", "logit")) {
     if (is_multilayer) {
-      "impute_school_coverage_process_v6"
+      "bspline_static_offsets_logit"
     } else {
-      "impute_school_coverage_process_v6_single_layer"
+      "bspline_single_logit"
+    }
+  } else if (identical(model, "probit")) {
+    if (is_multilayer) {
+      "bspline_static_offsets_probit"
+    } else {
+      "bspline_single_probit"
     }
   } else {
     stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model = model)
