@@ -30,6 +30,8 @@ model_hierarchical_phi <- sprintf(
   "
 functions {
   #include functions/link/logit.stan
+  #include functions/guess/taylor2_logit.stan
+  #include functions/solvers/direct.stan
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/bounds_to_range.stan
   #include functions/lookups.stan

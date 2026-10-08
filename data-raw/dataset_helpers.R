@@ -593,20 +593,6 @@ simulate_observations_from_latent <- function(
   ))
   locations_sim <- pop_dt[locs_raw, on = "loc_id"]
 
-  sim_internals <- list(
-    phi_st = phi_st,
-    lambda = setup$lambda,
-    sigma_sch = setup$sigma_sch,
-    sigma_cnty = setup$sigma_cnty,
-    off_sch = latent$delta_sch,
-    off_cnty = latent$delta_cnty,
-    censor_reduction = other_vax_reduction,
-    uptake = cov,
-    county_names = county_names,
-    school_names = school_names,
-    cnty_ids = cnty_ids
-  )
-
   target_grid <- imuGAP:::create_target(
     location = unique(locations_sim$loc_id),
     age = 1:18,
@@ -646,9 +632,7 @@ simulate_observations_from_latent <- function(
     observations_sim = observations_sim,
     populations_sim = populations_sim,
     locations_sim = locations_sim,
-    latent_params_sim = latent_params_sim,
-    sim_internals = sim_internals,
-    target_sim = target_grid
+    latent_params_sim = latent_params_sim
   )
 }
 
@@ -835,20 +819,6 @@ simulate_observations_from_latent_min_noise <- function(
   ))
   locations_sim <- pop_dt[locs_raw, on = "loc_id"]
 
-  sim_internals <- list(
-    phi_st = phi_st,
-    lambda = setup$lambda,
-    sigma_sch = setup$sigma_sch,
-    sigma_cnty = setup$sigma_cnty,
-    off_sch = latent$delta_sch,
-    off_cnty = latent$delta_cnty,
-    censor_reduction = other_vax_reduction,
-    uptake = cov,
-    county_names = county_names,
-    school_names = school_names,
-    cnty_ids = cnty_ids
-  )
-
   target_grid <- imuGAP:::create_target(
     location = unique(locations_sim$loc_id),
     age = 1:18,
@@ -888,8 +858,6 @@ simulate_observations_from_latent_min_noise <- function(
     observations_sim = observations_sim,
     populations_sim = populations_sim,
     locations_sim = locations_sim,
-    latent_params_sim = latent_params_sim,
-    sim_internals = sim_internals,
-    target_sim = target_grid
+    latent_params_sim = latent_params_sim
   )
 }

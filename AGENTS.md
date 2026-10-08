@@ -30,7 +30,9 @@ This document provides concise instructions and rules for AI coding assistants w
 * **Formatting & Linting**:
   * Format code with `just format` (`air`).
   * Verify lint compliance with `just lint` (`air` and `lintr`).
-  * Maximum line length is **100 characters**.
+  * Maximum line length is **100 characters** for R/Stan code, comments, and configuration files.
+    In vignettes (`.Rmd`) and documentation, prose paragraphs should be authored as single
+    continuous lines (allowing editor soft-wrapping).
 * **Error Handling, Message Templates & Assertions**:
   * Define error format strings as module constants (`ERR_*`, `MSG_*`) at the top of each file
     using named `{var}` placeholders (e.g. `"{n_doses}"`, `"{dose}"`, `"{sched_age}"`) for
@@ -79,12 +81,16 @@ This document provides concise instructions and rules for AI coding assistants w
     #' }
     ```
   * This ensures fast `pkgdown` site builds (~35s) while passing CRAN `--as-cran` checks and remaining runnable for interactive users.
-* **Vignette Voice & Tone**:
+* **Vignette Voice, Tone & Prose Structure**:
   * Write vignettes directly to the user using active voice for actions (e.g. "You can fit the model to your data by calling `sampling()`...", "Specify your model options using `imugap_options()`...").
   * Avoid passive or impersonal constructions (e.g. avoid "Model fitting is executed via...", "Calculations are performed by...").
   * For visual presentations, diagrams, or rendered plots (where text describes something to see rather than an action the reader takes), introduce the visual directly (e.g. "The following diagram shows...", "The following plot compares...").
+  * **Prose Paragraph Authoring**: Author prose paragraphs as single continuous lines per paragraph rather than inserting arbitrary hard line breaks, allowing markdown renderers and editors to soft-wrap paragraphs cleanly.
 * **Vignette Plots & Dark Mode**:
   * Vignette plots must enforce a solid white background and black text (`dev.args = list(bg = "white")`, `thematic::thematic_off()`, and `ggplot2::theme_set(...)`).
+  * **Omit Titles and Subtitles**: Generally avoid in-plot `title` and `subtitle` text in `labs()`; semantic context should be obvious from the figure caption (`fig.cap`) and surrounding prose context.
+  * **Consistent Panel Axes**: Panel figures (facets and multi-panel displays) should share consistent axes and coordinate limits across subplots.
+  * **Panel Spacing & Label Collisions**: Ensure panel spacing (`panel.spacing`) and axis tick breaks prevent text collisions, particularly along dense multi-column x-axis labels.
 * **Vignette Mermaid Diagrams & PDF Support**:
   * The fundamental tracked source for diagrams is the Mermaid file (`vignettes/figures/*.mmd`).
   * Compiled SVG/PDF/PNG assets are untracked (gitignored) and dynamically built via `just diagrams` (integrated into `just docs`, `just render`, `just build`, `just site`, and CI workflows).
@@ -94,8 +100,9 @@ This document provides concise instructions and rules for AI coding assistants w
     * Exclude explicit numbering from box labels; step sequencing is implied by diagram wiring.
     * Position primary box titles toward the top of each container.
     * Keep subtitle/detail font sizes and weights close to the title styling so all text remains crisp and legible under color-scheme inversions.
-* **Plot Production & Coordinate Limits**:
+* **Plot Production, Coordinate Limits & Expansion**:
   * Prefer the ggplot2 coordinate system (`coord_cartesian(xlim = ..., ylim = ...)`) over scale-based limits (`scale_*_continuous(limits = ...)`) when setting plot axis bounds, to avoid dropping or discarding out-of-bounds data points and ribbon geometries.
+  * Generally prefer `expand = FALSE` in `coord_*` functions (or `expansion(mult = 0)` in scales) to remove default outer padding, while explicitly setting precise coordinate limits that cleanly enclose the intended data range.
 * **Stan Component Unit Testing**:
   * Unit tests for Stan include files in `inst/stan/` live in granular files `tests/testthat/test-stan-*.R`.
   * Explicitly declare `target <- "<subpath>.stan"` and compile via `sprintf(...) |> compile_stan_harness()`.

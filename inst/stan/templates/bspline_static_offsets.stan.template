@@ -1,8 +1,17 @@
+/**
+ * @file bspline_static_offsets.stan.template
+ * @brief Production template for hierarchical static offset models.
+ * Pattern placeholders:
+ *   @LINK@   : link module ("logit", "probit")
+ *   @GUESS@  : initial guess module ("taylor4", "conditioned", "zero", "taylor2", etc.)
+ *   @SOLVE@  : solver module ("direct", "halley2", "halley10", "newton2", "builtin", etc.)
+ */
+
 functions {
   #include functions/convenience.stan
-  #include functions/link/logit.stan
-  #include functions/guess/taylor4_logit.stan
-  #include functions/solvers/direct.stan
+  #include functions/link/@LINK@.stan
+  #include functions/guess/@GUESS@_@LINK@.stan
+  #include functions/solvers/@SOLVE@.stan
   #include functions/layer_offsets.stan
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/observation_likelihood_reduce.stan

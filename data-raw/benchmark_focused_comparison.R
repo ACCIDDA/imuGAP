@@ -55,10 +55,10 @@ generated quantities {
   vector[C] z_guess = shift_zero(eta0, p0_c, w, delta);
   vector[C] cond_guess = shift_logit_conditioned(eta0, p0_c, w, delta);
 
-  vector[C] halley_warm_max2 = solve_shift_halley(cond_guess, eta0, p0_c, w, delta, 2, 1e-12);
-  vector[C] halley_warm_max10 = solve_shift_halley(cond_guess, eta0, p0_c, w, delta, 10, 1e-12);
-  vector[C] halley_naive_max2 = solve_shift_halley(z_guess, eta0, p0_c, w, delta, 2, 1e-12);
-  vector[C] halley_naive_max10 = solve_shift_halley(z_guess, eta0, p0_c, w, delta, 10, 1e-12);
+  vector[C] halley_warm_max2 = solve_shift_halley(cond_guess, eta0, p0_c, w, delta, 2);
+  vector[C] halley_warm_max10 = solve_shift_halley(cond_guess, eta0, p0_c, w, delta, 10);
+  vector[C] halley_naive_max2 = solve_shift_halley(z_guess, eta0, p0_c, w, delta, 2);
+  vector[C] halley_naive_max10 = solve_shift_halley(z_guess, eta0, p0_c, w, delta, 10);
   vector[C] builtin_warm = solve_shift_builtin(cond_guess, eta0, p0_c, w, delta);
   vector[C] builtin_naive = solve_shift_builtin(z_guess, eta0, p0_c, w, delta);
 }
@@ -92,10 +92,10 @@ generated quantities {
   vector[C] z_guess = shift_zero(eta0, p0_c, w, delta);
   vector[C] cond_guess = shift_probit_conditioned(eta0, p0_c, w, delta);
 
-  vector[C] halley_warm_max2 = solve_shift_halley(cond_guess, eta0, p0_c, w, delta, 2, 1e-12);
-  vector[C] halley_warm_max10 = solve_shift_halley(cond_guess, eta0, p0_c, w, delta, 10, 1e-12);
-  vector[C] halley_naive_max2 = solve_shift_halley(z_guess, eta0, p0_c, w, delta, 2, 1e-12);
-  vector[C] halley_naive_max10 = solve_shift_halley(z_guess, eta0, p0_c, w, delta, 10, 1e-12);
+  vector[C] halley_warm_max2 = solve_shift_halley(cond_guess, eta0, p0_c, w, delta, 2);
+  vector[C] halley_warm_max10 = solve_shift_halley(cond_guess, eta0, p0_c, w, delta, 10);
+  vector[C] halley_naive_max2 = solve_shift_halley(z_guess, eta0, p0_c, w, delta, 2);
+  vector[C] halley_naive_max10 = solve_shift_halley(z_guess, eta0, p0_c, w, delta, 10);
   vector[C] builtin_warm = solve_shift_builtin(cond_guess, eta0, p0_c, w, delta);
   vector[C] builtin_naive = solve_shift_builtin(z_guess, eta0, p0_c, w, delta);
 }

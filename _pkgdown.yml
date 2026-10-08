@@ -23,6 +23,8 @@ navbar:
           href: articles/examining_fits.html
         - text: "Model Evaluation & PSIS-LOO Cross-Validation"
           href: articles/leave_some_out.html
+        - text: "Aggregation Offsets: Solvers and Approximations"
+          href: articles/aggregation_offsets.html
 
 authors:
   sidebar:

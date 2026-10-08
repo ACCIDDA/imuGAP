@@ -9,6 +9,13 @@
 
 /**
  * Partial log-likelihood for unmixed uncensored observations (unnormalized).
+ *
+ * @param y_obs_slice Slice of observed positive vaccination counts.
+ * @param start 1-based start index of the slice.
+ * @param end 1-based end index of the slice.
+ * @param y_smp Array of total sample size counts.
+ * @param p Vector of expected vaccination probabilities.
+ * @return Unnormalized binomial log-likelihood contribution.
  */
 real unmixed_uncensored_partial_lpmf(
   array[] int y_obs_slice,
@@ -22,6 +29,14 @@ real unmixed_uncensored_partial_lpmf(
 
 /**
  * Partial log-likelihood for mixed uncensored observations (unnormalized).
+ *
+ * @param y_obs_slice Slice of observed positive vaccination counts.
+ * @param start 1-based start index of the slice.
+ * @param end 1-based end index of the slice.
+ * @param y_smp Array of total sample size counts.
+ * @param obs_map 2D array [2, N] of [start, end] indices into weighted components.
+ * @param weighted Vector of componentwise weighted probabilities.
+ * @return Unnormalized binomial log-likelihood contribution.
  */
 real mixed_uncensored_partial_lpmf(
   array[] int y_obs_slice,
@@ -45,6 +60,16 @@ real mixed_uncensored_partial_lpmf(
 
 /**
  * Partial log-likelihood for unmixed right-censored observations.
+ *
+ * @param y_fail_slice Slice of observed unvaccinated/failure counts.
+ * @param start 1-based start index of the slice.
+ * @param end 1-based end index of the slice.
+ * @param y_smp Array of total sample size counts.
+ * @param phi_lookup Mapping from observation index to propensity entry.
+ * @param cdf_lookup Mapping from observation index to dose CDF entry.
+ * @param phi Vector of location-cohort non-uptake probabilities.
+ * @param unrolled_dose_probs Vector of cumulative dose timing probabilities.
+ * @return Binomial log cumulative distribution function contribution.
  */
 real unmixed_right_partial_lcdf(
   array[] int y_fail_slice,
@@ -64,6 +89,14 @@ real unmixed_right_partial_lcdf(
 
 /**
  * Partial log-likelihood for mixed right-censored observations.
+ *
+ * @param y_fail_slice Slice of observed unvaccinated/failure counts.
+ * @param start 1-based start index of the slice.
+ * @param end 1-based end index of the slice.
+ * @param y_smp Array of total sample size counts.
+ * @param obs_map 2D array [2, N] of [start, end] indices into weighted components.
+ * @param weighted Vector of componentwise weighted probabilities.
+ * @return Binomial log cumulative distribution function contribution.
  */
 real mixed_right_partial_lcdf(
   array[] int y_fail_slice,
@@ -87,6 +120,16 @@ real mixed_right_partial_lcdf(
 
 /**
  * Partial log-likelihood for unmixed left-censored observations.
+ *
+ * @param y_obs_slice Slice of observed positive vaccination counts.
+ * @param start 1-based start index of the slice.
+ * @param end 1-based end index of the slice.
+ * @param y_smp Array of total sample size counts.
+ * @param phi_lookup Mapping from observation index to propensity entry.
+ * @param cdf_lookup Mapping from observation index to dose CDF entry.
+ * @param phi Vector of location-cohort non-uptake probabilities.
+ * @param unrolled_dose_probs Vector of cumulative dose timing probabilities.
+ * @return Binomial log cumulative distribution function contribution.
  */
 real unmixed_left_partial_lcdf(
   array[] int y_obs_slice,
@@ -106,6 +149,14 @@ real unmixed_left_partial_lcdf(
 
 /**
  * Partial log-likelihood for mixed left-censored observations.
+ *
+ * @param y_obs_slice Slice of observed positive vaccination counts.
+ * @param start 1-based start index of the slice.
+ * @param end 1-based end index of the slice.
+ * @param y_smp Array of total sample size counts.
+ * @param obs_map 2D array [2, N] of [start, end] indices into weighted components.
+ * @param weighted Vector of componentwise weighted probabilities.
+ * @return Binomial log cumulative distribution function contribution.
  */
 real mixed_left_partial_lcdf(
   array[] int y_obs_slice,

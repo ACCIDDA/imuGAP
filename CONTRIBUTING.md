@@ -72,7 +72,7 @@ We use [`just`](https://github.com/casey/just) to automate development tasks. Th
 ### 1. Formatting & Linting
 
 * R code is formatted with `air` and linted with `lintr` (rules in `.lintr`).
-* Maximum line length is **100 characters**.
+* Maximum line length is **100 characters** for R/Stan code, comments, and configuration files. In vignettes (`.Rmd`) and documentation, prose paragraphs should be authored as single continuous lines per paragraph (allowing editor soft-wrapping).
 * `R/stanmodels.R`, `R/flexstanr.R`, `inst/analysis/`, `inst/scripts/`, and `data-raw/` are excluded from linting because they are generated artifacts or standalone scratch scripts.
 
 ### 2. Tracked vs. Untracked Artifacts & Generated Files
@@ -150,10 +150,15 @@ For computationally heavy functions (such as `sampling()` or multi-draw `predict
 To ensure vignettes provide clear, engaging, and robust guidance for users:
 
 * **Active Voice & Tone**: Write vignettes directly to the user in the active voice for actions (e.g. "You can fit the model to your data by calling `sampling()`...", "Configure your sampler with `stan_options()`..."). Avoid passive or impersonal constructions (e.g. avoid "Model fitting is executed via...", "Calculations are performed by..."). When introducing visual presentations, diagrams, or rendered plots (describing something to see rather than an action the reader performs), introduce the visual directly (e.g. "The following diagram shows...", "The following plot compares...").
+* **Prose Paragraph Authoring**: Author prose paragraphs as single continuous lines per paragraph rather than inserting arbitrary hard line breaks, allowing markdown renderers and editors to soft-wrap paragraphs cleanly.
 * **Solid Backgrounds**: In vignette setup chunks, specify `knitr::opts_chunk$set(dev.args = list(bg = "white"))`.
 * **Thematic Inversion**: Disable automatic plot theme inversion with `if (requireNamespace("thematic", quietly = TRUE)) thematic::thematic_off()`.
 * **Theme Styling**: Configure `ggplot2::theme_set()` with solid white backgrounds (`plot.background`, `panel.background`, `legend.background`) and black text (`text`, `axis.text`, `axis.title`, `plot.title`).
+* **Title and Subtitle Omission**: Generally avoid in-plot `title` and `subtitle` strings inside `labs()`; figure intent and narrative should be obvious from the chunk caption (`fig.cap`) and surrounding prose text.
+* **Consistent Panel Axes**: In faceted or multi-panel layouts, maintain consistent axis scales across subplots to support accurate comparative evaluation across parameter values.
+* **Panel Spacing & Text Collisions**: Adjust panel spacing (`panel.spacing = unit(...)`) and configure axis break frequencies (`scale_x_continuous(breaks = ...)`) to ensure no overlapping or colliding tick labels, particularly across dense multi-column facet x-axes.
 * **Coordinate System vs. Scale Limits**: Prefer ggplot2 coordinate system bounds (`coord_cartesian(xlim = ..., ylim = ...)`) over scale-based limits (`scale_*_continuous(limits = ...)`) when zooming or adjusting visible ranges. Scale limits discard data points outside the window (altering summary statistics, regressions, or ribbon clipping), whereas coordinate zooming retains all underlying data.
+* **Plot Area Expansion (`expand = FALSE`)**: Generally prefer disabling default multiplicative padding in coordinate systems (`coord_cartesian(..., expand = FALSE)`) or scales (`expansion(mult = 0)`), while specifying explicit, precise coordinate limits that cleanly enclose the intended data range.
 
 ### 7. Vignette Mermaid Diagrams & Full PDF Support
 

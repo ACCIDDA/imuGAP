@@ -118,3 +118,14 @@ details summary:hover {
   height: auto;
 }
 
+/* Compact math tables */
+.table-compact,
+.table-compact table {
+  font-size: 0.85rem !important;
+}
+
+.table-compact td,
+.table-compact th {
+  padding: 0.35rem 0.5rem;
+}
+

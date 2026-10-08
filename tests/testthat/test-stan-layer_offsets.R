@@ -17,6 +17,8 @@ model_layer_offsets <- sprintf(
   "
 functions {
   #include functions/link/logit.stan
+  #include functions/guess/taylor2_logit.stan
+  #include functions/solvers/direct.stan
   #include %s
 }
 data {
@@ -71,7 +73,6 @@ generated quantities {
     raw_phi_root, off_layer, n_cohort, n_locs,
     n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight
   );
-  vector[2] out_test_mu = evaluate_mu_from_moments([0.3, 0.7]', [0.05, 0.01, 0.002]');
 }
 ",
   target
@@ -282,15 +283,6 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
 
   expect_equal(as.matrix(mu_offset), expected_mu_offset, tolerance = 1e-6)
 
-  # Check evaluate_mu_from_moments functional signature (logit: 0.5 * m2 * (2 * p - 1))
-  test_mu <- run_stan_harness(
-    model_layer_offsets,
-    data = data_list,
-    out_test_mu
-  )
-  expected_test_mu <- 0.5 * 0.05 * (2.0 * c(0.3, 0.7) - 1.0)
-  expect_equal(as.numeric(test_mu), expected_test_mu, tolerance = 1e-6)
-
   # Check compute_hierarchical_phi matches expected_phi_hierarchical
   expected_phi_hierarchical <- as.vector(stats::plogis(expected_raw_phi_mat))
   expect_equal(
@@ -300,7 +292,7 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
   )
 })
 
-test_that("probit.stan defines inv_link and evaluate_mu_from_moments correctly", {
+test_that("probit.stan defines link_fn and inv_link correctly", {
   model_probit <- sprintf(
     "
 functions {
@@ -319,7 +311,6 @@ model {
 generated quantities {
   real out_scalar = inv_link(x_scalar);
   vector[2] out_vec = inv_link(x_vec);
-  vector[2] out_mu = evaluate_mu_from_moments([0.3, 0.7]', [0.05, 0.01, 0.002]');
 }
 "
   ) |>
@@ -342,12 +333,4 @@ generated quantities {
     stats::pnorm(c(-1.96, 1.96)),
     tolerance = 1e-4
   )
-
-  res_mu <- run_stan_harness(
-    model_probit,
-    data = list(x_scalar = 0.0, x_vec = c(-1.96, 1.96)),
-    out_mu
-  )
-  expected_probit_mu <- 0.5 * 0.05 * stats::qnorm(c(0.3, 0.7))
-  expect_equal(as.numeric(res_mu), expected_probit_mu, tolerance = 1e-6)
 })

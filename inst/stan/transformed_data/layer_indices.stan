@@ -82,3 +82,4 @@ for (p in 1:n_parent_locs) {
   cur_qr += K * (K - 1);
 }
 
+

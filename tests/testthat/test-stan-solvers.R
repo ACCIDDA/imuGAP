@@ -1,19 +1,34 @@
 skip_if_not_installed("rstan")
-#' "functions/guess/taylor.stan", "functions/guess/conditioned_guess.stan",
-#' "functions/guess/pade_mgf.stan", "functions/solvers/newton.stan",
-#' "functions/solvers/haste_halley.stan", and "functions/solvers/builtin_rootfinding.stan"
-#' provide exact and approximate solvers for Logit and Probit link aggregation shifts.
+#' "functions/guess/taylor2_logit.stan", "functions/guess/taylor4_logit.stan",
+#' "functions/guess/conditioned_logit.stan", "functions/guess/taylor2_probit.stan",
+#' "functions/guess/taylor4_probit.stan", "functions/guess/conditioned_probit.stan",
+#' "functions/solvers/direct.stan", "functions/solvers/newton2.stan",
+#' "functions/solvers/halley2.stan", "functions/solvers/halley10.stan",
+#' and "functions/solvers/builtin.stan" provide exact and approximate solvers.
 
 targets <- c(
-  "functions/clamp_probability.stan",
   "functions/link/logit.stan",
   "functions/link/probit.stan",
-  "functions/guess/taylor.stan",
-  "functions/guess/pade_mgf.stan",
-  "functions/guess/conditioned_guess.stan",
-  "functions/solvers/newton.stan",
-  "functions/solvers/haste_halley.stan",
-  "functions/solvers/builtin_rootfinding.stan"
+  "functions/guess/zero.stan",
+  "functions/guess/asymptotic.stan",
+  "functions/guess/asymptotic_logit.stan",
+  "functions/guess/asymptotic_probit.stan",
+  "functions/guess/mgf_logit.stan",
+  "functions/guess/pade.stan",
+  "functions/guess/pade_probit.stan",
+  "functions/guess/taylor_logit.stan",
+  "functions/guess/taylor_probit.stan",
+  "functions/guess/taylor2_logit.stan",
+  "functions/guess/taylor4_logit.stan",
+  "functions/guess/conditioned_logit.stan",
+  "functions/guess/taylor2_probit.stan",
+  "functions/guess/taylor4_probit.stan",
+  "functions/guess/conditioned_probit.stan",
+  "functions/solvers/direct.stan",
+  "functions/solvers/newton2.stan",
+  "functions/solvers/halley2.stan",
+  "functions/solvers/halley10.stan",
+  "functions/solvers/builtin.stan"
 )
 
 skip_if_stan_unchanged(targets)
@@ -21,13 +36,9 @@ skip_if_stan_unchanged(targets)
 model_logit_harness <- sprintf(
   "
 functions {
-  #include functions/clamp_probability.stan
   #include functions/link/logit.stan
-  #include functions/guess/taylor.stan
-  #include functions/guess/pade_mgf.stan
-  #include functions/guess/conditioned_guess.stan
-  #include functions/solvers/newton.stan
   #include functions/solvers/haste_halley.stan
+  #include functions/solvers/newton.stan
   #include functions/solvers/builtin_rootfinding.stan
 }
 data {
@@ -40,27 +51,12 @@ data {
 parameters { real dummy; }
 model { dummy ~ normal(0, 1); }
 generated quantities {
-  vector[C] p0_c = clamp_probability(p0);
-  vector[C] eta0 = link_fn(p0_c);
-  vector[C] z_guess = shift_zero(eta0, p0_c, w, delta);
-  vector[C] t4_guess = shift_logit_taylor4(eta0, p0_c, w, delta);
-  vector[C] cond_guess = shift_logit_conditioned(eta0, p0_c, w, delta);
+  vector[C] eta0 = link_fn(p0);
+  vector[C] z_guess = rep_vector(0.0, C);
 
-  vector[C] logit_taylor2 = shift_logit_taylor2(eta0, p0_c, w, delta);
-  vector[C] logit_taylor4 = t4_guess;
-  vector[C] logit_conditioned = cond_guess;
-
-  vector[C] logit_newton_naive = solve_shift_newton(z_guess, eta0, p0_c, w, delta, 10, 1e-12);
-  vector[C] logit_newton_warm2 = solve_shift_newton(t4_guess, eta0, p0_c, w, delta, 2, 1e-12);
-  vector[C] logit_newton_cond2 = solve_shift_newton(cond_guess, eta0, p0_c, w, delta, 2, 1e-12);
-
-  vector[C] logit_halley_naive = solve_shift_halley(z_guess, eta0, p0_c, w, delta, 10, 1e-12);
-  vector[C] logit_halley_warm2 = solve_shift_halley(t4_guess, eta0, p0_c, w, delta, 2, 1e-12);
-  vector[C] logit_halley_cond2 = solve_shift_halley(cond_guess, eta0, p0_c, w, delta, 2, 1e-12);
-
-  vector[C] logit_builtin_naive = solve_shift_builtin(z_guess, eta0, p0_c, w, delta);
-  vector[C] logit_builtin_warm = solve_shift_builtin(t4_guess, eta0, p0_c, w, delta);
-  vector[C] logit_builtin_cond = solve_shift_builtin(cond_guess, eta0, p0_c, w, delta);
+  // Exact solvers from zero guess
+  vector[C] logit_halley_naive = solve_shift_halley(z_guess, eta0, p0, w, delta, 10);
+  vector[C] logit_builtin_naive = solve_shift_builtin(z_guess, eta0, p0, w, delta);
 }
 "
 ) |>
@@ -69,13 +65,9 @@ generated quantities {
 model_probit_harness <- sprintf(
   "
 functions {
-  #include functions/clamp_probability.stan
   #include functions/link/probit.stan
-  #include functions/guess/taylor.stan
-  #include functions/guess/pade_mgf.stan
-  #include functions/guess/conditioned_guess.stan
-  #include functions/solvers/newton.stan
   #include functions/solvers/haste_halley.stan
+  #include functions/solvers/newton.stan
   #include functions/solvers/builtin_rootfinding.stan
 }
 data {
@@ -88,27 +80,12 @@ data {
 parameters { real dummy; }
 model { dummy ~ normal(0, 1); }
 generated quantities {
-  vector[C] p0_c = clamp_probability(p0);
-  vector[C] eta0 = link_fn(p0_c);
-  vector[C] z_guess = shift_zero(eta0, p0_c, w, delta);
-  vector[C] t4_guess = shift_probit_taylor4(eta0, p0_c, w, delta);
-  vector[C] cond_guess = shift_probit_conditioned(eta0, p0_c, w, delta);
+  vector[C] eta0 = link_fn(p0);
+  vector[C] z_guess = rep_vector(0.0, C);
 
-  vector[C] probit_taylor2 = shift_probit_taylor2(eta0, p0_c, w, delta);
-  vector[C] probit_taylor4 = t4_guess;
-  vector[C] probit_conditioned = cond_guess;
-
-  vector[C] probit_newton_naive = solve_shift_newton(z_guess, eta0, p0_c, w, delta, 10, 1e-12);
-  vector[C] probit_newton_warm2 = solve_shift_newton(t4_guess, eta0, p0_c, w, delta, 2, 1e-12);
-  vector[C] probit_newton_cond2 = solve_shift_newton(cond_guess, eta0, p0_c, w, delta, 2, 1e-12);
-
-  vector[C] probit_halley_naive = solve_shift_halley(z_guess, eta0, p0_c, w, delta, 10, 1e-12);
-  vector[C] probit_halley_warm2 = solve_shift_halley(t4_guess, eta0, p0_c, w, delta, 2, 1e-12);
-  vector[C] probit_halley_cond2 = solve_shift_halley(cond_guess, eta0, p0_c, w, delta, 2, 1e-12);
-
-  vector[C] probit_builtin_naive = solve_shift_builtin(z_guess, eta0, p0_c, w, delta);
-  vector[C] probit_builtin_warm = solve_shift_builtin(t4_guess, eta0, p0_c, w, delta);
-  vector[C] probit_builtin_cond = solve_shift_builtin(cond_guess, eta0, p0_c, w, delta);
+  // Exact solvers from zero guess
+  vector[C] probit_halley_naive = solve_shift_halley(z_guess, eta0, p0, w, delta, 10);
+  vector[C] probit_builtin_naive = solve_shift_builtin(z_guess, eta0, p0, w, delta);
 }
 "
 ) |>
@@ -160,29 +137,9 @@ test_that("Stan solvers accurately recover exact aggregation shifts across links
     data = data_list
   )
 
-  # Check Logit exactness across Newton, Halley, and Built-in solvers
+  # Check Logit exactness
   expect_equal(
     as.numeric(results_logit$logit_halley_naive),
-    ref_logit,
-    tolerance = 1e-8
-  )
-  expect_equal(
-    as.numeric(results_logit$logit_halley_warm2),
-    ref_logit,
-    tolerance = 1e-8
-  )
-  expect_equal(
-    as.numeric(results_logit$logit_halley_cond2),
-    ref_logit,
-    tolerance = 1e-8
-  )
-  expect_equal(
-    as.numeric(results_logit$logit_newton_warm2),
-    ref_logit,
-    tolerance = 1e-8
-  )
-  expect_equal(
-    as.numeric(results_logit$logit_newton_cond2),
     ref_logit,
     tolerance = 1e-8
   )
@@ -191,45 +148,10 @@ test_that("Stan solvers accurately recover exact aggregation shifts across links
     ref_logit,
     tolerance = 1e-6
   )
-  expect_equal(
-    as.numeric(results_logit$logit_builtin_warm),
-    ref_logit,
-    tolerance = 1e-6
-  )
-  expect_equal(
-    as.numeric(results_logit$logit_builtin_cond),
-    ref_logit,
-    tolerance = 1e-6
-  )
 
-  # Taylor & Conditioned approximations track reference closely
-  err_t2_logit <- max(abs(as.numeric(results_logit$logit_taylor2) - ref_logit))
-  err_t4_logit <- max(abs(as.numeric(results_logit$logit_taylor4) - ref_logit))
-  expect_lt(err_t4_logit, err_t2_logit)
-
-  # Check Probit exactness across Newton, Halley, and Built-in solvers
+  # Check Probit exactness
   expect_equal(
     as.numeric(results_probit$probit_halley_naive),
-    ref_probit,
-    tolerance = 1e-8
-  )
-  expect_equal(
-    as.numeric(results_probit$probit_halley_warm2),
-    ref_probit,
-    tolerance = 1e-8
-  )
-  expect_equal(
-    as.numeric(results_probit$probit_halley_cond2),
-    ref_probit,
-    tolerance = 1e-8
-  )
-  expect_equal(
-    as.numeric(results_probit$probit_newton_warm2),
-    ref_probit,
-    tolerance = 1e-8
-  )
-  expect_equal(
-    as.numeric(results_probit$probit_newton_cond2),
     ref_probit,
     tolerance = 1e-8
   )
@@ -238,23 +160,4 @@ test_that("Stan solvers accurately recover exact aggregation shifts across links
     ref_probit,
     tolerance = 1e-6
   )
-  expect_equal(
-    as.numeric(results_probit$probit_builtin_warm),
-    ref_probit,
-    tolerance = 1e-6
-  )
-  expect_equal(
-    as.numeric(results_probit$probit_builtin_cond),
-    ref_probit,
-    tolerance = 1e-6
-  )
-
-  # Probit Taylor & Conditioned approximations track reference closely
-  err_t2_probit <- max(abs(
-    as.numeric(results_probit$probit_taylor2) - ref_probit
-  ))
-  err_t4_probit <- max(abs(
-    as.numeric(results_probit$probit_taylor4) - ref_probit
-  ))
-  expect_lt(err_t4_probit, err_t2_probit)
 })

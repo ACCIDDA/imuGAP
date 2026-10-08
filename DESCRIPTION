@@ -61,6 +61,7 @@ Suggests:
     pkgload,
     thematic,
     usethis,
+    ggh4x,
     loo (>= 2.6.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3

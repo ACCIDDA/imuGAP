@@ -1,14 +1,18 @@
 /**
- * Stably compute the divided difference (exp(-r1) - exp(-r2)) / (r2 - r1)
+ * @file unrolled_dose_static_lambda.stan
+ * @brief Continuous-time Markov chain dose acquisition probabilities under piecewise hazards.
+ */
+
+/**
+ * Stably compute the divided difference (exp(-r1) - exp(-r2)) / (r2 - r1).
  *
  * Used for off-diagonal transition probabilities in continuous-time Markov chains
  * with non-zero interval transitions between dose states.
  *
- * @param delta Difference in cumulative rates (r2 - r1)
- * @param e1    Precomputed exponential decay exp(-r1)
- * @param e2    Precomputed exponential decay exp(-r2)
- *
- * @return Value of (exp(-r1) - exp(-r2)) / (r2 - r1)
+ * @param delta Difference in cumulative rates (r2 - r1).
+ * @param e1    Precomputed exponential decay exp(-r1).
+ * @param e2    Precomputed exponential decay exp(-r2).
+ * @return Value of (exp(-r1) - exp(-r2)) / (r2 - r1).
  */
 real exp_diff_div(real delta, real e1, real e2) {
   if (abs(delta) < 1e-4) {
@@ -24,15 +28,20 @@ real exp_diff_div(real delta, real e1, real e2) {
  * Simulates a continuous-time Markov chain transition matrix P = exp(Q) for each interval m
  * under piecewise-constant transition hazards lambda_raw.
  *
- * @param n_intervals Number of time/age intervals (M)
- * @param n_doses     Maximum number of doses (D)
- * @param dt_vec      Vector of interval widths in time/age units (length M)
- * @param dose_sched  Binary schedule matrix (M x D), where dose_sched[m, k] = 1 if dose k is active
- * @param lambda_raw  Log-scale transition hazard rates (length D)
- *
- * @return Flattened vector of length M * D containing cumulative dose probabilities (P(Dose >= k))
+ * @param n_intervals Number of time/age intervals (M).
+ * @param n_doses     Maximum number of doses (D).
+ * @param dt_vec      Data vector of interval widths in time/age units (length M).
+ * @param dose_sched  Data binary schedule matrix (M x D), where dose_sched[m, k] = 1 if dose k is active.
+ * @param lambda_raw  Log-scale transition hazard rates (length D).
+ * @return Flattened vector of length M * D containing cumulative dose probabilities (P(Dose >= k)).
  */
-vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sched, vector lambda_raw) {
+vector unrolled_dose(
+  int n_intervals,
+  int n_doses,
+  data vector dt_vec,
+  data matrix dose_sched,
+  vector lambda_raw
+) {
   int n_states = n_doses + 1;
   vector[n_doses] lambda = exp(lambda_raw);
 

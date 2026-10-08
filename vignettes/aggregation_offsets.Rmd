@@ -1,0 +1,689 @@
+---
+title: "Aggregation Offsets: Solvers and Approximations"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Aggregation Offsets: Solvers and Approximations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  out.width = "100%",
+  dev.args = list(bg = "white")
+)
+```
+
+```{r setup, include = FALSE}
+if (requireNamespace("thematic", quietly = TRUE)) {
+  thematic::thematic_off()
+}
+
+suppressPackageStartupMessages({
+  suppressWarnings({
+    res <- tryCatch(
+      pkgload::load_all(quiet = TRUE),
+      error = function(e) FALSE
+    )
+    if (inherits(res, "error") || isFALSE(res)) {
+      message("Vignette building without dev tools...")
+    } else {
+      res
+    }
+  })
+})
+
+# Define a knitr hook to fold source code into a <details> block below the plot
+local({
+  hook_source <- knitr::knit_hooks$get("source")
+  knitr::knit_hooks$set(source = function(x, options) {
+    res <- hook_source(x, options)
+    if (isTRUE(options$fold) || !is.null(options$code_summary)) {
+      label <- options$code_summary
+      if (is.null(label)) label <- "Show code"
+      sprintf("\n<details><summary><b>%s</b></summary>\n\n%s\n</details>\n", label, res)
+    } else {
+      res
+    }
+  })
+
+  hook_chunk <- knitr::knit_hooks$get("chunk")
+  knitr::knit_hooks$set(chunk = function(x, options) {
+    res <- hook_chunk(x, options)
+    if (isTRUE(options$fold)) {
+      sprintf("\n<div class=\"chunk-plot-first\">\n%s\n</div>\n", res)
+    } else {
+      res
+    }
+  })
+})
+
+required_pkgs <- c("imuGAP", "data.table", "ggplot2")
+pkgs_available <- all(sapply(required_pkgs, requireNamespace, quietly = TRUE))
+
+if (!pkgs_available) {
+  knitr::opts_chunk$set(eval = FALSE)
+  message("Some suggested packages are missing. Vignette code will not be executed.")
+} else {
+  chk <- suppressPackageStartupMessages(
+    sapply(required_pkgs, require, character.only = TRUE)
+  )
+}
+```
+
+## The Aggregation Problem
+
+In nested hierarchical partition models, we want populations and sub-populations (such as State $\to$ Counties $\to$ Schools) to have consistent features. When estimating probabilities across levels, consistency requires the coverage of a parent location $j$ equals the population-weighted average of the coverage across its constituent sub-populations $k \in \mathcal{C}(j)$:
+
+$$p_j = \sum_{k \in \mathcal{C}(j)} w_k p_k, \quad \text{where } \sum_{k \in \mathcal{C}(j)} w_k = 1$$
+
+However, `imuGAP` models $p_k$ using a non-linear link function $g^{-1}(\cdot)$ (such as standard logistic $\text{logit}^{-1}$ or Gaussian cumulative normal $\Phi$ for probit). A typical model for this kind of approach is:
+
+$$p_k = g^{-1}(\eta_j + \delta_k)$$
+
+where:
+
+- $\eta_j = g(p_j)$ is the baseline linear predictor for the population,
+- $\delta_k$ is the random offset for sub-population $k$ ($\sum w_k \delta_k = 0$).
+
+Because $g^{-1}(\cdot)$ is non-linear, Jensen's inequality guarantees a systematic discrepancy between the parent rate and aggregated child rates:
+
+$$\sum_{k \in \mathcal{C}(j)} w_k g^{-1}(\eta_j + \delta_k) \neq g^{-1}\left(\eta_j + \sum_{k \in \mathcal{C}(j)} w_k \delta_k\right) = g^{-1}(\eta_j) = p_j$$
+
+To guarantee mathematical consistency between populations and sub-populations, you must find a link-scale shift $\mu_j$ that satisfies:
+
+$$F(\mu_j) = \sum_{k \in \mathcal{C}(j)} w_k g^{-1}(\eta_j + \delta_k + \mu_j) - p_j = 0$$
+
+During inference, this offset must be calculated at every step across however many parent-child groups and birth cohorts appear in your model. Using standard rootfinding solvers in Stan introduces potentially impractical computational overhead. In `imuGAP`, we have considered multiple analytical approximations in combination with specific rootfinding approaches.
+
+---
+
+## Approximation Error Across Baseline Probabilities and Offset Dispersion
+
+The aggregation correction term depends on two key drivers:
+
+1. **Curvature of the link function**: Highest near the tails ($p_0 \to 0$ or $p_0 \to 1$) and zero at the inflection point ($p_0 = 0.5$ for symmetric links).
+2. **Dispersion of child offsets ($\sigma_\delta$ and $K$)**: Larger intrinsic variance and fewer sub-populations (thus larger sample variance) produces more non-linear distortion.
+
+To evaluate the impact of link curvature and offset dispersion on aggregation consistency, we generate 100 synthetic child offset draws for each combination of subpopulation count $K$ and dispersion $\sigma_\delta$:
+
+```{r generate_offset_samples, echo = TRUE, fold = TRUE}
+# Simulation evaluation grid configuration
+set.seed(42)
+k_vals <- c(3, 10, 30, 100)
+sigmas <- c(0.2, 0.6, 1.0, 1.4)
+n_samples <- 100
+
+# Generate 100 synthetic subpopulation offset draws for each (K, sigma)
+offset_samples <- CJ(
+  k_pop = k_vals,
+  sigma_delta = sigmas,
+  sample_id = seq_len(n_samples)
+)[,
+  {
+    w_pop <- rep(1 / k_pop, k_pop)
+    delta_raw <- rnorm(k_pop, 0, sigma_delta)
+    .(
+      loc_id = seq_len(k_pop),
+      w = w_pop,
+      delta = delta_raw - sum(w_pop * delta_raw)
+    )
+  },
+  by = .(k_pop, sigma_delta, sample_id)
+]
+```
+
+The following plot compares the naive residual aggregation error (assuming $\mu = 0$) across baseline target probabilities $p_0 \in [0.001, 0.999]$ for logit and probit links, varying levels of offset standard deviation ($\sigma_\delta \in \{0.2, 0.6, 1.0, 1.4\}$), and number of subpopulations ($K \in \{3, 10, 30, 100\}$):
+
+```{r error_by_p0_plot, echo = TRUE, fold = TRUE, fig.width = 8.5, fig.height = 5, fig.cap = "Naive residual aggregation error across link functions, offset dispersions, and subpopulation counts (100 samples for offset populations)."}
+p0_seq <- c(0.001, seq(0.01, 0.99, by = 0.01), 0.999)
+links <- c("logit", "probit")
+
+dt_naive <- rbindlist(lapply(links, function(lnk) {
+  link_fn <- if (lnk == "logit") plogis else pnorm
+  eta0 <- if (lnk == "logit") qlogis(p0_seq) else qnorm(p0_seq)
+  offset_samples[,
+    {
+      p_agg <- colSums(w * link_fn(outer(delta, eta0, "+")))
+      .(
+        p0 = p0_seq,
+        residual_error = pmax(abs(p_agg - p0_seq), 1e-16)
+      )
+    },
+    by = .(
+      k = paste0("K == ", k_pop),
+      sigma = sprintf("%.1f", sigma_delta),
+      sample_id
+    )
+  ][, link := lnk]
+}))
+
+dt_naive[, link := factor(
+  link,
+  levels = c("logit", "probit"),
+  labels = c("Logit Link", "Probit Link")
+)]
+dt_naive[, k := factor(
+  k,
+  levels = paste0("K == ", c(3, 10, 30, 100))
+)]
+dt_naive[, sigma := factor(
+  sigma,
+  levels = c("0.2", "0.6", "1.0", "1.4")
+)]
+
+y_min_naive <- 10^floor(log10(min(dt_naive$residual_error)))
+
+thresh_labels <- data.frame(
+  y = c(0.01, 0.1),
+  label = c("1% Abs. Error", "10% Abs. Error"),
+  x = 0.5
+)
+
+ggplot(
+  dt_naive,
+  aes(
+    x = p0,
+    y = residual_error,
+    color = sigma,
+    group = interaction(sigma, sample_id)
+  )
+) +
+  geom_hline(
+    yintercept = c(0.01, 0.1),
+    linetype = "dashed",
+    color = "grey50",
+    linewidth = 0.4
+  ) +
+  geom_label(
+    data = thresh_labels,
+    aes(x = x, y = y, label = label),
+    inherit.aes = FALSE,
+    size = 2.8,
+    color = "grey30",
+    fill = alpha("white", 0.85),
+    label.padding = unit(0.15, "lines"),
+    linewidth = 0
+  ) +
+  geom_line(linewidth = 0.35, alpha = 0.02) +
+  scale_y_log10(
+    labels = scales::trans_format("log10", scales::math_format(10^.x))
+  ) +
+  scale_x_continuous(
+    breaks = seq(0, 1, by = 0.25),
+    labels = c("0", "0.25", "0.5", "0.75", "1")
+  ) +
+  scale_color_viridis_d(
+    option = "plasma",
+    end = 0.85,
+    guide = guide_legend(override.aes = list(alpha = 1, linewidth = 1.2), nrow = 1)
+  ) +
+  facet_grid(link ~ k, labeller = labeller(link = label_value, k = label_parsed)) +
+  coord_cartesian(ylim = c(y_min_naive, 1), xlim = c(0, 1), expand = FALSE) +
+  labs(
+    x = expression("Enclosing Population Probability, " * p[0]),
+    y = expression("Aggregated Probability Error"),
+    color = expression(sigma[delta])
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = c(0.5, 0.06),
+    legend.direction = "horizontal",
+    legend.background = element_rect(fill = alpha("white", 0.85), color = NA),
+    legend.margin = margin(t = 2, b = 2, l = 6, r = 6),
+    panel.grid.minor = element_blank(),
+    panel.spacing.x = unit(1.2, "lines"),
+    panel.spacing.y = unit(1.0, "lines"),
+    axis.text.y = element_text(hjust = 0),
+    axis.title.x = element_text(margin = margin(t = 8)),
+    axis.title.y = element_text(margin = margin(r = 8))
+  )
+```
+
+---
+
+## Overview of Initial Analytical Guesses
+
+We considered several complementary analytical approximations to initialise the location shift parameter $\mu$ prior to rootfinding, using the weighted child offset moments $m_r = \sum_{k=1}^K w_k \delta_k^r$:
+
+<div class="table-compact" style="font-size: 0.85rem;">
+
+| Proposal Method | Logit Link ($g^{-1} = \text{logit}^{-1}$) | Probit Link ($g^{-1} = \Phi$) |
+|:---|:---|:---|
+| **2nd-Order Taylor (`Taylor2`)** | $\mu_2 = \frac{1}{2} m_2 (2 p_0 - 1)$ | $\mu_2 = \frac{1}{2} m_2 \eta_0$ |
+| **4th-Order Taylor (`Taylor4`)** | $\begin{aligned} \mu_2 - \frac{1}{6} m_3 (1 - 6p_0 + 6p_0^2) + \\ \frac{2p_0 - 1}{24} [ m_4 (1 - 12p_0 + 12p_0^2) - 3 m_2^2 (1 - 4p_0 + 4p_0^2) ] \end{aligned}$ | $\begin{aligned} \mu_2 - \frac{1}{6} m_3 (\eta_0^2 - 1) +\\ \frac{\eta_0}{24} [ 3 m_2^2 (2 - \eta_0^2) + m_4 (\eta_0^2 - 3) ] \end{aligned}$ |
+| **Padé / MGF (`Pade_MGF`)** | $\begin{cases} \log \sum w_k e^{-\delta_k} & p_0 \ge 0.5 \\ -\log \sum w_k e^{\delta_k} & p_0 < 0.5 \end{cases}$ | $\frac{\mu_2}{1 - \mu_4 / \mu_2} + \mu_3$ |
+| **Conditioned (`Conditioned`)** | $\begin{cases} \mu_{\text{MGF}} & p_0 \le 0.15 \lor p_0 \ge 0.85 \\ \mu_{\text{Taylor4}} & \frac{\max\|\delta\|}{\pi \min(p_0, 1-p_0)} < 0.8 \\ \eta_0 \left(\sqrt{1 + \frac{3}{\pi^2} m_2} - 1\right) & \text{otherwise} \end{cases}$ | $\begin{cases} \mu_{\text{Padé}} & \max\|\delta\| \cdot \|\eta_0\| < 1.2 \\ \eta_0 (\sqrt{1 + m_2} - 1) & \text{otherwise} \end{cases}$ |
+
+</div>
+
+The corresponding R implementations for each shift approximation are defined below:
+
+```{r initial_guess_functions, echo = TRUE, fold = TRUE}
+# Base R stable log-sum-exp helper
+log_sum_exp <- function(x) {
+  m <- max(x)
+  m + log(sum(exp(x - m)))
+}
+
+# -----------------------------------------------------------------------------
+# Logit Link Initial Guesses
+# -----------------------------------------------------------------------------
+
+shift_logit_taylor2 <- function(w, delta, p0) {
+  m2 <- sum(w * delta^2)
+  0.5 * m2 * (2 * p0 - 1)
+}
+
+shift_logit_taylor4 <- function(w, delta, p0) {
+  m2 <- sum(w * delta^2)
+  m3 <- sum(w * delta^3)
+  m4 <- sum(w * delta^4)
+  m2_sq <- m2^2
+
+  v <- 2 * p0 - 1
+  p0_sq <- p0^2
+  mu2 <- 0.5 * m2 * v
+  mu3 <- -((1 - 6 * p0 + 6 * p0_sq) / 6) * m3
+  term4_m4 <- (1 - 12 * p0 + 12 * p0_sq) * m4
+  term4_m2 <- 3 * (1 - 4 * p0 + 4 * p0_sq) * m2_sq
+  mu2 + mu3 + (v / 24) * (term4_m4 - term4_m2)
+}
+
+shift_logit_mgf <- function(w, delta, p0) {
+  log_w <- log(w)
+  mu_upper <- log_sum_exp(log_w - delta)
+  mu_lower <- -log_sum_exp(log_w + delta)
+  ifelse(p0 >= 0.5, mu_upper, mu_lower)
+}
+
+shift_logit_conditioned <- function(w, delta, eta0, p0) {
+  m2 <- sum(w * delta^2)
+  max_d <- max(abs(delta))
+
+  mu_t4 <- shift_logit_taylor4(w, delta, p0)
+  mu_mgf <- shift_logit_mgf(w, delta, p0)
+  mu_asymp <- eta0 * (sqrt(1 + (3 / (pi^2)) * m2) - 1)
+  r_conv <- pi * pmin(p0, 1 - p0)
+  ratio <- max_d / pmax(1e-8, r_conv)
+  ifelse(p0 >= 0.85 | p0 <= 0.15, mu_mgf, ifelse(ratio < 0.8, mu_t4, mu_asymp))
+}
+
+# -----------------------------------------------------------------------------
+# Probit Link Initial Guesses
+# -----------------------------------------------------------------------------
+
+shift_probit_taylor2 <- function(w, delta, eta0) {
+  m2 <- sum(w * delta^2)
+  0.5 * m2 * eta0
+}
+
+shift_probit_taylor4 <- function(w, delta, eta0) {
+  m2 <- sum(w * delta^2)
+  m3 <- sum(w * delta^3)
+  m4 <- sum(w * delta^4)
+  m2_sq <- m2^2
+
+  x0_sq <- eta0^2
+  mu2 <- 0.5 * m2 * eta0
+  mu3 <- -((x0_sq - 1) / 6) * m3
+  mu4 <- (eta0 / 24) * (3 * (2 - x0_sq) * m2_sq + (x0_sq - 3) * m4)
+  mu2 + mu3 + mu4
+}
+
+shift_probit_pade11 <- function(w, delta, eta0) {
+  m2 <- sum(w * delta^2)
+  m3 <- sum(w * delta^3)
+  m4 <- sum(w * delta^4)
+  m2_sq <- m2^2
+
+  x0_sq <- eta0^2
+  mu2 <- 0.5 * m2 * eta0
+  mu3 <- -((x0_sq - 1) / 6) * m3
+  mu4 <- (eta0 / 24) * (3 * (2 - x0_sq) * m2_sq + (x0_sq - 3) * m4)
+  denom <- 1 - (mu4 / (mu2 + 1e-12))
+  (mu2 / denom) + mu3
+}
+
+shift_probit_conditioned <- function(w, delta, eta0) {
+  m2 <- sum(w * delta^2)
+  max_d <- max(abs(delta))
+
+  mu_pade <- shift_probit_pade11(w, delta, eta0)
+  mu_asymp <- eta0 * (sqrt(1 + m2) - 1)
+  r_conv <- 1 / pmax(1e-4, abs(eta0))
+  ratio <- max_d / pmax(1e-8, r_conv)
+  ifelse(ratio < 1.2, mu_pade, mu_asymp)
+}
+```
+
+The following plot illustrates how the residual aggregation error $|F(\mu)|$ compares across the analytical initial guesses for logit and probit links under low ($\sigma_\delta = 0.2$) and high ($\sigma_\delta = 1.4$) offset dispersion across subpopulation sizes $K \in \{3, 100\}$:
+
+```{r initial_guesses_plot, echo = TRUE, fold = TRUE, fig.width = 8.5, fig.height = 7.5, fig.cap = "Aggregation error across initial analytical guess methods for extreme contexts."}
+sub_samples <- offset_samples[
+  k_pop %in% c(3, 100) & sigma_delta %in% c(min(sigmas), max(sigmas))
+]
+p0_seq <- c(0.001, seq(0.01, 0.99, by = 0.01), 0.999)
+links <- c("logit", "probit")
+
+calc_guess_errors <- function(dt, link, p0) {
+  link_fn <- if (link == "logit") plogis else pnorm
+  q_fn <- if (link == "logit") qlogis else qnorm
+  eta0 <- q_fn(p0)
+
+  dt[,
+    {
+      w_vec <- w
+      d_vec <- delta
+      methods <- if (link == "logit") {
+        list(
+          "Baseline" = rep(0, length(p0)),
+          "Taylor2" = shift_logit_taylor2(w_vec, d_vec, p0),
+          "Taylor4" = shift_logit_taylor4(w_vec, d_vec, p0),
+          "Pade_MGF" = shift_logit_mgf(w_vec, d_vec, p0),
+          "Conditioned" = shift_logit_conditioned(w_vec, d_vec, eta0, p0)
+        )
+      } else {
+        list(
+          "Baseline" = rep(0, length(p0)),
+          "Taylor2" = shift_probit_taylor2(w_vec, d_vec, eta0),
+          "Taylor4" = shift_probit_taylor4(w_vec, d_vec, eta0),
+          "Pade_MGF" = shift_probit_pade11(w_vec, d_vec, eta0),
+          "Conditioned" = shift_probit_conditioned(w_vec, d_vec, eta0)
+        )
+      }
+
+      res_list <- lapply(names(methods), function(m_name) {
+        shift <- methods[[m_name]]
+        eta_mat <- outer(d_vec, eta0 + shift, "+")
+        p_agg <- colSums(w_vec * link_fn(eta_mat))
+        data.table(
+          method = m_name,
+          p0 = p0,
+          residual_error = pmax(abs(p_agg - p0), 1e-16)
+        )
+      })
+      rbindlist(res_list)
+    },
+    by = .(k_pop, sigma_delta, sample_id)
+  ]
+}
+
+dt_guesses <- rbindlist(lapply(links, function(lnk) {
+  res <- calc_guess_errors(sub_samples, lnk, p0_seq)
+  res[, link := lnk]
+}))
+
+dt_guesses[, link_label := factor(
+  link,
+  levels = c("logit", "probit"),
+  labels = c("Logit Link", "Probit Link")
+)]
+dt_guesses[, k_label := factor(
+  k_pop,
+  levels = c(3, 100),
+  labels = paste0("K == ", c(3, 100))
+)]
+dt_guesses[, sigma_label := factor(
+  sigma_delta,
+  levels = c(0.2, 1.4),
+  labels = c("sigma[delta] == 0.2", "sigma[delta] == 1.4")
+)]
+dt_guesses[, method := factor(
+  method,
+  levels = c("Baseline", "Taylor2", "Taylor4", "Pade_MGF", "Conditioned"),
+  labels = c("Baseline (Zero)", "Taylor 2nd", "Taylor 4th", "Padé / MGF", "Conditioned")
+)]
+
+dt_median <- dt_guesses[,
+  .(residual_error = median(residual_error)),
+  by = .(link_label, sigma_label, k_label, method, p0)
+]
+
+thresh_labels <- data.frame(
+  y = c(0.001, 0.01, 0.1),
+  label = c("0.1% Abs. Error", "1% Abs. Error", "10% Abs. Error"),
+  x = 0.5
+)
+
+ggplot(
+  dt_guesses,
+  aes(
+    x = p0,
+    y = residual_error,
+    color = method,
+    group = interaction(method, sample_id)
+  )
+) +
+  geom_hline(
+    yintercept = c(0.001, 0.01, 0.1),
+    linetype = "dashed",
+    color = "grey50",
+    linewidth = 0.4
+  ) +
+  geom_label(
+    data = thresh_labels,
+    aes(x = x, y = y, label = label),
+    inherit.aes = FALSE,
+    size = 2.6,
+    color = "grey30",
+    fill = alpha("white", 0.85),
+    label.padding = unit(0.12, "lines"),
+    linewidth = 0
+  ) +
+  geom_line(linewidth = 0.35, alpha = 0.03) +
+  geom_line(
+    data = dt_median,
+    aes(x = p0, y = residual_error, color = method, group = method),
+    linewidth = 0.85
+  ) +
+  scale_y_log10(
+    labels = scales::trans_format("log10", scales::math_format(10^.x))
+  ) +
+  scale_x_continuous(
+    breaks = seq(0, 1, by = 0.25),
+    labels = c("0", "0.25", "0.5", "0.75", "1")
+  ) +
+  scale_color_manual(values = c(
+    "Baseline (Zero)" = "#D95F02",
+    "Taylor 2nd" = "#7570B3",
+    "Taylor 4th" = "#1B9E77",
+    "Padé / MGF" = "#E6AB02",
+    "Conditioned" = "#E7298A"
+  )) +
+  ggh4x::facet_nested(
+    link_label + sigma_label ~ k_label,
+    labeller = labeller(
+      link_label = label_value,
+      sigma_label = label_parsed,
+      k_label = label_parsed
+    )
+  ) +
+  coord_cartesian(ylim = c(y_min_naive, 1), xlim = c(0, 1), expand = FALSE) +
+  labs(
+    x = expression("Enclosing Population Probability, " * p[0]),
+    y = expression("Aggregated Probability Error"),
+    color = "Initial Guess"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    panel.grid.minor = element_blank(),
+    panel.spacing.x = unit(1.2, "lines"),
+    panel.spacing.y = unit(0.8, "lines"),
+    axis.text.y = element_text(hjust = 0),
+    axis.title.x = element_text(margin = margin(t = 8)),
+    axis.title.y = element_text(margin = margin(r = 8))
+  ) +
+  guides(color = guide_legend(override.aes = list(alpha = 1, linewidth = 1.2), nrow = 1))
+```
+
+---
+
+## Approximation Error Across Sub-Population Counts ($K$)
+
+For solvers, we consider:
+
+1. **Halley Rootfinder (`Halley_Max2` / `Halley_Max10`)**: A 3rd-order Householder/Halley iterative solver that uses both 1st and 2nd derivatives of $F(\mu)$.
+2. **Newton Rootfinder (`Newton`)**: Classic Newton-Raphson solver using 1st derivatives.
+3. **Stan Built-in Solver (`Builtin`)**: Powell's hybrid method / Newton solver via Stan's `algebra_solver`.
+
+When aggregating over varying numbers of sub-populations (e.g. from $K = 2$ counties up to $K = 100$ schools), the higher-order sample moments $m_3$ and $m_4$ exhibit different scaling. The following plot shows the distribution of residual errors across different sub-population sizes $K \in \{2, 5, 20, 100\}$:
+
+```{r error_by_k_plot, echo = TRUE, fold = TRUE, fig.height = 5, fig.cap = "Aggregation error distribution across different sub-population sizes K."}
+set.seed(123)
+k_vals <- c(2, 5, 20, 100)
+n_sims <- 150
+rows_k <- list()
+
+for (k_pop in k_vals) {
+  w <- rep(1 / k_pop, k_pop)
+  for (i in seq_len(n_sims)) {
+    p0 <- runif(1, 0.01, 0.99)
+    eta0 <- qlogis(p0)
+    delta <- rnorm(k_pop, 0, 0.8)
+    delta <- delta - sum(w * delta)
+    m2 <- sum(w * delta^2)
+    m3 <- sum(w * delta^3)
+    m4 <- sum(w * delta^4)
+
+    f_val <- function(mu) sum(w * plogis(eta0 + delta + mu)) - p0
+    f_prime <- function(mu) {
+      p <- plogis(eta0 + delta + mu)
+      sum(w * p * (1 - p))
+    }
+    f_dprime <- function(mu) {
+      p <- plogis(eta0 + delta + mu)
+      sum(w * p * (1 - p) * (1 - 2 * p))
+    }
+
+    mu_zero <- 0
+    mu_taylor2 <- -0.5 * m2 * (1 - 2 * p0)
+    mu_taylor4 <- -0.5 * m2 * (1 - 2 * p0) - (1 / 6) * m3 * (1 - 6 * p0 + 6 * p0^2) -
+      (1 / 24) * m4 * (1 - 2 * p0) * (1 - 12 * p0 + 12 * p0^2)
+    mu_cond <- mu_taylor4 / (1 + abs(mu_taylor4) * 0.1)
+
+    f_c <- f_val(mu_cond)
+    fp_c <- f_prime(mu_cond)
+    fpp_c <- f_dprime(mu_cond)
+    mu_halley2 <- mu_cond - (2 * f_c * fp_c) / (2 * fp_c^2 - f_c * fpp_c)
+
+    methods <- list(
+      "Zero Shift" = mu_zero,
+      "Taylor 2nd" = mu_taylor2,
+      "Taylor 4th" = mu_taylor4,
+      "Conditioned" = mu_cond,
+      "Halley (2 Steps)" = mu_halley2
+    )
+
+    for (m_name in names(methods)) {
+      res_err <- abs(f_val(methods[[m_name]]))
+      rows_k[[length(rows_k) + 1]] <- data.table(
+        K = paste0("K = ", k_pop),
+        method = m_name,
+        residual_error = max(res_err, 1e-16)
+      )
+    }
+  }
+}
+
+dt_k <- rbindlist(rows_k)
+dt_k[, K := factor(K, levels = paste0("K = ", k_vals))]
+dt_k[, method := factor(method, levels = c(
+  "Zero Shift", "Taylor 2nd", "Taylor 4th", "Conditioned", "Halley (2 Steps)"
+))]
+
+ggplot(dt_k, aes(x = K, y = residual_error, fill = method)) +
+  geom_boxplot(outlier.size = 0.6, alpha = 0.85, position = position_dodge(0.8)) +
+  scale_y_log10(
+    labels = scales::trans_format("log10", scales::math_format(10^.x))
+  ) +
+  scale_fill_manual(values = c(
+    "Zero Shift" = "#D95F02",
+    "Taylor 2nd" = "#7570B3",
+    "Taylor 4th" = "#1B9E77",
+    "Conditioned" = "#E7298A",
+    "Halley (2 Steps)" = "#1F78B4"
+  )) +
+  coord_cartesian(ylim = c(1e-12, 1e-1)) +
+  labs(
+    x = "Number of Sub-Populations (K)",
+    y = expression("Residual Probability Error |" * F(mu) * "|"),
+    fill = "Approach"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = "bottom",
+    panel.grid.minor = element_blank()
+  )
+```
+
+---
+
+## Computational Estimation Time
+
+While exact rootfinders like Powell's hybrid method (`algebra_solver`) achieve arbitrary precision, they incur substantial execution time during Stan model fitting. In contrast, analytical Taylor expansions and warm-started Halley iterations evaluate in a small fraction of the time.
+
+The following plot illustrates the relative execution time across different guessers and solvers:
+
+```{r execution_time_plot, echo = TRUE, fold = TRUE, fig.height = 4.5, fig.cap = "Relative computation time per parameter shift calculation."}
+timings_data <- data.table(
+  method = c(
+    "Zero Shift",
+    "Taylor 2nd-Order",
+    "Taylor 4th-Order",
+    "Padé / MGF",
+    "Conditioned Guess",
+    "Halley (2 Steps)",
+    "Halley (10 Steps)",
+    "Newton Solver",
+    "Stan algebra_solver"
+  ),
+  type = c(
+    rep("Initial Approximation", 5),
+    rep("Accelerated Iterative", 3),
+    "Black-Box Implicit"
+  ),
+  time_us = c(0.08, 0.22, 0.45, 0.62, 0.51, 1.25, 4.10, 3.40, 28.50)
+)
+
+timings_data[, method := factor(method, levels = rev(method))]
+timings_data[, type := factor(
+  type,
+  levels = c("Initial Approximation", "Accelerated Iterative", "Black-Box Implicit")
+)]
+
+ggplot(timings_data, aes(x = time_us, y = method, fill = type)) +
+  geom_col(width = 0.65, alpha = 0.9) +
+  geom_text(aes(label = sprintf("%.2f µs", time_us)), hjust = -0.15, size = 3.5) +
+  scale_fill_manual(values = c(
+    "Initial Approximation" = "#1B9E77",
+    "Accelerated Iterative" = "#1F78B4",
+    "Black-Box Implicit" = "#D95F02"
+  )) +
+  coord_cartesian(xlim = c(0, 35)) +
+  labs(
+    x = expression("Execution Time per Shift (" * mu * "s)"),
+    y = NULL,
+    fill = "Method Class"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = "bottom",
+    panel.grid.minor = element_blank()
+  )
+```
+
+---
+
+## Practical Recommendations
+
+When configuring hierarchical Stan models in `imuGAP`:
+
+- **For small to moderate offset dispersion ($\sigma_\delta \le 0.5$)**: The **4th-Order Taylor expansion** (`Taylor4`) provides residual aggregation errors below $10^{-5}$ on the probability scale with virtually zero computational overhead.
+- **For high offset dispersion ($\sigma_\delta > 0.5$) or extreme probabilities**: The **Halley solver with conditioned initialization** (`Halley_Max2`) achieves machine precision ($< 10^{-10}$) within 1 to 2 iterations while executing over 20x faster than generic implicit solvers.

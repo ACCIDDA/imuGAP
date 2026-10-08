@@ -1,6 +1,18 @@
+/**
+ * @file bounds_to_range.stan
+ * @brief Utility for converting 1-based start indices to inclusive (lower, upper) segment ranges.
+ */
 
-// a function to convert lower bounds l_1, l_2, ... l_n
-// to (lower, upper) pairs (l_1, l_2-1), (l_2, l_3-1), ...
+/**
+ * Convert strictly increasing lower bounds to 2D range matrix [2, n_bounds].
+ *
+ * Transforms bounds [l_1, l_2, ..., l_n] and upper bound `ub` into paired segments:
+ * [[l_1, l_2, ...], [l_2 - 1, l_3 - 1, ..., ub]].
+ *
+ * @param lowers 1D array of strictly increasing 1-based starting indices.
+ * @param ub Maximum upper bound boundary for the final segment.
+ * @return 2D integer array of dimension [2, size(lowers)] where row 1 = lowers, row 2 = uppers.
+ */
 array[,] int bounds_to_range(array[] int lowers, int ub) {
   int size_bounds = size(lowers);
   if (size_bounds == 0) {
