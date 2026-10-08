@@ -67,6 +67,8 @@ vector compute_hierarchical_phi(
  * @param parent_child_bounds 2D array [2, n_parent_locs] of child location index bounds.
  * @param parent_loc_id 1D array of parent location IDs.
  * @param loc_child_weight Normalized population weights of children within parent blocks.
+ * @param guess_type Integer code specifying initial guesser (1..6).
+ * @param solver_type Integer code specifying rootfinder solver (1..5).
  * @return Matrix of dimension [n_cohort, n_locs] containing link-scale latent parameters.
  */
 matrix accumulate_hierarchical_raw_phi(
@@ -77,7 +79,9 @@ matrix accumulate_hierarchical_raw_phi(
   int n_parent_locs,
   array[,] int parent_child_bounds,
   array[] int parent_loc_id,
-  data vector loc_child_weight
+  data vector loc_child_weight,
+  data int guess_type,
+  data int solver_type
 ) {
   matrix[n_cohort, n_locs] raw_phi_mat;
   raw_phi_mat[:, 1] = raw_phi_root;
@@ -91,13 +95,15 @@ matrix accumulate_hierarchical_raw_phi(
     vector[n_cohort] mu_init = guess_subpop_shift(
       eta0, p0,
       loc_child_weight[(st - 1):(en - 1)],
-      off_layer[(st - 1):(en - 1)]
+      off_layer[(st - 1):(en - 1)],
+      guess_type
     );
 
     vector[n_cohort] mu_p = solve_subpop_shift(
       mu_init, eta0, p0,
       loc_child_weight[(st - 1):(en - 1)],
-      off_layer[(st - 1):(en - 1)]
+      off_layer[(st - 1):(en - 1)],
+      solver_type
     );
 
     for (l in st:en) {
@@ -105,6 +111,23 @@ matrix accumulate_hierarchical_raw_phi(
     }
   }
   return raw_phi_mat;
+}
+
+matrix accumulate_hierarchical_raw_phi(
+  vector raw_phi_root,
+  vector off_layer,
+  int n_cohort,
+  int n_locs,
+  int n_parent_locs,
+  array[,] int parent_child_bounds,
+  array[] int parent_loc_id,
+  data vector loc_child_weight
+) {
+  return accumulate_hierarchical_raw_phi(
+    raw_phi_root, off_layer, n_cohort, n_locs,
+    n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight,
+    3, 1
+  );
 }
 
 /**
@@ -118,6 +141,8 @@ matrix accumulate_hierarchical_raw_phi(
  * @param parent_child_bounds 2D array [2, n_parent_locs] of child location index bounds.
  * @param parent_loc_id 1D array of parent location IDs.
  * @param loc_child_weight Normalized population weights of children within parent blocks.
+ * @param guess_type Integer code specifying initial guesser (1..6).
+ * @param solver_type Integer code specifying rootfinder solver (1..5).
  * @return Flattened column-major vector of length `n_cohort * n_locs` on probability scale.
  */
 vector compute_hierarchical_phi(
@@ -128,13 +153,33 @@ vector compute_hierarchical_phi(
   int n_parent_locs,
   array[,] int parent_child_bounds,
   array[] int parent_loc_id,
-  data vector loc_child_weight
+  data vector loc_child_weight,
+  data int guess_type,
+  data int solver_type
 ) {
   matrix[n_cohort, n_locs] raw_phi_mat = accumulate_hierarchical_raw_phi(
     raw_phi_root, off_layer, n_cohort, n_locs,
-    n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight
+    n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight,
+    guess_type, solver_type
   );
   return to_vector(inv_link(raw_phi_mat));
+}
+
+vector compute_hierarchical_phi(
+  vector raw_phi_root,
+  vector off_layer,
+  int n_cohort,
+  int n_locs,
+  int n_parent_locs,
+  array[,] int parent_child_bounds,
+  array[] int parent_loc_id,
+  data vector loc_child_weight
+) {
+  return compute_hierarchical_phi(
+    raw_phi_root, off_layer, n_cohort, n_locs,
+    n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight,
+    3, 1
+  );
 }
 
 /**
@@ -214,6 +259,8 @@ vector compute_layer_offsets(
  * @param parent_child_bounds 2D array [2, n_parent_locs] of child location index bounds.
  * @param parent_loc_id 1D array of parent location IDs.
  * @param loc_child_weight Normalized population weights of children within parent blocks.
+ * @param guess_type Integer code specifying initial guesser (1..6).
+ * @param solver_type Integer code specifying rootfinder solver (1..5).
  * @return Matrix of dimension [n_cohort, n_parent_locs] containing shift offsets mu.
  */
 matrix compute_mu_offsets(
@@ -224,7 +271,9 @@ matrix compute_mu_offsets(
   int n_parent_locs,
   array[,] int parent_child_bounds,
   array[] int parent_loc_id,
-  data vector loc_child_weight
+  data vector loc_child_weight,
+  data int guess_type,
+  data int solver_type
 ) {
   matrix[n_cohort, n_parent_locs] mu_offset;
   for (p in 1:n_parent_locs) {
@@ -237,14 +286,33 @@ matrix compute_mu_offsets(
     vector[n_cohort] mu_init = guess_subpop_shift(
       eta0, p0,
       loc_child_weight[(st - 1):(en - 1)],
-      off_layer[(st - 1):(en - 1)]
+      off_layer[(st - 1):(en - 1)],
+      guess_type
     );
 
     mu_offset[:, p] = solve_subpop_shift(
       mu_init, eta0, p0,
       loc_child_weight[(st - 1):(en - 1)],
-      off_layer[(st - 1):(en - 1)]
+      off_layer[(st - 1):(en - 1)],
+      solver_type
     );
   }
   return mu_offset;
+}
+
+matrix compute_mu_offsets(
+  matrix raw_phi_mat,
+  vector off_layer,
+  int n_cohort,
+  int n_locs,
+  int n_parent_locs,
+  array[,] int parent_child_bounds,
+  array[] int parent_loc_id,
+  data vector loc_child_weight
+) {
+  return compute_mu_offsets(
+    raw_phi_mat, off_layer, n_cohort, n_locs,
+    n_parent_locs, parent_child_bounds, parent_loc_id,
+    loc_child_weight, 3, 1
+  );
 }

@@ -12,6 +12,6 @@
  * @param delta Vector of relative child offsets on link scale (length K).
  * @return Zero vector of length C.
  */
-vector guess_subpop_shift(vector eta0, vector p0, data vector w, vector delta) {
+vector guess_shift_zero(vector eta0, vector p0, data vector w, vector delta) {
   return rep_vector(0.0, num_elements(eta0));
 }

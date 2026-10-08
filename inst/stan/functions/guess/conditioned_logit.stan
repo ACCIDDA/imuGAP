@@ -15,7 +15,7 @@
  * @param delta Vector of relative child offsets on link scale (length K).
  * @return Vector of estimated shift offsets mu (length C).
  */
-vector guess_subpop_shift(vector eta0, vector p0, data vector w, vector delta) {
+vector guess_shift_conditioned_logit(vector eta0, vector p0, data vector w, vector delta) {
   int C = num_elements(p0);
   vector[C] mu_t4 = guess_shift_taylor4_logit(eta0, p0, w, delta);
   vector[C] mu_asymp = guess_shift_asymptotic_logit(eta0, p0, w, delta);
@@ -45,3 +45,4 @@ vector guess_subpop_shift(vector eta0, vector p0, data vector w, vector delta) {
   }
   return mu;
 }
+

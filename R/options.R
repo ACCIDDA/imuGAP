@@ -1,3 +1,22 @@
+guess_type_map <- c(
+  default = 3L,
+  taylor4 = 3L,
+  zero = 1L,
+  taylor2 = 2L,
+  pade = 4L,
+  asymptotic = 5L,
+  conditioned = 6L
+)
+
+solver_type_map <- c(
+  default = 1L,
+  direct = 1L,
+  halley2 = 2L,
+  newton2 = 3L,
+  builtin = 4L,
+  halley10 = 5L
+)
+
 #' @title imuGAP Model Options
 #'
 #' @description
@@ -9,15 +28,22 @@
 #'   becomes eligible (default: `c(1, 4)` for 2-dose vaccines).
 #' @param compute_log_lik logical scalar; compute pointwise log-likelihood during
 #'   sampling? (default: `FALSE`).
-#' @param model character string specifying the model formulation (default: `"default"`).
+#' @param link character string specifying the link function formulation (default: `"default"`).
 #'   Options include `"default"` (or `"logit"`) for the logit link and `"probit"` for the
 #'   probit link. Dispatch to optimized single versus multi-layer versions occurs
 #'   automatically within `[sampling()]`.
+#' @param guess character string specifying the initial shift guess method (default: `"default"`).
+#'   Options include `"default"` (alias for `"taylor4"`), `"taylor4"`, `"zero"`, `"taylor2"`,
+#'   `"pade"`, `"asymptotic"`, and `"conditioned"`.
+#' @param solver character string specifying the rootfinder solver method (default: `"default"`).
+#'   Options include `"default"` (alias for `"direct"`), `"direct"`, `"halley2"`, `"newton2"`,
+#'   `"builtin"`, and `"halley10"`.
+#' @param model deprecated alias for `link`.
 #'
 #' @examples
 #' imugap_options()
 #' imugap_options(dose_schedule = c(1, 3))
-#' imugap_options(model = "probit")
+#' imugap_options(link = "probit", guess = "taylor4", solver = "halley2")
 #'
 #' @return a named list, of `imuGAP` model options.
 #' @export
@@ -25,9 +51,51 @@ imugap_options <- function(
   df = 5L,
   dose_schedule = c(1, 4),
   compute_log_lik = FALSE,
-  model = c("default", "logit", "probit")
+  link = c("default", "logit", "probit"),
+  guess = c(
+    "default",
+    "taylor4",
+    "zero",
+    "taylor2",
+    "pade",
+    "asymptotic",
+    "conditioned"
+  ),
+  solver = c("default", "direct", "halley2", "newton2", "builtin", "halley10"),
+  model = link
 ) {
-  model <- match.arg(model)
+  if (!missing(model) && missing(link)) {
+    link <- model
+  }
+  link <- match.arg(link, c("default", "logit", "probit"))
+  guess <- if (
+    is.numeric(guess) && length(guess) == 1L && as.integer(guess) %in% 1:6
+  ) {
+    c(
+      "zero",
+      "taylor2",
+      "taylor4",
+      "pade",
+      "asymptotic",
+      "conditioned"
+    )[as.integer(guess)]
+  } else {
+    match.arg(guess)
+  }
+  if (identical(guess, "default")) {
+    guess <- "taylor4"
+  }
+
+  solver <- if (
+    is.numeric(solver) && length(solver) == 1L && as.integer(solver) %in% 1:5
+  ) {
+    c("direct", "halley2", "newton2", "builtin", "halley10")[as.integer(solver)]
+  } else {
+    match.arg(solver)
+  }
+  if (identical(solver, "default")) {
+    solver <- "direct"
+  }
 
   stop_fmt_if(length(df) != 1L, ERR_OPT_DF_SINGLE)
   df <- assert_positive_int(df, "df")
@@ -49,6 +117,11 @@ imugap_options <- function(
     df = df,
     dose_schedule = dose_schedule,
     compute_log_lik = compute_log_lik,
-    model = model
+    link = link,
+    model = link,
+    guess = guess,
+    guess_type = unname(guess_type_map[guess]),
+    solver = solver,
+    solver_type = unname(solver_type_map[solver])
   )
 }

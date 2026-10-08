@@ -304,8 +304,14 @@ sampling <- function(
   loc_info <- canonicalize_locations(locations)
   n_layers <- max(loc_info$layer)
   is_multilayer <- n_layers > 1L
+  guess_type_opt <- imugap_opts$guess_type %||% 3L
+  solver_type_opt <- imugap_opts$solver_type %||% 1L
   layer_data <- if (is_multilayer) {
-    assemble_layer_data(loc_info)
+    assemble_layer_data(
+      loc_info,
+      guess_type = guess_type_opt,
+      solver_type = solver_type_opt
+    )
   } else {
     NULL
   }
@@ -386,12 +392,17 @@ sampling <- function(
     stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model = model)
   }
 
+  # Drop unconstrained latent spatial innovation parameters (z_layer) by default
+  # in multi-layer models, while returning the full orthonormalized offsets (off_layer).
+  # If the user explicitly requested custom `pars` in stan_opts, respect user selection.
+  drop_pars <- if (is.null(stan_opts$pars) && is_multilayer) "z_layer" else NULL
+
   raw_fit <- fit_model(
     model_name,
     dat_stan,
     init = make_init_fn(dat_stan, model = model),
     stan_opts,
-    drop_pars = NULL,
+    drop_pars = drop_pars,
     package = "imuGAP"
   )
 

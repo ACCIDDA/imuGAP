@@ -1,8 +1,8 @@
 functions {
   #include functions/convenience.stan
   #include functions/link/logit.stan
-  #include functions/guess/taylor4_logit.stan
-  #include functions/solvers/direct.stan
+  #include functions/guess/dispatch_logit.stan
+  #include functions/solvers/dispatch.stan
   #include functions/layer_offsets.stan
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/observation_likelihood_reduce.stan
@@ -28,6 +28,7 @@ parameters {
 }
 transformed parameters {
   #include transformed_parameters/bspline.stan
+  #include transformed_parameters/layer_offsets.stan
 }
 model {
   if (!predict_mode) {

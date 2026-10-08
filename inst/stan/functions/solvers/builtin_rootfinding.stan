@@ -49,17 +49,17 @@ vector solve_shift_builtin(
   vector[1] y_g;
   vector[2 + K] params;
   params[3:(K + 2)] = delta;
-  data array[K] real x_r = to_array_1d(w);
-  array[1] int x_i = { K };
-
   for (c in 1:C) {
     y_g[1] = y_guess[c];
     params[1] = eta0[c];
     params[2] = p0[c];
 
     vector[1] res = algebra_solver(
-      offset_residual, y_g, params, x_r, x_i,
-      1e-10, 1e-8, 1000
+      offset_residual,
+      y_g,
+      params,
+      to_array_1d(w),
+      { K }
     );
     theta_sol[c] = res[1];
   }
