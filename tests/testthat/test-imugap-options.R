@@ -5,12 +5,23 @@ test_that("imugap_options returns expected structure with defaults", {
   expect_type(defaults, "list")
   expect_setequal(
     names(defaults),
-    c("df", "dose_schedule", "compute_log_lik", "model")
+    c(
+      "df",
+      "dose_schedule",
+      "compute_log_lik",
+      "time",
+      "offsets",
+      "link",
+      "model"
+    )
   )
   expect_equal(defaults$df, 5L)
   expect_equal(defaults$dose_schedule, c(1, 4))
   expect_false(defaults$compute_log_lik)
-  expect_equal(defaults$model, "default")
+  expect_equal(defaults$time, "bspline")
+  expect_equal(defaults$offsets, "static")
+  expect_equal(defaults$link, "logit")
+  expect_equal(defaults$model, "bspline_static_logit")
 })
 
 test_that("imugap_options df can be overridden", {
@@ -31,21 +42,43 @@ test_that("imugap_options dose_schedule can be overridden", {
   expect_equal(opts, expected)
 })
 
-test_that("imugap_options errors on unknown model", {
+test_that("imugap_options errors on unknown link / model", {
   expect_error(
-    imugap_options(model = "unknown_model"),
+    imugap_options(link = "unknown_link"),
     "should be"
   )
   expect_error(
-    imugap_options(model = "stateonly"),
+    imugap_options(model = "unknown_model"),
+    err_pattern(ERR_OPT_UNKNOWN_MODEL, model = "unknown_model")
+  )
+  expect_error(
+    imugap_options(link = "stateonly"),
     "should be"
   )
 })
 
-test_that("imugap_options accepts default keyword explicitly", {
+test_that("imugap_options accepts default, logit, and probit link options", {
   defaults <- imugap_options()
-  opts <- imugap_options(model = "default")
-  expect_equal(opts, defaults)
+  opts_default <- imugap_options(link = "default")
+  expect_equal(opts_default, defaults)
+
+  opts_logit <- imugap_options(link = "logit")
+  expect_equal(opts_logit$link, "logit")
+  expect_equal(opts_logit$model, "bspline_static_logit")
+
+  opts_probit <- imugap_options(link = "probit")
+  expect_equal(opts_probit$link, "probit")
+  expect_equal(opts_probit$model, "bspline_static_probit")
+
+  # Backwards compatibility with model parameter
+  opts_model_probit <- imugap_options(model = "probit")
+  expect_equal(opts_model_probit$link, "probit")
+  expect_equal(opts_model_probit$model, "bspline_static_probit")
+
+  # Full model template name
+  opts_model_full <- imugap_options(model = "bspline_static_probit")
+  expect_equal(opts_model_full$link, "probit")
+  expect_equal(opts_model_full$model, "bspline_static_probit")
 })
 
 test_that("imugap_options accepts numeric whole-number df", {

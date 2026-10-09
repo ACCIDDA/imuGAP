@@ -200,8 +200,12 @@ generate_inits <- function(dat_stan, model = "default") {
     )
   }
 
-  model_inits <- if (identical(model, "default")) {
+  model_inits <- if (model %in% c("default", "logit")) {
     init_beta <- rep(stats::qlogis(baseline_phi), dat_stan$k_bs) +
+      stats::rnorm(dat_stan$k_bs, 0, 0.05)
+    list(beta_bs = array(init_beta, dim = dat_stan$k_bs))
+  } else if (identical(model, "probit")) {
+    init_beta <- rep(stats::qnorm(baseline_phi), dat_stan$k_bs) +
       stats::rnorm(dat_stan$k_bs, 0, 0.05)
     list(beta_bs = array(init_beta, dim = dat_stan$k_bs))
   } else {
@@ -287,12 +291,37 @@ sampling <- function(
   stan_opts = stan_options(threading = TRUE)
 ) {
   # check imugap_opts
-  model <- imugap_opts$model %||% "default"
+  link <- imugap_opts$link
+  time <- imugap_opts$time %||% "bspline"
+  model <- imugap_opts$model
+  if (!is.null(model)) {
+    if (model %in% c("default", "logit", "probit")) {
+      link <- if (identical(model, "default")) "logit" else model
+    } else if (
+      model %in%
+        c(
+          "bspline_static_logit",
+          "bspline_static_probit",
+          "bspline_single_logit",
+          "bspline_single_probit"
+        )
+    ) {
+      parts <- strsplit(model, "_", fixed = TRUE)[[1]]
+      time <- parts[1]
+      link <- parts[length(parts)]
+    } else {
+      stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model = model)
+    }
+  }
+  link <- link %||% "logit"
   stop_fmt_if(
-    !identical(model, "default"),
+    !link %in% c("default", "logit", "probit"),
     ERR_OPT_UNKNOWN_MODEL,
-    model = model
+    model = link
   )
+  if (identical(link, "default")) {
+    link <- "logit"
+  }
   dose_sched_opts <- imugap_opts$dose_schedule %||% c(1L, 4L)
   df_opts <- imugap_opts$df %||% 5L
 
@@ -363,18 +392,22 @@ sampling <- function(
   backend <- stan_opts$backend
   stop_fmt_if(is.null(backend), ERR_STAN_OPTS_CLASS)
 
-  # Select specialized Stan model based on model and hierarchy depth:
+  # Select specialized Stan model based on model components and hierarchy depth:
   # 1-layer uses the streamlined single-location model; >= 2 layers uses the full
   # hierarchical model.
-  model_name <- if (identical(model, "default")) {
-    if (is_multilayer) {
-      "impute_school_coverage_process_v6"
-    } else {
-      "impute_school_coverage_process_v6_single_layer"
-    }
-  } else {
-    stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model = model)
-  }
+  offsets_type <- if (is_multilayer) "static" else "single"
+  model_name <- sprintf("%s_%s_%s", time, offsets_type, link)
+  supported_models <- c(
+    "bspline_static_logit",
+    "bspline_static_probit",
+    "bspline_single_logit",
+    "bspline_single_probit"
+  )
+  stop_fmt_if(
+    !model_name %in% supported_models,
+    ERR_OPT_UNKNOWN_MODEL,
+    model = model_name
+  )
 
   # Drop unconstrained latent spatial innovation parameters (z_layer) by default
   # in multi-layer models, while returning the full orthonormalized offsets (off_layer).
@@ -384,7 +417,7 @@ sampling <- function(
   raw_fit <- fit_model(
     model_name,
     dat_stan,
-    init = make_init_fn(dat_stan, model = model),
+    init = make_init_fn(dat_stan, model = link),
     stan_opts,
     drop_pars = drop_pars,
     package = "imuGAP"
