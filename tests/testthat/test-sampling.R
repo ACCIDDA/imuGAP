@@ -371,3 +371,48 @@ test_that("sampling errors when imugap_opts contains an unknown model", {
     "unknown model 'unsupported_model'"
   )
 })
+
+test_that("sampling drops z_layer by default in multi-layer models", {
+  out_multi <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs()
+    )
+  ))
+  expect_equal(out_multi$captured$pars, "z_layer")
+  expect_false(out_multi$captured$include)
+
+  # Custom pars in stan_opts overrides default parameter dropping
+  out_custom <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs(),
+      stan_opts = flexstanr::stan_options(pars = c("beta_bs", "off_layer"))
+    )
+  ))
+  expect_equal(out_custom$captured$pars, c("beta_bs", "off_layer"))
+  expect_true(
+    is.null(out_custom$captured$include) || isTRUE(out_custom$captured$include)
+  )
+
+  # Single-layer models do not drop z_layer
+  locs1 <- data.frame(loc_id = "state", parent_id = NA)
+  pops1 <- data.frame(
+    obs_id = c("o1", "o2"),
+    loc_id = c("state", "state"),
+    cohort = c(1L, 1L),
+    age = c(5L, 5L),
+    dose = c(1L, 2L),
+    weight = c(1.0, 1.0)
+  )
+  out_single <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = pops1,
+      locations = locs1
+    )
+  ))
+  expect_null(out_single$captured$pars)
+})
