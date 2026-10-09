@@ -554,11 +554,11 @@ compute_layer_qr <- function(
 #' @keywords internal
 #' @noRd
 ensure_layer_qr <- function(dat_stan) {
-  if (
-    !is.null(dat_stan$qr_entries) &&
-      !is.null(dat_stan$z_bounds) &&
-      !is.null(dat_stan$qr_bounds)
-  ) {
+  is_single <- is.null(dat_stan$n_parent_locs) || dat_stan$n_parent_locs == 0L
+  has_qr <- !is.null(dat_stan$qr_entries) &&
+    !is.null(dat_stan$z_bounds) &&
+    !is.null(dat_stan$qr_bounds)
+  if (is_single || has_qr) {
     return(dat_stan)
   }
   qr_data <- compute_layer_qr(

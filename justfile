@@ -251,3 +251,52 @@ prune-branches:
 		echo "No merged or stale local branches to prune."
 	fi
 
+[group('github')]
+[doc('View pull request details and review comments')]
+pr-view pr="":
+	#!/usr/bin/env bash
+	set -euo pipefail
+	export GH_PAGER=cat
+	export GH_PROMPT_DISABLED=1
+	if [ -n "{{ pr }}" ]; then
+		gh pr view "{{ pr }}" --comments
+	else
+		gh pr view --comments
+	fi
+
+[doc('View pull request CI status checks')]
+pr-checks pr="":
+	#!/usr/bin/env bash
+	set -euo pipefail
+	export GH_PAGER=cat
+	export GH_PROMPT_DISABLED=1
+	if [ -n "{{ pr }}" ]; then
+		gh pr checks "{{ pr }}"
+	else
+		gh pr checks
+	fi
+
+[doc('View pull request inline review comments')]
+pr-review-comments pr="":
+	#!/usr/bin/env bash
+	set -euo pipefail
+	export GH_PAGER=cat
+	export GH_PROMPT_DISABLED=1
+	pr_num="{{ pr }}"
+	if [ -z "$pr_num" ]; then
+		pr_num=$(gh pr view --json number -q .number)
+	fi
+	gh api "repos/ACCIDDA/imuGAP/pulls/${pr_num}/comments" --jq '.[] | "[\(.path):\(.line // .original_line)] by \(.user.login):\n\(.body)\n---"'
+
+[doc('View failed CI run logs')]
+pr-failed-logs run_id="":
+	#!/usr/bin/env bash
+	set -euo pipefail
+	export GH_PAGER=cat
+	export GH_PROMPT_DISABLED=1
+	if [ -n "{{ run_id }}" ]; then
+		gh run view "{{ run_id }}" --log-failed
+	else
+		gh run view --log-failed
+	fi
+

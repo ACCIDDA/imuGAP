@@ -42,15 +42,18 @@ test_that("imuGAP::sampling() fits via the cmdstanr backend", {
   expect_s3_class(fit$raw_fit, "CmdStanMCMC")
 
   fit_pars <- fit$raw_fit$metadata()$stan_variables
-  for (par in c("beta_bs", "lambda_raw", "raw_phi_root")) {
+  for (par in c("beta_bs", "lambda_raw", "raw_phi_root", "off_layer")) {
     expect_true(par %in% fit_pars, info = paste("missing parameter:", par))
   }
-  for (par in c("phi")) {
+  for (par in c("phi", "z_layer")) {
     expect_false(
       par %in% fit_pars,
       info = paste("parameter should be absent:", par)
     )
   }
+
+  off_layer_draws <- fit$raw_fit$draws(variables = "off_layer")
+  expect_equal(dim(off_layer_draws)[3], nrow(locs) - 1L)
 
   draws <- fit$raw_fit$draws(variables = "beta_bs")
   expect_true(all(is.finite(draws)))
