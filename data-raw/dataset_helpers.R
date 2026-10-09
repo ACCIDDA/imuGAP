@@ -250,6 +250,7 @@ get_simulation_setup <- function(
     nsch_base = nsch_base,
     nsch_matrix = nsch_matrix,
     other_vax_reduction = other_vax_reduction,
+    bsp = bsp,
     beta_bs = beta_bs,
     phi_st_target = phi_st_target,
     sch_per_cnty = sch_per_cnty,
@@ -277,8 +278,9 @@ get_simulation_setup <- function(
   )
 }
 
-#' Generate latent probability matrices under current logit offset model
-generate_latent_current <- function(setup) {
+#' Generate latent probability matrices under link offset model
+generate_latent_current <- function(setup, link = c("logit", "probit")) {
+  link <- match.arg(link)
   sch_per_cnty <- copy(setup$sch_per_cnty)
 
   # Enforce per-parent weighted balanced offsets and full-layer population scaling on county offsets
@@ -306,16 +308,19 @@ generate_latent_current <- function(setup) {
   delta_sch <- z_proj_sch * scale_sch * setup$sigma_sch
   names(delta_sch) <- setup$school_names
 
-  state_logit <- qlogis(setup$phi_st_target)
+  inv_link_fun <- if (link == "logit") stats::plogis else stats::pnorm
 
-  # Expand school logit matrix: n_cohort x tot_sch
+  state_link <- as.vector(setup$bsp %*% setup$beta_bs)
+  p_state <- inv_link_fun(state_link)
+
+  # Expand school link matrix: n_cohort x tot_sch
   schl_prob_matrix <- matrix(0, nrow = setup$n_cohort, ncol = setup$tot_sch)
   for (c_idx in seq_along(setup$county_names)) {
     ll <- sch_per_cnty$ll[c_idx]
     ul <- sch_per_cnty$ul[c_idx]
     for (s in ll:ul) {
-      schl_logit <- state_logit + delta_cnty[c_idx] + delta_sch[s]
-      schl_prob_matrix[, s] <- plogis(schl_logit)
+      schl_link <- state_link + delta_cnty[c_idx] + delta_sch[s]
+      schl_prob_matrix[, s] <- inv_link_fun(schl_link)
     }
   }
 
@@ -326,13 +331,14 @@ generate_latent_current <- function(setup) {
     ncol = length(setup$county_names)
   )
   for (c_idx in seq_along(setup$county_names)) {
-    cnty_prob_matrix[, c_idx] <- plogis(state_logit + delta_cnty[c_idx])
+    cnty_prob_matrix[, c_idx] <- inv_link_fun(state_link + delta_cnty[c_idx])
   }
 
   list(
-    approach = "current",
-    approach_name = "Current Logit Offset Model",
-    phi_st = setup$phi_st_target,
+    approach = link,
+    approach_name = sprintf("Offset Model (%s link)", link),
+    link = link,
+    phi_st = p_state,
     cnty_prob_matrix = cnty_prob_matrix,
     schl_prob_matrix = schl_prob_matrix,
     delta_cnty = delta_cnty,

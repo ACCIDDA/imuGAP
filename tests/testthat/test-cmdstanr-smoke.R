@@ -13,7 +13,7 @@ test_that("imuGAP::sampling() fits via the cmdstanr backend", {
   skip_if(
     base::system.file(
       "stan",
-      "impute_school_coverage_process_v6.stan",
+      "bspline_static_logit.stan",
       package = "imuGAP"
     ) ==
       "",

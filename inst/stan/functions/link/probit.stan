@@ -1,71 +1,71 @@
 /**
- * @file logit.stan
- * @brief Logit and inverse logit link functions mapping latent scale <-> (0, 1).
+ * @file probit.stan
+ * @brief Probit and inverse probit link functions mapping latent scale <-> (0, 1).
  */
 
 /**
- * Apply logit link function to a scalar probability.
+ * Apply probit link function to a scalar probability.
  *
  * @param p Scalar probability in (0, 1).
- * @return Value on latent link scale: log(p / (1 - p)).
+ * @return Value on latent link scale: inv_Phi(p).
  */
 real link_fn(real p) {
-  return logit(p);
+  return inv_Phi(p);
 }
 
 /**
- * Apply logit link function elementwise to a vector of probabilities.
+ * Apply probit link function elementwise to a vector of probabilities.
  *
  * @param p Vector of probabilities in (0, 1).
  * @return Vector on latent link scale.
  */
 vector link_fn(vector p) {
-  return logit(p);
+  return inv_Phi(p);
 }
 
 /**
- * Apply inverse logit link function to a scalar coordinate.
+ * Apply inverse probit link function to a scalar coordinate.
  *
  * @param x Scalar coordinate on link scale.
- * @return Probability in (0, 1): 1 / (1 + exp(-x)).
+ * @return Probability in (0, 1): Phi(x).
  */
 real inv_link(real x) {
-  return inv_logit(x);
+  return Phi(x);
 }
 
 /**
- * Apply inverse logit link function elementwise to a vector.
+ * Apply inverse probit link function elementwise to a vector.
  *
  * @param x Vector on link scale.
  * @return Vector of probabilities in (0, 1).
  */
 vector inv_link(vector x) {
-  return inv_logit(x);
+  return Phi(x);
 }
 
 /**
- * Apply inverse logit link function elementwise to a matrix.
+ * Apply inverse probit link function elementwise to a matrix.
  *
  * @param x Matrix on link scale.
  * @return Matrix of probabilities in (0, 1).
  */
 matrix inv_link(matrix x) {
-  return inv_logit(x);
+  return Phi(x);
 }
 
 /**
- * Compute first derivative of inverse logit link function: p * (1 - p).
+ * Compute first derivative of inverse probit link function: phi(x) = exp(-0.5 * x^2) / sqrt(2 * pi).
  *
  * @param x Vector on link scale.
  * @param p Vector of probabilities in (0, 1): inv_link(x).
- * @return Vector of first derivatives.
+ * @return Vector of standard normal PDF evaluations.
  */
 vector d_inv_link(vector x, vector p) {
-  return p .* (1.0 - p);
+  return exp(-0.5 * square(x)) / sqrt(2.0 * pi());
 }
 
 /**
- * Compute second derivative of inverse logit link function: d1 * (1 - 2p).
+ * Compute second derivative of inverse probit link function: -x * d1.
  *
  * @param x Vector on link scale.
  * @param p Vector of probabilities in (0, 1): inv_link(x).
@@ -73,5 +73,5 @@ vector d_inv_link(vector x, vector p) {
  * @return Vector of second derivatives.
  */
 vector d2_inv_link(vector x, vector p, vector d1) {
-  return d1 .* (1.0 - 2.0 * p);
+  return -x .* d1;
 }
