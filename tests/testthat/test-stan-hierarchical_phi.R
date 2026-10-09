@@ -22,6 +22,7 @@ skip_if_stan_unchanged(c(
   "transformed_data/layer_indices.stan",
   "transformed_data/layer_phi_lookup.stan",
   "transformed_parameters/bspline.stan",
+  "transformed_parameters/layer_offsets.stan",
   "model/common_phi.stan",
   target
 ))
@@ -59,6 +60,7 @@ parameters {
 }
 transformed parameters {
   #include transformed_parameters/bspline.stan
+  #include transformed_parameters/layer_offsets.stan
 }
 model {
   dummy ~ normal(0, 1);

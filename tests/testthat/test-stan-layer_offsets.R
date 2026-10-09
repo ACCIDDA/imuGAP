@@ -49,7 +49,6 @@ generated quantities {
   vector[n_cohort * n_locs] out_phi = compute_hierarchical_phi(
     raw_phi_root, out_raw_phi_loc, n_cohort, n_locs
   );
-  matrix[3, 2] out_qr_test = get_weighted_qr_basis([0.2, 0.3, 0.5]');
   vector[n_locs - 1] out_computed_offsets = compute_layer_offsets(
     n_locs, n_parent_locs, parent_child_bounds, z_bounds, qr_bounds, qr_entries,
     z_layer, loc_pop_scale, sigma_layer, loc_layer_idx
@@ -208,14 +207,11 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
     tolerance = 1e-6
   )
 
-  # Check get_weighted_qr_basis orthogonality and orthonormality
-  qr_test <- run_stan_harness(
-    model_layer_offsets,
-    data = data_list,
-    out_qr_test
-  )
+  # Check compute_layer_qr orthogonality and orthonormality
   w <- c(0.2, 0.3, 0.5)
-  w_norm <- w / sqrt(sum(w^2))
-  expect_equal(as.numeric(t(qr_test) %*% w_norm), c(0, 0), tolerance = 1e-6)
-  expect_equal(t(qr_test) %*% qr_test, diag(2), tolerance = 1e-6)
+  w_norm <- sqrt(w) / sqrt(sum(w))
+  qr_res <- imuGAP:::compute_layer_qr(1L, 2L, 4L, w)
+  q_star <- matrix(qr_res$qr_entries, nrow = 3L, ncol = 2L)
+  expect_equal(as.numeric(t(q_star) %*% w_norm), c(0, 0), tolerance = 1e-6)
+  expect_equal(t(q_star) %*% q_star, diag(2), tolerance = 1e-6)
 })
