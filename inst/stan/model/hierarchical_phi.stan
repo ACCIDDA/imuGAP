@@ -6,11 +6,6 @@ matrix[n_cohort, n_locs] raw_phi_mat = accumulate_hierarchical_raw_phi(
   n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight,
   guess_type, solver_type
 );
-matrix[n_cohort, n_parent_locs] mu_offset = compute_mu_offsets(
-  raw_phi_mat, off_layer, n_cohort, n_locs,
-  n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight,
-  guess_type, solver_type
-);
 vector[n_cohort * n_locs] phi = to_vector(inv_link(raw_phi_mat));
 
 #include model/common_phi.stan

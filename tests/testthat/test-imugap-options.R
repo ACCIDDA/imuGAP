@@ -168,4 +168,8 @@ test_that("imugap_options accepts valid guess and solver values including defaul
 test_that("imugap_options rejects invalid guess and solver values", {
   expect_error(imugap_options(guess = "invalid_guess"), "should be")
   expect_error(imugap_options(solver = "invalid_solver"), "should be")
+  expect_error(imugap_options(guess = 2.5))
+  expect_error(imugap_options(solver = 3.8))
+  expect_error(imugap_options(guess = 7L))
+  expect_error(imugap_options(solver = 0L))
 })

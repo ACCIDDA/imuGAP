@@ -168,8 +168,48 @@ For every fit, the following metrics are recorded and aggregated across Monte Ca
 - Unified compilation & model assembly: `data-raw/benchmarks/benchmark_compilation.R`
 - Synthetic population generation: `data-raw/benchmarks/benchmark_synthetic_populations.R`
 - Core MCMC inference & metric runner: `data-raw/benchmarks/benchmark_inference_runner.R`
+- Results consolidator & reducer: `data-raw/benchmarks/benchmark_merge.R`
+- SLURM batch scripts:
+  - `slurm_benchmark_array.sh` (55-worker array job, 4 chains across 4 CPU cores per task)
+  - `slurm_merge.sh` (dependent reducer job running automatically on `afterok`)
+  - `slurm_submit.sh` (two-stage submission orchestrator)
 - Orchestration Makefile: `data-raw/benchmarks/Makefile`
 - Primary configurations:
   - Stress Test: `config_stress_test.yml` -> `results_stress_test.rds`
   - Strenuous Grid: `config_strenuous.yml` -> `results_strenuous.rds`
   - Full Grid: `config_full.yml` -> `results_full_grid.rds`
+
+---
+
+## 6. Distributed SLURM Execution & Consolidation
+
+For large factorial grids (e.g. 33,000 fits in the Strenuous Grid or 264,000 fits in the Full Grid), the suite is parallelized across HPC clusters via SLURM job arrays.
+
+### 6.1 Two-Dimensional Multicore Scaling & Package Synchronization
+- **Pre-flight Package Sync (Stage 0)**: `slurm_submit.sh` runs `R CMD INSTALL ../..` prior to dispatching array jobs, guaranteeing that all cluster compute nodes execute against the exact active development version of `imuGAP`.
+- **Threaded Stan Compilation**: Model assembly compiles C++ DSOs with `-DSTAN_THREADS -pthread`, enabling within-chain likelihood threading in `observation_likelihood_reduce.stan`.
+- **2D Parallel Allocation**:
+  - Across-chain parallel workers: `chains = 4` processes.
+  - Within-chain likelihood threads: `threads_per_chain = T` (e.g., $T=1$ to $T=4$).
+  - Total CPUs per SLURM task: `chains * threads_per_chain` (e.g., $4 \times 1 = 4$ cores or $4 \times 4 = 16$ cores).
+- **Worker Artifacts**: Each array worker saves detailed posterior summaries (cohort $p_0(c)$ quantiles, subpopulation offset $\delta_k$ quantiles, parameter MCMC diagnostics, and pointwise scoring rules) to `results_parts/raw_part_<config>_<task_id>.rds`.
+
+### 6.2 Automatic Dependent Merge & Consolidation
+The submission script `slurm_submit.sh` automatically schedules a lightweight reducer job with dependency `afterok:<ARRAY_JOB_ID>`:
+
+```bash
+# Launch entire pipeline on SLURM (4 chains x 1 thread = 4 cores/task):
+make slurm-strenuous   # or bash slurm_submit.sh strenuous 4 1 300 150
+
+# Launch with within-chain multithreading (4 chains x 4 threads = 16 cores/task):
+bash slurm_submit.sh strenuous 4 4 300 150
+```
+
+The consolidation reducer executes the following reductions:
+1. **Runs Table (`results_<cfg>_runs.rds`)**: Compact scalar metrics per fit across all 33,000 runs (~4 MB).
+2. **Performance Matrix (`results_<cfg>_matrix.rds` & `.csv`)**: Grouped by `(link, guess, solver, model_name, K, sigma)` with median/IQR of ESS/sec, convergence rate, divergence rate, MAE, Bernoulli JSD, 95% and 50% coverage rates, and Winkler interval scores (<300 KB).
+3. **Solver Ranking (`results_<cfg>_ranking.rds` & `.csv`)**: Overall speedup and Pareto-efficiency ranking across models.
+4. **Calibration Profiles (`results_<cfg>_calibration.rds`)**: Cohort-specific and subpopulation offset bias and credible interval coverage envelopes.
+5. **Master Bundle (`results_<cfg>.rds`)**: Unified list holding all consolidated summary tables for downstream plotting and reporting.
+
+

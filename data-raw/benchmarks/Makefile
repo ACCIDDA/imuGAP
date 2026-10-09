@@ -1,7 +1,7 @@
 # Makefile for imuGAP Inference & Offset Benchmarking Pipeline
 # Manages intermediate artifacts (synthetic populations, compiled models, benchmark runs)
 
-.PHONY: all help populations stress-test-pop strenuous-pop full-pop models stress-test-models strenuous-models full-models compile stress-test-compile strenuous-compile full-compile run stress-test-run strenuous-run full-run stress-test strenuous clean
+.PHONY: all help populations stress-test-pop strenuous-pop full-pop models stress-test-models strenuous-models full-models compile stress-test-compile strenuous-compile full-compile run stress-test-run strenuous-run full-run stress-test strenuous clean slurm-strenuous slurm-full slurm-stress-test merge-strenuous merge-full merge-stress-test
 
 # Default target: display help
 all: help
@@ -26,7 +26,13 @@ help:
 	@echo "  make full-run            : Run MCMC inference & compute metrics for full grid"
 	@echo "  make stress-test         : Complete end-to-end stress test (populations -> compile -> run)"
 	@echo "  make strenuous           : Complete end-to-end strenuous test (populations -> compile -> run)"
-	@echo "  make clean               : Remove intermediate populations, models, objects, and results"
+	@echo "  make slurm-strenuous     : Launch 55 SLURM array workers (4 cores) + dependent merge for strenuous"
+	@echo "  make slurm-full          : Launch 55 SLURM array workers (4 cores) + dependent merge for full grid"
+	@echo "  make slurm-stress-test   : Launch 55 SLURM array workers (4 cores) + dependent merge for stress test"
+	@echo "  make merge-strenuous     : Consolidate partition files into final results for strenuous"
+	@echo "  make merge-full          : Consolidate partition files into final results for full grid"
+	@echo "  make merge-stress-test   : Consolidate partition files into final results for stress test"
+	@echo "  make clean               : Remove intermediate populations, models, objects, parts, and results"
 
 # --- 0. Stan Dependencies & Target Lists ---------------------------------------
 
@@ -92,7 +98,7 @@ standalone-strenuous-compile:
 standalone-full-compile:
 	Rscript benchmark_compilation.R config_full.yml --standalone --compile --parallel
 
-# --- 3. Inference Execution & Metrics Evaluation -------------------------------
+# --- 3. Inference Execution & Local Runs ---------------------------------------
 
 results_stress_test.rds: config_stress_test.rds $(UNIFIED_MODELS_OBJS) benchmark_inference_runner.R
 	Rscript benchmark_inference_runner.R config_stress_test.rds $@
@@ -115,7 +121,27 @@ stress-test: stress-test-pop stress-test-compile stress-test-run
 
 strenuous: strenuous-pop strenuous-compile strenuous-run
 
-# --- 4. Clean Target ----------------------------------------------------------
+# --- 4. SLURM Distributed Execution & Consolidation ---------------------------
+
+slurm-strenuous:
+	bash slurm_submit.sh strenuous 4 4 300 150
+
+slurm-full:
+	bash slurm_submit.sh full 4 4 300 150
+
+slurm-stress-test:
+	bash slurm_submit.sh stress_test 4 4 300 150
+
+merge-strenuous:
+	Rscript benchmark_merge.R strenuous results_parts
+
+merge-full:
+	Rscript benchmark_merge.R full results_parts
+
+merge-stress-test:
+	Rscript benchmark_merge.R stress_test results_parts
+
+# --- 5. Clean Target ----------------------------------------------------------
 
 clean:
-	rm -rf config_stress_test.rds config_strenuous.rds config_full.rds benchmodels benchobjs results_*.rds test_output.log
+	rm -rf config_stress_test.rds config_strenuous.rds config_full.rds benchmodels benchobjs results_*.rds results_*.csv results_parts logs test_output.log

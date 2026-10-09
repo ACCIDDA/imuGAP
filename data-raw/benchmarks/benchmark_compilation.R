@@ -340,17 +340,26 @@ compile_or_load_unified_model <- function(
     }
   }
 
-  cat(sprintf("Compiling unified model [%s] ... ", model_name))
+  cat(sprintf(
+    "Compiling unified model [%s] (threads=enabled) ... ",
+    model_name
+  ))
   flush(stdout())
   stan_dir <- find_stan_include_dir()
 
   t_start <- proc.time()
-  model <- rstan::stan_model(
-    file = stan_path,
-    isystem = stan_dir,
-    auto_write = FALSE,
-    save_dso = TRUE,
-    verbose = FALSE
+  cxx_flags <- paste(Sys.getenv("CXXFLAGS"), "-DSTAN_THREADS -pthread")
+  model <- withr::with_makevars(
+    c(CPPFLAGS = "-DSTAN_THREADS", CXXFLAGS = cxx_flags),
+    {
+      rstan::stan_model(
+        file = stan_path,
+        isystem = stan_dir,
+        auto_write = FALSE,
+        save_dso = TRUE,
+        verbose = FALSE
+      )
+    }
   )
   t_elapsed <- (proc.time() - t_start)[["elapsed"]]
 
@@ -388,17 +397,23 @@ compile_or_load_model <- function(
     }
   }
 
-  cat(sprintf("Compiling model [%s] ... ", model_name))
+  cat(sprintf("Compiling model [%s] (threads=enabled) ... ", model_name))
   flush(stdout())
   stan_dir <- find_stan_include_dir()
 
   t_start <- proc.time()
-  model <- rstan::stan_model(
-    file = stan_path,
-    isystem = stan_dir,
-    auto_write = FALSE,
-    save_dso = TRUE,
-    verbose = FALSE
+  cxx_flags <- paste(Sys.getenv("CXXFLAGS"), "-DSTAN_THREADS -pthread")
+  model <- withr::with_makevars(
+    c(CPPFLAGS = "-DSTAN_THREADS", CXXFLAGS = cxx_flags),
+    {
+      rstan::stan_model(
+        file = stan_path,
+        isystem = stan_dir,
+        auto_write = FALSE,
+        save_dso = TRUE,
+        verbose = FALSE
+      )
+    }
   )
   t_elapsed <- (proc.time() - t_start)[["elapsed"]]
 

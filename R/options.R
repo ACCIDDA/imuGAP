@@ -69,7 +69,11 @@ imugap_options <- function(
   }
   link <- match.arg(link, c("default", "logit", "probit"))
   guess <- if (
-    is.numeric(guess) && length(guess) == 1L && as.integer(guess) %in% 1:6
+    is.numeric(guess) &&
+      length(guess) == 1L &&
+      !is.na(guess) &&
+      guess %% 1 == 0 &&
+      as.integer(guess) %in% 1:6
   ) {
     c(
       "zero",
@@ -87,7 +91,11 @@ imugap_options <- function(
   }
 
   solver <- if (
-    is.numeric(solver) && length(solver) == 1L && as.integer(solver) %in% 1:5
+    is.numeric(solver) &&
+      length(solver) == 1L &&
+      !is.na(solver) &&
+      solver %% 1 == 0 &&
+      as.integer(solver) %in% 1:5
   ) {
     c("direct", "halley2", "newton2", "builtin", "halley10")[as.integer(solver)]
   } else {

@@ -62,7 +62,7 @@ local({
   })
 })
 
-required_pkgs <- c("imuGAP", "data.table", "ggplot2")
+required_pkgs <- c("imuGAP", "data.table", "ggplot2", "ggh4x")
 pkgs_available <- all(sapply(required_pkgs, requireNamespace, quietly = TRUE))
 
 if (!pkgs_available) {
@@ -568,10 +568,14 @@ for (k_pop in k_vals) {
       (1 / 24) * m4 * (1 - 2 * p0) * (1 - 12 * p0 + 12 * p0^2)
     mu_cond <- mu_taylor4 / (1 + abs(mu_taylor4) * 0.1)
 
-    f_c <- f_val(mu_cond)
-    fp_c <- f_prime(mu_cond)
-    fpp_c <- f_dprime(mu_cond)
-    mu_halley2 <- mu_cond - (2 * f_c * fp_c) / (2 * fp_c^2 - f_c * fpp_c)
+    mu_cur <- mu_cond
+    for (step in seq_len(2L)) {
+      f_c <- f_val(mu_cur)
+      fp_c <- f_prime(mu_cur)
+      fpp_c <- f_dprime(mu_cur)
+      mu_cur <- mu_cur - (2 * f_c * fp_c) / (2 * fp_c^2 - f_c * fpp_c)
+    }
+    mu_halley2 <- mu_cur
 
     methods <- list(
       "Zero Shift" = mu_zero,
