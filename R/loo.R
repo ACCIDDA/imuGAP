@@ -34,9 +34,10 @@ extract_log_lik_array <- function(object, posterior_size = NULL) {
     model_name <- object$settings$imugap_opts$model_name
     draws_mat <- apply(draws_sub, 3L, c)
 
-    dat_stan <- object$data
+    dat_stan <- ensure_layer_qr(object$data)
     dat_stan$predict_mode <- 0L
     dat_stan$compute_log_lik <- 1L
+    draws_mat <- ensure_draws_parameters(draws_mat, dat_stan)
 
     ll_mat <- backend_generate_quantities(
       raw_fit,
