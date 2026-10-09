@@ -380,7 +380,7 @@ create_target <- function(
 #' @keywords internal
 #' @noRd
 #' @autoglobal
-assemble_layer_data <- function(loc_info) {
+assemble_layer_data <- function(loc_info, guess_type = 3L, solver_type = 1L) {
   n_locs <- nrow(loc_info)
   n_layers <- max(loc_info$layer)
   layer_starts <- loc_info[, min(loc_c_id), by = layer]$V1
@@ -440,8 +440,114 @@ assemble_layer_data <- function(loc_info) {
     n_parent_locs = n_parent_locs,
     parent_loc_id = as.array(as.integer(parent_loc_id)),
     parent_child_starts = as.array(as.integer(parent_child_starts)),
-    loc_population = as.array(as.numeric(loc_population))
+    loc_population = as.array(as.numeric(loc_population)),
+    guess_type = as.integer(guess_type),
+    solver_type = as.integer(solver_type)
   )
+}
+
+#' @title Reconstruct unconstrained spatial parameters if dropped
+#'
+#' @description
+#' Reconstructs `z_layer` parameters from `off_layer` and the precomputed block
+#' QR basis if `z_layer` was dropped from posterior draws during sampling.
+#'
+#' @param draws_mat matrix of flattened posterior draws (rows = draws, cols = parameters).
+#' @param dat_stan list of Stan input data.
+#'
+#' @return a matrix containing `draws_mat` and any reconstructed `z_layer` columns.
+#' @keywords internal
+#' @noRd
+ensure_draws_parameters <- function(draws_mat, dat_stan) {
+  if (is.null(dat_stan$n_parent_locs) || dat_stan$n_parent_locs == 0L) {
+    return(draws_mat)
+  }
+  cols <- colnames(draws_mat)
+  if (
+    is.null(cols) ||
+      any(grepl("^z_layer(\\[|$)", cols)) ||
+      !any(grepl("^off_layer(\\[|$)", cols))
+  ) {
+    return(draws_mat)
+  }
+
+  n_locs <- dat_stan$n_locs
+  n_layers <- dat_stan$n_layers
+  layer_starts <- as.integer(dat_stan$layer_starts)
+  n_parent_locs <- dat_stan$n_parent_locs
+  parent_child_starts <- as.integer(dat_stan$parent_child_starts)
+  loc_population <- as.numeric(dat_stan$loc_population)
+
+  layer_bounds <- rbind(layer_starts, c(layer_starts[-1L] - 1L, n_locs))
+  parent_child_bounds <- rbind(
+    parent_child_starts,
+    c(parent_child_starts[-1L] - 1L, n_locs)
+  )
+
+  loc_layer_idx <- integer(n_locs - 1L)
+  for (k in seq_len(n_layers - 1L)) {
+    st <- layer_bounds[1L, k + 1L] - 1L
+    en <- layer_bounds[2L, k + 1L] - 1L
+    loc_layer_idx[st:en] <- k
+  }
+
+  loc_pop_scale <- numeric(n_locs - 1L)
+  for (k in seq_len(n_layers - 1L)) {
+    st <- layer_bounds[1L, k + 1L]
+    en <- layer_bounds[2L, k + 1L]
+    layer_pop <- loc_population[st:en]
+    mean_layer_pop <- mean(layer_pop)
+    for (i in st:en) {
+      pop_val <- loc_population[i]
+      loc_pop_scale[i - 1L] <- if (pop_val > 0 && mean_layer_pop > 0) {
+        sqrt(mean_layer_pop / pop_val)
+      } else {
+        1.0
+      }
+    }
+  }
+
+  cur_z <- 1L
+  z_cols <- vector("list", n_parent_locs)
+  for (p in seq_len(n_parent_locs)) {
+    st <- parent_child_bounds[1L, p]
+    en <- parent_child_bounds[2L, p]
+    k_size <- en - st + 1L
+    z_st <- cur_z
+    z_en <- cur_z + k_size - 2L
+    cur_z <- cur_z + (k_size - 1L)
+
+    pop_slice <- loc_population[st:en]
+    sum_pop <- sum(pop_slice)
+    w <- if (sum_pop > 0) pop_slice / sum_pop else rep(1.0 / k_size, k_size)
+    w_prime <- sqrt(w)
+
+    v1 <- w_prime / sqrt(sum(w_prime^2))
+    mat_m <- matrix(0.0, nrow = k_size, ncol = k_size)
+    mat_m[, 1L] <- v1
+    for (j in seq_len(k_size - 1L)) {
+      mat_m[j, j + 1L] <- 1.0
+    }
+    mat_q <- qr.Q(qr(mat_m))
+    q_star <- mat_q[, 2L:k_size, drop = FALSE]
+
+    l_st <- st - 1L
+    l_en <- en - 1L
+    layer_idx <- loc_layer_idx[l_st]
+    pop_scale <- loc_pop_scale[l_st:l_en]
+
+    off_names <- paste0("off_layer[", l_st:l_en, "]")
+    sigma_name <- paste0("sigma_layer[", layer_idx, "]")
+
+    off_sub <- draws_mat[, off_names, drop = FALSE]
+    sigma <- draws_mat[, sigma_name]
+    raw_off <- sweep(off_sub, 2L, pop_scale, "/") / sigma
+    z_sub <- raw_off %*% q_star
+    colnames(z_sub) <- paste0("z_layer[", z_st:z_en, "]")
+    z_cols[[p]] <- z_sub
+  }
+
+  cbind(draws_mat, do.call(cbind, z_cols))
 }
 
 #' @title Validate and subset posterior draws array
@@ -495,4 +601,32 @@ subset_draws_tail <- function(draws_array, posterior_size = NULL) {
 
   keep <- posterior_size %/% n_chains
   draws_array[seq.int(n_iter - keep + 1L, n_iter), , , drop = FALSE]
+}
+
+#' Ensure compatibility of raw_fit with renamed Stan models
+#'
+#' @param raw_fit a fitted Stan object (e.g. `stanfit` or `CmdStanMCMC`).
+#'
+#' @return the `raw_fit` with updated stanmodel reference if needed.
+#' @keywords internal
+#' @noRd
+ensure_stanmodel_compat <- function(raw_fit) {
+  if (
+    inherits(raw_fit, "stanfit") &&
+      exists("stanmodels", envir = asNamespace("imuGAP"))
+  ) {
+    model_name <- raw_fit@stanmodel@model_name
+    legacy_map <- c(
+      "impute_school_coverage_process_v6" = "bspline_static_offsets_logit",
+      "impute_school_coverage_process_v6_single_layer" = "bspline_single_logit"
+    )
+    if (model_name %in% names(legacy_map)) {
+      target_model <- legacy_map[[model_name]]
+      pkg_stanmodels <- get("stanmodels", envir = asNamespace("imuGAP"))
+      if (target_model %in% names(pkg_stanmodels)) {
+        raw_fit@stanmodel <- pkg_stanmodels[[target_model]]
+      }
+    }
+  }
+  raw_fit
 }

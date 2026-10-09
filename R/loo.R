@@ -13,7 +13,7 @@
 #' @keywords internal
 #' @noRd
 extract_log_lik_array <- function(object, posterior_size = NULL) {
-  raw_fit <- object$raw_fit
+  raw_fit <- ensure_stanmodel_compat(object$raw_fit)
   draws_array <- backend_draws_array(raw_fit)
   param_names <- dimnames(draws_array)[[3]]
   ll_param_idx <- grep("^log_lik\\[", param_names)
@@ -32,11 +32,17 @@ extract_log_lik_array <- function(object, posterior_size = NULL) {
     n_keep <- dim(draws_sub)[1]
     n_chains <- dim(draws_sub)[2]
     model_name <- object$settings$imugap_opts$model_name
-    draws_mat <- apply(draws_sub, 3L, c)
-
     dat_stan <- object$data
+    if (is.null(dat_stan$guess_type)) {
+      dat_stan$guess_type <- 3L
+    }
+    if (is.null(dat_stan$solver_type)) {
+      dat_stan$solver_type <- 1L
+    }
     dat_stan$predict_mode <- 0L
     dat_stan$compute_log_lik <- 1L
+
+    draws_mat <- ensure_draws_parameters(apply(draws_sub, 3L, c), dat_stan)
 
     ll_mat <- backend_generate_quantities(
       raw_fit,

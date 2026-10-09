@@ -1,0 +1,51 @@
+# Strenuous Benchmark Configuration: Focused on Algorithmic Stress Boundaries
+name: "strenuous"
+
+# Boundary & extreme partition regimes:
+# - K = 3: Extreme finite-sample variance / non-Gaussian empirical mixture
+# - K = 10: Standard operational reference
+# - K = 100: Maximum computational and Jacobian evaluation stress
+k_grid: [3, 10, 100]
+
+# Heterogeneity stress regimes:
+# - sigma = 0.6: Moderate baseline control
+# - sigma = 1.4: Extreme stress / Taylor truncation breakdown threshold
+sigma_grid: [0.6, 1.4]
+
+# Targeted 7-cohort trend: Concentrating on steep-gradient & asymmetric tail boundaries
+# (2 boundary extremes, 2 steep slopes, 2 transition points, 1 central control)
+p0_trend:
+  - 0.02   # Extreme lower tail (logit: -3.89, probit: -2.05)
+  - 0.05   # Lower tail saturation
+  - 0.15   # Steep lower gradient
+  - 0.50   # Symmetric central reference
+  - 0.85   # Steep upper gradient
+  - 0.95   # Upper tail saturation
+  - 0.98   # Extreme upper tail (logit: +3.89, probit: +2.05)
+
+n_samples: 100
+seed: 20261008
+
+links:
+  - "logit"
+  - "probit"
+
+guessers:
+  - "zero"
+  - "taylor2"
+  - "taylor4"
+  - "pade"
+  - "asymptotic"
+  - "conditioned"
+
+solvers:
+  - "direct"
+  - "halley2"
+  - "newton2"
+  - "builtin"
+  - "halley10"
+
+n_sample_obs: 1000
+dose_schedule: [1]
+obs_age: 2
+pop_per_sub: 5000

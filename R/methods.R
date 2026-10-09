@@ -120,7 +120,7 @@ predict.imugap_fit <- function(
     name = "object"
   )
 
-  raw_fit <- object$raw_fit
+  raw_fit <- ensure_stanmodel_compat(object$raw_fit)
 
   # Posterior draws as a 3D array: iterations x chains x parameters.
   draws_array <- backend_draws_array(raw_fit)
@@ -132,7 +132,7 @@ predict.imugap_fit <- function(
   model_name <- object$settings$imugap_opts$model_name
 
   # Flatten to the 2D draws matrix gqs expects (rows = draws, cols = params).
-  draws_mat <- apply(draws_sub, 3L, c)
+  draws_mat <- ensure_draws_parameters(apply(draws_sub, 3L, c), object$data)
 
   target <- canonicalize_target(target, object)
 
@@ -188,6 +188,12 @@ predict.imugap_fit <- function(
 
   # Update the data object for prediction mode
   dat_stan <- object$data
+  if (is.null(dat_stan$guess_type)) {
+    dat_stan$guess_type <- 3L
+  }
+  if (is.null(dat_stan$solver_type)) {
+    dat_stan$solver_type <- 1L
+  }
   updates <- c(
     list(n_yr = length(target_sched$age_to_interval_map)),
     target_sched,

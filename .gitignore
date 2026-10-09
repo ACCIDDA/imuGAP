@@ -32,6 +32,7 @@ R/globals.R
 data/fit_sim*.rda
 data/target_sim*.rda
 data/predict_sim*.rda
+data/leave_*.rda
 
 # Diagram artifacts generated from .mmd sources prior to building vignettes
 vignettes/figures/*.svg
@@ -41,4 +42,11 @@ vignettes/figures/*.pdf
 # Vignette render outputs
 vignettes/*.html
 vignettes/*.pdf
+
+# Benchmark pipeline intermediate models, DSO objects, and run results
+data-raw/benchmarks/benchmodels/
+data-raw/benchmarks/benchobjs/
+data-raw/benchmarks/*.rds
+data-raw/benchmarks/*.log
+benchmodels/
 

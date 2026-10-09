@@ -47,6 +47,9 @@ generated quantities {
   array[2, n_parent_locs] int out_qr_bounds = qr_bounds;
   vector[n_qr_entries] out_qr_entries = qr_entries;
   vector[n_locs - 1] out_loc_pop_scale = loc_pop_scale;
+  vector[n_locs - 1] out_loc_child_weight = loc_child_weight;
+  array[n_locs] int out_loc_parent_idx = loc_parent_idx;
+  array[n_locs] int out_loc_to_parent_p_idx = loc_to_parent_p_idx;
 }
 ",
   target
@@ -209,4 +212,44 @@ test_that("layer_indices.stan constructs multi-layer mappings with canonical hie
     weighted_sum <- sum(child_pops * child_offsets)
     expect_equal(weighted_sum, 0, tolerance = 1e-6)
   }
+
+  # Verify loc_child_weight, loc_parent_idx, and loc_to_parent_p_idx
+  loc_child_weight <- run_stan_harness(
+    model_layer_indices,
+    data = ld_sim,
+    out_loc_child_weight
+  )
+  loc_parent_idx <- run_stan_harness(
+    model_layer_indices,
+    data = ld_sim,
+    out_loc_parent_idx
+  )
+  loc_to_parent_p_idx <- run_stan_harness(
+    model_layer_indices,
+    data = ld_sim,
+    out_loc_to_parent_p_idx
+  )
+
+  for (p in seq_len(ld_sim$n_parent_locs)) {
+    st <- parent_child_bounds[1, p]
+    en <- parent_child_bounds[2, p]
+    pop_slice <- ld_sim$loc_population[st:en]
+    expected_w <- as.numeric(pop_slice / sum(pop_slice))
+    expect_equal(
+      as.numeric(loc_child_weight[(st - 1L):(en - 1L)]),
+      expected_w,
+      tolerance = 1e-6
+    )
+    expect_equal(
+      sum(loc_child_weight[(st - 1L):(en - 1L)]),
+      1.0,
+      tolerance = 1e-6
+    )
+    expect_equal(loc_parent_idx[ld_sim$parent_loc_id[p]], p)
+    expect_equal(
+      as.numeric(loc_to_parent_p_idx[st:en]),
+      rep(p, en - st + 1L)
+    )
+  }
+  expect_equal(loc_to_parent_p_idx[1], 0L)
 })

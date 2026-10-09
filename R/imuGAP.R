@@ -200,8 +200,12 @@ generate_inits <- function(dat_stan, model = "default") {
     )
   }
 
-  model_inits <- if (identical(model, "default")) {
+  model_inits <- if (model %in% c("default", "logit")) {
     init_beta <- rep(stats::qlogis(baseline_phi), dat_stan$k_bs) +
+      stats::rnorm(dat_stan$k_bs, 0, 0.05)
+    list(beta_bs = array(init_beta, dim = dat_stan$k_bs))
+  } else if (identical(model, "probit")) {
+    init_beta <- rep(stats::qnorm(baseline_phi), dat_stan$k_bs) +
       stats::rnorm(dat_stan$k_bs, 0, 0.05)
     list(beta_bs = array(init_beta, dim = dat_stan$k_bs))
   } else {
@@ -289,7 +293,7 @@ sampling <- function(
   # check imugap_opts
   model <- imugap_opts$model %||% "default"
   stop_fmt_if(
-    !identical(model, "default"),
+    !model %in% c("default", "logit", "probit"),
     ERR_OPT_UNKNOWN_MODEL,
     model = model
   )
@@ -300,8 +304,14 @@ sampling <- function(
   loc_info <- canonicalize_locations(locations)
   n_layers <- max(loc_info$layer)
   is_multilayer <- n_layers > 1L
+  guess_type_opt <- imugap_opts$guess_type %||% 3L
+  solver_type_opt <- imugap_opts$solver_type %||% 1L
   layer_data <- if (is_multilayer) {
-    assemble_layer_data(loc_info)
+    assemble_layer_data(
+      loc_info,
+      guess_type = guess_type_opt,
+      solver_type = solver_type_opt
+    )
   } else {
     NULL
   }
@@ -366,22 +376,33 @@ sampling <- function(
   # Select specialized Stan model based on model and hierarchy depth:
   # 1-layer uses the streamlined single-location model; >= 2 layers uses the full
   # hierarchical model.
-  model_name <- if (identical(model, "default")) {
+  model_name <- if (model %in% c("default", "logit")) {
     if (is_multilayer) {
-      "impute_school_coverage_process_v6"
+      "bspline_static_offsets_logit"
     } else {
-      "impute_school_coverage_process_v6_single_layer"
+      "bspline_single_logit"
+    }
+  } else if (identical(model, "probit")) {
+    if (is_multilayer) {
+      "bspline_static_offsets_probit"
+    } else {
+      "bspline_single_probit"
     }
   } else {
     stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model = model)
   }
+
+  # Drop unconstrained latent spatial innovation parameters (z_layer) by default
+  # in multi-layer models, while returning the full orthonormalized offsets (off_layer).
+  # If the user explicitly requested custom `pars` in stan_opts, respect user selection.
+  drop_pars <- if (is.null(stan_opts$pars) && is_multilayer) "z_layer" else NULL
 
   raw_fit <- fit_model(
     model_name,
     dat_stan,
     init = make_init_fn(dat_stan, model = model),
     stan_opts,
-    drop_pars = NULL,
+    drop_pars = drop_pars,
     package = "imuGAP"
   )
 
