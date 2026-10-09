@@ -187,7 +187,7 @@ predict.imugap_fit <- function(
   )
 
   # Update the data object for prediction mode
-  dat_stan <- object$data
+  dat_stan <- ensure_layer_qr(object$data)
   updates <- c(
     list(n_yr = length(target_sched$age_to_interval_map)),
     target_sched,
@@ -197,6 +197,7 @@ predict.imugap_fit <- function(
     list(predict_mode = 1L, compute_log_lik = 0L)
   )
   dat_stan[names(updates)] <- updates
+  draws_mat <- ensure_draws_parameters(draws_mat, dat_stan)
 
   # Predicted coverage via the backend's generated-quantities run, reshaped to
   # iterations x chains x targets so the per-chain structure is preserved.
