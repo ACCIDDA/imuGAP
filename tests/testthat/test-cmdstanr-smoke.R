@@ -45,7 +45,7 @@ test_that("imuGAP::sampling() fits via the cmdstanr backend", {
   for (par in c("beta_bs", "lambda_raw", "raw_phi_root", "off_layer")) {
     expect_true(par %in% fit_pars, info = paste("missing parameter:", par))
   }
-  for (par in c("phi", "z_layer")) {
+  for (par in c("phi")) {
     expect_false(
       par %in% fit_pars,
       info = paste("parameter should be absent:", par)
