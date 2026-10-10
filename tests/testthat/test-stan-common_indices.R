@@ -165,7 +165,7 @@ test_that("structural data and transformed indices create compliant lookup and r
 
   results <- run_stan_harness(
     model_common_indices,
-    data = data_list
+    data = ensure_layer_qr(data_list)
   )
 
   # Uncensored range and lookups
