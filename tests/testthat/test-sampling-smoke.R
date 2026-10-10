@@ -27,7 +27,7 @@ test_that("imuGAP::sampling() runs end-to-end on bundled *_sim data", {
   expect_s4_class(fit$raw_fit, "stanfit")
 
   fit_pars <- fit$raw_fit@model_pars
-  for (par in c("beta_bs", "lambda_raw", "raw_phi_root")) {
+  for (par in c("beta_bs", "lambda_raw", "raw_phi_root", "off_layer")) {
     expect_true(par %in% fit_pars, info = paste("missing parameter:", par))
   }
   for (par in c("phi")) {
@@ -36,6 +36,8 @@ test_that("imuGAP::sampling() runs end-to-end on bundled *_sim data", {
       info = paste("parameter should be absent:", par)
     )
   }
+  off_layer_draws <- as.matrix(fit$raw_fit, pars = "off_layer")
+  expect_equal(ncol(off_layer_draws), nrow(locs) - 1L)
 })
 
 test_that("imuGAP::sampling() runs end-to-end with 1-layer location hierarchy", {

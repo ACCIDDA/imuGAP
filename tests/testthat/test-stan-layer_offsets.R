@@ -49,7 +49,6 @@ generated quantities {
   vector[n_cohort * n_locs] out_phi = compute_hierarchical_phi(
     raw_phi_root, out_raw_phi_loc, n_cohort, n_locs
   );
-  matrix[3, 2] out_qr_test = get_weighted_qr_basis([0.2, 0.3, 0.5]');
   vector[n_locs - 1] out_computed_offsets = compute_layer_offsets(
     n_locs, n_parent_locs, parent_child_bounds, z_bounds, qr_bounds, qr_entries,
     z_layer, loc_pop_scale, sigma_layer, loc_layer_idx
@@ -93,38 +92,9 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
     times = diff(c(ld_sim$layer_starts, ld_sim$n_locs + 1L))[-1L]
   )
 
-  z_bounds <- matrix(0L, nrow = 2, ncol = ld_sim$n_parent_locs)
-  qr_bounds <- matrix(0L, nrow = 2, ncol = ld_sim$n_parent_locs)
-  cur_z <- 1L
-  cur_qr <- 1L
-  qr_list <- vector("list", ld_sim$n_parent_locs)
-
-  for (p in seq_len(ld_sim$n_parent_locs)) {
-    k_len <- parent_child_bounds[2, p] - parent_child_bounds[1, p] + 1L
-    z_bounds[1, p] <- cur_z
-    z_bounds[2, p] <- cur_z + k_len - 2L
-    qr_bounds[1, p] <- cur_qr
-    qr_bounds[2, p] <- cur_qr + k_len * (k_len - 1L) - 1L
-
-    pop_slice <- ld_sim$loc_population[
-      parent_child_bounds[1, p]:parent_child_bounds[2, p]
-    ]
-    w <- if (sum(pop_slice) > 0) {
-      pop_slice / sum(pop_slice)
-    } else {
-      rep(1 / k_len, k_len)
-    }
-    mat_m <- cbind(
-      sqrt(w) / sqrt(sum(w)),
-      diag(k_len)[, seq_len(k_len - 1L), drop = FALSE]
-    )
-    q_star <- qr.Q(qr(mat_m))[, -1L, drop = FALSE]
-    qr_list[[p]] <- as.vector(q_star)
-
-    cur_z <- cur_z + k_len - 1L
-    cur_qr <- cur_qr + k_len * (k_len - 1L)
-  }
-  qr_entries <- unlist(qr_list)
+  z_bounds <- ld_sim$z_bounds
+  qr_bounds <- ld_sim$qr_bounds
+  qr_entries <- ld_sim$qr_entries
 
   data_list <- c(
     ld_sim,
@@ -134,10 +104,6 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
       n_cohort = length(raw_phi_root),
       raw_phi_root = raw_phi_root,
       n_unconstrained = n_unconstrained,
-      n_qr_entries = length(qr_entries),
-      z_bounds = z_bounds,
-      qr_bounds = qr_bounds,
-      qr_entries = qr_entries,
       z_layer = z_layer,
       loc_pop_scale = loc_pop_scale,
       sigma_layer = sigma_layer,
@@ -208,14 +174,11 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
     tolerance = 1e-6
   )
 
-  # Check get_weighted_qr_basis orthogonality and orthonormality
-  qr_test <- run_stan_harness(
-    model_layer_offsets,
-    data = data_list,
-    out_qr_test
-  )
+  # Check compute_layer_qr orthogonality and orthonormality
   w <- c(0.2, 0.3, 0.5)
-  w_norm <- w / sqrt(sum(w^2))
-  expect_equal(as.numeric(t(qr_test) %*% w_norm), c(0, 0), tolerance = 1e-6)
-  expect_equal(t(qr_test) %*% qr_test, diag(2), tolerance = 1e-6)
+  w_norm <- sqrt(w) / sqrt(sum(w))
+  qr_res <- imuGAP:::compute_layer_qr(1L, 2L, 4L, c(1.0, w))
+  q_star <- matrix(qr_res$qr_entries, nrow = 3L, ncol = 2L)
+  expect_equal(as.numeric(t(q_star) %*% w_norm), c(0, 0), tolerance = 1e-6)
+  expect_equal(t(q_star) %*% q_star, diag(2), tolerance = 1e-6)
 })

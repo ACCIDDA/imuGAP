@@ -433,6 +433,14 @@ assemble_layer_data <- function(loc_info) {
   }
   loc_population[is.na(loc_population)] <- 1.0
 
+  # Precompute QR block entries and index bounds for balanced layer offsets
+  qr_data <- compute_layer_qr(
+    n_parent_locs,
+    parent_child_starts,
+    n_locs,
+    loc_population
+  )
+
   list(
     n_locs = n_locs,
     n_layers = n_layers,
@@ -440,8 +448,130 @@ assemble_layer_data <- function(loc_info) {
     n_parent_locs = n_parent_locs,
     parent_loc_id = as.array(as.integer(parent_loc_id)),
     parent_child_starts = as.array(as.integer(parent_child_starts)),
-    loc_population = as.array(as.numeric(loc_population))
+    loc_population = as.array(as.numeric(loc_population)),
+    n_qr_entries = qr_data$n_qr_entries,
+    z_bounds = qr_data$z_bounds,
+    qr_bounds = qr_data$qr_bounds,
+    qr_entries = as.array(as.numeric(qr_data$qr_entries))
   )
+}
+
+#' @title Precompute orthonormal nullspace QR basis for hierarchical layers
+#'
+#' @description
+#' Computes per-parent block QR bases, bounds, and flattened entries for weighted
+#' sum-to-zero offsets.
+#'
+#' @param n_parent_locs integer scalar; number of parent locations.
+#' @param parent_child_starts integer vector; starting 1-based child index for each parent.
+#' @param n_locs integer scalar; total number of locations.
+#' @param loc_population numeric vector; location population sizes.
+#'
+#' @return a list containing `n_qr_entries`, `z_bounds`, `qr_bounds`, and `qr_entries`.
+#' @keywords internal
+#' @noRd
+compute_layer_qr <- function(
+  n_parent_locs,
+  parent_child_starts,
+  n_locs,
+  loc_population
+) {
+  if (n_parent_locs == 0L) {
+    return(list(
+      n_qr_entries = 0L,
+      z_bounds = matrix(0L, nrow = 2L, ncol = 0L),
+      qr_bounds = matrix(0L, nrow = 2L, ncol = 0L),
+      qr_entries = numeric(0L)
+    ))
+  }
+
+  parent_child_bounds <- rbind(
+    parent_child_starts,
+    c(parent_child_starts[-1L] - 1L, n_locs)
+  )
+
+  z_bounds <- matrix(0L, nrow = 2L, ncol = n_parent_locs)
+  qr_bounds <- matrix(0L, nrow = 2L, ncol = n_parent_locs)
+  qr_list <- vector("list", n_parent_locs)
+
+  cur_z <- 1L
+  cur_qr <- 1L
+  for (p in seq_len(n_parent_locs)) {
+    st <- parent_child_bounds[1L, p]
+    en <- parent_child_bounds[2L, p]
+    k_len <- en - st + 1L
+
+    z_bounds[1L, p] <- cur_z
+    z_bounds[2L, p] <- cur_z + k_len - 2L
+
+    qr_bounds[1L, p] <- cur_qr
+    qr_bounds[2L, p] <- cur_qr + k_len * (k_len - 1L) - 1L
+
+    pop_slice <- loc_population[st:en]
+    sum_pop <- sum(pop_slice)
+    w <- if (sum_pop > 0) pop_slice / sum_pop else rep(1.0 / k_len, k_len)
+    w_prime <- sqrt(w)
+
+    v1 <- w_prime / sqrt(sum(w_prime^2))
+    mat_m <- matrix(0.0, nrow = k_len, ncol = k_len)
+    mat_m[, 1L] <- v1
+    for (j in seq_len(k_len - 1L)) {
+      mat_m[j, j + 1L] <- 1.0
+    }
+    mat_q <- qr.Q(qr(mat_m))
+    q_star <- mat_q[, 2L:k_len, drop = FALSE]
+    for (j in seq_len(ncol(q_star))) {
+      nz <- which(abs(q_star[, j]) > 1e-10)[1L]
+      if (!is.na(nz) && q_star[nz, j] < 0) {
+        q_star[, j] <- -q_star[, j]
+      }
+    }
+    qr_list[[p]] <- as.vector(q_star)
+
+    cur_z <- cur_z + k_len - 1L
+    cur_qr <- cur_qr + k_len * (k_len - 1L)
+  }
+
+  qr_entries <- unlist(qr_list)
+
+  list(
+    n_qr_entries = length(qr_entries),
+    z_bounds = z_bounds,
+    qr_bounds = qr_bounds,
+    qr_entries = qr_entries
+  )
+}
+
+#' @title Ensure Stan data contains precomputed QR basis entries
+#'
+#' @description
+#' Backfills `n_qr_entries`, `z_bounds`, `qr_bounds`, and `qr_entries` into Stan data
+#' if missing.
+#'
+#' @param dat_stan list of Stan input data.
+#'
+#' @return a list of Stan input data guaranteed to contain QR basis entries.
+#' @keywords internal
+#' @noRd
+ensure_layer_qr <- function(dat_stan) {
+  is_single <- is.null(dat_stan$n_parent_locs) || dat_stan$n_parent_locs == 0L
+  has_qr <- !is.null(dat_stan$qr_entries) &&
+    !is.null(dat_stan$z_bounds) &&
+    !is.null(dat_stan$qr_bounds)
+  if (is_single || has_qr) {
+    return(dat_stan)
+  }
+  qr_data <- compute_layer_qr(
+    as.integer(dat_stan$n_parent_locs),
+    as.integer(dat_stan$parent_child_starts),
+    as.integer(dat_stan$n_locs),
+    as.numeric(dat_stan$loc_population)
+  )
+  dat_stan$n_qr_entries <- qr_data$n_qr_entries
+  dat_stan$z_bounds <- qr_data$z_bounds
+  dat_stan$qr_bounds <- qr_data$qr_bounds
+  dat_stan$qr_entries <- as.array(as.numeric(qr_data$qr_entries))
+  dat_stan
 }
 
 #' @title Validate and subset posterior draws array
@@ -495,4 +625,102 @@ subset_draws_tail <- function(draws_array, posterior_size = NULL) {
 
   keep <- posterior_size %/% n_chains
   draws_array[seq.int(n_iter - keep + 1L, n_iter), , , drop = FALSE]
+}
+
+#' @title Ensure presence of parameter columns in posterior draws
+#'
+#' @description
+#' Reconstructs `z_layer` parameters from `off_layer` and the precomputed block
+#' QR basis if `z_layer` was dropped from posterior draws during sampling.
+#'
+#' @param draws_mat matrix of flattened posterior draws (rows = draws, cols = parameters).
+#' @param dat_stan list of Stan input data.
+#'
+#' @return a matrix containing `draws_mat` and any reconstructed `z_layer` columns.
+#' @keywords internal
+#' @noRd
+ensure_draws_parameters <- function(draws_mat, dat_stan) {
+  if (is.null(dat_stan$n_parent_locs) || dat_stan$n_parent_locs == 0L) {
+    return(draws_mat)
+  }
+  cols <- colnames(draws_mat)
+  if (
+    is.null(cols) ||
+      any(grepl("^z_layer(\\[|$)", cols)) ||
+      !any(grepl("^off_layer(\\[|$)", cols))
+  ) {
+    return(draws_mat)
+  }
+
+  n_locs <- dat_stan$n_locs
+  n_layers <- dat_stan$n_layers
+  layer_starts <- as.integer(dat_stan$layer_starts)
+  n_parent_locs <- dat_stan$n_parent_locs
+  parent_child_starts <- as.integer(dat_stan$parent_child_starts)
+  loc_population <- as.numeric(dat_stan$loc_population)
+
+  layer_bounds <- rbind(layer_starts, c(layer_starts[-1L] - 1L, n_locs))
+  parent_child_bounds <- rbind(
+    parent_child_starts,
+    c(parent_child_starts[-1L] - 1L, n_locs)
+  )
+
+  loc_layer_idx <- integer(n_locs - 1L)
+  for (k in seq_len(n_layers - 1L)) {
+    st <- layer_bounds[1L, k + 1L] - 1L
+    en <- layer_bounds[2L, k + 1L] - 1L
+    loc_layer_idx[st:en] <- k
+  }
+
+  loc_pop_scale <- numeric(n_locs - 1L)
+  for (k in seq_len(n_layers - 1L)) {
+    st <- layer_bounds[1L, k + 1L]
+    en <- layer_bounds[2L, k + 1L]
+    layer_pop <- loc_population[st:en]
+    mean_layer_pop <- mean(layer_pop)
+    for (i in st:en) {
+      pop_val <- loc_population[i]
+      loc_pop_scale[i - 1L] <- if (pop_val > 0 && mean_layer_pop > 0) {
+        sqrt(mean_layer_pop / pop_val)
+      } else {
+        1.0
+      }
+    }
+  }
+
+  dat_stan <- ensure_layer_qr(dat_stan)
+
+  z_cols <- vector("list", n_parent_locs)
+  for (p in seq_len(n_parent_locs)) {
+    st <- parent_child_bounds[1L, p]
+    en <- parent_child_bounds[2L, p]
+    k_size <- en - st + 1L
+
+    z_st <- dat_stan$z_bounds[1L, p]
+    z_en <- dat_stan$z_bounds[2L, p]
+    q_st <- dat_stan$qr_bounds[1L, p]
+    q_en <- dat_stan$qr_bounds[2L, p]
+    q_star <- matrix(
+      dat_stan$qr_entries[q_st:q_en],
+      nrow = k_size,
+      ncol = k_size - 1L
+    )
+
+    l_st <- st - 1L
+    l_en <- en - 1L
+    layer_idx <- loc_layer_idx[l_st]
+    pop_scale <- loc_pop_scale[l_st:l_en]
+
+    off_names <- paste0("off_layer[", l_st:l_en, "]")
+    sigma_name <- paste0("sigma_layer[", layer_idx, "]")
+
+    off_sub <- draws_mat[, off_names, drop = FALSE]
+    sigma <- draws_mat[, sigma_name]
+    raw_off <- sweep(off_sub, 2L, pop_scale, "/") / sigma
+    z_sub <- raw_off %*% q_star
+    colnames(z_sub) <- paste0("z_layer[", z_st:z_en, "]")
+    z_cols[[p]] <- z_sub
+  }
+
+  cbind(draws_mat, do.call(cbind, z_cols))
 }

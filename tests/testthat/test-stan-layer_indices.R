@@ -20,13 +20,7 @@ functions {
   #include functions/layer_offsets.stan
 }
 data {
-  int n_locs;
-  int n_layers;
-  array[n_layers] int layer_starts;
-  int n_parent_locs;
-  array[n_parent_locs] int parent_loc_id;
-  array[n_parent_locs] int parent_child_starts;
-  vector<lower=0>[n_locs] loc_population;
+  #include data/locations.stan
 }
 transformed data {
   #include %s
@@ -41,12 +35,8 @@ generated quantities {
   array[2, n_layers] int out_layer_bounds = layer_bounds;
   array[2, n_parent_locs] int out_parent_child_bounds = parent_child_bounds;
   array[n_locs - 1] int out_loc_layer_idx = loc_layer_idx;
-  int out_n_unconstrained_offsets = n_unconstrained_offsets;
-  int out_n_qr_entries = n_qr_entries;
-  array[2, n_parent_locs] int out_z_bounds = z_bounds;
-  array[2, n_parent_locs] int out_qr_bounds = qr_bounds;
-  vector[n_qr_entries] out_qr_entries = qr_entries;
   vector[n_locs - 1] out_loc_pop_scale = loc_pop_scale;
+  int out_n_unconstrained_offsets = n_unconstrained_offsets;
 }
 ",
   target
@@ -104,21 +94,9 @@ test_that("layer_indices.stan constructs multi-layer mappings with canonical hie
   )
   expect_equal(n_unconstrained, (ld_sim$n_locs - 1L) - ld_sim$n_parent_locs)
 
-  z_bounds <- run_stan_harness(
-    model_layer_indices,
-    data = ld_sim,
-    out_z_bounds
-  )
-  qr_bounds <- run_stan_harness(
-    model_layer_indices,
-    data = ld_sim,
-    out_qr_bounds
-  )
-  qr_entries <- run_stan_harness(
-    model_layer_indices,
-    data = ld_sim,
-    out_qr_entries
-  )
+  z_bounds <- ld_sim$z_bounds
+  qr_bounds <- ld_sim$qr_bounds
+  qr_entries <- ld_sim$qr_entries
 
   loc_pop_scale <- run_stan_harness(
     model_layer_indices,
