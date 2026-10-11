@@ -29,7 +29,43 @@ vector compute_hierarchical_phi(
   return to_vector(inv_link(raw_phi_mat));
 }
 
+// Accumulate hierarchical link-scale effects (spline baseline, per-parent mu shifts, and offsets)
+// Evaluates link(p_{l, t}) = link(p_{parent(l), t}) + mu_{parent(l), t} + delta_l sequentially top-down
+// Returns [n_cohort, n_locs + n_parent_locs] matrix with raw_phi_mat in cols 1..n_locs and
+// mu_offset in cols (n_locs + 1)..(n_locs + n_parent_locs), avoiding duplicate solver evaluations
+matrix accumulate_hierarchical_raw_phi(
+  vector raw_phi_root,
+  vector off_layer,
+  int n_cohort,
+  int n_locs,
+  int n_parent_locs,
+  array[,] int parent_child_bounds,
+  array[] int parent_loc_id,
+  vector loc_child_weight
+) {
+  matrix[n_cohort, n_locs + n_parent_locs] out_mat;
+  out_mat[:, 1] = raw_phi_root;
+  for (p in 1:n_parent_locs) {
+    int pid = parent_loc_id[p];
+    int st = parent_child_bounds[1, p];
+    int en = parent_child_bounds[2, p];
 
+    vector[n_cohort] eta0 = out_mat[:, pid];
+    vector[n_cohort] p0 = inv_link(eta0);
+    out_mat[:, n_locs + p] = solve_subpop_shift(
+      eta0, p0,
+      loc_child_weight[(st - 1):(en - 1)],
+      off_layer[(st - 1):(en - 1)]
+    );
+
+    vector[n_cohort] parent_shifted = out_mat[:, pid] + out_mat[:, n_locs + p];
+    for (l in st:en) {
+      out_mat[:, l] = parent_shifted + off_layer[l - 1];
+    }
+
+  }
+  return out_mat;
+}
 
 // Compute scaled layer offsets from unconstrained deviations using block QR basis
 vector compute_layer_offsets(

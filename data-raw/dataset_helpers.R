@@ -309,29 +309,73 @@ generate_latent_current <- function(setup, link = c("logit", "probit")) {
   names(delta_sch) <- setup$school_names
 
   inv_link_fun <- if (link == "logit") stats::plogis else stats::pnorm
+  link_fun <- if (link == "logit") stats::qlogis else stats::qnorm
 
   state_link <- as.vector(setup$bsp %*% setup$beta_bs)
   p_state <- inv_link_fun(state_link)
 
-  # Expand school link matrix: n_cohort x tot_sch
-  schl_prob_matrix <- matrix(0, nrow = setup$n_cohort, ncol = setup$tot_sch)
-  for (c_idx in seq_along(setup$county_names)) {
-    ll <- sch_per_cnty$ll[c_idx]
-    ul <- sch_per_cnty$ul[c_idx]
-    for (s in ll:ul) {
-      schl_link <- state_link + delta_cnty[c_idx] + delta_sch[s]
-      schl_prob_matrix[, s] <- inv_link_fun(schl_link)
-    }
+  # Solve for mu offsets via rootfinding: sum(w_i * invlink(link(p_enc) + mu + delta_i)) == p_enc
+  solve_mu_root <- function(p_enc, w_child, delta_child) {
+    vapply(
+      seq_along(p_enc),
+      function(t) {
+        p_t <- p_enc[t]
+        eta_t <- link_fun(p_t)
+        obj <- function(mu) {
+          sum(w_child * inv_link_fun(eta_t + mu + delta_child)) - p_t
+        }
+        stats::uniroot(
+          obj,
+          interval = c(-5, 5),
+          extendInt = "yes",
+          tol = 1e-12
+        )$root
+      },
+      numeric(1L)
+    )
   }
 
+  # County-level offsets under State (parent = State)
+  mu_state <- solve_mu_root(p_state, w_cnty, delta_cnty)
+
   # County prob matrix
+  cnty_link_matrix <- matrix(
+    0,
+    nrow = setup$n_cohort,
+    ncol = length(setup$county_names)
+  )
   cnty_prob_matrix <- matrix(
     0,
     nrow = setup$n_cohort,
     ncol = length(setup$county_names)
   )
   for (c_idx in seq_along(setup$county_names)) {
-    cnty_prob_matrix[, c_idx] <- inv_link_fun(state_link + delta_cnty[c_idx])
+    cnty_link_matrix[, c_idx] <- state_link + mu_state + delta_cnty[c_idx]
+    cnty_prob_matrix[, c_idx] <- inv_link_fun(cnty_link_matrix[, c_idx])
+  }
+
+  # School prob matrix (parent = County)
+  schl_prob_matrix <- matrix(0, nrow = setup$n_cohort, ncol = setup$tot_sch)
+  mu_cnty_matrix <- matrix(
+    0,
+    nrow = setup$n_cohort,
+    ncol = length(setup$county_names)
+  )
+  for (c_idx in seq_along(setup$county_names)) {
+    ll <- sch_per_cnty$ll[c_idx]
+    ul <- sch_per_cnty$ul[c_idx]
+    pop_slice <- setup$nsch_base[ll:ul]
+    w_sch <- pop_slice / sum(pop_slice)
+    delta_sch_slice <- delta_sch[ll:ul]
+
+    p_cnty <- cnty_prob_matrix[, c_idx]
+    mu_cnty <- solve_mu_root(p_cnty, w_sch, delta_sch_slice)
+    mu_cnty_matrix[, c_idx] <- mu_cnty
+
+    for (s in ll:ul) {
+      schl_link <- cnty_link_matrix[, c_idx] + mu_cnty + delta_sch[s]
+      schl_prob_matrix[, s] <- inv_link_fun(schl_link)
+    }
   }
 
   list(
@@ -342,7 +386,9 @@ generate_latent_current <- function(setup, link = c("logit", "probit")) {
     cnty_prob_matrix = cnty_prob_matrix,
     schl_prob_matrix = schl_prob_matrix,
     delta_cnty = delta_cnty,
-    delta_sch = delta_sch
+    delta_sch = delta_sch,
+    mu_state = mu_state,
+    mu_cnty = mu_cnty_matrix
   )
 }
 

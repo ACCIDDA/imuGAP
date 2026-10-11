@@ -155,6 +155,12 @@ For computationally heavy functions (such as `sampling()` or multi-draw `predict
   * Option arguments adhere to the `c("default", "the_default_value", ...)` vector idiom (e.g. `time = c("default", "bspline")`, `offsets = c("default", "static")`, `link = c("default", "logit", "probit")`).
   * High-level options define a model template string (`<time>_<offsets>_<link>`, e.g. `"bspline_static_logit"`).
   * Resolution from high-level offset specification (`"static"`) to execution model name (`"static"` vs. `"single"`) happens dynamically inside `sampling()` where the location tree hierarchy depth is known.
+* **Stan Multi-Indexing & Slicing Idiom**:
+  * Prefer open-ended slices (e.g. `:n_locs` from beginning to index, `(n_locs + 1):` from index to
+    end, `:` for entire dimension) over redundant closed bounds (e.g. `1:n_locs`,
+    `(n_locs + 1):(n_locs + n_parent_locs)`).
+  * Open-ended slicing avoids redundant upper/lower bound expressions and prevents boundary
+    discrepancies when partitioning packed blocks.
 
 ### 6. Vignette Voice, Plot Styling & Dark Mode Compatibility
 
