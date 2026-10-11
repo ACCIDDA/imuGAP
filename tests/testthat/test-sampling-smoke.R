@@ -27,10 +27,16 @@ test_that("imuGAP::sampling() runs end-to-end on bundled *_sim data", {
   expect_s4_class(fit$raw_fit, "stanfit")
 
   fit_pars <- fit$raw_fit@model_pars
-  for (par in c("beta_bs", "lambda_raw", "raw_phi_root", "off_layer")) {
+  for (par in c(
+    "beta_bs",
+    "lambda_raw",
+    "raw_phi_root",
+    "off_layer",
+    "mu_offset"
+  )) {
     expect_true(par %in% fit_pars, info = paste("missing parameter:", par))
   }
-  for (par in c("phi")) {
+  for (par in c("phi", "raw_phi_and_mu")) {
     expect_false(
       par %in% fit_pars,
       info = paste("parameter should be absent:", par)
@@ -38,6 +44,10 @@ test_that("imuGAP::sampling() runs end-to-end on bundled *_sim data", {
   }
   off_layer_draws <- as.matrix(fit$raw_fit, pars = "off_layer")
   expect_equal(ncol(off_layer_draws), nrow(locs) - 1L)
+  n_parent <- length(unique(locs$parent_id[!is.na(locs$parent_id)]))
+  n_cohort <- length(unique(pop$cohort))
+  mu_offset_draws <- as.matrix(fit$raw_fit, pars = "mu_offset")
+  expect_equal(ncol(mu_offset_draws), n_cohort * n_parent)
 })
 
 test_that("imuGAP::sampling() runs end-to-end with 1-layer location hierarchy", {
@@ -67,6 +77,8 @@ test_that("imuGAP::sampling() runs end-to-end with 1-layer location hierarchy", 
   expect_null(fit$data$n_layers)
   expect_null(fit$data$n_locs)
   expect_true("beta_bs" %in% fit$raw_fit@model_pars)
+  expect_false("off_layer" %in% fit$raw_fit@model_pars)
+  expect_false("mu_offset" %in% fit$raw_fit@model_pars)
 })
 
 test_that("imuGAP::sampling() runs end-to-end with 2-layer location hierarchy", {
@@ -95,4 +107,6 @@ test_that("imuGAP::sampling() runs end-to-end with 2-layer location hierarchy", 
   expect_equal(fit$data$n_layers, max(locs_2layer$layer))
   expect_equal(fit$data$n_locs, nrow(locs_2layer))
   expect_true("beta_bs" %in% fit$raw_fit@model_pars)
+  expect_true("off_layer" %in% fit$raw_fit@model_pars)
+  expect_true("mu_offset" %in% fit$raw_fit@model_pars)
 })
