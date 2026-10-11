@@ -173,12 +173,4 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
     expected_computed_offsets,
     tolerance = 1e-6
   )
-
-  # Check compute_layer_qr orthogonality and orthonormality
-  w <- c(0.2, 0.3, 0.5)
-  w_norm <- sqrt(w) / sqrt(sum(w))
-  qr_res <- imuGAP:::compute_layer_qr(1L, 2L, 4L, c(1.0, w))
-  q_star <- matrix(qr_res$qr_entries, nrow = 3L, ncol = 2L)
-  expect_equal(as.numeric(t(q_star) %*% w_norm), c(0, 0), tolerance = 1e-6)
-  expect_equal(t(q_star) %*% q_star, diag(2), tolerance = 1e-6)
 })

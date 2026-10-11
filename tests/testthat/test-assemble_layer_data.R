@@ -115,3 +115,12 @@ test_that("assemble_layer_data extracts population weights correctly", {
     c(5.0, 2.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0)
   )
 })
+
+test_that("compute_layer_qr produces orthonormal basis orthogonal to sqrt(w)", {
+  w <- c(0.2, 0.3, 0.5)
+  w_norm <- sqrt(w) / sqrt(sum(w))
+  qr_res <- compute_layer_qr(1L, 2L, 4L, c(1.0, w))
+  q_star <- matrix(qr_res$qr_entries, nrow = 3L, ncol = 2L)
+  expect_equal(as.numeric(t(q_star) %*% w_norm), c(0, 0), tolerance = 1e-6)
+  expect_equal(t(q_star) %*% q_star, diag(2), tolerance = 1e-6)
+})

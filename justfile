@@ -286,7 +286,8 @@ pr-review-comments pr="":
 	if [ -z "$pr_num" ]; then
 		pr_num=$(gh pr view --json number -q .number)
 	fi
-	gh api "repos/ACCIDDA/imuGAP/pulls/${pr_num}/comments" --jq '.[] | "[\(.path):\(.line // .original_line)] by \(.user.login):\n\(.body)\n---"'
+	gh api --paginate -f per_page=100 "repos/ACCIDDA/imuGAP/pulls/${pr_num}/comments" \
+		--jq '.[] | "[\(.path):\(.line // .original_line)] by \(.user.login):\n\(.body)\n---"'
 
 [doc('View failed CI run logs')]
 pr-failed-logs run_id="":
@@ -294,9 +295,14 @@ pr-failed-logs run_id="":
 	set -euo pipefail
 	export GH_PAGER=cat
 	export GH_PROMPT_DISABLED=1
-	if [ -n "{{ run_id }}" ]; then
-		gh run view "{{ run_id }}" --log-failed
+	run="{{ run_id }}"
+	if [ -z "$run" ]; then
+		run=$(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
+	fi
+	if [ -n "$run" ]; then
+		gh run view "$run" --log-failed
 	else
-		gh run view --log-failed
+		echo "No workflow runs found." >&2
+		exit 1
 	fi
 
