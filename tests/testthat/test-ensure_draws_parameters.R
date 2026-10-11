@@ -26,6 +26,93 @@ test_that("ensure_draws_parameters returns untouched draws if already present or
   expect_identical(ensure_draws_parameters(draws_no_off, dat), draws_no_off)
 })
 
+test_that("ensure_draws_parameters reconstructs z_layer from synthetic off_mat in pure R", {
+  data("locations_sim", package = "imuGAP")
+  loc_info <- canonicalize_locations(locations_sim)
+  ld <- assemble_layer_data(loc_info)
+
+  n_draws <- 5L
+  n_unconstrained <- (ld$n_locs - 1L) - ld$n_parent_locs
+  n_layers_eff <- ld$n_layers - 1L
+
+  set.seed(42)
+  z_mat <- matrix(rnorm(n_draws * n_unconstrained), nrow = n_draws)
+  sigma_mat <- matrix(runif(n_draws * n_layers_eff, 0.5, 1.5), nrow = n_draws)
+
+  layer_starts <- as.integer(ld$layer_starts)
+  layer_bounds <- rbind(layer_starts, c(layer_starts[-1L] - 1L, ld$n_locs))
+  parent_child_starts <- as.integer(ld$parent_child_starts)
+  parent_child_bounds <- rbind(
+    parent_child_starts,
+    c(parent_child_starts[-1L] - 1L, ld$n_locs)
+  )
+
+  loc_layer_idx <- integer(ld$n_locs - 1L)
+  for (k in seq_len(n_layers_eff)) {
+    st <- layer_bounds[1L, k + 1L] - 1L
+    en <- layer_bounds[2L, k + 1L] - 1L
+    loc_layer_idx[st:en] <- k
+  }
+
+  loc_pop_scale <- numeric(ld$n_locs - 1L)
+  for (k in seq_len(n_layers_eff)) {
+    st <- layer_bounds[1L, k + 1L]
+    en <- layer_bounds[2L, k + 1L]
+    layer_pop <- ld$loc_population[st:en]
+    mean_layer_pop <- mean(layer_pop)
+    for (i in st:en) {
+      pop_val <- ld$loc_population[i]
+      loc_pop_scale[i - 1L] <- if (pop_val > 0 && mean_layer_pop > 0) {
+        sqrt(mean_layer_pop / pop_val)
+      } else {
+        1.0
+      }
+    }
+  }
+
+  off_mat <- matrix(0.0, nrow = n_draws, ncol = ld$n_locs - 1L)
+  for (p in seq_len(ld$n_parent_locs)) {
+    st <- parent_child_bounds[1L, p]
+    en <- parent_child_bounds[2L, p]
+    k_size <- en - st + 1L
+
+    z_st <- ld$z_bounds[1L, p]
+    z_en <- ld$z_bounds[2L, p]
+    q_st <- ld$qr_bounds[1L, p]
+    q_en <- ld$qr_bounds[2L, p]
+    q_star <- matrix(
+      ld$qr_entries[q_st:q_en],
+      nrow = k_size,
+      ncol = k_size - 1L
+    )
+
+    l_st <- st - 1L
+    l_en <- en - 1L
+    layer_idx <- loc_layer_idx[l_st]
+    pop_scale <- loc_pop_scale[l_st:l_en]
+
+    z_sub <- z_mat[, z_st:z_en, drop = FALSE]
+    for (d in seq_len(n_draws)) {
+      off_slice <- as.vector(q_star %*% z_sub[d, ]) *
+        pop_scale *
+        sigma_mat[d, layer_idx]
+      off_mat[d, l_st:l_en] <- off_slice
+    }
+  }
+
+  colnames(off_mat) <- paste0("off_layer[", seq_len(ld$n_locs - 1L), "]")
+  colnames(sigma_mat) <- paste0("sigma_layer[", seq_len(n_layers_eff), "]")
+  draws_mat <- cbind(off_mat, sigma_mat)
+
+  res <- ensure_draws_parameters(draws_mat, ld)
+
+  z_colnames <- paste0("z_layer[", seq_len(n_unconstrained), "]")
+  expect_true(all(z_colnames %in% colnames(res)))
+
+  z_recovered <- res[, z_colnames, drop = FALSE]
+  expect_equal(unname(z_recovered), z_mat, tolerance = 1e-10)
+})
+
 test_that("ensure_draws_parameters reconstructs z_layer from Stan transformed offsets", {
   skip_if_not_installed("rstan")
 
