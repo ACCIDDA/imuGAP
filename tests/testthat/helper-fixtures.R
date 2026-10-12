@@ -143,3 +143,101 @@ eval_err_diagnostic <- function(err, env) {
   expr_text <- gsub("^`|`$", "", m)
   eval(parse(text = expr_text), envir = env)
 }
+
+#' Verify that an imuGAP fit object from a smoke test meets all expectations
+#'
+#' @param fit an object of class `imugap_fit`.
+#' @param obs canonicalized observations data.table.
+#' @param pop canonicalized populations data.table.
+#' @param locs canonicalized locations data.table.
+#' @param backend character; `"rstan"` or `"cmdstanr"`.
+verify_imugap_smoke_fit <- function(
+  fit,
+  obs,
+  pop,
+  locs,
+  backend = c("rstan", "cmdstanr")
+) {
+  backend <- match.arg(backend)
+  expect_s3_class(fit, "imugap_fit")
+
+  if (backend == "rstan") {
+    expect_s4_class(fit$raw_fit, "stanfit")
+    saved_pars <- fit$raw_fit@sim$pars_oi
+  } else {
+    expect_s3_class(fit$raw_fit, "CmdStanMCMC")
+    saved_pars <- fit$raw_fit$metadata()$stan_variables
+  }
+
+  # Essential model parameters must always be present
+  expected_pars <- c(
+    "beta_bs",
+    "lambda_raw",
+    "raw_phi_root",
+    "off_layer",
+    "mu_offset"
+  )
+  for (par in expected_pars) {
+    expect_true(par %in% saved_pars, info = paste("missing parameter:", par))
+  }
+
+  # Model-block locals are never saved in any backend
+  model_locals <- c("phi", "raw_phi_and_mu")
+  for (par in model_locals) {
+    expect_false(
+      par %in% saved_pars,
+      info = paste("parameter should be absent:", par)
+    )
+  }
+
+  # Dropped parameters: rstan supports drop_pars so z_layer and raw_phi_mat
+  # are excluded from saved draws.
+  if (backend == "rstan") {
+    for (par in c("raw_phi_mat", "z_layer")) {
+      expect_false(
+        par %in% saved_pars,
+        info = paste("parameter should be absent:", par)
+      )
+    }
+  }
+
+  # Check parameter dimensions
+  n_parent <- length(unique(locs$parent_id[!is.na(locs$parent_id)]))
+  n_cohort <- length(unique(pop$cohort))
+  n_locs <- nrow(locs)
+
+  if (backend == "rstan") {
+    off_layer_draws <- as.matrix(fit$raw_fit, pars = "off_layer")
+    n_off_cols <- ncol(off_layer_draws)
+    mu_offset_draws <- as.matrix(fit$raw_fit, pars = "mu_offset")
+    n_mu_cols <- ncol(mu_offset_draws)
+    beta_draws <- as.matrix(fit$raw_fit, pars = "beta_bs")
+  } else {
+    off_layer_draws <- fit$raw_fit$draws(variables = "off_layer")
+    n_off_cols <- dim(off_layer_draws)[3]
+    mu_offset_draws <- fit$raw_fit$draws(variables = "mu_offset")
+    n_mu_cols <- dim(mu_offset_draws)[3]
+    beta_draws <- fit$raw_fit$draws(variables = "beta_bs")
+  }
+
+  expect_equal(n_off_cols, n_locs - 1L)
+  expect_equal(n_mu_cols, n_cohort * n_parent)
+  expect_true(all(is.finite(beta_draws)))
+
+  # Downstream predict()
+  target_pops <- data.table::copy(pop)[!duplicated(obs_id)]
+  target_pops[, weight := 1.0]
+  preds <- suppressWarnings(predict(fit, target_pops, posterior_size = 10))
+  expect_s3_class(preds, "imugap_predict")
+  expect_true(is.array(preds$draws))
+  expect_equal(dim(preds$draws)[2], 1L)
+
+  # Downstream compute_phi()
+  phi_arr <- suppressWarnings(compute_phi(fit, posterior_size = 10))
+  expect_equal(dim(phi_arr), c(10L, n_cohort, n_locs))
+  expect_true(all(phi_arr >= 0 & phi_arr <= 1))
+  eta_arr <- suppressWarnings(
+    compute_phi(fit, posterior_size = 10, link_scale = TRUE)
+  )
+  expect_equal(phi_arr, stats::plogis(eta_arr))
+}

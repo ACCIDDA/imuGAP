@@ -252,8 +252,9 @@ make_init_fn <- function(dat_stan, model = "default") {
 #'
 #' @return an object of class `imugap_fit`, wrapping the raw `stanfit` (or
 #'   `CmdStanMCMC`) object along with model settings and dataset metadata. For multi-layer
-#'   models, retained draws include orthonormalized offsets `off_layer` (with unconstrained
-#'   `z_layer` omitted by default unless overridden via custom `stan_opts`).
+#'   models, retained draws include orthonormalized offsets `off_layer` and hierarchical
+#'   shifts `mu_offset` (with unconstrained `z_layer` and intermediate `raw_phi_mat` omitted
+#'   by default unless overridden via custom `stan_opts`).
 #'
 #' @details
 #' `sampling()` automatically inspects the depth of the location hierarchy
@@ -265,10 +266,13 @@ make_init_fn <- function(dat_stan, model = "default") {
 #'   or deeper trees), `sampling()` dispatches to the general hierarchical model
 #'   with partial pooling across layer-specific variance components.
 #'
-#' In multi-layer models, unconstrained population offsets (`z_layer`) are omitted from
-#' retained draws by default to save memory, while the full orthonormalized offsets (`off_layer`)
-#' are retained. If you require `z_layer` draws or wish to retain a specific set of parameters,
-#' specify `pars` explicitly in `stan_opts = stan_options(pars = ...)`.
+#' In multi-layer models, unconstrained population offsets (`z_layer`) and intermediate
+#' link matrices (`raw_phi_mat`) are omitted from retained draws by default to save memory,
+#' while the full orthonormalized offsets (`off_layer`) and hierarchical shifts (`mu_offset`)
+#' are retained. To compute coverage probabilities or link-scale parameters for any or all
+#' locations and cohorts from retained draws, use `[compute_phi()]`. If you require `z_layer`
+#' or `raw_phi_mat` draws directly or wish to retain a specific set of parameters, specify
+#' `pars` explicitly in `stan_opts = stan_options(pars = ...)`.
 #'
 #' If the Stan sampler fails to initialize and produces no draws (for the rstan
 #' backend, a mode-2 `stanfit` with an empty `@sim`), `sampling()` raises an
@@ -416,12 +420,18 @@ sampling <- function(
     model = model_name
   )
 
-  # Drop unconstrained latent spatial innovation parameters (z_layer) by default
-  # in multi-layer models, while returning the full orthonormalized offsets (off_layer).
+  # Drop unconstrained latent spatial innovation parameters (z_layer) and
+  # intermediate unrolled link matrices (raw_phi_mat) by default in multi-layer
+  # models, while returning the full orthonormalized offsets (off_layer) and
+  # parent aggregation shifts (mu_offset).
   # If the user explicitly requested custom `pars` in stan_opts, respect user selection.
-  drop_pars <- if (is.null(stan_opts$pars) && is_multilayer) "z_layer" else NULL
+  drop_pars <- if (is.null(stan_opts$pars) && is_multilayer) {
+    c("z_layer", "raw_phi_mat")
+  } else {
+    NULL
+  }
 
-  raw_fit <- fit_model(
+  raw_fit <- flexstanr::fit_model(
     model_name,
     dat_stan,
     init = make_init_fn(dat_stan, model = link),
@@ -436,7 +446,7 @@ sampling <- function(
   # stanfit); passing it through would let a caller using tryCatch(error=)
   # mistake the failure for success. Detect the no-draws case in a
   # backend-agnostic way and raise a typed error instead. (#107)
-  if (!backend_has_draws(raw_fit)) {
+  if (!flexstanr::backend_has_draws(raw_fit)) {
     stop(errorCondition(
       paste0(
         "the Stan sampler produced no draws; it most likely failed to ",

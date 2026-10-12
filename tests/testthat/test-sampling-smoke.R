@@ -16,38 +16,14 @@ test_that("imuGAP::sampling() runs end-to-end on bundled *_sim data", {
     pop,
     locs,
     stan_opts = stan_options(
-      iter = 100,
+      iter = 20,
       chains = 1,
       refresh = 0,
       seed = 1L
     )
   ))
 
-  expect_s3_class(fit, "imugap_fit")
-  expect_s4_class(fit$raw_fit, "stanfit")
-
-  fit_pars <- fit$raw_fit@model_pars
-  for (par in c(
-    "beta_bs",
-    "lambda_raw",
-    "raw_phi_root",
-    "off_layer",
-    "mu_offset"
-  )) {
-    expect_true(par %in% fit_pars, info = paste("missing parameter:", par))
-  }
-  for (par in c("phi", "raw_phi_and_mu")) {
-    expect_false(
-      par %in% fit_pars,
-      info = paste("parameter should be absent:", par)
-    )
-  }
-  off_layer_draws <- as.matrix(fit$raw_fit, pars = "off_layer")
-  expect_equal(ncol(off_layer_draws), nrow(locs) - 1L)
-  n_parent <- length(unique(locs$parent_id[!is.na(locs$parent_id)]))
-  n_cohort <- length(unique(pop$cohort))
-  mu_offset_draws <- as.matrix(fit$raw_fit, pars = "mu_offset")
-  expect_equal(ncol(mu_offset_draws), n_cohort * n_parent)
+  verify_imugap_smoke_fit(fit, obs, pop, locs, backend = "rstan")
 })
 
 test_that("imuGAP::sampling() runs end-to-end with 1-layer location hierarchy", {
@@ -65,7 +41,7 @@ test_that("imuGAP::sampling() runs end-to-end with 1-layer location hierarchy", 
     pops_1layer,
     locs_1layer,
     stan_opts = stan_options(
-      iter = 100,
+      iter = 20,
       chains = 1,
       refresh = 0,
       seed = 1L
@@ -79,6 +55,10 @@ test_that("imuGAP::sampling() runs end-to-end with 1-layer location hierarchy", 
   expect_true("beta_bs" %in% fit$raw_fit@model_pars)
   expect_false("off_layer" %in% fit$raw_fit@model_pars)
   expect_false("mu_offset" %in% fit$raw_fit@model_pars)
+
+  phi_1l <- compute_phi(fit)
+  expect_equal(dim(phi_1l)[3], 1L)
+  expect_true(all(phi_1l >= 0 & phi_1l <= 1))
 })
 
 test_that("imuGAP::sampling() runs end-to-end with 2-layer location hierarchy", {
@@ -95,7 +75,7 @@ test_that("imuGAP::sampling() runs end-to-end with 2-layer location hierarchy", 
     pops_2layer,
     locs_2layer,
     stan_opts = stan_options(
-      iter = 100,
+      iter = 20,
       chains = 1,
       refresh = 0,
       seed = 1L

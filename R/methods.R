@@ -635,3 +635,122 @@ print.imugap_predict <- function(x, ...) {
 
   invisible(x)
 }
+
+#' @title Compute hierarchical saturation probabilities and link parameters
+#'
+#' @description
+#' Computes posterior draws of the link-scale parameters or coverage probabilities
+#' (\eqn{\phi}) across cohorts and locations from an `[imugap_fit]` object.
+#'
+#' @details
+#' In multi-layer models, `sampling()` retains orthonormalized spatial offsets (`off_layer`)
+#' and parent aggregation shifts (`mu_offset`) while omitting the full unrolled
+#' parameter matrix (`raw_phi_mat`) by default to conserve memory. `compute_phi()`
+#' reconstructs the complete link-scale and probability profiles across the location hierarchy:
+#' \deqn{\eta_{l, t} = \eta_{\text{parent}(l), t} + \mu_{\text{parent}(l), t} + \delta_l}
+#' \deqn{\phi_{l, t} = g^{-1}(\eta_{l, t})}
+#' where \eqn{g^{-1}} is the configured inverse-link function (e.g. logit or probit).
+#'
+#' @param object an object of class `imugap_fit` returned by `[sampling()]`.
+#' @param link_scale logical scalar; return link-scale parameters (\eqn{\eta}) instead of
+#'   probabilities (\eqn{\phi})? (default: `FALSE`).
+#' @param posterior_size integer scalar; optional number of posterior draws to retain from the
+#'   tail of each chain (default: `NULL`, keeping all draws).
+#' @param ... additional arguments (currently ignored).
+#'
+#' @return a 3D numeric array with dimensions `c(draw, cohort, location)` containing the
+#'   reconstructed posterior draws.
+#'
+#' @examplesIf interactive()
+#' \donttest{
+#' data("fit_sim", package = "imuGAP")
+#' phi_draws <- compute_phi(fit_sim, posterior_size = 10)
+#' dim(phi_draws)
+#' }
+#'
+#' @autoglobal
+#' @export
+compute_phi <- function(
+  object,
+  link_scale = FALSE,
+  posterior_size = NULL,
+  ...
+) {
+  stop_fmt_if(
+    !inherits(object, "imugap_fit"),
+    ERR_NOT_IMUGAP_FIT,
+    name = "object"
+  )
+
+  raw_fit <- object$raw_fit
+  draws_array <- flexstanr::backend_draws_array(raw_fit)
+  draws_sub <- subset_draws_tail(draws_array, posterior_size)
+  draws_mat <- apply(draws_sub, 3L, c)
+  n_draws <- nrow(draws_mat)
+
+  dat_stan <- object$data
+  n_cohort <- dat_stan$n_cohort
+  n_locs <- dat_stan$n_locs %||% 1L
+  n_layers <- dat_stan$n_layers %||% 1L
+
+  # Baseline root link vector across draws and cohorts (n_draws x n_cohort)
+  beta_cols <- paste0("beta_bs[", seq_len(dat_stan$k_bs), "]")
+  beta_mat <- draws_mat[, beta_cols, drop = FALSE]
+  raw_phi_root <- beta_mat %*% t(dat_stan$bs)
+
+  loc_names <- object$locations$loc_id
+  dim_names <- list(
+    draw = seq_len(n_draws),
+    cohort = seq_len(n_cohort),
+    location = loc_names
+  )
+
+  eta_array <- array(
+    0.0,
+    dim = c(n_draws, n_cohort, n_locs),
+    dimnames = dim_names
+  )
+  eta_array[seq_len(n_draws), seq_len(n_cohort), 1L] <- raw_phi_root
+
+  if (n_layers > 1L) {
+    n_parent_locs <- dat_stan$n_parent_locs
+    parent_loc_id <- as.vector(dat_stan$parent_loc_id)
+    starts <- as.integer(dat_stan$parent_child_starts)
+    ends <- c(starts[-1L] - 1L, n_locs)
+
+    for (p in seq_len(n_parent_locs)) {
+      pid <- parent_loc_id[p]
+      st <- starts[p]
+      en <- ends[p]
+
+      eta_parent <- eta_array[seq_len(n_draws), seq_len(n_cohort), pid]
+      mu_cols <- paste0("mu_offset[", seq_len(n_cohort), ",", p, "]")
+      mu_p <- if (all(mu_cols %in% colnames(draws_mat))) {
+        draws_mat[, mu_cols, drop = FALSE]
+      } else {
+        matrix(0.0, nrow = n_draws, ncol = n_cohort)
+      }
+      parent_shifted <- eta_parent + mu_p
+
+      for (l in st:en) {
+        off_col <- paste0("off_layer[", l - 1L, "]")
+        off_l <- draws_mat[, off_col]
+        # Broadcast off_l across cohorts (n_draws x n_cohort)
+        eta_array[seq_len(n_draws), seq_len(n_cohort), l] <- sweep(
+          parent_shifted,
+          1L,
+          off_l,
+          "+"
+        )
+      }
+    }
+  }
+
+  if (isTRUE(link_scale)) {
+    return(eta_array)
+  }
+
+  link <- object$settings$imugap_opts$link %||% "logit"
+  inv_link_fn <- if (identical(link, "probit")) stats::pnorm else stats::plogis
+  inv_link_fn(eta_array)
+}
