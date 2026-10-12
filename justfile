@@ -286,7 +286,7 @@ pr-review-comments pr="":
 	if [ -z "$pr_num" ]; then
 		pr_num=$(gh pr view --json number -q .number)
 	fi
-	gh api --paginate -f per_page=100 "repos/ACCIDDA/imuGAP/pulls/${pr_num}/comments" \
+	gh api --paginate "repos/ACCIDDA/imuGAP/pulls/${pr_num}/comments?per_page=100" \
 		--jq '.[] | "[\(.path):\(.line // .original_line)] by \(.user.login):\n\(.body)\n---"'
 
 [doc('View failed CI run logs')]

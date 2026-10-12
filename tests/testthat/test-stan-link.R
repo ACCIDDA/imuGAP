@@ -2,7 +2,7 @@ target_logit <- "functions/link/logit.stan"
 target_probit <- "functions/link/probit.stan"
 
 skip_if_not_installed("rstan")
-skip_if_stan_unchanged(target_logit)
+skip_if_stan_unchanged(c(target_logit, target_probit))
 
 model_logit <- sprintf(
   "
