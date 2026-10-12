@@ -411,7 +411,7 @@ test_that("sampling errors when imugap_opts contains an unknown model", {
   )
 })
 
-test_that("sampling drops z_layer by default in multi-layer models", {
+test_that("sampling drops z_layer and raw_phi_mat by default in multi-layer models", {
   out_multi <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
       observations = make_minimal_obs(),
@@ -419,7 +419,7 @@ test_that("sampling drops z_layer by default in multi-layer models", {
       locations = make_3layer_locs()
     )
   ))
-  expect_equal(out_multi$captured$pars, "z_layer")
+  expect_equal(out_multi$captured$pars, c("z_layer", "raw_phi_mat"))
   expect_false(out_multi$captured$include)
 
   # Custom pars in stan_opts overrides default parameter dropping

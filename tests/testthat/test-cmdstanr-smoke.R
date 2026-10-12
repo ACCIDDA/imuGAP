@@ -11,7 +11,7 @@ test_that("imuGAP::sampling() fits via the cmdstanr backend", {
     "CmdStan toolchain not available"
   )
   skip_if(
-    system.file(
+    base::system.file(
       "stan",
       "bspline_static_logit.stan",
       package = "imuGAP"

@@ -522,19 +522,33 @@ print.imugap_fit <- function(x, pars = NULL, ...) {
   if (!is.null(raw_fit)) {
     if (is.null(pars)) {
       all_pars <- if (inherits(raw_fit, "stanfit")) {
-        raw_fit@model_pars
+        if (!is.null(raw_fit@sim$pars_oi)) {
+          raw_fit@sim$pars_oi
+        } else {
+          raw_fit@model_pars
+        }
       } else if (inherits(raw_fit, "CmdStanMCMC")) {
         tryCatch(raw_fit$metadata()$stan_variables, error = function(e) NULL)
       } else {
         NULL
       }
       if (!is.null(all_pars)) {
-        pars <- setdiff(all_pars, c("z_layer", "off_layer", "p_obs"))
+        pars <- setdiff(
+          all_pars,
+          c("z_layer", "raw_phi_mat", "off_layer", "p_obs")
+        )
       }
     }
     if (inherits(raw_fit, "stanfit")) {
       if (!is.null(pars) && length(pars) > 0L) {
-        print(raw_fit, pars = pars, ...)
+        if (!is.null(raw_fit@sim$pars_oi)) {
+          pars <- intersect(pars, raw_fit@sim$pars_oi)
+        }
+        if (length(pars) > 0L) {
+          print(raw_fit, pars = pars, ...)
+        } else {
+          print(raw_fit, ...)
+        }
       } else {
         print(raw_fit, ...)
       }
