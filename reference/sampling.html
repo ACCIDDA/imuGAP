@@ -118,7 +118,9 @@ uses <code>threading = TRUE</code>.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>an object of class <code>imugap_fit</code>, wrapping the raw <code>stanfit</code> (or
-<code>CmdStanMCMC</code>) object along with model settings and dataset metadata.</p>
+<code>CmdStanMCMC</code>) object along with model settings and dataset metadata. For multi-layer
+models, retained draws include orthonormalized offsets <code>off_layer</code> (with unconstrained
+<code>z_layer</code> omitted by default unless overridden via custom <code>stan_opts</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -129,7 +131,11 @@ supplied in <code>locations</code> via <code>[canonicalize_locations()]</code> a
 supplied (e.g., 2-layer state -&gt; county, 3-layer state -&gt; county -&gt; school,
 or deeper trees), <code>sampling()</code> dispatches to the general hierarchical model
 with partial pooling across layer-specific variance components.</p></li>
-</ul><p>If the Stan sampler fails to initialize and produces no draws (for the rstan
+</ul><p>In multi-layer models, unconstrained population offsets (<code>z_layer</code>) are omitted from
+retained draws by default to save memory, while the full orthonormalized offsets (<code>off_layer</code>)
+are retained. If you require <code>z_layer</code> draws or wish to retain a specific set of parameters,
+specify <code>pars</code> explicitly in <code>stan_opts = stan_options(pars = ...)</code>.</p>
+<p>If the Stan sampler fails to initialize and produces no draws (for the rstan
 backend, a mode-2 <code>stanfit</code> with an empty <code>@sim</code>), <code>sampling()</code> raises an
 error of class <code>imugap_no_draws</code> rather than returning an empty fit, so the
 failure can be handled with <code><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch()</a></code>. The check is backend-agnostic (see

@@ -78,6 +78,9 @@ sampling(
 
 an object of class `imugap_fit`, wrapping the raw `stanfit` (or
 `CmdStanMCMC`) object along with model settings and dataset metadata.
+For multi-layer models, retained draws include orthonormalized offsets
+`off_layer` (with unconstrained `z_layer` omitted by default unless
+overridden via custom `stan_opts`).
 
 ## Details
 
@@ -94,6 +97,12 @@ supplied in `locations` via `[canonicalize_locations()]` and
   school, or deeper trees), `sampling()` dispatches to the general
   hierarchical model with partial pooling across layer-specific variance
   components.
+
+In multi-layer models, unconstrained population offsets (`z_layer`) are
+omitted from retained draws by default to save memory, while the full
+orthonormalized offsets (`off_layer`) are retained. If you require
+`z_layer` draws or wish to retain a specific set of parameters, specify
+`pars` explicitly in `stan_opts = stan_options(pars = ...)`.
 
 If the Stan sampler fails to initialize and produces no draws (for the
 rstan backend, a mode-2 `stanfit` with an empty `@sim`), `sampling()`
