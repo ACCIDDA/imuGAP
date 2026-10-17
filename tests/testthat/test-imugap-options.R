@@ -12,7 +12,9 @@ test_that("imugap_options returns expected structure with defaults", {
       "time",
       "offsets",
       "link",
-      "model"
+      "model",
+      "solver",
+      "solver_type"
     )
   )
   expect_equal(defaults$df, 5L)
@@ -22,6 +24,8 @@ test_that("imugap_options returns expected structure with defaults", {
   expect_equal(defaults$offsets, "static")
   expect_equal(defaults$link, "logit")
   expect_equal(defaults$model, "bspline_static_logit")
+  expect_equal(defaults$solver, "direct")
+  expect_equal(defaults$solver_type, 1L)
 })
 
 test_that("imugap_options df can be overridden", {
@@ -143,5 +147,56 @@ test_that("imugap_options rejects invalid compute_log_lik", {
   expect_error(
     imugap_options(compute_log_lik = NA),
     err_pattern(ERR_OPT_COMPUTE_LOG_LIK)
+  )
+})
+
+test_that("imugap_options accepts valid solver values including default", {
+  opts_def <- imugap_options(solver = "default")
+  expect_equal(opts_def$solver, "direct")
+  expect_equal(opts_def$solver_type, 1L)
+
+  opts_halley2 <- imugap_options(solver = "halley2")
+  expect_equal(opts_halley2$solver, "halley2")
+  expect_equal(opts_halley2$solver_type, 2L)
+
+  opts_newton2 <- imugap_options(solver = "newton2")
+  expect_equal(opts_newton2$solver, "newton2")
+  expect_equal(opts_newton2$solver_type, 3L)
+
+  opts_builtin <- imugap_options(solver = "builtin")
+  expect_equal(opts_builtin$solver, "builtin")
+  expect_equal(opts_builtin$solver_type, 4L)
+
+  opts_halley10 <- imugap_options(solver = "halley10")
+  expect_equal(opts_halley10$solver, "halley10")
+  expect_equal(opts_halley10$solver_type, 5L)
+
+  # Numeric integer codes 1..5
+  opts_num2 <- imugap_options(solver = 2L)
+  expect_equal(opts_num2$solver, "halley2")
+  expect_equal(opts_num2$solver_type, 2L)
+
+  opts_num5 <- imugap_options(solver = 5)
+  expect_equal(opts_num5$solver, "halley10")
+  expect_equal(opts_num5$solver_type, 5L)
+})
+
+test_that("imugap_options rejects invalid solver values", {
+  expect_error(imugap_options(solver = "unknown_solver"), "should be")
+  expect_error(
+    imugap_options(solver = 0L),
+    err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "0")
+  )
+  expect_error(
+    imugap_options(solver = 6L),
+    err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "6")
+  )
+  expect_error(
+    imugap_options(solver = 2.5),
+    err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "2.5")
+  )
+  expect_error(
+    imugap_options(solver = c(1L, 2L)),
+    err_pattern(ERR_OPT_UNKNOWN_SOLVER)
   )
 })

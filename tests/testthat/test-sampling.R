@@ -348,6 +348,27 @@ test_that("sampling forwards extra stan_opts (e.g. iter, chains)", {
   expect_equal(out$captured$refresh, 0)
 })
 
+test_that("sampling passes solver_type to Stan data", {
+  out_default <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs()
+    )
+  ))
+  expect_equal(out_default$captured$data$solver_type, 1L)
+
+  out_halley2 <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs(),
+      imugap_opts = imuGAP::imugap_options(solver = "halley2")
+    )
+  ))
+  expect_equal(out_halley2$captured$data$solver_type, 2L)
+})
+
 test_that("sampling returns a structured imugap_fit object", {
   out <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
@@ -378,6 +399,8 @@ test_that("sampling returns a structured imugap_fit object", {
       "time",
       "offsets",
       "link",
+      "solver",
+      "solver_type",
       "model",
       "model_name"
     ),

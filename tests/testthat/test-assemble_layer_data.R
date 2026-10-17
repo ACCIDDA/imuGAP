@@ -124,3 +124,15 @@ test_that("compute_layer_qr produces orthonormal basis orthogonal to sqrt(w)", {
   expect_equal(as.numeric(t(q_star) %*% w_norm), c(0, 0), tolerance = 1e-6)
   expect_equal(t(q_star) %*% q_star, diag(2), tolerance = 1e-6)
 })
+
+test_that("assemble_layer_data includes solver_type and respects override", {
+  locs2 <- canonicalize_locations(data.frame(
+    loc_id = c("state", "cnty1", "cnty2"),
+    parent_id = c(NA, "state", "state")
+  ))
+  d_default <- assemble_layer_data(locs2)
+  expect_equal(d_default$solver_type, 1L)
+
+  d_override <- assemble_layer_data(locs2, solver_type = 3L)
+  expect_equal(d_override$solver_type, 3L)
+})

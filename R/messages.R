@@ -705,6 +705,13 @@ ERR_OPT_DOSE_SCHEDULE <- "`dose_schedule` must be an ascending vector of positiv
 #' @noRd
 ERR_OPT_UNKNOWN_MODEL <- "`imugap_opts` unknown model '{model}'"
 
+#' @title Unknown Solver Option Error
+#' @description Raised when an unrecognized rootfinder solver option is requested.
+#' @param {solver} requested solver method name.
+#' @keywords internal
+#' @noRd
+ERR_OPT_UNKNOWN_SOLVER <- "`imugap_opts` unknown solver '{solver}'"
+
 #' @title Compute Log-Likelihood Option Error
 #' @description Raised when `compute_log_lik` is not a single logical value.
 #' @keywords internal

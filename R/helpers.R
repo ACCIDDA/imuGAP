@@ -367,6 +367,7 @@ create_target <- function(
 #'
 #' @param loc_info a canonicalized locations table (passed to
 #'   `[canonicalize_locations()]`).
+#' @param solver_type integer scalar; solver type code (default: 1L).
 #'
 #' @return a named list, containing:
 #'   - `n_locs`: integer total count of locations
@@ -376,11 +377,16 @@ create_target <- function(
 #'   - `parent_loc_id`: integer array (length `n_parent_locs`) of canonical IDs of parent locations
 #'   - `parent_child_starts`: integer array (length `n_parent_locs`) of starting child location IDs
 #'   - `loc_population`: numeric array (length `n_locs`) of population weights
+#'   - `n_qr_entries`: integer count of flattened QR basis entries
+#'   - `z_bounds`: integer array of unconstrained offset bounds
+#'   - `qr_bounds`: integer array of QR basis index bounds
+#'   - `qr_entries`: numeric array of flattened QR basis entries
+#'   - `solver_type`: integer scalar solver type code
 #'
 #' @keywords internal
 #' @noRd
 #' @autoglobal
-assemble_layer_data <- function(loc_info) {
+assemble_layer_data <- function(loc_info, solver_type = 1L) {
   n_locs <- nrow(loc_info)
   n_layers <- max(loc_info$layer)
   layer_starts <- loc_info[, min(loc_c_id), by = layer]$V1
@@ -452,7 +458,8 @@ assemble_layer_data <- function(loc_info) {
     n_qr_entries = qr_data$n_qr_entries,
     z_bounds = qr_data$z_bounds,
     qr_bounds = qr_data$qr_bounds,
-    qr_entries = as.array(as.numeric(qr_data$qr_entries))
+    qr_entries = as.array(as.numeric(qr_data$qr_entries)),
+    solver_type = as.integer(solver_type)
   )
 }
 
@@ -558,6 +565,9 @@ ensure_layer_qr <- function(dat_stan) {
   has_qr <- !is.null(dat_stan$qr_entries) &&
     !is.null(dat_stan$z_bounds) &&
     !is.null(dat_stan$qr_bounds)
+  if (!is_single && is.null(dat_stan$solver_type)) {
+    dat_stan$solver_type <- 1L
+  }
   if (is_single || has_qr) {
     return(dat_stan)
   }
@@ -572,6 +582,32 @@ ensure_layer_qr <- function(dat_stan) {
   dat_stan$qr_bounds <- qr_data$qr_bounds
   dat_stan$qr_entries <- as.array(as.numeric(qr_data$qr_entries))
   dat_stan
+}
+
+#' @title Synchronize stanmodel slot with package definition
+#'
+#' @description
+#' Ensures an `rstan` `stanfit` object's `@stanmodel` slot matches the package's
+#' compiled `stanmodel` definition, preventing data variable dropping in `[rstan::gqs()]`.
+#'
+#' @param raw_fit backend fit object (e.g. class `stanfit` or `CmdStanMCMC`).
+#' @param model_name optional character scalar model name (default: `NULL`).
+#'
+#' @return the backend fit object, with its `@stanmodel` slot updated when applicable.
+#' @keywords internal
+#' @noRd
+ensure_current_stanmodel <- function(raw_fit, model_name = NULL) {
+  if (
+    inherits(raw_fit, "stanfit") &&
+      exists("stanmodels", envir = asNamespace("imuGAP"))
+  ) {
+    m_name <- model_name %||% raw_fit@stanmodel@model_name
+    models <- get("stanmodels", envir = asNamespace("imuGAP"))
+    if (!is.null(m_name) && !is.null(models[[m_name]])) {
+      raw_fit@stanmodel <- models[[m_name]]
+    }
+  }
+  raw_fit
 }
 
 #' @title Validate and subset posterior draws array

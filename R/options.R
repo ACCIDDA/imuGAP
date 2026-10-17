@@ -1,3 +1,11 @@
+solver_type_map <- c(
+  direct = 1L,
+  halley2 = 2L,
+  newton2 = 3L,
+  builtin = 4L,
+  halley10 = 5L
+)
+
 #' @title imuGAP Model Options
 #'
 #' @description
@@ -16,13 +24,16 @@
 #' @param link character string specifying the link function formulation
 #'   (default: `"default"`, resolving to `"logit"`). Options include `"default"` (or `"logit"`)
 #'   and `"probit"`.
+#' @param solver character string or integer specifying the rootfinder solver method
+#'   (default: `"default"`, resolving to `"direct"`). Options include `"default"` (or `"direct"`),
+#'   `"halley2"`, `"newton2"`, `"builtin"`, and `"halley10"`.
 #' @param model optional character string; alias for `link` or full model template name
 #'   (default: `NULL`).
 #'
 #' @examples
 #' imugap_options()
 #' imugap_options(dose_schedule = c(1, 3))
-#' imugap_options(link = "probit")
+#' imugap_options(link = "probit", solver = "halley2")
 #'
 #' @return a named list, of `imuGAP` model options.
 #' @export
@@ -33,6 +44,7 @@ imugap_options <- function(
   time = c("default", "bspline"),
   offsets = c("default", "static"),
   link = c("default", "logit", "probit"),
+  solver = c("default", "direct", "halley2", "newton2", "builtin", "halley10"),
   model = NULL
 ) {
   time <- match.arg(time)
@@ -46,6 +58,23 @@ imugap_options <- function(
   link <- match.arg(link)
   if (identical(link, "default")) {
     link <- "logit"
+  }
+
+  solver <- if (is.numeric(solver)) {
+    stop_fmt_if(
+      length(solver) != 1L ||
+        is.na(solver) ||
+        solver %% 1 != 0 ||
+        !(as.integer(solver) %in% 1:5),
+      ERR_OPT_UNKNOWN_SOLVER,
+      solver = as.character(solver)
+    )
+    names(solver_type_map)[as.integer(solver)]
+  } else {
+    match.arg(solver)
+  }
+  if (identical(solver, "default")) {
+    solver <- "direct"
   }
 
   if (!is.null(model)) {
@@ -94,6 +123,8 @@ imugap_options <- function(
     time = time,
     offsets = offsets,
     link = link,
-    model = model_template
+    model = model_template,
+    solver = solver,
+    solver_type = unname(solver_type_map[solver])
   )
 }
