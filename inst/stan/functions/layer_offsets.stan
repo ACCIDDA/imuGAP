@@ -41,7 +41,8 @@ matrix accumulate_hierarchical_raw_phi(
   int n_parent_locs,
   array[,] int parent_child_bounds,
   array[] int parent_loc_id,
-  vector loc_child_weight
+  data vector loc_child_weight,
+  int solver_type
 ) {
   matrix[n_cohort, n_locs + n_parent_locs] out_mat;
   out_mat[:, 1] = raw_phi_root;
@@ -55,7 +56,8 @@ matrix accumulate_hierarchical_raw_phi(
     out_mat[:, n_locs + p] = solve_subpop_shift(
       eta0, p0,
       loc_child_weight[(st - 1):(en - 1)],
-      off_layer[(st - 1):(en - 1)]
+      off_layer[(st - 1):(en - 1)],
+      solver_type
     );
 
     vector[n_cohort] parent_shifted = out_mat[:, pid] + out_mat[:, n_locs + p];
@@ -65,6 +67,22 @@ matrix accumulate_hierarchical_raw_phi(
 
   }
   return out_mat;
+}
+
+matrix accumulate_hierarchical_raw_phi(
+  vector raw_phi_root,
+  vector off_layer,
+  int n_cohort,
+  int n_locs,
+  int n_parent_locs,
+  array[,] int parent_child_bounds,
+  array[] int parent_loc_id,
+  data vector loc_child_weight
+) {
+  return accumulate_hierarchical_raw_phi(
+    raw_phi_root, off_layer, n_cohort, n_locs,
+    n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight, 1
+  );
 }
 
 // Compute scaled layer offsets from unconstrained deviations using block QR basis

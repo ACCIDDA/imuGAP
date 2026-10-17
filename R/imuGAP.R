@@ -341,7 +341,7 @@ sampling <- function(
   n_layers <- max(loc_info$layer)
   is_multilayer <- n_layers > 1L
   layer_data <- if (is_multilayer) {
-    assemble_layer_data(loc_info)
+    assemble_layer_data(loc_info, solver_type = imugap_opts$solver_type %||% 1L)
   } else {
     NULL
   }

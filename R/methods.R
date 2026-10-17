@@ -198,6 +198,7 @@ predict.imugap_fit <- function(
   )
   dat_stan[names(updates)] <- updates
   draws_mat <- ensure_draws_parameters(draws_mat, dat_stan)
+  raw_fit <- ensure_current_stanmodel(raw_fit, model_name = model_name)
 
   # Predicted coverage via the backend's generated-quantities run, reshaped to
   # iterations x chains x targets so the per-chain structure is preserved.

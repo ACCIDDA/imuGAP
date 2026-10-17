@@ -38,6 +38,7 @@ extract_log_lik_array <- function(object, posterior_size = NULL) {
     dat_stan$predict_mode <- 0L
     dat_stan$compute_log_lik <- 1L
     draws_mat <- ensure_draws_parameters(draws_mat, dat_stan)
+    raw_fit <- ensure_current_stanmodel(raw_fit, model_name = model_name)
 
     ll_mat <- backend_generate_quantities(
       raw_fit,
