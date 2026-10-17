@@ -241,9 +241,10 @@ or multi-draw [`predict()`](https://rdrr.io/r/stats/predict.html)):
     lengthy runtime checks during package validation.
   - Interactive user sessions (`example(sampling)`) execute normally.
 
-### 5. Modular Stan Architecture
+### 5. Modular Stan Architecture & Model Naming Convention
 
-- Stan models in `imuGAP` are designed modularly.
+- **Modular Decomposition**: Stan models in `imuGAP` are designed
+  modularly.
 - Top-level Stan models directly in `inst/stan/` (and not Stan code in
   subdirectories) must remain concise assembly skeletons composed of
   `#include <subpath>.stan` directives for particular modular elements
@@ -252,6 +253,40 @@ or multi-draw [`predict()`](https://rdrr.io/r/stats/predict.html)):
 - Never inline full block contents or raw logic directly into top-level
   models in `inst/stan/`; keep component logic encapsulated in dedicated
   sub-files to facilitate reuse, maintainability, and clean diffs.
+- **Top-Level Model Naming Convention**: Top-level Stan model files
+  follow the naming convention `<time>_<offsets>_<link>.stan`:
+  - `<time>`: Temporal basis formulation (e.g. `bspline`).
+  - `<offsets>`: Hierarchical offset structure for nested population
+    partitions (`static` for non-time varying, multi-layer populations,
+    `single` for unpartitioned populations).
+  - `<link>`: Link function implementation (e.g. `logit`, `probit`).
+  - Examples: `bspline_static_logit.stan`, `bspline_single_logit.stan`,
+    `bspline_static_probit.stan`, `bspline_single_probit.stan`.
+- **Link Functions**: Modular link implementations are located in
+  `inst/stan/functions/link/<link>.stan` (e.g. `logit.stan`,
+  `probit.stan`) and define mathematical transformations `link_fn()`,
+  `inv_link()`, `d_inv_link()`, and `d2_inv_link()`.
+- **Options Interface
+  ([`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md))**:
+  - Option arguments adhere to the
+    `c("default", "the_default_value", ...)` vector idiom
+    (e.g. `time = c("default", "bspline")`,
+    `offsets = c("default", "static")`,
+    `link = c("default", "logit", "probit")`).
+  - High-level options define a model template string
+    (`<time>_<offsets>_<link>`, e.g. `"bspline_static_logit"`).
+  - Resolution from high-level offset specification (`"static"`) to
+    execution model name (`"static"` vs. `"single"`) happens dynamically
+    inside
+    [`sampling()`](https://accidda.github.io/imuGAP/reference/sampling.md)
+    where the location tree hierarchy depth is known.
+- **Stan Multi-Indexing & Slicing Idiom**:
+  - Prefer open-ended slices (e.g. `:n_locs` from beginning to index,
+    `(n_locs + 1):` from index to end, `:` for entire dimension) over
+    redundant closed bounds (e.g. `1:n_locs`,
+    `(n_locs + 1):(n_locs + n_parent_locs)`).
+  - Open-ended slicing avoids redundant upper/lower bound expressions
+    and prevents boundary discrepancies when partitioning packed blocks.
 
 ### 6. Vignette Voice, Plot Styling & Dark Mode Compatibility
 
@@ -397,6 +432,7 @@ following these guidelines:
 |  | `layer_offsets.stan` | `test-stan-layer_offsets.R` | Multi-layer tree offset accumulation and hierarchical phi calculation |
 |  | `lookups.stan` | `test-stan-lookups.R` | Column-major index flattening (`compute_cdf_lookup`, `compute_phi_lookup`) and bounds validation |
 |  | `unrolled_dose_static_lambda.stan` | `test-stan-unrolled_dose.R` | Multi-dose CDF unrolling given schedule and rate $`\lambda`$ |
+|  | `link/logit.stan`, `link/probit.stan` | `test-stan-link.R` | Link transformations (`link_fn`, `inv_link`, `d_inv_link`, `d2_inv_link`) and derivatives |
 |  | `convenience.stan` | *(composite include)* | Tested via constituent sub-function unit tests |
 | **`data/`** | `uncensored/`, `right/`, `left/` | *(composite includes)* | Modular observation data and weights definitions |
 |  | `locations.stan`, `structural.stan` | *(composite includes)* | Structural indices and location hierarchy data |

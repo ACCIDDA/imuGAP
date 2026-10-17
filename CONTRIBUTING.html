@@ -262,10 +262,34 @@
 </ul></li>
 </ul></div>
 <div class="section level3">
-<h3 id="id_5-modular-stan-architecture">5. Modular Stan Architecture<a class="anchor" aria-label="anchor" href="#id_5-modular-stan-architecture"></a></h3>
-<ul><li>Stan models in <code>imuGAP</code> are designed modularly.</li>
+<h3 id="id_5-modular-stan-architecture--model-naming-convention">5. Modular Stan Architecture &amp; Model Naming Convention<a class="anchor" aria-label="anchor" href="#id_5-modular-stan-architecture--model-naming-convention"></a></h3>
+<ul><li>
+<strong>Modular Decomposition</strong>: Stan models in <code>imuGAP</code> are designed modularly.</li>
 <li>Top-level Stan models directly in <code>inst/stan/</code> (and not Stan code in subdirectories) must remain concise assembly skeletons composed of <code>#include &lt;subpath&gt;.stan</code> directives for particular modular elements (<code>functions/</code>, <code>data/</code>, <code>transformed_data/</code>, <code>parameters/</code>, <code>model/</code>, <code>generated_quantities/</code>).</li>
 <li>Never inline full block contents or raw logic directly into top-level models in <code>inst/stan/</code>; keep component logic encapsulated in dedicated sub-files to facilitate reuse, maintainability, and clean diffs.</li>
+<li>
+<strong>Top-Level Model Naming Convention</strong>: Top-level Stan model files follow the naming convention <code>&lt;time&gt;_&lt;offsets&gt;_&lt;link&gt;.stan</code>:
+<ul><li>
+<code>&lt;time&gt;</code>: Temporal basis formulation (e.g. <code>bspline</code>).</li>
+<li>
+<code>&lt;offsets&gt;</code>: Hierarchical offset structure for nested population partitions (<code>static</code> for non-time varying, multi-layer populations, <code>single</code> for unpartitioned populations).</li>
+<li>
+<code>&lt;link&gt;</code>: Link function implementation (e.g. <code>logit</code>, <code>probit</code>).</li>
+<li>Examples: <code>bspline_static_logit.stan</code>, <code>bspline_single_logit.stan</code>, <code>bspline_static_probit.stan</code>, <code>bspline_single_probit.stan</code>.</li>
+</ul></li>
+<li>
+<strong>Link Functions</strong>: Modular link implementations are located in <code>inst/stan/functions/link/&lt;link&gt;.stan</code> (e.g. <code>logit.stan</code>, <code>probit.stan</code>) and define mathematical transformations <code>link_fn()</code>, <code>inv_link()</code>, <code>d_inv_link()</code>, and <code>d2_inv_link()</code>.</li>
+<li>
+<strong>Options Interface (<code><a href="reference/imugap_options.html">imugap_options()</a></code>)</strong>:
+<ul><li>Option arguments adhere to the <code>c("default", "the_default_value", ...)</code> vector idiom (e.g. <code>time = c("default", "bspline")</code>, <code>offsets = c("default", "static")</code>, <code>link = c("default", "logit", "probit")</code>).</li>
+<li>High-level options define a model template string (<code>&lt;time&gt;_&lt;offsets&gt;_&lt;link&gt;</code>, e.g. <code>"bspline_static_logit"</code>).</li>
+<li>Resolution from high-level offset specification (<code>"static"</code>) to execution model name (<code>"static"</code> vs. <code>"single"</code>) happens dynamically inside <code><a href="reference/sampling.html">sampling()</a></code> where the location tree hierarchy depth is known.</li>
+</ul></li>
+<li>
+<strong>Stan Multi-Indexing &amp; Slicing Idiom</strong>:
+<ul><li>Prefer open-ended slices (e.g. <code>:n_locs</code> from beginning to index, <code>(n_locs + 1):</code> from index to end, <code>:</code> for entire dimension) over redundant closed bounds (e.g. <code>1:n_locs</code>, <code>(n_locs + 1):(n_locs + n_parent_locs)</code>).</li>
+<li>Open-ended slicing avoids redundant upper/lower bound expressions and prevents boundary discrepancies when partitioning packed blocks.</li>
+</ul></li>
 </ul></div>
 <div class="section level3">
 <h3 id="id_6-vignette-voice-plot-styling--dark-mode-compatibility">6. Vignette Voice, Plot Styling &amp; Dark Mode Compatibility<a class="anchor" aria-label="anchor" href="#id_6-vignette-voice-plot-styling--dark-mode-compatibility"></a></h3>
@@ -356,6 +380,12 @@
 <td align="left"><code>unrolled_dose_static_lambda.stan</code></td>
 <td align="left"><code>test-stan-unrolled_dose.R</code></td>
 <td align="left">Multi-dose CDF unrolling given schedule and rate <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></td>
+</tr><tr><td align="left"></td>
+<td align="left">
+<code>link/logit.stan</code>, <code>link/probit.stan</code>
+</td>
+<td align="left"><code>test-stan-link.R</code></td>
+<td align="left">Link transformations (<code>link_fn</code>, <code>inv_link</code>, <code>d_inv_link</code>, <code>d2_inv_link</code>) and derivatives</td>
 </tr><tr><td align="left"></td>
 <td align="left"><code>convenience.stan</code></td>
 <td align="left"><em>(composite include)</em></td>

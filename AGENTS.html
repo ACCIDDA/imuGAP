@@ -73,9 +73,20 @@
 <strong>Dataset Roxygen Idiom</strong>: Always use <code>@name &lt;data&gt;</code> and <code>@docType data</code> (never bare string form <code>#' "my_data"</code>) in <code>R/imuGAP-package.R</code>.</li>
 </ul></li>
 <li>
-<strong>Modular Stan Architecture</strong>:
+<strong>Modular Stan Architecture &amp; Model Naming Convention</strong>:
 <ul><li>Top-level Stan models in <code>inst/stan/</code> (and not Stan code in subdirectories) must remain modular skeletons that assemble model components using <code>#include &lt;subpath&gt;.stan</code> directives.</li>
 <li>Never inline full block contents or inlined logic directly into top-level Stan models in <code>inst/stan/</code>.</li>
+<li>
+<strong>Model Naming</strong>: Top-level Stan model files follow the naming convention <code>&lt;time&gt;_&lt;offsets&gt;_&lt;link&gt;.stan</code> (e.g. <code>bspline_static_logit.stan</code>, <code>bspline_single_logit.stan</code>, <code>bspline_static_probit.stan</code>, <code>bspline_single_probit.stan</code>).</li>
+<li>
+<strong>Link Functions</strong>: Modular link implementations live in <code>inst/stan/functions/link/&lt;link&gt;.stan</code> and define <code>link_fn()</code>, <code>inv_link()</code>, <code>d_inv_link()</code>, and <code>d2_inv_link()</code>.</li>
+<li>
+<strong>Options Specification</strong>: Option parameters in <code><a href="reference/imugap_options.html">imugap_options()</a></code> follow the vector idiom <code>c("default", "the_default_value", ...)</code> (e.g. <code>time = c("default", "bspline")</code>, <code>offsets = c("default", "static")</code>, <code>link = c("default", "logit", "probit")</code>). High-level options construct a model template (<code>&lt;time&gt;_&lt;offsets&gt;_&lt;link&gt;</code>), reflecting temporal basis, hierarchical offset structure for nested population partitions (<code>"static"</code> for non-time varying multi-layer populations, <code>"single"</code> for unpartitioned populations), and link function. Resolution to the concrete model name occurs dynamically inside <code><a href="reference/sampling.html">sampling()</a></code>.</li>
+</ul></li>
+<li>
+<strong>Stan Multi-Indexing &amp; Slicing Idiom</strong>:
+<ul><li>Prefer open-ended slices (e.g. <code>:n_locs</code> from beginning to index, <code>(n_locs + 1):</code> from index to end, <code>:</code> for entire dimension) over redundant closed bounds (e.g. <code>1:n_locs</code>, <code>(n_locs + 1):(n_locs + n_parent_locs)</code>).</li>
+<li>Open-ended slicing avoids redundant upper/lower bound expressions and prevents boundary discrepancies when partitioning packed blocks.</li>
 </ul></li>
 <li>
 <strong>Location Hierarchy Invariant</strong>:

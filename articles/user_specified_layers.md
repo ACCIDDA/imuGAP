@@ -130,26 +130,26 @@ fit_sim_2layer
 #>   Hierarchy:    4 locations across 2 layers (root: 'State')
 #>   Observations: 841 total (775 uncensored, 66 right-censored)
 #> 
-#> Inference for Stan model: impute_school_coverage_process_v6.
+#> Inference for Stan model: bspline_static_logit.
 #> 4 chains, each with iter=1000; warmup=500; thin=1; 
 #> post-warmup draws per chain=500, total post-warmup draws=2000.
 #> 
 #>                       mean se_mean   sd      2.5%       25%       50%       75%
-#> beta_bs[1]           -1.68    0.00 0.04     -1.75     -1.71     -1.68     -1.66
-#> beta_bs[2]           -1.90    0.00 0.06     -2.01     -1.93     -1.90     -1.86
-#> beta_bs[3]           -2.48    0.00 0.10     -2.68     -2.55     -2.48     -2.42
-#> beta_bs[4]           -3.24    0.00 0.11     -3.46     -3.31     -3.23     -3.16
-#> beta_bs[5]           -2.62    0.00 0.10     -2.81     -2.69     -2.62     -2.56
-#> sigma_layer[1]        0.70    0.02 0.37      0.26      0.43      0.61      0.86
+#> beta_bs[1]           -1.68    0.00 0.03     -1.75     -1.70     -1.68     -1.66
+#> beta_bs[2]           -1.90    0.00 0.05     -2.01     -1.93     -1.90     -1.86
+#> beta_bs[3]           -2.48    0.00 0.09     -2.65     -2.54     -2.48     -2.42
+#> beta_bs[4]           -3.24    0.00 0.11     -3.47     -3.31     -3.24     -3.16
+#> beta_bs[5]           -2.63    0.00 0.10     -2.82     -2.69     -2.63     -2.56
+#> sigma_layer[1]        0.67    0.02 0.34      0.25      0.42      0.58      0.83
 #> lambda_raw[1]         1.00    0.00 0.03      0.95      0.98      1.00      1.02
 #> lambda_raw[2]         1.01    0.00 0.01      0.99      1.00      1.01      1.02
-#> raw_phi_root[1]      -1.68    0.00 0.04     -1.75     -1.71     -1.68     -1.66
+#> raw_phi_root[1]      -1.68    0.00 0.03     -1.75     -1.70     -1.68     -1.66
 #> raw_phi_root[2]      -1.73    0.00 0.03     -1.78     -1.75     -1.73     -1.71
-#> raw_phi_root[3]      -1.78    0.00 0.02     -1.82     -1.79     -1.78     -1.76
+#> raw_phi_root[3]      -1.78    0.00 0.02     -1.83     -1.79     -1.78     -1.76
 #> raw_phi_root[4]      -1.83    0.00 0.02     -1.87     -1.84     -1.83     -1.81
-#> raw_phi_root[5]      -1.88    0.00 0.03     -1.93     -1.89     -1.88     -1.86
+#> raw_phi_root[5]      -1.88    0.00 0.03     -1.93     -1.90     -1.88     -1.86
 #> raw_phi_root[6]      -1.93    0.00 0.03     -1.98     -1.95     -1.93     -1.91
-#> raw_phi_root[7]      -1.99    0.00 0.03     -2.04     -2.00     -1.99     -1.97
+#> raw_phi_root[7]      -1.99    0.00 0.03     -2.04     -2.01     -1.99     -1.97
 #> raw_phi_root[8]      -2.04    0.00 0.03     -2.10     -2.06     -2.04     -2.03
 #> raw_phi_root[9]      -2.10    0.00 0.03     -2.16     -2.12     -2.10     -2.08
 #> raw_phi_root[10]     -2.16    0.00 0.03     -2.22     -2.18     -2.16     -2.14
@@ -157,65 +157,125 @@ fit_sim_2layer
 #> raw_phi_root[12]     -2.29    0.00 0.03     -2.35     -2.31     -2.29     -2.27
 #> raw_phi_root[13]     -2.36    0.00 0.03     -2.42     -2.38     -2.35     -2.33
 #> raw_phi_root[14]     -2.42    0.00 0.04     -2.49     -2.45     -2.42     -2.40
-#> raw_phi_root[15]     -2.49    0.00 0.04     -2.57     -2.52     -2.49     -2.46
+#> raw_phi_root[15]     -2.49    0.00 0.04     -2.57     -2.51     -2.49     -2.47
 #> raw_phi_root[16]     -2.56    0.00 0.04     -2.64     -2.59     -2.56     -2.53
 #> raw_phi_root[17]     -2.63    0.00 0.04     -2.71     -2.66     -2.63     -2.60
-#> raw_phi_root[18]     -2.70    0.00 0.04     -2.78     -2.72     -2.70     -2.67
-#> raw_phi_root[19]     -2.76    0.00 0.05     -2.85     -2.79     -2.76     -2.73
+#> raw_phi_root[18]     -2.70    0.00 0.04     -2.79     -2.73     -2.70     -2.67
+#> raw_phi_root[19]     -2.76    0.00 0.05     -2.86     -2.79     -2.76     -2.73
 #> raw_phi_root[20]     -2.82    0.00 0.05     -2.92     -2.85     -2.82     -2.78
-#> raw_phi_root[21]     -2.87    0.00 0.05     -2.97     -2.90     -2.87     -2.83
-#> raw_phi_root[22]     -2.91    0.00 0.05     -3.02     -2.94     -2.90     -2.87
-#> raw_phi_root[23]     -2.94    0.00 0.06     -3.05     -2.97     -2.93     -2.90
-#> raw_phi_root[24]     -2.95    0.00 0.06     -3.06     -2.99     -2.95     -2.91
-#> raw_phi_root[25]     -2.95    0.00 0.06     -3.06     -2.98     -2.94     -2.91
-#> raw_phi_root[26]     -2.93    0.00 0.05     -3.04     -2.96     -2.92     -2.89
-#> raw_phi_root[27]     -2.89    0.00 0.05     -3.00     -2.92     -2.88     -2.85
-#> raw_phi_root[28]     -2.82    0.00 0.06     -2.94     -2.86     -2.82     -2.78
-#> raw_phi_root[29]     -2.74    0.00 0.07     -2.88     -2.79     -2.73     -2.69
-#> raw_phi_root[30]     -2.62    0.00 0.10     -2.81     -2.69     -2.62     -2.56
-#> lp__             -79930.74    0.09 2.32 -79936.07 -79932.10 -79930.43 -79929.01
+#> raw_phi_root[21]     -2.87    0.00 0.05     -2.98     -2.90     -2.87     -2.83
+#> raw_phi_root[22]     -2.91    0.00 0.06     -3.03     -2.95     -2.91     -2.87
+#> raw_phi_root[23]     -2.94    0.00 0.06     -3.06     -2.98     -2.94     -2.90
+#> raw_phi_root[24]     -2.95    0.00 0.06     -3.07     -2.99     -2.95     -2.91
+#> raw_phi_root[25]     -2.95    0.00 0.06     -3.07     -2.99     -2.95     -2.91
+#> raw_phi_root[26]     -2.93    0.00 0.05     -3.04     -2.97     -2.93     -2.89
+#> raw_phi_root[27]     -2.89    0.00 0.05     -3.00     -2.93     -2.89     -2.85
+#> raw_phi_root[28]     -2.83    0.00 0.06     -2.94     -2.87     -2.82     -2.79
+#> raw_phi_root[29]     -2.74    0.00 0.07     -2.88     -2.79     -2.74     -2.69
+#> raw_phi_root[30]     -2.63    0.00 0.10     -2.82     -2.69     -2.63     -2.56
+#> mu_offset[1,1]        0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[2,1]        0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[3,1]        0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[4,1]        0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[5,1]        0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[6,1]        0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[7,1]        0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[8,1]        0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[9,1]        0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[10,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[11,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[12,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[13,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[14,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[15,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[16,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[17,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[18,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[19,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[20,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[21,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[22,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[23,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[24,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[25,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[26,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[27,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[28,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[29,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> mu_offset[30,1]       0.00     NaN 0.00      0.00      0.00      0.00      0.00
+#> lp__             -79930.66    0.11 2.31 -79935.91 -79932.10 -79930.37 -79928.95
 #>                      97.5% n_eff Rhat
-#> beta_bs[1]           -1.62  1185 1.00
-#> beta_bs[2]           -1.79   730 1.00
-#> beta_bs[3]           -2.30   615 1.01
-#> beta_bs[4]           -3.04   723 1.01
-#> beta_bs[5]           -2.45   988 1.00
-#> sigma_layer[1]        1.65   283 1.02
-#> lambda_raw[1]         1.05  1104 1.00
-#> lambda_raw[2]         1.04   929 1.00
-#> raw_phi_root[1]      -1.62  1185 1.00
-#> raw_phi_root[2]      -1.68  1246 1.00
-#> raw_phi_root[3]      -1.73  1143 1.01
-#> raw_phi_root[4]      -1.78  1030 1.01
-#> raw_phi_root[5]      -1.83   968 1.00
-#> raw_phi_root[6]      -1.88   973 1.00
-#> raw_phi_root[7]      -1.94  1013 1.00
-#> raw_phi_root[8]      -1.99  1056 1.00
-#> raw_phi_root[9]      -2.05  1084 1.00
-#> raw_phi_root[10]     -2.11  1070 1.00
-#> raw_phi_root[11]     -2.17  1011 1.00
-#> raw_phi_root[12]     -2.23   948 1.00
-#> raw_phi_root[13]     -2.29   902 1.00
-#> raw_phi_root[14]     -2.35   881 1.00
-#> raw_phi_root[15]     -2.42   882 1.00
-#> raw_phi_root[16]     -2.48   905 1.00
-#> raw_phi_root[17]     -2.55   939 1.00
-#> raw_phi_root[18]     -2.62   967 1.00
-#> raw_phi_root[19]     -2.67   975 1.00
-#> raw_phi_root[20]     -2.73   963 1.00
-#> raw_phi_root[21]     -2.77   940 1.00
-#> raw_phi_root[22]     -2.81   919 1.00
-#> raw_phi_root[23]     -2.83   907 1.00
-#> raw_phi_root[24]     -2.85   914 1.00
-#> raw_phi_root[25]     -2.84   949 1.00
-#> raw_phi_root[26]     -2.83  1017 1.00
-#> raw_phi_root[27]     -2.79  1125 1.00
-#> raw_phi_root[28]     -2.71  1199 1.00
-#> raw_phi_root[29]     -2.60  1133 1.00
-#> raw_phi_root[30]     -2.45   988 1.00
-#> lp__             -79927.23   610 1.01
+#> beta_bs[1]           -1.62  1130 1.00
+#> beta_bs[2]           -1.80   574 1.00
+#> beta_bs[3]           -2.30   768 1.01
+#> beta_bs[4]           -3.04   556 1.00
+#> beta_bs[5]           -2.44  1105 1.00
+#> sigma_layer[1]        1.52   238 1.02
+#> lambda_raw[1]         1.05   903 1.00
+#> lambda_raw[2]         1.04   711 1.00
+#> raw_phi_root[1]      -1.62  1130 1.00
+#> raw_phi_root[2]      -1.68   944 1.00
+#> raw_phi_root[3]      -1.73   669 1.00
+#> raw_phi_root[4]      -1.78   532 1.00
+#> raw_phi_root[5]      -1.83   486 1.00
+#> raw_phi_root[6]      -1.88   503 1.00
+#> raw_phi_root[7]      -1.93   543 1.00
+#> raw_phi_root[8]      -1.99   610 1.00
+#> raw_phi_root[9]      -2.05   703 1.00
+#> raw_phi_root[10]     -2.11   782 1.00
+#> raw_phi_root[11]     -2.17   824 1.00
+#> raw_phi_root[12]     -2.23   839 1.01
+#> raw_phi_root[13]     -2.29   844 1.01
+#> raw_phi_root[14]     -2.35   842 1.01
+#> raw_phi_root[15]     -2.42   833 1.01
+#> raw_phi_root[16]     -2.49   818 1.01
+#> raw_phi_root[17]     -2.55   797 1.01
+#> raw_phi_root[18]     -2.61   769 1.01
+#> raw_phi_root[19]     -2.67   733 1.01
+#> raw_phi_root[20]     -2.73   701 1.01
+#> raw_phi_root[21]     -2.77   675 1.01
+#> raw_phi_root[22]     -2.81   642 1.01
+#> raw_phi_root[23]     -2.83   615 1.01
+#> raw_phi_root[24]     -2.84   608 1.01
+#> raw_phi_root[25]     -2.85   633 1.01
+#> raw_phi_root[26]     -2.83   674 1.01
+#> raw_phi_root[27]     -2.79   770 1.01
+#> raw_phi_root[28]     -2.71   929 1.01
+#> raw_phi_root[29]     -2.59  1078 1.00
+#> raw_phi_root[30]     -2.44  1105 1.00
+#> mu_offset[1,1]        0.00   NaN  NaN
+#> mu_offset[2,1]        0.00   NaN  NaN
+#> mu_offset[3,1]        0.00   NaN  NaN
+#> mu_offset[4,1]        0.00   NaN  NaN
+#> mu_offset[5,1]        0.00   NaN  NaN
+#> mu_offset[6,1]        0.00   NaN  NaN
+#> mu_offset[7,1]        0.00   NaN  NaN
+#> mu_offset[8,1]        0.00   NaN  NaN
+#> mu_offset[9,1]        0.00   NaN  NaN
+#> mu_offset[10,1]       0.00   NaN  NaN
+#> mu_offset[11,1]       0.00   NaN  NaN
+#> mu_offset[12,1]       0.00   NaN  NaN
+#> mu_offset[13,1]       0.00   NaN  NaN
+#> mu_offset[14,1]       0.00   NaN  NaN
+#> mu_offset[15,1]       0.00   NaN  NaN
+#> mu_offset[16,1]       0.00   NaN  NaN
+#> mu_offset[17,1]       0.00   NaN  NaN
+#> mu_offset[18,1]       0.00   NaN  NaN
+#> mu_offset[19,1]       0.00   NaN  NaN
+#> mu_offset[20,1]       0.00   NaN  NaN
+#> mu_offset[21,1]       0.00   NaN  NaN
+#> mu_offset[22,1]       0.00   NaN  NaN
+#> mu_offset[23,1]       0.00   NaN  NaN
+#> mu_offset[24,1]       0.00   NaN  NaN
+#> mu_offset[25,1]       0.00   NaN  NaN
+#> mu_offset[26,1]       0.00   NaN  NaN
+#> mu_offset[27,1]       0.00   NaN  NaN
+#> mu_offset[28,1]       0.00   NaN  NaN
+#> mu_offset[29,1]       0.00   NaN  NaN
+#> mu_offset[30,1]       0.00   NaN  NaN
+#> lp__             -79927.05   428 1.01
 #> 
-#> Samples were drawn using NUTS(diag_e) at Sat Oct 17 13:43:18 2026.
+#> Samples were drawn using NUTS(diag_e) at Sat Oct 17 13:54:30 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).

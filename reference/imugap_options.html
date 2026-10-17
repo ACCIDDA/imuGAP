@@ -57,7 +57,10 @@
 <span>  df <span class="op">=</span> <span class="fl">5L</span>,</span>
 <span>  dose_schedule <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">4</span><span class="op">)</span>,</span>
 <span>  compute_log_lik <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"default"</span><span class="op">)</span></span>
+<span>  time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"default"</span>, <span class="st">"bspline"</span><span class="op">)</span>,</span>
+<span>  offsets <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"default"</span>, <span class="st">"static"</span><span class="op">)</span>,</span>
+<span>  link <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"default"</span>, <span class="st">"logit"</span>, <span class="st">"probit"</span><span class="op">)</span>,</span>
+<span>  model <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -80,10 +83,25 @@ becomes eligible (default: <code>c(1, 4)</code> for 2-dose vaccines).</p></dd>
 sampling? (default: <code>FALSE</code>).</p></dd>
 
 
+<dt id="arg-time">time<a class="anchor" aria-label="anchor" href="#arg-time"></a></dt>
+<dd><p>character string specifying the temporal model component
+(default: <code>"default"</code>, resolving to <code>"bspline"</code>).</p></dd>
+
+
+<dt id="arg-offsets">offsets<a class="anchor" aria-label="anchor" href="#arg-offsets"></a></dt>
+<dd><p>character string specifying the spatial offset model component
+(default: <code>"default"</code>, resolving to <code>"static"</code>).</p></dd>
+
+
+<dt id="arg-link">link<a class="anchor" aria-label="anchor" href="#arg-link"></a></dt>
+<dd><p>character string specifying the link function formulation
+(default: <code>"default"</code>, resolving to <code>"logit"</code>). Options include <code>"default"</code> (or <code>"logit"</code>)
+and <code>"probit"</code>.</p></dd>
+
+
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
-<dd><p>character string specifying the model formulation (default: <code>"default"</code>).
-Dispatch to optimized single versus multi-layer versions occurs automatically
-within <code>[sampling()]</code>.</p></dd>
+<dd><p>optional character string; alias for <code>link</code> or full model template name
+(default: <code>NULL</code>).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -103,8 +121,17 @@ within <code>[sampling()]</code>.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $compute_log_lik</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bspline"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $offsets</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "static"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $link</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "logit"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $model</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "default"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bspline_static_logit"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="fu">imugap_options</span><span class="op">(</span>dose_schedule <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $df</span>
@@ -116,8 +143,39 @@ within <code>[sampling()]</code>.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $compute_log_lik</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bspline"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $offsets</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "static"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $link</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "logit"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $model</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "default"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bspline_static_logit"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="fu">imugap_options</span><span class="op">(</span>link <span class="op">=</span> <span class="st">"probit"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $df</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $dose_schedule</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $compute_log_lik</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $time</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bspline"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $offsets</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "static"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $link</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "probit"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $model</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bspline_static_probit"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

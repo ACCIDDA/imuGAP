@@ -42,12 +42,38 @@ documentation and CI architecture, see
   - **Dataset Roxygen Idiom**: Always use `@name <data>` and
     `@docType data` (never bare string form `#' "my_data"`) in
     `R/imuGAP-package.R`.
-- **Modular Stan Architecture**:
+- **Modular Stan Architecture & Model Naming Convention**:
   - Top-level Stan models in `inst/stan/` (and not Stan code in
     subdirectories) must remain modular skeletons that assemble model
     components using `#include <subpath>.stan` directives.
   - Never inline full block contents or inlined logic directly into
     top-level Stan models in `inst/stan/`.
+  - **Model Naming**: Top-level Stan model files follow the naming
+    convention `<time>_<offsets>_<link>.stan`
+    (e.g. `bspline_static_logit.stan`, `bspline_single_logit.stan`,
+    `bspline_static_probit.stan`, `bspline_single_probit.stan`).
+  - **Link Functions**: Modular link implementations live in
+    `inst/stan/functions/link/<link>.stan` and define `link_fn()`,
+    `inv_link()`, `d_inv_link()`, and `d2_inv_link()`.
+  - **Options Specification**: Option parameters in
+    [`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md)
+    follow the vector idiom `c("default", "the_default_value", ...)`
+    (e.g. `time = c("default", "bspline")`,
+    `offsets = c("default", "static")`,
+    `link = c("default", "logit", "probit")`). High-level options
+    construct a model template (`<time>_<offsets>_<link>`), reflecting
+    temporal basis, hierarchical offset structure for nested population
+    partitions (`"static"` for non-time varying multi-layer populations,
+    `"single"` for unpartitioned populations), and link function.
+    Resolution to the concrete model name occurs dynamically inside
+    [`sampling()`](https://accidda.github.io/imuGAP/reference/sampling.md).
+- **Stan Multi-Indexing & Slicing Idiom**:
+  - Prefer open-ended slices (e.g. `:n_locs` from beginning to index,
+    `(n_locs + 1):` from index to end, `:` for entire dimension) over
+    redundant closed bounds (e.g. `1:n_locs`,
+    `(n_locs + 1):(n_locs + n_parent_locs)`).
+  - Open-ended slicing avoids redundant upper/lower bound expressions
+    and prevents boundary discrepancies when partitioning packed blocks.
 - **Location Hierarchy Invariant**:
   - Every location node must have either **0 offspring** (leaf) or
     **strictly greater than 1 offspring** ($`\ge 2`$ children).

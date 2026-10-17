@@ -9,7 +9,10 @@ imugap_options(
   df = 5L,
   dose_schedule = c(1, 4),
   compute_log_lik = FALSE,
-  model = c("default")
+  time = c("default", "bspline"),
+  offsets = c("default", "static"),
+  link = c("default", "logit", "probit"),
+  model = NULL
 )
 ```
 
@@ -30,11 +33,26 @@ imugap_options(
   logical scalar; compute pointwise log-likelihood during sampling?
   (default: `FALSE`).
 
+- time:
+
+  character string specifying the temporal model component (default:
+  `"default"`, resolving to `"bspline"`).
+
+- offsets:
+
+  character string specifying the spatial offset model component
+  (default: `"default"`, resolving to `"static"`).
+
+- link:
+
+  character string specifying the link function formulation (default:
+  `"default"`, resolving to `"logit"`). Options include `"default"` (or
+  `"logit"`) and `"probit"`.
+
 - model:
 
-  character string specifying the model formulation (default:
-  `"default"`). Dispatch to optimized single versus multi-layer versions
-  occurs automatically within `[sampling()]`.
+  optional character string; alias for `link` or full model template
+  name (default: `NULL`).
 
 ## Value
 
@@ -53,8 +71,17 @@ imugap_options()
 #> $compute_log_lik
 #> [1] FALSE
 #> 
+#> $time
+#> [1] "bspline"
+#> 
+#> $offsets
+#> [1] "static"
+#> 
+#> $link
+#> [1] "logit"
+#> 
 #> $model
-#> [1] "default"
+#> [1] "bspline_static_logit"
 #> 
 imugap_options(dose_schedule = c(1, 3))
 #> $df
@@ -66,7 +93,38 @@ imugap_options(dose_schedule = c(1, 3))
 #> $compute_log_lik
 #> [1] FALSE
 #> 
+#> $time
+#> [1] "bspline"
+#> 
+#> $offsets
+#> [1] "static"
+#> 
+#> $link
+#> [1] "logit"
+#> 
 #> $model
-#> [1] "default"
+#> [1] "bspline_static_logit"
+#> 
+imugap_options(link = "probit")
+#> $df
+#> [1] 5
+#> 
+#> $dose_schedule
+#> [1] 1 4
+#> 
+#> $compute_log_lik
+#> [1] FALSE
+#> 
+#> $time
+#> [1] "bspline"
+#> 
+#> $offsets
+#> [1] "static"
+#> 
+#> $link
+#> [1] "probit"
+#> 
+#> $model
+#> [1] "bspline_static_probit"
 #> 
 ```
