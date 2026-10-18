@@ -88,6 +88,7 @@ functions {
 data {
   int<lower=1> C;
   int<lower=1> K;
+  int<lower=1> S;
   vector[C] p0;
   vector[K] w;
   vector[K] delta;
@@ -101,12 +102,17 @@ model {
 generated quantities {
   vector[C] eta0 = link_fn(p0);
   vector[C] sol_direct = solve_subpop_shift(eta0, p0, w, delta, 1);
-  vector[C] sol_halley1 = solve_shift_halley(sol_direct, eta0, p0, w, delta, 1);
   vector[C] sol_halley2 = solve_subpop_shift(eta0, p0, w, delta, 2);
-  vector[C] sol_newton1 = solve_shift_newton(sol_direct, eta0, p0, w, delta, 1);
   vector[C] sol_newton2 = solve_subpop_shift(eta0, p0, w, delta, 3);
   vector[C] sol_builtin = solve_subpop_shift(eta0, p0, w, delta, 4);
   vector[C] sol_halley10 = solve_subpop_shift(eta0, p0, w, delta, 5);
+
+  matrix[C, S] sol_newton_by_step;
+  matrix[C, S] sol_halley_by_step;
+  for (s in 1:S) {
+    sol_newton_by_step[:, s] = solve_shift_newton(sol_direct, eta0, p0, w, delta, s);
+    sol_halley_by_step[:, s] = solve_shift_halley(sol_direct, eta0, p0, w, delta, s);
+  }
 }
 "
 ) |>
@@ -122,6 +128,7 @@ functions {
 data {
   int<lower=1> C;
   int<lower=1> K;
+  int<lower=1> S;
   vector[C] p0;
   vector[K] w;
   vector[K] delta;
@@ -135,12 +142,17 @@ model {
 generated quantities {
   vector[C] eta0 = link_fn(p0);
   vector[C] sol_direct = solve_subpop_shift(eta0, p0, w, delta, 1);
-  vector[C] sol_halley1 = solve_shift_halley(sol_direct, eta0, p0, w, delta, 1);
   vector[C] sol_halley2 = solve_subpop_shift(eta0, p0, w, delta, 2);
-  vector[C] sol_newton1 = solve_shift_newton(sol_direct, eta0, p0, w, delta, 1);
   vector[C] sol_newton2 = solve_subpop_shift(eta0, p0, w, delta, 3);
   vector[C] sol_builtin = solve_subpop_shift(eta0, p0, w, delta, 4);
   vector[C] sol_halley10 = solve_subpop_shift(eta0, p0, w, delta, 5);
+
+  matrix[C, S] sol_newton_by_step;
+  matrix[C, S] sol_halley_by_step;
+  for (s in 1:S) {
+    sol_newton_by_step[:, s] = solve_shift_newton(sol_direct, eta0, p0, w, delta, s);
+    sol_halley_by_step[:, s] = solve_shift_halley(sol_direct, eta0, p0, w, delta, s);
+  }
 }
 "
 ) |>
@@ -173,9 +185,11 @@ test_that("Stan solvers accurately recover exact aggregation shifts across links
   ref_logit <- solve_exact_r(p0_vals, w_vec, delta_vec, "logit")
   ref_probit <- solve_exact_r(p0_vals, w_vec, delta_vec, "probit")
 
+  s_steps <- 4L
   data_list <- list(
     C = length(p0_vals),
     K = length(w_vec),
+    S = s_steps,
     p0 = p0_vals,
     w = w_vec,
     delta = delta_vec
@@ -184,51 +198,66 @@ test_that("Stan solvers accurately recover exact aggregation shifts across links
   res_logit <- run_stan_harness(model_dispatch_logit, data = data_list)
   res_probit <- run_stan_harness(model_dispatch_probit, data = data_list)
 
-  # Check direct solver returns 0 (baseline)
-  expect_equal(
-    as.numeric(res_logit$sol_direct),
-    rep(0, length(p0_vals)),
-    tolerance = 1e-9
-  )
-  expect_equal(
-    as.numeric(res_probit$sol_direct),
-    rep(0, length(p0_vals)),
-    tolerance = 1e-9
+  link_cases <- list(
+    logit = list(res = res_logit, ref = ref_logit),
+    probit = list(res = res_probit, ref = ref_probit)
   )
 
-  # Check high-precision Halley (10 steps) matches uniroot
-  expect_equal(as.numeric(res_logit$sol_halley10), ref_logit, tolerance = 1e-8)
-  expect_equal(
-    as.numeric(res_probit$sol_halley10),
-    ref_probit,
-    tolerance = 1e-8
-  )
+  for (case in link_cases) {
+    res <- case$res
+    ref <- case$ref
 
-  # Check Stan algebraic solver matches uniroot
-  expect_equal(as.numeric(res_logit$sol_builtin), ref_logit, tolerance = 1e-6)
-  expect_equal(as.numeric(res_probit$sol_builtin), ref_probit, tolerance = 1e-6)
+    # Check direct solver returns 0 (baseline)
+    expect_equal(
+      as.numeric(res$sol_direct),
+      rep(0, length(p0_vals)),
+      tolerance = 1e-9
+    )
 
-  # Check that each step of Halley and Newton monotonically reduces the error
-  # from the direct solver baseline toward the exact root
-  err_direct_logit <- abs(as.numeric(res_logit$sol_direct) - ref_logit)
-  err_newton1_logit <- abs(as.numeric(res_logit$sol_newton1) - ref_logit)
-  err_newton2_logit <- abs(as.numeric(res_logit$sol_newton2) - ref_logit)
-  err_halley1_logit <- abs(as.numeric(res_logit$sol_halley1) - ref_logit)
-  err_halley2_logit <- abs(as.numeric(res_logit$sol_halley2) - ref_logit)
+    # Check high-precision Halley (10 steps) and Stan algebraic solver match uniroot
+    expect_equal(as.numeric(res$sol_halley10), ref, tolerance = 1e-8)
+    expect_equal(as.numeric(res$sol_builtin), ref, tolerance = 1e-6)
 
-  expect_true(all(err_newton1_logit < err_direct_logit))
-  expect_true(all(err_newton2_logit < err_newton1_logit))
-  expect_true(all(err_halley1_logit < err_direct_logit))
-  expect_true(all(err_halley2_logit <= err_halley1_logit))
+    # Verify that dispatched 2-step solvers match direct solver invocations with 2 steps
+    for (m in c("newton", "halley")) {
+      expect_equal(
+        as.numeric(res[[paste0("sol_", m, "2")]]),
+        as.numeric(res[[paste0("sol_", m, "_by_step")]][, 2]),
+        tolerance = 1e-12
+      )
+    }
 
-  err_direct_probit <- abs(as.numeric(res_probit$sol_direct) - ref_probit)
-  err_newton1_probit <- abs(as.numeric(res_probit$sol_newton1) - ref_probit)
-  err_newton2_probit <- abs(as.numeric(res_probit$sol_newton2) - ref_probit)
-  err_halley1_probit <- abs(as.numeric(res_probit$sol_halley1) - ref_probit)
-  err_halley2_probit <- abs(as.numeric(res_probit$sol_halley2) - ref_probit)
+    # Check that each step (1..S) represents decreasing error from the direct solver baseline
+    err_direct <- abs(as.numeric(res$sol_direct) - ref)
+    for (s in seq_len(s_steps)) {
+      err_newton_s <- abs(
+        as.numeric(res$sol_newton_by_step[, s]) - ref
+      )
+      err_halley_s <- abs(
+        as.numeric(res$sol_halley_by_step[, s]) - ref
+      )
 
-  expect_true(all(err_newton1_probit < err_direct_probit))
-  expect_true(all(err_newton2_probit < err_newton1_probit))
-  expect_true(all(err_halley1_probit < err_direct_probit))
-  expect_true(all(err_halley2_probit <= err_halley1_probit))
+      # Every step reduces error compared to direct solver baseline
+      expect_true(all(err_newton_s < err_direct))
+      expect_true(all(err_halley_s < err_direct))
+
+      # Each step monotonically decreases or stabilizes (upon convergence) error
+      if (s > 1L) {
+        err_newton_prev <- abs(
+          as.numeric(res$sol_newton_by_step[, s - 1L]) - ref
+        )
+        err_halley_prev <- abs(
+          as.numeric(res$sol_halley_by_step[, s - 1L]) - ref
+        )
+        expect_true(all(err_newton_s <= err_newton_prev))
+        expect_true(all(err_halley_s <= err_halley_prev))
+      }
+    }
+
+    # Early Newton step strictly decreases error
+    expect_true(all(
+      abs(as.numeric(res$sol_newton_by_step[, 2]) - ref) <
+        abs(as.numeric(res$sol_newton_by_step[, 1]) - ref)
+    ))
+  }
 })
