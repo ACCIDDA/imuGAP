@@ -5,7 +5,7 @@ targets <- c(
   "functions/link/probit.stan",
   "functions/guess/zero.stan",
   "functions/solvers/direct.stan",
-  "functions/solvers/haste_halley.stan",
+  "functions/solvers/halley.stan",
   "functions/solvers/newton.stan",
   "functions/solvers/builtin_rootfinding.stan",
   "functions/solvers/halley2.stan",

@@ -3,7 +3,7 @@
  * @brief Unified dynamic rootfinding solver dispatcher.
  */
 
-#include functions/solvers/haste_halley.stan
+#include functions/solvers/halley.stan
 #include functions/solvers/newton.stan
 #include functions/solvers/builtin_rootfinding.stan
 
