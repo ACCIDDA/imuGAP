@@ -3,7 +3,7 @@
  * @brief 2-step Halley rootfinder solver module.
  */
 
-#include functions/solvers/haste_halley.stan
+#include functions/solvers/halley.stan
 
 /**
  * Solve subpopulation shift offsets using 2 Halley iteration steps.

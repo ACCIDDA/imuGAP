@@ -1,5 +1,5 @@
 /**
- * @file haste_halley.stan
+ * @file halley.stan
  * @brief Generic Halley rootfinder for link aggregation offsets.
  */
 

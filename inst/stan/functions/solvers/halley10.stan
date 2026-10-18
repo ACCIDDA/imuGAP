@@ -3,7 +3,7 @@
  * @brief High-precision 10-step Halley rootfinder solver module.
  */
 
-#include functions/solvers/haste_halley.stan
+#include functions/solvers/halley.stan
 
 /**
  * Solve subpopulation shift offsets using up to 10 Halley iteration steps.
