@@ -220,7 +220,6 @@ test_that("Stan solvers accurately recover exact aggregation shifts across links
   expect_true(all(err_newton2_logit < err_newton1_logit))
   expect_true(all(err_halley1_logit < err_direct_logit))
   expect_true(all(err_halley2_logit <= err_halley1_logit))
-  expect_true(all(err_halley2_logit < err_direct_logit))
 
   err_direct_probit <- abs(as.numeric(res_probit$sol_direct) - ref_probit)
   err_newton1_probit <- abs(as.numeric(res_probit$sol_newton1) - ref_probit)
@@ -232,5 +231,4 @@ test_that("Stan solvers accurately recover exact aggregation shifts across links
   expect_true(all(err_newton2_probit < err_newton1_probit))
   expect_true(all(err_halley1_probit < err_direct_probit))
   expect_true(all(err_halley2_probit <= err_halley1_probit))
-  expect_true(all(err_halley2_probit < err_direct_probit))
 })
