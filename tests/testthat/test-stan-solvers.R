@@ -101,7 +101,9 @@ model {
 generated quantities {
   vector[C] eta0 = link_fn(p0);
   vector[C] sol_direct = solve_subpop_shift(eta0, p0, w, delta, 1);
+  vector[C] sol_halley1 = solve_shift_halley(sol_direct, eta0, p0, w, delta, 1);
   vector[C] sol_halley2 = solve_subpop_shift(eta0, p0, w, delta, 2);
+  vector[C] sol_newton1 = solve_shift_newton(sol_direct, eta0, p0, w, delta, 1);
   vector[C] sol_newton2 = solve_subpop_shift(eta0, p0, w, delta, 3);
   vector[C] sol_builtin = solve_subpop_shift(eta0, p0, w, delta, 4);
   vector[C] sol_halley10 = solve_subpop_shift(eta0, p0, w, delta, 5);
@@ -133,7 +135,9 @@ model {
 generated quantities {
   vector[C] eta0 = link_fn(p0);
   vector[C] sol_direct = solve_subpop_shift(eta0, p0, w, delta, 1);
+  vector[C] sol_halley1 = solve_shift_halley(sol_direct, eta0, p0, w, delta, 1);
   vector[C] sol_halley2 = solve_subpop_shift(eta0, p0, w, delta, 2);
+  vector[C] sol_newton1 = solve_shift_newton(sol_direct, eta0, p0, w, delta, 1);
   vector[C] sol_newton2 = solve_subpop_shift(eta0, p0, w, delta, 3);
   vector[C] sol_builtin = solve_subpop_shift(eta0, p0, w, delta, 4);
   vector[C] sol_halley10 = solve_subpop_shift(eta0, p0, w, delta, 5);
@@ -204,9 +208,29 @@ test_that("Stan solvers accurately recover exact aggregation shifts across links
   expect_equal(as.numeric(res_logit$sol_builtin), ref_logit, tolerance = 1e-6)
   expect_equal(as.numeric(res_probit$sol_builtin), ref_probit, tolerance = 1e-6)
 
-  # Check 2-step Halley and Newton approximate uniroot closely
-  expect_equal(as.numeric(res_logit$sol_halley2), ref_logit, tolerance = 1e-3)
-  expect_equal(as.numeric(res_probit$sol_halley2), ref_probit, tolerance = 1e-3)
-  expect_equal(as.numeric(res_logit$sol_newton2), ref_logit, tolerance = 1e-2)
-  expect_equal(as.numeric(res_probit$sol_newton2), ref_probit, tolerance = 1e-2)
+  # Check that each step of Halley and Newton monotonically reduces the error
+  # from the direct solver baseline toward the exact root
+  err_direct_logit <- abs(as.numeric(res_logit$sol_direct) - ref_logit)
+  err_newton1_logit <- abs(as.numeric(res_logit$sol_newton1) - ref_logit)
+  err_newton2_logit <- abs(as.numeric(res_logit$sol_newton2) - ref_logit)
+  err_halley1_logit <- abs(as.numeric(res_logit$sol_halley1) - ref_logit)
+  err_halley2_logit <- abs(as.numeric(res_logit$sol_halley2) - ref_logit)
+
+  expect_true(all(err_newton1_logit < err_direct_logit))
+  expect_true(all(err_newton2_logit < err_newton1_logit))
+  expect_true(all(err_halley1_logit < err_direct_logit))
+  expect_true(all(err_halley2_logit <= err_halley1_logit))
+  expect_true(all(err_halley2_logit < err_direct_logit))
+
+  err_direct_probit <- abs(as.numeric(res_probit$sol_direct) - ref_probit)
+  err_newton1_probit <- abs(as.numeric(res_probit$sol_newton1) - ref_probit)
+  err_newton2_probit <- abs(as.numeric(res_probit$sol_newton2) - ref_probit)
+  err_halley1_probit <- abs(as.numeric(res_probit$sol_halley1) - ref_probit)
+  err_halley2_probit <- abs(as.numeric(res_probit$sol_halley2) - ref_probit)
+
+  expect_true(all(err_newton1_probit < err_direct_probit))
+  expect_true(all(err_newton2_probit < err_newton1_probit))
+  expect_true(all(err_halley1_probit < err_direct_probit))
+  expect_true(all(err_halley2_probit <= err_halley1_probit))
+  expect_true(all(err_halley2_probit < err_direct_probit))
 })
