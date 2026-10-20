@@ -9,4 +9,3 @@ int<lower=0> n_qr_entries;
 array[2, n_parent_locs] int z_bounds;
 array[2, n_parent_locs] int qr_bounds;
 vector[n_qr_entries] qr_entries;
-int<lower=1, upper=5> solver_type;

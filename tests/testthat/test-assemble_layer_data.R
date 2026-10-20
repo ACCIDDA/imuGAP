@@ -131,7 +131,10 @@ test_that("assemble_layer_data includes solver_type and respects override", {
     parent_id = c(NA, "state", "state")
   ))
   d_default <- assemble_layer_data(locs2)
-  expect_equal(d_default$solver_type, 1L)
+  expect_null(d_default$solver_type)
+
+  d_direct <- assemble_layer_data(locs2, solver_type = 1L)
+  expect_equal(d_direct$solver_type, 1L)
 
   d_override <- assemble_layer_data(locs2, solver_type = 3L)
   expect_equal(d_override$solver_type, 3L)

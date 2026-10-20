@@ -277,8 +277,9 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_multi$captured$object, "stanmodel")
   expect_equal(
     out_multi$captured$object@model_name,
-    "bspline_static_logit"
+    "bspline_static_direct_logit"
   )
+  expect_null(out_multi$captured$data$solver_type)
 
   # 1-layer hierarchy dispatches to specialized single-layer Stan model
   locs1 <- data.frame(loc_id = "state", parent_id = NA)
@@ -303,7 +304,7 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
     "bspline_single_logit"
   )
 
-  # Probit multi-layer hierarchy dispatches to bspline_static_probit
+  # Probit multi-layer hierarchy dispatches to bspline_static_direct_probit
   out_multi_probit <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
       observations = make_minimal_obs(),
@@ -315,8 +316,41 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_multi_probit$captured$object, "stanmodel")
   expect_equal(
     out_multi_probit$captured$object@model_name,
-    "bspline_static_probit"
+    "bspline_static_direct_probit"
   )
+  expect_null(out_multi_probit$captured$data$solver_type)
+
+  # Multi-layer with selectable solver dispatches to bspline_static_dispatch_logit
+  out_multi_dispatch <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs(),
+      imugap_opts = imuGAP::imugap_options(solver = "halley2")
+    )
+  ))
+  expect_s4_class(out_multi_dispatch$captured$object, "stanmodel")
+  expect_equal(
+    out_multi_dispatch$captured$object@model_name,
+    "bspline_static_dispatch_logit"
+  )
+  expect_equal(out_multi_dispatch$captured$data$solver_type, 2L)
+
+  # Probit multi-layer with selectable solver dispatches to bspline_static_dispatch_probit
+  out_multi_dispatch_probit <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs(),
+      imugap_opts = imuGAP::imugap_options(link = "probit", solver = "newton2")
+    )
+  ))
+  expect_s4_class(out_multi_dispatch_probit$captured$object, "stanmodel")
+  expect_equal(
+    out_multi_dispatch_probit$captured$object@model_name,
+    "bspline_static_dispatch_probit"
+  )
+  expect_equal(out_multi_dispatch_probit$captured$data$solver_type, 3L)
 
   # Probit single-layer hierarchy dispatches to bspline_single_probit
   out_single_probit <- with_captured_sampling(suppressWarnings(
@@ -356,7 +390,7 @@ test_that("sampling passes solver_type to Stan data", {
       locations = make_3layer_locs()
     )
   ))
-  expect_equal(out_default$captured$data$solver_type, 1L)
+  expect_null(out_default$captured$data$solver_type)
 
   out_halley2 <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(

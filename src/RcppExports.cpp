@@ -14,14 +14,18 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_single_logit_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_single_probit_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_logit_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_probit_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_direct_logit_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_direct_probit_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_dispatch_logit_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_dispatch_probit_mod();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_stan_fit4bspline_single_logit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_single_logit_mod, 0},
     {"_rcpp_module_boot_stan_fit4bspline_single_probit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_single_probit_mod, 0},
-    {"_rcpp_module_boot_stan_fit4bspline_static_logit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_logit_mod, 0},
-    {"_rcpp_module_boot_stan_fit4bspline_static_probit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_probit_mod, 0},
+    {"_rcpp_module_boot_stan_fit4bspline_static_direct_logit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_direct_logit_mod, 0},
+    {"_rcpp_module_boot_stan_fit4bspline_static_direct_probit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_direct_probit_mod, 0},
+    {"_rcpp_module_boot_stan_fit4bspline_static_dispatch_logit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_dispatch_logit_mod, 0},
+    {"_rcpp_module_boot_stan_fit4bspline_static_dispatch_probit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_dispatch_probit_mod, 0},
     {NULL, NULL, 0}
 };
 

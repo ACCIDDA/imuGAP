@@ -301,47 +301,27 @@ sampling <- function(
   imugap_opts = imugap_options(),
   stan_opts = stan_options(threading = TRUE)
 ) {
-  # check imugap_opts
-  link <- imugap_opts$link
-  time <- imugap_opts$time %||% "bspline"
-  model <- imugap_opts$model
-  if (!is.null(model)) {
-    if (model %in% c("default", "logit", "probit")) {
-      link <- if (identical(model, "default")) "logit" else model
-    } else if (
-      model %in%
-        c(
-          "bspline_static_logit",
-          "bspline_static_probit",
-          "bspline_single_logit",
-          "bspline_single_probit"
-        )
-    ) {
-      parts <- strsplit(model, "_", fixed = TRUE)[[1]]
-      time <- parts[1]
-      link <- parts[length(parts)]
-    } else {
-      stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model = model)
-    }
-  }
-  link <- link %||% "logit"
-  stop_fmt_if(
-    !link %in% c("default", "logit", "probit"),
-    ERR_OPT_UNKNOWN_MODEL,
-    model = link
-  )
-  if (identical(link, "default")) {
-    link <- "logit"
-  }
-  dose_sched_opts <- imugap_opts$dose_schedule %||% c(1L, 4L)
-  df_opts <- imugap_opts$df %||% 5L
-
-  # check location argument
+  # check location argument and determine hierarchy depth
   loc_info <- canonicalize_locations(locations)
   n_layers <- max(loc_info$layer)
   is_multilayer <- n_layers > 1L
+
+  # resolve concrete Stan model and configuration
+  resolved_model <- resolve_model_name(
+    imugap_opts = imugap_opts,
+    is_multilayer = is_multilayer
+  )
+  model_name <- resolved_model$model_name
+  link <- resolved_model$link
+
+  dose_sched_opts <- imugap_opts$dose_schedule %||% c(1L, 4L)
+  df_opts <- imugap_opts$df %||% 5L
+
   layer_data <- if (is_multilayer) {
-    assemble_layer_data(loc_info, solver_type = imugap_opts$solver_type %||% 1L)
+    assemble_layer_data(
+      loc_info,
+      solver_type = resolved_model$solver_type
+    )
   } else {
     NULL
   }
@@ -403,23 +383,6 @@ sampling <- function(
   backend <- stan_opts$backend
   stop_fmt_if(is.null(backend), ERR_STAN_OPTS_CLASS)
 
-  # Select specialized Stan model based on model components and hierarchy depth:
-  # 1-layer uses the streamlined single-location model; >= 2 layers uses the full
-  # hierarchical model.
-  offsets_type <- if (is_multilayer) "static" else "single"
-  model_name <- sprintf("%s_%s_%s", time, offsets_type, link)
-  supported_models <- c(
-    "bspline_static_logit",
-    "bspline_static_probit",
-    "bspline_single_logit",
-    "bspline_single_probit"
-  )
-  stop_fmt_if(
-    !model_name %in% supported_models,
-    ERR_OPT_UNKNOWN_MODEL,
-    model = model_name
-  )
-
   # Drop unconstrained latent spatial innovation parameters (z_layer) and
   # intermediate unrolled link matrices (raw_phi_mat) by default in multi-layer
   # models, while returning the full orthonormalized offsets (off_layer) and
@@ -457,7 +420,13 @@ sampling <- function(
     ))
   }
 
+  imugap_opts$model <- model_name
   imugap_opts$model_name <- model_name
+  imugap_opts$offsets <- resolved_model$offsets
+  imugap_opts$solver <- resolved_model$solver
+  imugap_opts$solver_type <- resolved_model$solver_type %||%
+    imugap_opts$solver_type
+  imugap_opts$link <- resolved_model$link
 
   structure(
     list(
