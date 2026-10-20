@@ -386,7 +386,7 @@ create_target <- function(
 #' @keywords internal
 #' @noRd
 #' @autoglobal
-assemble_layer_data <- function(loc_info, solver_type = 1L) {
+assemble_layer_data <- function(loc_info, solver_type = NULL) {
   n_locs <- nrow(loc_info)
   n_layers <- max(loc_info$layer)
   layer_starts <- loc_info[, min(loc_c_id), by = layer]$V1
@@ -447,7 +447,7 @@ assemble_layer_data <- function(loc_info, solver_type = 1L) {
     loc_population
   )
 
-  list(
+  res <- list(
     n_locs = n_locs,
     n_layers = n_layers,
     layer_starts = as.array(as.integer(layer_starts)),
@@ -458,9 +458,12 @@ assemble_layer_data <- function(loc_info, solver_type = 1L) {
     n_qr_entries = qr_data$n_qr_entries,
     z_bounds = qr_data$z_bounds,
     qr_bounds = qr_data$qr_bounds,
-    qr_entries = as.array(as.numeric(qr_data$qr_entries)),
-    solver_type = as.integer(solver_type)
+    qr_entries = as.array(as.numeric(qr_data$qr_entries))
   )
+  if (!is.null(solver_type)) {
+    res$solver_type <- as.integer(solver_type)
+  }
+  res
 }
 
 #' @title Precompute orthonormal nullspace QR basis for hierarchical layers
@@ -565,9 +568,6 @@ ensure_layer_qr <- function(dat_stan) {
   has_qr <- !is.null(dat_stan$qr_entries) &&
     !is.null(dat_stan$z_bounds) &&
     !is.null(dat_stan$qr_bounds)
-  if (!is_single && is.null(dat_stan$solver_type)) {
-    dat_stan$solver_type <- 1L
-  }
   if (is_single || has_qr) {
     return(dat_stan)
   }
@@ -602,6 +602,11 @@ ensure_current_stanmodel <- function(raw_fit, model_name = NULL) {
       exists("stanmodels", envir = asNamespace("imuGAP"))
   ) {
     m_name <- model_name %||% raw_fit@stanmodel@model_name
+    if (identical(m_name, "bspline_static_logit")) {
+      m_name <- "bspline_static_direct_logit"
+    } else if (identical(m_name, "bspline_static_probit")) {
+      m_name <- "bspline_static_direct_probit"
+    }
     models <- get("stanmodels", envir = asNamespace("imuGAP"))
     if (!is.null(m_name) && !is.null(models[[m_name]])) {
       raw_fit@stanmodel <- models[[m_name]]

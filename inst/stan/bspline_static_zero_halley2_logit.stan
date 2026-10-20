@@ -1,8 +1,8 @@
 functions {
   #include functions/convenience.stan
-  #include functions/link/probit.stan
+  #include functions/link/logit.stan
   #include functions/guess/zero.stan
-  #include functions/solvers/dispatch.stan
+  #include functions/solvers/halley2.stan
   #include functions/layer_offsets.stan
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/observation_likelihood_reduce.stan
