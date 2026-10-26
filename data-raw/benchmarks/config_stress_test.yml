@@ -16,5 +16,6 @@ solvers:
   - "builtin"
 n_sample_obs: 1000
 dose_schedule: [1]
-obs_age: 2
+obs_ages: [2, 4]
+lambda_true: 3.0
 pop_per_sub: 5000

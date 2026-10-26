@@ -33,13 +33,13 @@ Imports:
     data.table,
     flexstanr (>= 0.2.0),
     methods,
-    Rcpp (>= 1.1.2),
+    Rcpp (>= 1.0.2),
     RcppParallel (>= 5.1.11.2),
     rstan (>= 2.32),
     rstantools (>= 2.6.0)
 LinkingTo: 
     BH (>= 1.90),
-    Rcpp (>= 1.1.2),
+    Rcpp (>= 1.0.2),
     RcppEigen (>= 0.3.4),
     RcppParallel (>= 5.1.11),
     rstan (>= 2.32),

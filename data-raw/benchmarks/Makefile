@@ -1,7 +1,18 @@
 # Makefile for imuGAP Inference & Offset Benchmarking Pipeline
 # Manages intermediate artifacts (synthetic populations, compiled models, benchmark runs)
 
-.PHONY: all help populations stress-test-pop strenuous-pop full-pop models stress-test-models strenuous-models full-models compile stress-test-compile strenuous-compile full-compile run stress-test-run strenuous-run full-run stress-test strenuous clean slurm-strenuous slurm-full slurm-stress-test merge-strenuous merge-full merge-stress-test
+.PHONY: all help populations \
+	stress-test-pop strenuous-pop full-pop \
+	compile run \
+	stress-test-run strenuous-run full-run \
+	stress-test strenuous full \
+	figures \
+	slurm-stress-test slurm-strenuous slurm-full \
+	merge-stress-test merge-strenuous merge-full \
+	clean
+
+# Generic Rscript execution macro: $^ (script + dependencies) $(1) (flags) $@ (target)
+R = $(strip Rscript $^ $(1) $@)
 
 # Default target: display help
 all: help
@@ -9,44 +20,35 @@ all: help
 help:
 	@echo "imuGAP Benchmarking Pipeline"
 	@echo "============================"
-	@echo "Available targets:"
-	@echo "  make stress-test-pop     : Generate synthetic datasets for stress-test (config_stress_test.rds)"
-	@echo "  make strenuous-pop       : Generate synthetic datasets for strenuous grid (config_strenuous.rds)"
-	@echo "  make full-pop            : Generate synthetic datasets for full grid (config_full.rds)"
+	@echo "Configuration tiers (%):"
+	@echo "  stress-test : Fast sanity check on bounding grid (K in {3, 10}, sigma in {0.2, 1.4})"
+	@echo "  strenuous   : Algorithmic stress boundaries (K in {3, 10, 100}, sigma in {0.6, 1.4})"
+	@echo "  full        : Complete factorial production grid (4 K x 4 sigma x 19 p0, N=300)"
+	@echo ""
+	@echo "Tier targets (where % is stress-test, strenuous, or full):"
+	@echo "  make %-pop               : Generate synthetic datasets for tier (config_%.rds)"
+	@echo "  make %-run               : Run MCMC inference & compute metrics"
+	@echo "  make %                   : Complete end-to-end pipeline (%-pop -> compile -> %-run)"
+	@echo "  make slurm-%             : Launch SLURM array workers (4 cores) + dependent merge"
+	@echo "  make merge-%             : Consolidate partition files into final results"
+	@echo ""
+	@echo "Shared model & utility targets:"
+	@echo "  make compile             : Compile unified Stan models into benchobjs/ (cached)"
 	@echo "  make populations         : Generate all population datasets (.rds from .yml)"
-	@echo "  make stress-test-models  : Assemble intermediate Stan models for stress test in benchmodels/"
-	@echo "  make strenuous-models    : Assemble intermediate Stan models for strenuous grid in benchmodels/"
-	@echo "  make full-models         : Assemble all intermediate Stan models in benchmodels/"
-	@echo "  make models              : Assemble all configured Stan models"
-	@echo "  make stress-test-compile : Compile Stan models for stress test into benchobjs/ (cached)"
-	@echo "  make strenuous-compile   : Compile Stan models for strenuous grid into benchobjs/ (cached)"
-	@echo "  make full-compile        : Compile all Stan models into benchobjs/ (cached)"
-	@echo "  make stress-test-run     : Run MCMC inference & compute metrics for stress test"
-	@echo "  make strenuous-run       : Run MCMC inference & compute metrics for strenuous grid"
-	@echo "  make full-run            : Run MCMC inference & compute metrics for full grid"
-	@echo "  make stress-test         : Complete end-to-end stress test (populations -> compile -> run)"
-	@echo "  make strenuous           : Complete end-to-end strenuous test (populations -> compile -> run)"
-	@echo "  make slurm-strenuous     : Launch 55 SLURM array workers (4 cores) + dependent merge for strenuous"
-	@echo "  make slurm-full          : Launch 55 SLURM array workers (4 cores) + dependent merge for full grid"
-	@echo "  make slurm-stress-test   : Launch 55 SLURM array workers (4 cores) + dependent merge for stress test"
-	@echo "  make merge-strenuous     : Consolidate partition files into final results for strenuous"
-	@echo "  make merge-full          : Consolidate partition files into final results for full grid"
-	@echo "  make merge-stress-test   : Consolidate partition files into final results for stress test"
-	@echo "  make clean               : Remove intermediate populations, models, objects, parts, and results"
+	@echo "  make figures             : Generate diagnostic and benchmark plots from results"
+	@echo "  make clean               : Remove intermediate datasets, objects, and results"
 
 # --- 0. Stan Dependencies & Target Lists ---------------------------------------
 
-STAN_TEMPLATE := ../../inst/stan/templates/bspline_static_offsets.stan.template
-STAN_DEPS := $(shell find ../../inst/stan -type f -name "*.stan" -o -name "*.stan.template" 2>/dev/null)
+STAN_DEPS := $(shell find ../../inst/stan -type f -name "*.stan" 2>/dev/null)
 
-UNIFIED_MODELS_STAN := benchmodels/model_unified_logit.stan benchmodels/model_unified_probit.stan
 UNIFIED_MODELS_OBJS := benchobjs/model_unified_logit.rds benchobjs/model_unified_probit.rds
 
 # --- 1. Synthetic Population Generation ---------------------------------------
 
 # Pattern rule: Build %.rds from %.yml using benchmark_synthetic_populations.R
 %.rds: benchmark_synthetic_populations.R %.yml
-	Rscript $^
+	$(call R)
 
 stress-test-pop: config_stress_test.rds
 
@@ -56,58 +58,41 @@ full-pop: config_full.rds
 
 populations: config_stress_test.rds config_strenuous.rds config_full.rds
 
-# --- 2. Model Template Generation & Compilation -------------------------------
-
-benchmodels:
-	mkdir -p benchmodels
+# --- 2. Model Compilation -----------------------------------------------------
 
 benchobjs:
 	mkdir -p benchobjs
 
-# Pattern rule: Generate model_*.stan from template and compilation helper
-benchmodels/model_%.stan: $(STAN_DEPS) benchmark_compilation.R | benchmodels
-	Rscript -e 'source("benchmark_compilation.R"); generate_single_model_stan("$*")'
+# Pattern rule: Compile unified Stan model object with Stan thread support
+benchobjs/model_unified_%.rds: benchmark_compilation.R \
+	../../inst/stan/bspline_static_zero_dispatch_%.stan \
+	$(STAN_DEPS) | benchobjs
+	Rscript $(wordlist 1, 2, $^) $@
 
-# Pattern rule: Compile model_*.rds from model_*.stan and all Stan include dependencies
-benchobjs/model_%.rds: benchmodels/model_%.stan $(STAN_DEPS) | benchobjs
-	Rscript -e 'source("benchmark_compilation.R"); compile_single_model("$*")'
+compile: $(UNIFIED_MODELS_OBJS)
 
-stress-test-models: $(UNIFIED_MODELS_STAN)
+stress-test-compile strenuous-compile full-compile: compile
 
-strenuous-models: $(UNIFIED_MODELS_STAN)
+results_parts:
+	mkdir -p results_parts
 
-full-models: $(UNIFIED_MODELS_STAN)
+logs:
+	mkdir -p logs
 
-models: stress-test-models strenuous-models full-models
-
-stress-test-compile: $(UNIFIED_MODELS_OBJS)
-
-strenuous-compile: $(UNIFIED_MODELS_OBJS)
-
-full-compile: $(UNIFIED_MODELS_OBJS)
-
-compile: stress-test-compile
-
-# Standalone compilation targets (legacy / un-unified)
-standalone-stress-compile:
-	Rscript benchmark_compilation.R config_stress_test.yml --standalone --compile --parallel
-
-standalone-strenuous-compile:
-	Rscript benchmark_compilation.R config_strenuous.yml --standalone --compile --parallel
-
-standalone-full-compile:
-	Rscript benchmark_compilation.R config_full.yml --standalone --compile --parallel
 
 # --- 3. Inference Execution & Local Runs ---------------------------------------
 
-results_stress_test.rds: config_stress_test.rds $(UNIFIED_MODELS_OBJS) benchmark_inference_runner.R
-	Rscript benchmark_inference_runner.R config_stress_test.rds $@
+results_stress_test.rds: benchmark_inference_runner.R config_stress_test.rds \
+	$(UNIFIED_MODELS_OBJS)
+	$(call R)
 
-results_strenuous.rds: config_strenuous.rds $(UNIFIED_MODELS_OBJS) benchmark_inference_runner.R
-	Rscript benchmark_inference_runner.R config_strenuous.rds $@
+results_strenuous.rds: benchmark_inference_runner.R config_strenuous.rds \
+	$(UNIFIED_MODELS_OBJS)
+	$(call R)
 
-results_full_grid.rds: config_full.rds $(UNIFIED_MODELS_OBJS) benchmark_inference_runner.R
-	Rscript benchmark_inference_runner.R config_full.rds $@
+results_full_grid.rds: benchmark_inference_runner.R config_full.rds \
+	$(UNIFIED_MODELS_OBJS)
+	$(call R)
 
 stress-test-run: results_stress_test.rds
 
@@ -117,11 +102,21 @@ full-run: results_full_grid.rds
 
 run: stress-test-run
 
-stress-test: stress-test-pop stress-test-compile stress-test-run
+stress-test: stress-test-pop compile stress-test-run figures
 
-strenuous: strenuous-pop strenuous-compile strenuous-run
+strenuous: strenuous-pop compile strenuous-run
 
-# --- 4. SLURM Distributed Execution & Consolidation ---------------------------
+full: full-pop compile full-run
+
+# --- 4. Benchmark Visualizations & Diagnostic Figures -------------------------
+
+figures: figures/fig_error_strata.png
+
+figures/fig_error_strata.png: benchmark_visualize.R results_stress_test.rds
+	@mkdir -p $(@D)
+	$(call R)
+
+# --- 5. SLURM Distributed Execution & Consolidation ---------------------------
 
 slurm-strenuous:
 	bash slurm_submit.sh strenuous 4 4 300 150
@@ -141,7 +136,8 @@ merge-full:
 merge-stress-test:
 	Rscript benchmark_merge.R stress_test results_parts
 
-# --- 5. Clean Target ----------------------------------------------------------
+# --- 6. Clean Target ----------------------------------------------------------
 
 clean:
-	rm -rf config_stress_test.rds config_strenuous.rds config_full.rds benchmodels benchobjs results_*.rds results_*.csv results_parts logs test_output.log
+	rm -rf config_stress_test.rds config_strenuous.rds config_full.rds \
+		benchobjs results_*.rds results_*.csv results_parts logs test_output.log figures
