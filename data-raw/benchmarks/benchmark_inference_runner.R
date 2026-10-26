@@ -78,10 +78,7 @@ prepare_benchmark_stan_data <- function(
 
   # Canonicalize with imuGAP helpers
   loc_c <- canonicalize_locations(locs)
-  layer_data <- assemble_layer_data(
-    loc_c,
-    solver_type = solver_type
-  )
+  layer_data <- assemble_layer_data(loc_c)
   obs_c <- canonicalize_observations(obs)
   wts <- canonicalize_populations(pops, obs_c, loc_c)
 
@@ -116,6 +113,7 @@ prepare_benchmark_stan_data <- function(
       n_cohort = max(wts$cohort)
     ),
     layer_data,
+    if (!is.null(solver_type)) list(solver_type = as.integer(solver_type)),
     list(
       n_doses = length(dose_sched),
       n_intervals = sched$n_intervals,

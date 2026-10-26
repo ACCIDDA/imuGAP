@@ -84,9 +84,12 @@ imugap_benchmark_theme <- function(base_size = 11) {
 # Curated harmonious Dark2 color palette matching imuGAP vignette standards
 MODEL_PALETTE <- c(
   "Zero (Direct)" = "#1B9E77", # Dark2 teal (default package model)
-  "Taylor2 (Direct)" = "#D95F02", # Dark2 orange (direct Taylor2 correction)
+  "Zero (Halley2)" = "#D95F02", # Dark2 orange (2-iter Halley rootfinder)
+  "Zero (Newton2)" = "#66A61E", # Dark2 olive green (2-iter Newton-Raphson)
   "Zero (Builtin)" = "#7570B3", # Dark2 slate purple (builtin iterative baseline)
-  "Taylor2 (Builtin)" = "#E7298A" # Dark2 magenta (builtin iterative Taylor2)
+  "Zero (Halley10)" = "#E7298A", # Dark2 magenta (10-iter high-precision Halley)
+  "Taylor2 (Direct)" = "#E6AB02", # Dark2 gold (direct Taylor2 correction)
+  "Taylor2 (Builtin)" = "#A6761D" # Dark2 brown (builtin iterative Taylor2)
 )
 
 # --- Figure 1: Parameter Recovery & Calibration -------------------------------

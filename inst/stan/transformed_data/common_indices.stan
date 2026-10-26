@@ -1,3 +1,8 @@
+/**
+ * @file common_indices.stan
+ * @brief Common observation stream indices and total observation tally.
+ */
+
 #include transformed_data/uncensored/indices.stan
 #include transformed_data/right/indices.stan
 #include transformed_data/left/indices.stan

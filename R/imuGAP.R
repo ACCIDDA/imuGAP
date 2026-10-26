@@ -320,14 +320,7 @@ sampling <- function(
   df_opts <- imugap_opts$df
 
   layer_data <- if (is_multilayer) {
-    assemble_layer_data(
-      loc_info,
-      solver_type = if (!identical(imugap_opts$solver, "direct")) {
-        imugap_opts$solver_type
-      } else {
-        NULL
-      }
-    )
+    assemble_layer_data(loc_info)
   } else {
     NULL
   }
@@ -365,6 +358,9 @@ sampling <- function(
       n_cohort = max(wts$cohort)
     ),
     if (is_multilayer) layer_data,
+    if (is_multilayer && !identical(imugap_opts$solver, "direct")) {
+      list(solver_type = imugap_opts$solver_type)
+    },
     list(
       n_doses = length(dose_sched_opts),
       n_intervals = sched_info$n_intervals,

@@ -1,5 +1,19 @@
 
-// Accumulate multi-layer random walk offsets across hierarchical location tree
+/**
+ * @file layer_offsets.stan
+ * @brief Orthonormal nullspace QR projection and hierarchical tree aggregation.
+ */
+
+/**
+ * Accumulate multi-layer random walk offsets across hierarchical location tree (additive).
+ *
+ * @param n_locs Total number of locations.
+ * @param n_parent_locs Number of parent nodes.
+ * @param parent_child_bounds Contiguous [start, end] child bounds per parent.
+ * @param parent_loc_id Location IDs of parent nodes.
+ * @param off_layer Spatial offsets delta on link scale (length n_locs - 1).
+ * @return Vector of cumulative location random walk offsets on link scale (length n_locs).
+ */
 vector accumulate_layer_offsets(
   int n_locs,
   int n_parent_locs,
@@ -17,7 +31,15 @@ vector accumulate_layer_offsets(
   return raw_phi_loc;
 }
 
-// Combine cohort baseline spline effect with location hierarchy effects
+/**
+ * Combine cohort baseline spline effect with location hierarchy effects.
+ *
+ * @param raw_phi_root Baseline cohort coordinates on link scale (length n_cohort).
+ * @param raw_phi_loc Cumulative location offsets on link scale (length n_locs).
+ * @param n_cohort Number of cohorts.
+ * @param n_locs Number of locations.
+ * @return Vector of length (n_cohort * n_locs) containing unrolled inv_link probabilities.
+ */
 vector compute_hierarchical_phi(
   vector raw_phi_root,
   vector raw_phi_loc,
@@ -29,10 +51,25 @@ vector compute_hierarchical_phi(
   return to_vector(inv_link(raw_phi_mat));
 }
 
-// Accumulate hierarchical link-scale effects (spline baseline, per-parent mu shifts, and offsets)
-// Evaluates link(p_{l, t}) = link(p_{parent(l), t}) + mu_{parent(l), t} + delta_l sequentially top-down
-// Returns [n_cohort, n_locs + n_parent_locs] matrix with raw_phi_mat in cols 1..n_locs and
-// mu_offset in cols (n_locs + 1)..(n_locs + n_parent_locs), avoiding duplicate solver evaluations
+/**
+ * Sequentially accumulate hierarchical link-scale effects down the tree with rootfinding shifts.
+ *
+ * Top-down evaluation: link(p_{l, t}) = link(p_{parent(l), t}) + mu_{parent(l), t} + delta_l.
+ * Solves the nonlinear aggregation equation for mu_{parent, t} using solver_type to guarantee
+ * that parent aggregate coverage equals the population-weighted sum of child probabilities.
+ *
+ * @param raw_phi_root Baseline cohort coordinates on link scale (length n_cohort).
+ * @param off_layer Spatial offsets delta on link scale (length n_locs - 1).
+ * @param n_cohort Number of cohorts.
+ * @param n_locs Total location entities.
+ * @param n_parent_locs Number of parent nodes.
+ * @param parent_child_bounds Contiguous child index bounds per parent.
+ * @param parent_loc_id Location IDs of parent nodes.
+ * @param loc_child_weight Normalized child weights summing to 1 within each parent.
+ * @param solver_type Integer code specifying rootfinder algorithm (1..5).
+ * @return Packed matrix of shape [n_cohort, n_locs + n_parent_locs], where cols 1..n_locs
+ *   contain eta coordinates and cols (n_locs + 1).. contain solved mu shifts.
+ */
 matrix accumulate_hierarchical_raw_phi(
   vector raw_phi_root,
   vector off_layer,
@@ -69,6 +106,23 @@ matrix accumulate_hierarchical_raw_phi(
   return out_mat;
 }
 
+/**
+ * Sequentially accumulate hierarchical link-scale effects down the tree with direct shifts.
+ *
+ * Top-down evaluation: link(p_{l, t}) = link(p_{parent(l), t}) + mu_{parent(l), t} + delta_l.
+ * Evaluates initial guess/direct shift without solver dispatch parameter.
+ *
+ * @param raw_phi_root Baseline cohort coordinates on link scale (length n_cohort).
+ * @param off_layer Spatial offsets delta on link scale (length n_locs - 1).
+ * @param n_cohort Number of cohorts.
+ * @param n_locs Total location entities.
+ * @param n_parent_locs Number of parent nodes.
+ * @param parent_child_bounds Contiguous child index bounds per parent.
+ * @param parent_loc_id Location IDs of parent nodes.
+ * @param loc_child_weight Normalized child weights summing to 1 within each parent.
+ * @return Packed matrix of shape [n_cohort, n_locs + n_parent_locs], where cols 1..n_locs
+ *   contain eta coordinates and cols (n_locs + 1).. contain solved mu shifts.
+ */
 matrix accumulate_hierarchical_raw_phi(
   vector raw_phi_root,
   vector off_layer,
@@ -102,7 +156,25 @@ matrix accumulate_hierarchical_raw_phi(
   return out_mat;
 }
 
-// Compute scaled layer offsets from unconstrained deviations using block QR basis
+/**
+ * Compute scaled spatial offsets from unconstrained Gaussian draws using block QR basis.
+ *
+ * Multiplies unconstrained z ~ N(0, 1) by orthonormal nullspace basis Q_2 to enforce
+ * exact sum-to-zero constraints (sum_k w_k * delta_k = 0), and scales by inverse sqrt
+ * population weight and layer standard deviation sigma_layer.
+ *
+ * @param n_locs Total locations.
+ * @param n_parent_locs Number of parent nodes.
+ * @param parent_child_bounds Contiguous [start, end] child index bounds for each parent.
+ * @param z_bounds Index bounds into unconstrained parameter vector z_layer.
+ * @param qr_bounds Index bounds into flattened qr_entries.
+ * @param qr_entries Flattened Q_2 nullspace basis entries.
+ * @param z_layer Unconstrained standard normal parameter draws.
+ * @param loc_pop_scale Inverse sqrt relative population scale factor per location.
+ * @param sigma_layer Standard deviation of random walk offsets per layer.
+ * @param loc_layer_idx Lookup from location offset index to hierarchy layer.
+ * @return Vector of length (n_locs - 1) containing scaled spatial offsets delta.
+ */
 vector compute_layer_offsets(
   int n_locs,
   int n_parent_locs,
