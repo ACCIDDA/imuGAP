@@ -367,7 +367,6 @@ create_target <- function(
 #'
 #' @param loc_info a canonicalized locations table (passed to
 #'   `[canonicalize_locations()]`).
-#' @param solver_type integer scalar; solver type code (default: 1L).
 #'
 #' @return a named list, containing:
 #'   - `n_locs`: integer total count of locations
@@ -381,12 +380,11 @@ create_target <- function(
 #'   - `z_bounds`: integer array of unconstrained offset bounds
 #'   - `qr_bounds`: integer array of QR basis index bounds
 #'   - `qr_entries`: numeric array of flattened QR basis entries
-#'   - `solver_type`: integer scalar solver type code
 #'
 #' @keywords internal
 #' @noRd
 #' @autoglobal
-assemble_layer_data <- function(loc_info, solver_type = NULL) {
+assemble_layer_data <- function(loc_info) {
   n_locs <- nrow(loc_info)
   n_layers <- max(loc_info$layer)
   layer_starts <- loc_info[, min(loc_c_id), by = layer]$V1
@@ -447,7 +445,7 @@ assemble_layer_data <- function(loc_info, solver_type = NULL) {
     loc_population
   )
 
-  res <- list(
+  list(
     n_locs = n_locs,
     n_layers = n_layers,
     layer_starts = as.array(as.integer(layer_starts)),
@@ -460,10 +458,6 @@ assemble_layer_data <- function(loc_info, solver_type = NULL) {
     qr_bounds = qr_data$qr_bounds,
     qr_entries = as.array(as.numeric(qr_data$qr_entries))
   )
-  if (!is.null(solver_type)) {
-    res$solver_type <- as.integer(solver_type)
-  }
-  res
 }
 
 #' @title Precompute orthonormal nullspace QR basis for hierarchical layers

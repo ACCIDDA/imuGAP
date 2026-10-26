@@ -1,3 +1,15 @@
+/**
+ * @file pointwise_log_lik.stan
+ * @brief Pointwise observation log-likelihood extraction for PSIS-LOO and WAIC.
+ *
+ * Populates vector log_lik in consistent row order across observation streams:
+ *   1. Unmixed uncensored   (binomial_lpmf)
+ *   2. Mixed uncensored     (binomial_lpmf on mixture probability)
+ *   3. Unmixed right-cens   (binomial_lcdf of survival failure)
+ *   4. Mixed right-cens     (binomial_lcdf of mixture survival failure)
+ *   5. Unmixed left-cens    (binomial_lcdf of event occurrence)
+ *   6. Mixed left-cens      (binomial_lcdf of mixture event occurrence)
+ */
 {
   int ll_offset = 0;
   if (n_obs_unmixed_uncensored > 0) {

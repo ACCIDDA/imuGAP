@@ -1,7 +1,20 @@
-// The unrolled dose CDF vector is arranged in column-major order:
-// all interval endpoints for dose 1 (1:n_intervals), then all for dose 2, up to dose n_doses.
-// This function maps (life_year, dose) pairs to their 1D index:
-// age_to_interval_map[life_year] + (dose - 1) * n_intervals.
+/**
+ * @file lookups.stan
+ * @brief Flattened tensor 1D index mapping and observation probability mixing.
+ */
+
+/**
+ * Compute 1D lookup index into column-major unrolled dose hazard vector.
+ *
+ * Arranged as: dose 1 (1:n_intervals), dose 2 (1:n_intervals), ..., dose D.
+ * Index formula: age_to_interval_map[life_year[i]] + (dose[i] - 1) * n_intervals.
+ *
+ * @param life_year Array of observation ages in life years.
+ * @param dose Array of observation dose numbers.
+ * @param n_intervals Total hazard intervals.
+ * @param age_to_interval_map Lookup from annual age to interval index.
+ * @return Array of 1-based indices into unrolled dose CDF vector.
+ */
 array[] int compute_cdf_lookup(
   array[] int life_year,
   array[] int dose,
@@ -34,10 +47,18 @@ array[] int compute_cdf_lookup(
   return cdf_lookup;
 }
 
-// The unrolled phi vector is arranged in column-major order:
-// all cohorts for location 1 (1:n_cohort), then all cohorts for location 2, up to location n_locs.
-// This function maps (cohort, location) pairs to their 1D index:
-// cohort + (location - 1) * n_cohort.
+/**
+ * Compute 1D lookup index into column-major unrolled phi probability vector.
+ *
+ * Arranged as: location 1 (1:n_cohort), location 2 (1:n_cohort), ..., location L.
+ * Index formula: cohort[i] + (location[i] - 1) * n_cohort.
+ *
+ * @param cohort Array of observation cohort indices.
+ * @param location Array of observation location IDs.
+ * @param n_cohort Total number of cohorts.
+ * @param n_locs Total number of locations.
+ * @return Array of 1-based indices into unrolled phi vector.
+ */
 array[] int compute_phi_lookup(array[] int cohort, array[] int location, int n_cohort, int n_locs) {
   int n_c = size(cohort);
   int n_l = size(location);
@@ -63,8 +84,22 @@ array[] int compute_phi_lookup(array[] int cohort, array[] int location, int n_c
   return phi_lookup;
 }
 
-// NOTE: phi represents the non-uptake proportion (unlikely to vaccinate).
-// Therefore, (1 - phi) represents the vaccinating population (lifetime uptake propensity).
+/**
+ * Compute expected observation probability by combining non-uptake and dose CDF.
+ *
+ * Note: phi represents the non-uptake proportion (unlikely to vaccinate).
+ * Therefore, (1 - phi) represents the vaccinating population (lifetime uptake propensity).
+ *
+ * @param n_obs Number of observations to evaluate.
+ * @param n_weights Total number of mixture weight entries.
+ * @param phi Unrolled vector of non-uptake probabilities.
+ * @param phi_lookup Index array into phi for each weight entry.
+ * @param unrolled_dose_probs Cumulative vaccination probability given eventual uptake.
+ * @param cdf_lookup Index array into unrolled_dose_probs for each weight entry.
+ * @param weights Normalized sub-stratum mixture weights.
+ * @param obs_map [2, n_obs] index bounds into flattened mixture weight array.
+ * @return Vector of expected observation probabilities of length n_obs.
+ */
 vector compute_p_obs(
   int n_obs,
   int n_weights,
