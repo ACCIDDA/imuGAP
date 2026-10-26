@@ -6,9 +6,16 @@ solver_type_map <- c(
   halley10 = 5L
 )
 
+guess_type_map <- c(
+  zero = 1L,
+  taylor2 = 2L,
+  taylor4 = 3L,
+  pade = 4L,
+  asymptotic = 5L,
+  conditioned = 6L
+)
+
 supported_models <- c(
-  "bspline_static_zero_halley2_logit",
-  "bspline_static_zero_halley2_probit",
   "bspline_static_zero_dispatch_logit",
   "bspline_static_zero_dispatch_probit",
   "bspline_static_zero_direct_logit",
@@ -100,9 +107,15 @@ resolve_model_name <- function(
     } else {
       parts <- strsplit(raw_model, "_", fixed = TRUE)[[1L]]
       if (length(parts) == 5L) {
-        if (!identical(parts[1L], "default")) time <- parts[1L]
-        if (!identical(parts[2L], "default")) offsets <- parts[2L]
-        if (!identical(parts[3L], "default")) guesser <- parts[3L]
+        if (!identical(parts[1L], "default")) {
+          time <- parts[1L]
+        }
+        if (!identical(parts[2L], "default")) {
+          offsets <- parts[2L]
+        }
+        if (!identical(parts[3L], "default")) {
+          guesser <- parts[3L]
+        }
         if (
           !identical(parts[4L], "default") &&
             (identical(solver, "default") || identical(solver, "dispatch"))
@@ -111,8 +124,12 @@ resolve_model_name <- function(
         }
         if (!identical(parts[5L], "default")) link <- parts[5L]
       } else if (length(parts) == 4L) {
-        if (!identical(parts[1L], "default")) time <- parts[1L]
-        if (!identical(parts[2L], "default")) offsets <- parts[2L]
+        if (!identical(parts[1L], "default")) {
+          time <- parts[1L]
+        }
+        if (!identical(parts[2L], "default")) {
+          offsets <- parts[2L]
+        }
         if (identical(parts[3L], "single")) {
           offsets <- "single"
         } else if (
@@ -123,7 +140,9 @@ resolve_model_name <- function(
         }
         if (!identical(parts[4L], "default")) link <- parts[4L]
       } else if (length(parts) == 3L) {
-        if (!identical(parts[1L], "default")) time <- parts[1L]
+        if (!identical(parts[1L], "default")) {
+          time <- parts[1L]
+        }
         if (identical(parts[2L], "single")) {
           offsets <- "single"
         } else if (!identical(parts[2L], "default")) {
@@ -138,10 +157,18 @@ resolve_model_name <- function(
     }
   }
 
-  if (identical(time, "default")) time <- "bspline"
-  if (identical(link, "default")) link <- "logit"
-  if (identical(guesser, "default")) guesser <- "zero"
-  if (identical(solver, "default")) solver <- "halley2"
+  if (identical(time, "default")) {
+    time <- "bspline"
+  }
+  if (identical(link, "default")) {
+    link <- "logit"
+  }
+  if (identical(guesser, "default")) {
+    guesser <- "zero"
+  }
+  if (identical(solver, "default")) {
+    solver <- "halley2"
+  }
 
   # Convert offsets based on layer hierarchy depth
   if (!is_multilayer || identical(offsets, "single")) {
@@ -151,7 +178,11 @@ resolve_model_name <- function(
     offsets <- "static"
   }
 
-  stop_fmt_if(!time %in% c("bspline"), ERR_OPT_UNKNOWN_MODEL, model = raw_model %||% time)
+  stop_fmt_if(
+    !time %in% c("bspline"),
+    ERR_OPT_UNKNOWN_MODEL,
+    model = raw_model %||% time
+  )
   stop_fmt_if(
     !link %in% c("logit", "probit"),
     ERR_OPT_UNKNOWN_MODEL,
@@ -191,7 +222,7 @@ resolve_model_name <- function(
     is_dispatch <- FALSE
     solver_type <- NULL
     model_name <- sprintf("%s_single_%s", time, link)
-  } else if (solver %in% c("halley2", "direct")) {
+  } else if (identical(solver, "direct")) {
     is_dispatch <- FALSE
     solver_module <- solver
     solver_type <- NULL

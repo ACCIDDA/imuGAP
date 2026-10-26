@@ -42,3 +42,11 @@ vignettes/figures/*.pdf
 vignettes/*.html
 vignettes/*.pdf
 
+# Benchmark intermediate objects, datasets, results, and rendered figures
+data-raw/benchmarks/benchobjs/
+data-raw/benchmarks/results_parts/
+data-raw/benchmarks/logs/
+data-raw/benchmarks/*.rds
+data-raw/benchmarks/*.csv
+data-raw/benchmarks/figures/
+data-raw/benchmarks/test_output.log

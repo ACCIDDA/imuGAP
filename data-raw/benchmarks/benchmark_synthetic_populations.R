@@ -10,8 +10,15 @@
 suppressPackageStartupMessages({
   library(data.table)
   library(yaml)
-  library(imuGAP)
+  library(pkgload)
 })
+
+# Source compilation helpers for config reading & normalization
+source(pkgload::package_file(
+  "data-raw",
+  "benchmarks",
+  "benchmark_compilation.R"
+))
 
 # --- Exact Mu Shift Solver ----------------------------------------------------
 
@@ -47,7 +54,9 @@ generate_synthetic_dataset <- function(
   p0_trend,
   n_sample_obs = 1000L,
   pop_per_sub = 5000L,
-  obs_age = 2L,
+  obs_ages = c(2L, 4L),
+  lambda_true = 3.0,
+  dose_schedule = 1L,
   dose = 1L,
   seed = 42L,
   link = c("logit", "probit")
@@ -74,30 +83,45 @@ generate_synthetic_dataset <- function(
   inv_link <- if (link == "logit") stats::plogis else stats::pnorm
   link_fn <- if (link == "logit") stats::qlogis else stats::qnorm
 
-  # 4. Noiseless Observations (expected integer binomial counts)
+  # 4. Analytical Force-of-Vaccination / Hazard Uptake Factor
+  # In imuGAP, cumulative coverage by age a is:
+  # C(a) = (1 - phi_sub) * (1 - exp(-lambda * (a - sched_age)))
+  # Multi-age sampling breaks colinearity between non-uptake phi and hazard rate lambda.
+  sched_age <- min(dose_schedule)
+  uptake_factors <- vapply(
+    obs_ages,
+    function(a) 1.0 - exp(-lambda_true * (a - sched_age)),
+    numeric(1)
+  )
+  names(uptake_factors) <- as.character(obs_ages)
+
+  # 5. Noiseless Observations (expected integer binomial counts)
   obs_list <- list()
   obs_counter <- 1L
   for (c in seq_len(C)) {
     for (k in seq_len(K)) {
-      p_sub <- inv_link(link_fn(p0_trend[c]) + mu_true[c] + delta_true[k])
-      y_count <- round(n_sample_obs * p_sub)
-      obs_list[[length(obs_list) + 1L]] <- data.table(
-        obs_id = obs_counter,
-        loc_id = sprintf("Child_%02d", k),
-        cohort = c,
-        age_min = as.integer(obs_age),
-        dose = as.integer(dose),
-        positive = as.integer(y_count),
-        sample_n = as.integer(n_sample_obs),
-        censored = NA_real_
-      )
-      obs_counter <- obs_counter + 1L
+      phi_sub <- inv_link(link_fn(p0_trend[c]) + mu_true[c] + delta_true[k])
+      for (a in obs_ages) {
+        p_vax <- (1.0 - phi_sub) * uptake_factors[as.character(a)]
+        y_count <- as.integer(round(n_sample_obs * p_vax))
+        obs_list[[length(obs_list) + 1L]] <- data.table(
+          obs_id = obs_counter,
+          loc_id = sprintf("Child_%02d", k),
+          cohort = c,
+          age_min = as.integer(a),
+          dose = as.integer(dose),
+          positive = as.integer(y_count),
+          sample_n = as.integer(n_sample_obs),
+          censored = NA_real_
+        )
+        obs_counter <- obs_counter + 1L
+      }
     }
   }
   observations <- rbindlist(obs_list)
 
-  # 5. Populations Metadata
-  populations <- imuGAP:::create_observation_populations(
+  # 6. Populations Metadata
+  populations <- create_observation_populations(
     observations,
     mode = "snapshot"
   )
@@ -110,6 +134,8 @@ generate_synthetic_dataset <- function(
     delta_true = delta_true,
     mu_true = mu_true,
     w_vec = w_vec,
+    lambda_true = lambda_true,
+    obs_ages = obs_ages,
     K = K,
     sigma = sigma,
     link = link,
@@ -120,31 +146,20 @@ generate_synthetic_dataset <- function(
 # --- Batch Generator from YAML Config -----------------------------------------
 
 generate_populations_from_config <- function(config_path) {
-  stopifnot(file.exists(config_path))
-  cfg <- yaml::read_yaml(config_path)
+  cfg <- read_benchmark_config(config_path)
 
   k_grid <- as.integer(cfg$k_grid)
   sigma_grid <- as.numeric(cfg$sigma_grid)
   p0_trend <- as.numeric(cfg$p0_trend)
   n_samples <- as.integer(cfg$n_samples)
-  seed_base <- if (!is.null(cfg$seed)) as.integer(cfg$seed) else 42L
-  links <- if (!is.null(cfg$links)) {
-    as.character(cfg$links)
-  } else {
-    c("logit", "probit")
-  }
-  n_sample_obs <- if (!is.null(cfg$n_sample_obs)) {
-    as.integer(cfg$n_sample_obs)
-  } else {
-    1000L
-  }
-  pop_per_sub <- if (!is.null(cfg$pop_per_sub)) {
-    as.integer(cfg$pop_per_sub)
-  } else {
-    5000L
-  }
-  obs_age <- if (!is.null(cfg$obs_age)) as.integer(cfg$obs_age) else 2L
-  dose <- if (!is.null(cfg$dose)) as.integer(cfg$dose) else 1L
+  seed_base <- as.integer(cfg$seed %||% 42L)
+  links <- cfg$links
+  n_sample_obs <- as.integer(cfg$n_sample_obs %||% 1000L)
+  pop_per_sub <- as.integer(cfg$pop_per_sub %||% 5000L)
+  obs_ages <- as.integer(cfg$obs_ages %||% cfg$obs_age %||% c(2L, 4L))
+  lambda_true <- as.numeric(cfg$lambda_true %||% 3.0)
+  dose_schedule <- as.integer(cfg$dose_schedule %||% 1L)
+  dose <- as.integer(cfg$dose %||% 1L)
 
   total_datasets <- length(links) *
     length(k_grid) *
@@ -172,7 +187,9 @@ generate_populations_from_config <- function(config_path) {
             link = lnk,
             n_sample_obs = n_sample_obs,
             pop_per_sub = pop_per_sub,
-            obs_age = obs_age,
+            obs_ages = obs_ages,
+            lambda_true = lambda_true,
+            dose_schedule = dose_schedule,
             dose = dose,
             seed = sim_seed
           )
@@ -203,17 +220,10 @@ generate_populations_from_config <- function(config_path) {
   invisible(output_path)
 }
 
-# --- CLI Entrypoint -----------------------------------------------------------
+# --- CLI Entrypoint (Invoked by Make) -----------------------------------------
 
 if (sys.nframe() == 0L) {
   args <- commandArgs(trailingOnly = TRUE)
-  if (length(args) == 0L) {
-    cat("Usage: Rscript benchmark_synthetic_populations.R <config.yml>\n")
-    cat("Defaulting to data-raw/config_stress_test.yml...\n")
-    config_file <- "data-raw/config_stress_test.yml"
-  } else {
-    config_file <- args[1L]
-  }
-
+  config_file <- args[grepl("\\.ya?ml$", args)][1L]
   generate_populations_from_config(config_file)
 }

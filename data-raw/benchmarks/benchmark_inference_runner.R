@@ -20,18 +20,16 @@ suppressPackageStartupMessages({
   library(yaml)
   library(data.table)
   library(rstan)
-  library(imuGAP)
   library(splines)
+  library(pkgload)
 })
 
 # Source compilation and Stan resolution helpers
-if (file.exists("benchmark_compilation.R")) {
-  source("benchmark_compilation.R")
-} else if (file.exists("data-raw/benchmarks/benchmark_compilation.R")) {
-  source("data-raw/benchmarks/benchmark_compilation.R")
-} else if (file.exists("data-raw/benchmark_compilation.R")) {
-  source("data-raw/benchmark_compilation.R")
-}
+source(pkgload::package_file(
+  "data-raw",
+  "benchmarks",
+  "benchmark_compilation.R"
+))
 
 # --- Metric Helper Functions --------------------------------------------------
 
@@ -80,9 +78,8 @@ prepare_benchmark_stan_data <- function(
 
   # Canonicalize with imuGAP helpers
   loc_c <- canonicalize_locations(locs)
-  layer_data <- imuGAP:::assemble_layer_data(
+  layer_data <- assemble_layer_data(
     loc_c,
-    guess_type = guess_type,
     solver_type = solver_type
   )
   obs_c <- canonicalize_observations(obs)
@@ -103,15 +100,15 @@ prepare_benchmark_stan_data <- function(
   }
 
   dose_sched <- sort(unique(wts$dose))
-  sched <- imuGAP:::build_interval_schedule(dose_sched, wts$age)
+  sched <- build_interval_schedule(dose_sched, wts$age)
 
-  st_uncensored <- imuGAP:::slice_weights(
+  st_uncensored <- slice_weights(
     wts,
     obs_c[is.na(censored)],
     "uncensored"
   )
-  st_right <- imuGAP:::slice_weights(wts, obs_c[censored == 1], "right")
-  st_left <- imuGAP:::slice_weights(wts, obs_c[0], "left")
+  st_right <- slice_weights(wts, obs_c[censored == 1], "right")
+  st_left <- slice_weights(wts, obs_c[0], "left")
 
   dat_stan <- c(
     list(
@@ -153,29 +150,18 @@ run_benchmark_inference <- function(
   cores = 4L,
   threads_per_chain = 1L,
   seed = NULL,
-  unified = TRUE,
   model_idx = NULL,
   chunk_id = NULL,
   n_chunks = NULL
 ) {
-  # 1. Resolve population datasets
-  if (is.character(config_input) && grepl("\\.yml$", config_input)) {
-    rds_pop_path <- sub("\\.yml$", ".rds", config_input)
-    if (!file.exists(rds_pop_path)) {
-      message(sprintf(
-        "Population file '%s' not found. Generating...",
-        rds_pop_path
-      ))
-      system2("Rscript", c("benchmark_synthetic_populations.R", config_input))
-    }
-    pop_data <- readRDS(rds_pop_path)
-    cfg <- yaml::read_yaml(config_input)
-  } else if (is.character(config_input) && grepl("\\.rds$", config_input)) {
-    pop_data <- readRDS(config_input)
-    cfg <- pop_data$config
+  # 1. Resolve population datasets (built by Make)
+  rds_pop_path <- if (grepl("\\.ya?ml$", config_input)) {
+    sub("\\.ya?ml$", ".rds", config_input)
   } else {
-    stop("config_input must be a path to a .yml or .rds configuration file")
+    config_input
   }
+  pop_data <- readRDS(rds_pop_path)
+  cfg <- pop_data$config
 
   datasets <- pop_data$datasets
   n_datasets <- length(datasets)
@@ -187,7 +173,7 @@ run_benchmark_inference <- function(
 
   # 2. Resolve model combinations
   all_models <- get_valid_model_combinations(cfg)
-  n_total_models <- length(all_models)
+  n_total_models <- nrow(all_models)
 
   # Model chunking / slicing
   if (!is.null(model_idx)) {
@@ -198,12 +184,12 @@ run_benchmark_inference <- function(
         n_total_models
       ))
     }
-    models <- all_models[model_idx]
+    models <- all_models[model_idx, , drop = FALSE]
     message(sprintf(
       "Worker partition: running single model index %d/%d ('%s')",
       model_idx,
       n_total_models,
-      models[[1L]]$model_name
+      models$model_name[1L]
     ))
   } else if (!is.null(chunk_id) && !is.null(n_chunks)) {
     if (chunk_id < 1L || chunk_id > n_chunks) {
@@ -214,7 +200,7 @@ run_benchmark_inference <- function(
       cut(seq_len(n_total_models), n_chunks, labels = FALSE)
     )
     m_indices <- chunk_splits[[chunk_id]]
-    models <- all_models[m_indices]
+    models <- all_models[m_indices, , drop = FALSE]
     message(sprintf(
       "Worker partition: running chunk %d/%d (models %s)",
       chunk_id,
@@ -225,18 +211,17 @@ run_benchmark_inference <- function(
     models <- all_models
   }
 
-  n_models <- length(models)
+  n_models <- nrow(models)
 
   # Compute exact total runs across matching link datasets
   total_runs <- sum(vapply(
-    models,
-    function(m) sum(vapply(datasets, function(d) d$link == m$link, logical(1))),
+    models$link,
+    function(lnk) sum(vapply(datasets, function(d) d$link == lnk, logical(1))),
     integer(1)
   ))
 
   message(sprintf(
-    "Starting benchmark (unified=%s, chains=%d, cores=%d): %d datasets, %d models -> %d total runs",
-    unified,
+    "Starting benchmark (chains=%d, cores=%d): %d datasets, %d models -> %d total runs",
     chains,
     cores,
     n_datasets,
@@ -244,13 +229,17 @@ run_benchmark_inference <- function(
     total_runs
   ))
 
-  # Preload unified Stan model objects if unified mode is active
+  # Preload unified Stan model objects (built by Make)
   unified_cache <- list()
-  if (isTRUE(unified)) {
-    links <- unique(vapply(models, function(m) m$link, character(1)))
-    for (lnk in links) {
-      unified_cache[[lnk]] <- get_or_compile_unified_model(lnk)
-    }
+  for (lnk in unique(models$link)) {
+    unified_cache[[lnk]] <- readRDS(
+      pkgload::package_file(
+        "data-raw",
+        "benchmarks",
+        "benchobjs",
+        sprintf("model_unified_%s.rds", lnk)
+      )
+    )
   }
 
   results_runs <- list()
@@ -300,14 +289,13 @@ run_benchmark_inference <- function(
   run_idx <- 0L
   t_suite_start <- proc.time()
 
-  for (m_info in models) {
-    m_link <- m_info$link
-    m_guess <- m_info$guess
-    m_guess_type <- m_info$guess_type
-    m_solver <- m_info$solver
-    m_solver_type <- m_info$solver_type
-    m_name <- m_info$model_name
-    m_label <- m_info$label
+  for (m_idx in seq_len(nrow(models))) {
+    m_link <- models$link[m_idx]
+    m_guess <- models$guess[m_idx]
+    m_guess_type <- models$guess_type[m_idx]
+    m_solver <- models$solver[m_idx]
+    m_solver_type <- models$solver_type[m_idx]
+    m_name <- models$model_name[m_idx]
 
     # Filter datasets matching the model link function
     link_datasets <- datasets[vapply(
@@ -319,12 +307,8 @@ run_benchmark_inference <- function(
       next
     }
 
-    # Load Stan model object (unified or standalone)
-    stan_model_obj <- if (isTRUE(unified)) {
-      unified_cache[[m_link]]
-    } else {
-      get_or_compile_cached_model(m_link, m_guess, m_solver)
-    }
+    # Load precompiled unified Stan model object
+    stan_model_obj <- unified_cache[[m_link]]
 
     for (ds in link_datasets) {
       run_idx <- run_idx + 1L
@@ -359,7 +343,7 @@ run_benchmark_inference <- function(
       )
       dat_stan <- prep$dat_stan
       bsp <- prep$bsp
-      init_fn <- imuGAP:::make_init_fn(dat_stan, model = m_link)
+      init_fn <- make_init_fn(dat_stan, model = m_link)
       run_seed <- base_seed + ds$dataset_id * 100L + run_idx
 
       Sys.setenv(STAN_NUM_THREADS = as.character(threads_per_chain))
@@ -567,7 +551,10 @@ run_benchmark_inference <- function(
       ))
 
       message(sprintf(
-        "DONE (%.1fs | p0_MAE=%.4f | JSD=%.4f | off_MAE=%.4f | min_ESS=%.0f | max_Rhat=%.3f | div=%d)",
+        paste0(
+          "DONE (%.1fs | p0_MAE=%.4f | JSD=%.4f | off_MAE=%.4f | ",
+          "min_ESS=%.0f | max_Rhat=%.3f | div=%d)"
+        ),
         t_elapsed,
         p0_link_mae,
         p0_js_dist,
@@ -660,13 +647,15 @@ run_benchmark_inference <- function(
 if (sys.nframe() == 0L) {
   args <- commandArgs(trailingOnly = TRUE)
   if (length(args) == 0L) {
-    cat(
-      "Usage: Rscript benchmark_inference_runner.R <config.yml|config.rds> [output.rds] [--options]\n"
-    )
+    cat(paste(
+      "Usage: Rscript benchmark_inference_runner.R",
+      "<config.yml|config.rds> [output.rds] [--options]\n"
+    ))
     q(status = 1L)
   }
 
-  config_arg <- args[1L]
+  non_flags <- args[!grepl("^--", args)]
+  config_arg <- non_flags[1L]
 
   # Parse optional flags
   get_opt_int <- function(name, default_val = NULL) {
@@ -689,10 +678,8 @@ if (sys.nframe() == 0L) {
   model_idx_opt <- get_opt_int("model-idx", NULL)
   chunk_id_opt <- get_opt_int("chunk-id", NULL)
   n_chunks_opt <- get_opt_int("n-chunks", NULL)
-  unified_opt <- !("--standalone" %in% args)
-
-  output_arg <- if (length(args) >= 2L && !grepl("^--", args[2L])) {
-    args[2L]
+  output_arg <- if (length(non_flags) >= 2L) {
+    non_flags[length(non_flags)]
   } else {
     cfg_base <- tools::file_path_sans_ext(basename(config_arg))
     cfg_name <- sub("^config_", "", cfg_base)
@@ -716,7 +703,6 @@ if (sys.nframe() == 0L) {
     cores = cores_opt,
     threads_per_chain = threads_opt,
     seed = seed_opt,
-    unified = unified_opt,
     model_idx = model_idx_opt,
     chunk_id = chunk_id_opt,
     n_chunks = n_chunks_opt

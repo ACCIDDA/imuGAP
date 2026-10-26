@@ -86,17 +86,22 @@ $ Rscript benchmark_synthetic_populations.R some_config_A.yml
    - For each sample, raw shifts $\delta_k^{\text{raw}} \sim \mathcal{N}(0, \sigma_\delta^2)$ are drawn and centered: $\delta_k = \delta_k^{\text{raw}} - \sum_{k} w_k \delta_k^{\text{raw}}$. N.b. that balancing this way (rather than via orthonormalized approach) is fine for test purposes
    - Reference ground-truth shifts $\mu_c$ are solved to machine precision via 1D root-finding (`uniroot`).
 2. **Noiseless Observations**:
-   - Expected subpopulation coverage is computed:
-     $$p_{c, k} = g^{-1}\big(g(p_{0, c}) + \mu_c + \delta_k\big)$$
-   - Most-likely integer observation counts are generated under a single-dose vaccine model with high hazard $\lambda$:
-     $$y_{c, k} = \text{round}(N_{\text{samp}} \cdot p_{c, k}), \quad N_{\text{samp}} = 1000$$
-   - Single-dose observations are assigned to eligible age $a = 2$ (`age_min = 2L`) satisfying dose schedule changepoint invariants (`dose_schedule = c(1L)`).
+   - Expected subpopulation non-uptake propensity is computed:
+     $$\phi_{c, k} = g^{-1}\big(g(p_{0, c}) + \mu_c + \delta_k\big)$$
+   - Continuous-time hazard rate uptake across age intervals is evaluated:
+     $$\kappa(a) = 1 - \exp\big(-\lambda_{\text{true}} \cdot (a - a_{\text{sched}})\big)$$
+     with $\lambda_{\text{true}} = 3.0$ matching the Stan prior geometric mean
+     $\exp(\log(3)) = 3.0$.
+   - Multi-age observations at $a \in \{2, 4\}$ break collinearity between non-uptake $\phi$
+     and transition hazard $\lambda$, rendering both jointly identifiable from the likelihood.
+   - Most-likely integer positive vaccination counts are generated:
+     $$y_{c, k}(a) = \text{round}\big(N_{\text{samp}} \cdot (1 - \phi_{c, k}) \cdot \kappa(a)\big), \quad N_{\text{samp}} = 1000$$
 
 ---
 
 ## 3. Evaluated Model Configurations
 
-Models are assembled and compiled from `inst/stan/templates/bspline_static_offsets.stan.template` by substituting `@LINK@`, `@GUESS@`, and `@SOLVE@` placeholders. Processed model templates are created and stored as an intermediate product in the `benchmodels` directory. Cached compiled models are stored in `benchobjs` folder. These are managed by the `benchmark_compilation.R` script.
+Unified models are compiled directly from the shipped Stan models (`inst/stan/bspline_static_zero_dispatch_<link>.stan`), which dynamically dispatch guessers and solvers at runtime. Compiled model objects with Stan thread support are cached in the `benchobjs/` directory. These are managed by `benchmark_compilation.R` and the `Makefile`.
 
 The models for a benchmark are determined by a configuration file. The full set of available combinations are listed below. The stress test configuration uses all links, the `zero` and `taylor2` guessers, and the `direct` and `builtin` solvers. The full test uses all relevant combinations.
 
@@ -127,6 +132,7 @@ For every fit, the following metrics are recorded and aggregated across Monte Ca
 
 ### 4.1 Inferential Accuracy & Coverage
 - **Root Trend Recovery ($p_0$)**:
+  - Probability-Scale Absolute Error ($p_0$-scale MAE): $\frac{1}{C} \sum_{c=1}^C |\hat{p}_{0, c} - p_{0, c}^{\text{true}}|$.
   - Link-Scale Mean Absolute Error ($\eta$-scale MAE): $\frac{1}{C} \sum_{c=1}^C |g(\hat{p}_{0, c}) - g(p_{0, c}^{\text{true}})|$.
   - Jensen-Shannon Distance ($\sqrt{\text{JSD}}$): $\frac{1}{C} \sum_{c=1}^C \sqrt{\frac{1}{2} D_{\text{KL}}(p_{0, c} \parallel m_c) + \frac{1}{2} D_{\text{KL}}(\hat{p}_{0, c} \parallel m_c)}$, where $m_c = \frac{p_{0, c} + \hat{p}_{0, c}}{2}$.
   - 95% Credible Interval Coverage: Proportion of true cohort points falling within posterior 2.5% and 97.5% quantiles.
