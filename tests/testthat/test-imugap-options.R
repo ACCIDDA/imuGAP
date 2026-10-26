@@ -47,14 +47,14 @@ test_that("imugap_options dose_schedule can be overridden", {
   expect_equal(opts, expected)
 })
 
-test_that("imugap_options errors on unknown link / model / offsets", {
+test_that("imugap_options errors on unknown link / time / offsets", {
   expect_error(
-    imugap_options(link = "unknown_link"),
+    imugap_options(time = "unknown_time"),
     "should be"
   )
   expect_error(
-    imugap_options(model = "unknown_model"),
-    err_pattern(ERR_OPT_UNKNOWN_MODEL, model = "unknown_model")
+    imugap_options(link = "unknown_link"),
+    "should be"
   )
   expect_error(
     imugap_options(link = "stateonly"),
@@ -82,20 +82,6 @@ test_that("imugap_options accepts default, logit, and probit link options", {
   opts_probit <- imugap_options(link = "probit")
   expect_equal(opts_probit$link, "probit")
   expect_equal(opts_probit$model, "bspline_static_zero_direct_probit")
-
-  # Backwards compatibility with model parameter
-  opts_model_probit <- imugap_options(model = "probit")
-  expect_equal(opts_model_probit$link, "probit")
-  expect_equal(opts_model_probit$model, "bspline_static_zero_direct_probit")
-
-  # Full model template name
-  opts_model_full <- imugap_options(model = "bspline_static_zero_direct_probit")
-  expect_equal(opts_model_full$link, "probit")
-  expect_equal(opts_model_full$model, "bspline_static_zero_direct_probit")
-
-  # Legacy model alias
-  opts_model_legacy <- imugap_options(model = "bspline_static_probit")
-  expect_equal(opts_model_legacy$model, "bspline_static_zero_direct_probit")
 })
 
 test_that("imugap_options accepts numeric whole-number df", {
@@ -220,42 +206,13 @@ test_that("resolve_model_name resolves defaults and multi-layer model specs", {
   expect_equal(res_def$link, "logit")
   expect_false(res_def$is_dispatch)
 
-  # default_default_default_* template resolution
-  res_tmpl_logit <- resolve_model_name(model = "default_default_default_logit")
-  expect_equal(res_tmpl_logit$model_name, "bspline_static_zero_direct_logit")
+  res_logit <- resolve_model_name(link = "logit")
+  expect_equal(res_logit$model_name, "bspline_static_zero_direct_logit")
+  expect_equal(res_logit$link, "logit")
 
-  res_tmpl_probit <- resolve_model_name(
-    model = "default_default_default_probit"
-  )
-  expect_equal(res_tmpl_probit$model_name, "bspline_static_zero_direct_probit")
-  expect_equal(res_tmpl_probit$link, "probit")
-
-  # Character vector input
-  res_vec <- resolve_model_name(
-    model = c("default", "default", "default", "probit")
-  )
-  expect_equal(res_vec$model_name, "bspline_static_zero_direct_probit")
-
-  # Legacy model strings
-  res_leg_logit <- resolve_model_name(model = "bspline_static_logit")
-  expect_equal(res_leg_logit$model_name, "bspline_static_zero_direct_logit")
-
-  res_leg_probit <- resolve_model_name(model = "bspline_static_probit")
-  expect_equal(res_leg_probit$model_name, "bspline_static_zero_direct_probit")
-
-  # Single shortcuts
-  expect_equal(
-    resolve_model_name(model = "default")$model_name,
-    "bspline_static_zero_direct_logit"
-  )
-  expect_equal(
-    resolve_model_name(model = "logit")$model_name,
-    "bspline_static_zero_direct_logit"
-  )
-  expect_equal(
-    resolve_model_name(model = "probit")$model_name,
-    "bspline_static_zero_direct_probit"
-  )
+  res_probit <- resolve_model_name(link = "probit")
+  expect_equal(res_probit$model_name, "bspline_static_zero_direct_probit")
+  expect_equal(res_probit$link, "probit")
 })
 
 test_that("resolve_model_name resolves dynamic dispatch solvers", {
@@ -275,45 +232,6 @@ test_that("resolve_model_name resolves dynamic dispatch solvers", {
   expect_equal(res_n2_probit$solver_type, 3L)
   expect_equal(res_n2_probit$link, "probit")
   expect_true(res_n2_probit$is_dispatch)
-})
-
-test_that("resolve_model_name validates unknown options and models", {
-  expect_error(
-    resolve_model_name(offsets = "single"),
-    err_pattern(ERR_OPT_UNKNOWN_MODEL, model = "single")
-  )
-  expect_error(
-    resolve_model_name(offsets = "unknown_offset"),
-    err_pattern(ERR_OPT_UNKNOWN_MODEL, model = "unknown_offset")
-  )
-  expect_error(
-    resolve_model_name(model = "unknown_model_name"),
-    err_pattern(ERR_OPT_UNKNOWN_MODEL, model = "unknown_model_name")
-  )
-  expect_error(
-    resolve_model_name(time = "invalid_time"),
-    err_pattern(ERR_OPT_UNKNOWN_MODEL, model = "invalid_time")
-  )
-  expect_error(
-    resolve_model_name(link = "invalid_link"),
-    err_pattern(ERR_OPT_UNKNOWN_MODEL, model = "invalid_link")
-  )
-  expect_error(
-    resolve_model_name(solver = "unknown_solver"),
-    err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "unknown_solver")
-  )
-  expect_error(
-    resolve_model_name(solver = 0L),
-    err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "0")
-  )
-  expect_error(
-    resolve_model_name(solver = 2L),
-    err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "2")
-  )
-  expect_error(
-    resolve_model_name(solver = 6L),
-    err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "6")
-  )
 })
 
 test_that("resolve_layer_model handles multilayer vs single-layer conversion", {
