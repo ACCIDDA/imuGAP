@@ -10,10 +10,12 @@ links:
   - "probit"
 guessers:
   - "zero"
-  - "taylor2"
 solvers:
   - "direct"
+  - "halley2"
+  - "newton2"
   - "builtin"
+  - "halley10"
 n_sample_obs: 1000
 dose_schedule: [1]
 obs_ages: [2, 4]

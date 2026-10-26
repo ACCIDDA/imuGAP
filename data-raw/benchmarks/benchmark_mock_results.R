@@ -28,7 +28,7 @@ generate_mock_stress_test_results <- function(
   cfg <- pop_data$config
   datasets <- pop_data$datasets
 
-  # Model combinations for stress-test: zero & taylor2 x direct & builtin
+  # Model combinations for stress-test: zero guesser x solvers
   models_grid <- expand.grid(
     link = cfg$links,
     guess = cfg$guessers,
@@ -60,9 +60,6 @@ generate_mock_stress_test_results <- function(
     m_solver <- m_info$solver
     m_name <- m_info$model_name
 
-    is_builtin <- (m_solver == "builtin")
-    is_taylor2 <- (m_guess == "taylor2")
-
     # Match datasets with model link
     matching_ds <- datasets[vapply(
       datasets,
@@ -78,14 +75,23 @@ generate_mock_stress_test_results <- function(
       ds_id <- ds$dataset_id
 
       # 1. Simulate Subpopulation Offsets delta_k
-      # Builtin has near zero bias; Taylor2 direct has small bias; Zero direct has moderate bias
-      if (is_builtin) {
-        delta_bias <- stats::rnorm(K, mean = 0, sd = 0.005)
-      } else if (is_taylor2) {
-        delta_bias <- -0.025 *
+      # Precision hierarchy across solvers:
+      # - Builtin & Halley10: Machine-precision rootfinding (~zero bias)
+      # - Halley2: 3rd-order rational solver, cubic convergence
+      # - Newton2: 2nd-order solver, quadratic convergence
+      # - Direct: Zero-step uncorrected initial guess
+      if (m_solver %in% c("builtin", "halley10")) {
+        delta_bias <- stats::rnorm(K, mean = 0, sd = 0.004)
+      } else if (m_solver == "halley2") {
+        delta_bias <- -0.003 *
           (sigma^2) *
           tanh(delta_true) +
-          stats::rnorm(K, mean = 0, sd = 0.010)
+          stats::rnorm(K, mean = 0, sd = 0.005)
+      } else if (m_solver == "newton2") {
+        delta_bias <- -0.015 *
+          (sigma^2) *
+          tanh(delta_true) +
+          stats::rnorm(K, mean = 0, sd = 0.008)
       } else {
         delta_bias <- -0.120 *
           (sigma^2) *
@@ -136,13 +142,18 @@ generate_mock_stress_test_results <- function(
       # Mean and sd on eta scale as a function of target parent probability p0
       # Curvature g''(p0) is zero at p0 = 0.5 and maximal near the tails (0.05, 0.95)
       curvature_factor <- (abs(p0_true - 0.5) * 2)^1.5
-      eta_bias <- if (is_builtin) {
-        stats::rnorm(length(p0_true), 0, 0.004)
-      } else if (is_taylor2) {
-        0.030 *
+      eta_bias <- if (m_solver %in% c("builtin", "halley10")) {
+        stats::rnorm(length(p0_true), 0, 0.003)
+      } else if (m_solver == "halley2") {
+        0.005 *
           (sigma^2) *
           curvature_factor +
-          stats::rnorm(length(p0_true), 0, 0.008)
+          stats::rnorm(length(p0_true), 0, 0.004)
+      } else if (m_solver == "newton2") {
+        0.020 *
+          (sigma^2) *
+          curvature_factor +
+          stats::rnorm(length(p0_true), 0, 0.007)
       } else {
         0.180 *
           (sigma^2) *
@@ -196,16 +207,22 @@ generate_mock_stress_test_results <- function(
       )
 
       # 3. Simulate Runtime & MCMC Diagnostics
-      # Direct: fast ~1.5s - 2.5s; Builtin: slower ~4s - 20s (scales with K and sigma)
-      if (is_builtin) {
-        time_mult <- if (is_taylor2) 0.75 else 1.0
-        elapsed_sec <- (3.5 + 0.6 * K + 3.0 * (sigma^1.5)) *
-          time_mult +
+      # Direct: fast ~1.4s - 2.0s; Newton2: fast ~1.7s - 2.2s; Halley2: ~1.9s - 2.5s;
+      # Halley10: ~3.0s - 4.5s; Builtin: slow ~3.5s - 20s (scales heavily with K and sigma)
+      if (m_solver == "builtin") {
+        elapsed_sec <- (3.5 + 0.6 * K + 3.0 * (sigma^1.5)) +
           stats::rnorm(1, 0, 0.4)
+      } else if (m_solver == "halley10") {
+        elapsed_sec <- (3.0 + 0.15 * K + 0.6 * sigma) +
+          stats::rnorm(1, 0, 0.2)
+      } else if (m_solver == "halley2") {
+        elapsed_sec <- (1.9 + 0.06 * K + 0.2 * sigma) +
+          stats::rnorm(1, 0, 0.1)
+      } else if (m_solver == "newton2") {
+        elapsed_sec <- (1.7 + 0.05 * K + 0.15 * sigma) +
+          stats::rnorm(1, 0, 0.1)
       } else {
-        time_mult <- if (is_taylor2) 1.05 else 1.0
-        elapsed_sec <- (1.4 + 0.04 * K + 0.1 * sigma) *
-          time_mult +
+        elapsed_sec <- (1.4 + 0.04 * K + 0.1 * sigma) +
           stats::rnorm(1, 0, 0.1)
       }
       elapsed_sec <- max(0.5, round(elapsed_sec, 3))
@@ -216,7 +233,11 @@ generate_mock_stress_test_results <- function(
       mean_ess <- round(min_ess * 1.55)
       min_ess_sec <- round(min_ess / elapsed_sec, 2)
       max_rhat <- round(1.00 + abs(stats::rnorm(1, 0, 0.007)), 3)
-      n_div <- if (is_builtin && sigma > 1.0) stats::rpois(1, 0.1) else 0L
+      n_div <- if (m_solver == "builtin" && sigma > 1.0) {
+        stats::rpois(1, 0.1)
+      } else {
+        0L
+      }
 
       results_runs[[length(results_runs) + 1L]] <- data.table(
         dataset_id = ds_id,

@@ -24,84 +24,58 @@ supported_models <- c(
   "bspline_single_probit"
 )
 
-#' @title Resolve and validate concrete Stan model name from options
+#' @title Resolve and assemble concrete Stan model name from options
 #'
 #' @description
 #' Converts `"default"` option tokens to concrete specifications, validates option
-#' compatibility, handles single-layer versus multi-layer hierarchy conversions, and emits
-#' the concrete Stan model name along with parsed model components.
+#' compatibility, and emits the concrete Stan model name along with parsed model components.
 #'
-#' @param imugap_opts a list of imuGAP options returned by [imugap_options()], or
-#'   a model template string or character vector (default: `NULL`).
-#' @param time optional character string; temporal component specification (default: `NULL`).
-#' @param offsets optional character string; spatial offset component specification
-#'   (default: `NULL`).
-#' @param guesser optional character string; initial guesser method (default: `NULL`).
-#' @param solver optional character string or integer; rootfinder solver method (default: `NULL`).
-#' @param link optional character string; link function formulation (default: `NULL`).
-#' @param model optional character string; model template alias (default: `NULL`).
-#' @param is_multilayer logical scalar; does the location hierarchy have two or more layers?
-#'   (default: `TRUE`).
+#' @param time character string; temporal component specification (default: `"default"`,
+#'   resolving to `"bspline"`).
+#' @param offsets character string; spatial offset component specification
+#'   (default: `"default"`, resolving to `"static"`).
+#' @param guesser character string; initial guesser method (default: `"default"`,
+#'   resolving to `"zero"`).
+#' @param solver character string; rootfinder solver method (default: `"default"`,
+#'   resolving to `"direct"`).
+#' @param link character string; link function formulation (default: `"default"`,
+#'   resolving to `"logit"`).
+#' @param model optional character string or vector; model template alias (default: `NULL`).
 #'
 #' @return a named list, containing:
 #'   - `model_name`: character string of the concrete compiled Stan model.
-#'   - `time`: character string temporal basis (e.g. `"bspline"`).
-#'   - `offsets`: character string spatial offset type (`"static"` or `"single"`).
+#'   - `time`: character string temporal basis (`"bspline"`).
+#'   - `offsets`: character string spatial offset type (`"static"`).
 #'   - `guesser`: character string initial guesser method (`"zero"`).
 #'   - `solver`: character string rootfinder method (`"halley2"`, `"direct"`, etc.).
-#'   - `solver_module`: character string solver module (`"halley2"`, `"direct"`, `"dispatch"`, or
-#'     `NULL`).
-#'   - `solver_type`: integer solver code (1L..5L) or `NULL` if direct or single layer.
+#'   - `solver_module`: character string solver module (`"halley2"`, `"direct"`, or `"dispatch"`).
+#'   - `solver_type`: integer solver code (1L..5L).
 #'   - `link`: character string link formulation (`"logit"` or `"probit"`).
-#'   - `is_multilayer`: logical scalar indicating whether hierarchy is multi-layer.
 #'   - `is_dispatch`: logical scalar indicating whether dynamic solver dispatch is active.
 #'
 #' @examples
 #' resolve_model_name()
-#' resolve_model_name(is_multilayer = FALSE)
-#' resolve_model_name(imugap_options(solver = "newton2"))
-#' resolve_model_name("default_default_default_default_probit")
-#' resolve_model_name(c("default", "default", "default", "default", "probit"))
+#' resolve_model_name(solver = "newton2")
+#' resolve_model_name(model = "default_default_default_default_probit")
+#' resolve_model_name(model = c("default", "default", "default", "default", "probit"))
 #'
 #' @keywords internal
 #' @noRd
 resolve_model_name <- function(
-  imugap_opts = NULL,
-  time = NULL,
-  offsets = NULL,
-  guesser = NULL,
-  solver = NULL,
-  link = NULL,
-  model = NULL,
-  is_multilayer = TRUE
+  time = "default",
+  offsets = "default",
+  guesser = "default",
+  solver = "default",
+  link = "default",
+  model = NULL
 ) {
   raw_model <- model
   solver_type <- NULL
 
-  if (is.character(imugap_opts)) {
-    if (length(imugap_opts) > 1L) {
-      imugap_opts <- paste(imugap_opts, collapse = "_")
-    }
-    if (is.null(raw_model)) {
-      raw_model <- imugap_opts
-    }
-  } else if (is.list(imugap_opts)) {
-    raw_model <- raw_model %||% imugap_opts$model
-    time <- time %||% imugap_opts$time
-    offsets <- offsets %||% imugap_opts$offsets
-    guesser <- guesser %||% imugap_opts$guesser
-    solver <- solver %||% imugap_opts$solver
-    solver_type <- imugap_opts$solver_type
-    link <- link %||% imugap_opts$link
-  }
-
-  time <- time %||% "default"
-  offsets <- offsets %||% "default"
-  guesser <- guesser %||% "default"
-  solver <- solver %||% "default"
-  link <- link %||% "default"
-
   if (!is.null(raw_model)) {
+    if (length(raw_model) > 1L) {
+      raw_model <- paste(raw_model, collapse = "_")
+    }
     if (raw_model %in% c("default", "logit", "probit")) {
       link <- if (identical(raw_model, "default")) "logit" else raw_model
     } else {
@@ -130,9 +104,7 @@ resolve_model_name <- function(
         if (!identical(parts[2L], "default")) {
           offsets <- parts[2L]
         }
-        if (identical(parts[3L], "single")) {
-          offsets <- "single"
-        } else if (
+        if (
           !identical(parts[3L], "default") &&
             (identical(solver, "default") || identical(solver, "dispatch"))
         ) {
@@ -143,9 +115,7 @@ resolve_model_name <- function(
         if (!identical(parts[1L], "default")) {
           time <- parts[1L]
         }
-        if (identical(parts[2L], "single")) {
-          offsets <- "single"
-        } else if (!identical(parts[2L], "default")) {
+        if (!identical(parts[2L], "default")) {
           offsets <- parts[2L]
         }
         if (!identical(parts[3L], "default")) link <- parts[3L]
@@ -160,6 +130,9 @@ resolve_model_name <- function(
   if (identical(time, "default")) {
     time <- "bspline"
   }
+  if (identical(offsets, "default")) {
+    offsets <- "static"
+  }
   if (identical(link, "default")) {
     link <- "logit"
   }
@@ -167,49 +140,30 @@ resolve_model_name <- function(
     guesser <- "zero"
   }
   if (identical(solver, "default")) {
-    solver <- "halley2"
-  }
-
-  # Convert offsets based on layer hierarchy depth
-  if (!is_multilayer || identical(offsets, "single")) {
-    offsets <- "single"
-    is_multilayer <- FALSE
-  } else if (identical(offsets, "default")) {
-    offsets <- "static"
+    solver <- "direct"
   }
 
   stop_fmt_if(
     !time %in% c("bspline"),
     ERR_OPT_UNKNOWN_MODEL,
-    model = raw_model %||% time
+    model = if (!is.null(raw_model)) raw_model else time
   )
   stop_fmt_if(
     !link %in% c("logit", "probit"),
     ERR_OPT_UNKNOWN_MODEL,
-    model = raw_model %||% link
+    model = if (!is.null(raw_model)) raw_model else link
   )
   stop_fmt_if(
-    !offsets %in% c("static", "single"),
+    !offsets %in% c("static"),
     ERR_OPT_UNKNOWN_MODEL,
-    model = raw_model %||% offsets
+    model = if (!is.null(raw_model)) raw_model else offsets
   )
   stop_fmt_if(
     !guesser %in% c("zero"),
     ERR_OPT_UNKNOWN_MODEL,
-    model = raw_model %||% guesser
+    model = if (!is.null(raw_model)) raw_model else guesser
   )
 
-  if (is.numeric(solver)) {
-    stop_fmt_if(
-      length(solver) != 1L ||
-        is.na(solver) ||
-        solver %% 1 != 0 ||
-        !(as.integer(solver) %in% 1:5),
-      ERR_OPT_UNKNOWN_SOLVER,
-      solver = as.character(solver)
-    )
-    solver <- names(solver_type_map)[as.integer(solver)]
-  }
   stop_fmt_if(
     !solver %in%
       c("direct", "dispatch", "halley2", "newton2", "builtin", "halley10"),
@@ -217,23 +171,20 @@ resolve_model_name <- function(
     solver = solver
   )
 
-  if (identical(offsets, "single")) {
-    solver_module <- NULL
-    is_dispatch <- FALSE
-    solver_type <- NULL
-    model_name <- sprintf("%s_single_%s", time, link)
-  } else if (identical(solver, "direct")) {
+  if (is.null(solver_type)) {
+    solver_type <- unname(solver_type_map[solver])
+  }
+  if (is.na(solver_type)) {
+    solver_type <- 2L
+  }
+
+  if (identical(solver, "direct")) {
     is_dispatch <- FALSE
     solver_module <- solver
-    solver_type <- NULL
     model_name <- sprintf("%s_static_%s_%s_%s", time, guesser, solver, link)
   } else {
     is_dispatch <- TRUE
     solver_module <- "dispatch"
-    solver_type <- solver_type %||% unname(solver_type_map[solver])
-    if (is.na(solver_type)) {
-      solver_type <- 2L
-    }
     model_name <- sprintf("%s_static_%s_dispatch_%s", time, guesser, link)
   }
 
@@ -252,9 +203,33 @@ resolve_model_name <- function(
     solver_module = solver_module,
     solver_type = solver_type,
     link = link,
-    is_multilayer = is_multilayer,
     is_dispatch = is_dispatch
   )
+}
+
+#' @title Resolve execution model name based on location hierarchy depth
+#'
+#' @description
+#' Adapts a pre-validated `imugap_options` specification to the concrete location hierarchy
+#' depth (single-layer vs. multi-layer). By naming convention, single-layer models are
+#' `<time>_single_<link>`.
+#'
+#' @param imugap_opts an object of class `imugap_options`.
+#' @param is_multilayer logical scalar; does the location hierarchy have two or more layers?
+#'   (default: `TRUE`).
+#'
+#' @return a character string of the concrete compiled Stan model name.
+#'
+#' @keywords internal
+#' @noRd
+resolve_layer_model <- function(imugap_opts, is_multilayer = TRUE) {
+  stop_fmt_if(!inherits(imugap_opts, "imugap_options"), ERR_IMUGAP_OPTS_CLASS)
+
+  if (is_multilayer) {
+    imugap_opts$model
+  } else {
+    sprintf("%s_single_%s", imugap_opts$time, imugap_opts$link)
+  }
 }
 
 #' @title imuGAP Model Options
@@ -271,12 +246,11 @@ resolve_model_name <- function(
 #' @param time character string specifying the temporal model component
 #'   (default: `"default"`, resolving to `"bspline"`).
 #' @param offsets character string specifying the spatial offset model component
-#'   (default: `"default"`, resolving to `"static"`). Options include `"default"`, `"static"`,
-#'   and `"single"`.
+#'   (default: `"default"`, resolving to `"static"`). Options include `"default"` and `"static"`.
 #' @param link character string specifying the link function formulation
 #'   (default: `"default"`, resolving to `"logit"`). Options include `"default"` (or `"logit"`)
 #'   and `"probit"`.
-#' @param solver character string or integer specifying the rootfinder solver method
+#' @param solver character string specifying the rootfinder solver method
 #'   (default: `"default"`, resolving to `"direct"`). Options include `"default"` (or `"direct"`),
 #'   `"halley2"`, `"newton2"`, `"builtin"`, and `"halley10"`.
 #' @param model optional character string; alias for `link` or full model template name
@@ -287,14 +261,14 @@ resolve_model_name <- function(
 #' imugap_options(dose_schedule = c(1, 3))
 #' imugap_options(link = "probit", solver = "halley2")
 #'
-#' @return a named list, of `imuGAP` model options.
+#' @return an object of class `imugap_options`, wrapping a named list of model options.
 #' @export
 imugap_options <- function(
   df = 5L,
   dose_schedule = c(1, 4),
   compute_log_lik = FALSE,
   time = c("default", "bspline"),
-  offsets = c("default", "static", "single"),
+  offsets = c("default", "static"),
   link = c("default", "logit", "probit"),
   solver = c("default", "direct", "halley2", "newton2", "builtin", "halley10"),
   model = NULL
@@ -302,19 +276,7 @@ imugap_options <- function(
   time <- match.arg(time)
   offsets <- match.arg(offsets)
   link <- match.arg(link)
-  solver <- if (is.numeric(solver)) {
-    stop_fmt_if(
-      length(solver) != 1L ||
-        is.na(solver) ||
-        solver %% 1 != 0 ||
-        !(as.integer(solver) %in% 1:5),
-      ERR_OPT_UNKNOWN_SOLVER,
-      solver = as.character(solver)
-    )
-    names(solver_type_map)[as.integer(solver)]
-  } else {
-    match.arg(solver)
-  }
+  solver <- match.arg(solver)
 
   stop_fmt_if(length(df) != 1L, ERR_OPT_DF_SINGLE)
   df <- assert_positive_int(df, "df")
@@ -333,26 +295,25 @@ imugap_options <- function(
   )
 
   resolved <- resolve_model_name(
-    list(
-      time = time,
-      offsets = offsets,
-      solver = solver,
-      link = link,
-      model = model
-    ),
-    is_multilayer = !identical(offsets, "single")
+    time = time,
+    offsets = offsets,
+    solver = solver,
+    link = link,
+    model = model
   )
 
-  list(
-    df = df,
-    dose_schedule = dose_schedule,
-    compute_log_lik = compute_log_lik,
-    time = resolved$time,
-    offsets = resolved$offsets,
-    link = resolved$link,
-    model = resolved$model_name,
-    solver = resolved$solver,
-    solver_type = resolved$solver_type %||%
-      unname(solver_type_map[resolved$solver])
+  structure(
+    list(
+      df = df,
+      dose_schedule = dose_schedule,
+      compute_log_lik = compute_log_lik,
+      time = resolved$time,
+      offsets = resolved$offsets,
+      link = resolved$link,
+      model = resolved$model_name,
+      solver = resolved$solver,
+      solver_type = resolved$solver_type
+    ),
+    class = "imugap_options"
   )
 }

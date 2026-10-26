@@ -31,7 +31,7 @@ extract_log_lik_array <- function(object, posterior_size = NULL) {
     # Compute log-likelihood via generated quantities directly
     n_keep <- dim(draws_sub)[1]
     n_chains <- dim(draws_sub)[2]
-    model_name <- object$settings$imugap_opts$model_name
+    model_name <- object$settings$model_name
     draws_mat <- apply(draws_sub, 3L, c)
 
     dat_stan <- ensure_layer_qr(object$data)
@@ -117,7 +117,6 @@ loo.imugap_fit <- function(x, posterior_size = NULL, ...) {
 
   dots <- list(...)
   ll_arr <- extract_log_lik_array(x, posterior_size = posterior_size)
-  n_chains <- dim(ll_arr)[2]
 
   ll_mat <- apply(ll_arr, 3L, c)
   colnames(ll_mat) <- paste0("obs[", seq_len(ncol(ll_mat)), "]")

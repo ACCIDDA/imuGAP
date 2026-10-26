@@ -74,6 +74,21 @@ This document provides concise instructions and rules for AI coding assistants w
     specified named arguments.
   * Omitted, `NA`, or `NULL` slots automatically match wildcards (`.+?`), allowing tests to assert
     on specific key parameters while remaining robust to phrasing updates.
+* **Validation Architecture, Defaults & Type Safety**:
+  * **Avoid Validation Code Sprawl**: Centralize validation at external and public entry
+    boundaries (e.g. `canonicalize_*()`, `imugap_options()`, `stan_options()`). Internal helpers
+    and downstream model assemblers must rely on established contract invariants rather than
+    redundantly re-validating, defensively patching, or scattering ad-hoc checks throughout the
+    call stack.
+  * **Explicit, Communicated Defaults**: Define default values directly in formal parameter
+    signatures (e.g. `df = 5L`, `dose_schedule = c(1, 4)`) so they are visible in documentation,
+    autocomplete, and formal argument inspection (`args()`). Avoid `NULL` sentinels coupled with
+    hidden internal fallback chains (e.g. avoid `x %||% y %||% default`).
+  * **Type-Based Validation**: Favor class and type invariants over loose list inspection.
+    Validate structured inputs upfront against expected classes (e.g.
+    `inherits(opts, "imugap_options")`, `is_canonical(dt, ...)`). Constructors must guarantee
+    that all required fields are present and correctly typed upon creation, eliminating the need
+    for defensive null-coalescing operators (`%||%`) throughout internal code.
 * **Roxygen Documentation Standards**:
   * **Explicit `@title` and `@description`**: Roxygen blocks must use explicit `@title` and `@description` tags rather than relying on automatic inference.
   * **`data.table` and `@autoglobal`**: Functions containing `data.table` calculations or non-standard evaluation expressions should generally be annotated with `@autoglobal` so `roxyglobals` generates appropriate symbol declarations in `R/globals.R`.

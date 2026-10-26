@@ -455,6 +455,18 @@ test_that("canonicalize_populations validates dose schedule when imugap_opts is 
   expect_equal(diag_age$age, 3L)
 })
 
+test_that("canonicalize_populations errors when imugap_opts is not an imugap_options object", {
+  expect_error(
+    canonicalize_populations(
+      make_test_pops(),
+      make_test_obs(),
+      make_test_locs(),
+      imugap_opts = list(dose_schedule = c(1, 4))
+    ),
+    err_pattern(ERR_IMUGAP_OPTS_CLASS)
+  )
+})
+
 test_that("canonicalize_populations expands max_dose from imugap_opts schedule", {
   locs <- make_test_locs()
   obs <- data.frame(

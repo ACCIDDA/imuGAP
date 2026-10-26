@@ -1,6 +1,3 @@
-`%||%` <- function(x, y) if (is.null(x)) y else x
-
-
 #' @title Assert and coerce column to integer
 #'
 #' @description

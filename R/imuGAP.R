@@ -301,26 +301,32 @@ sampling <- function(
   imugap_opts = imugap_options(),
   stan_opts = stan_options(threading = TRUE)
 ) {
+  stop_fmt_if(!inherits(imugap_opts, "imugap_options"), ERR_IMUGAP_OPTS_CLASS)
+  stan_opts <- canonicalize_stan_options(stan_opts)
+
   # check location argument and determine hierarchy depth
   loc_info <- canonicalize_locations(locations)
   n_layers <- max(loc_info$layer)
   is_multilayer <- n_layers > 1L
 
-  # resolve concrete Stan model and configuration
-  resolved_model <- resolve_model_name(
+  # resolve concrete Stan model name based on hierarchy depth
+  model_name <- resolve_layer_model(
     imugap_opts = imugap_opts,
     is_multilayer = is_multilayer
   )
-  model_name <- resolved_model$model_name
-  link <- resolved_model$link
+  link <- imugap_opts$link
 
-  dose_sched_opts <- imugap_opts$dose_schedule %||% c(1L, 4L)
-  df_opts <- imugap_opts$df %||% 5L
+  dose_sched_opts <- imugap_opts$dose_schedule
+  df_opts <- imugap_opts$df
 
   layer_data <- if (is_multilayer) {
     assemble_layer_data(
       loc_info,
-      solver_type = resolved_model$solver_type
+      solver_type = if (!identical(imugap_opts$solver, "direct")) {
+        imugap_opts$solver_type
+      } else {
+        NULL
+      }
     )
   } else {
     NULL
@@ -374,14 +380,9 @@ sampling <- function(
     list(
       predict_mode = 0L,
       compute_log_lik = as.integer(isTRUE(imugap_opts$compute_log_lik)),
-      num_threads = as.integer(stan_opts$threads_per_chain %||% 1L)
+      num_threads = stan_opts$threads_per_chain
     )
   )
-
-  # The `backend` element is the marker that stan_opts came from stan_options();
-  # its absence means a hand-built list. Whatever backend it names wins.
-  backend <- stan_opts$backend
-  stop_fmt_if(is.null(backend), ERR_STAN_OPTS_CLASS)
 
   # Drop unconstrained latent spatial innovation parameters (z_layer) and
   # intermediate unrolled link matrices (raw_phi_mat) by default in multi-layer
@@ -420,18 +421,11 @@ sampling <- function(
     ))
   }
 
-  imugap_opts$model <- model_name
-  imugap_opts$model_name <- model_name
-  imugap_opts$offsets <- resolved_model$offsets
-  imugap_opts$solver <- resolved_model$solver
-  imugap_opts$solver_type <- resolved_model$solver_type %||%
-    imugap_opts$solver_type
-  imugap_opts$link <- resolved_model$link
-
   structure(
     list(
       raw_fit = raw_fit,
       settings = list(
+        model_name = model_name,
         imugap_opts = imugap_opts,
         stan_opts = stan_opts
       ),

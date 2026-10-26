@@ -233,6 +233,38 @@ When adding or refactoring Stan include files, create unit tests following these
 
 ---
 
+## Validation Architecture, Defaults, and Type Safety
+
+`imuGAP` enforces clear architectural boundaries for input validation and parameter defaults to
+prevent defensive validation code sprawl:
+
+### 1. Avoid Validation Code Sprawl
+* **Boundary Validation**: Validate inputs at external, public entry points (such as
+  `canonicalize_observations()`, `canonicalize_populations()`, `canonicalize_locations()`,
+  `imugap_options()`, and `sampling()`).
+* **Contract Invariants**: Once data or options pass these entry boundaries, internal helpers
+  and Stan model assemblers should rely on established invariants. Do not re-validate, re-check
+  types, or defensively patch missing fields repeatedly throughout internal helper functions.
+
+### 2. Explicit, Communicated Defaults
+* **Signature Defaults**: Define defaults directly in formal function signatures (e.g. `df = 5L`,
+  `dose_schedule = c(1, 4)` in `imugap_options()`). This makes default values immediately visible
+  to users via documentation, IDE autocomplete, and `args()`.
+* **No Hidden Fallback Chains**: Avoid signatures with `NULL` defaults that hide actual defaults
+  behind internal fallback expressions (e.g. `x %||% y %||% "default"`). The user should never
+  have to inspect implementation code to discover what default value will be applied.
+
+### 3. Type-Based Validation
+* **Class & Type Invariants**: Favor structured classes (such as `imugap_options`, `imugap_fit`,
+  `imugap_predict`, and canonical table attributes) over unvalidated lists.
+* **Guarantee by Construction**: Validate typed structures at construction time so that presence
+  and types of all required fields are guaranteed.
+* **Eliminate Null-Coalescing (`%||%`)**: Do not use ad-hoc null-coalescing operators to paper over
+  missing defaults or loose list structures. Use type-asserted constructors and explicit control
+  flow instead.
+
+---
+
 ## Error Messages, Signaling Standards, and Unit Testing
 
 All user-facing validation errors and warnings should follow these standards:

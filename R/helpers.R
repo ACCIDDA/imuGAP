@@ -601,11 +601,10 @@ ensure_current_stanmodel <- function(raw_fit, model_name = NULL) {
     inherits(raw_fit, "stanfit") &&
       exists("stanmodels", envir = asNamespace("imuGAP"))
   ) {
-    m_name <- model_name %||% raw_fit@stanmodel@model_name
-    if (identical(m_name, "bspline_static_logit")) {
-      m_name <- "bspline_static_direct_logit"
-    } else if (identical(m_name, "bspline_static_probit")) {
-      m_name <- "bspline_static_direct_probit"
+    m_name <- if (is.null(model_name)) {
+      raw_fit@stanmodel@model_name
+    } else {
+      model_name
     }
     models <- get("stanmodels", envir = asNamespace("imuGAP"))
     if (!is.null(m_name) && !is.null(models[[m_name]])) {

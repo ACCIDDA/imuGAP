@@ -236,7 +236,7 @@ test_that("predict() accommodates cmdstanr (CmdStanMCMC) fits", {
   # Create a fit with CmdStanMCMC raw_fit
   cmdstan_fit <- fit_sim
   cmdstan_fit$raw_fit <- structure(list(), class = "CmdStanMCMC")
-  cmdstan_fit$settings$imugap_opts$model_name <- "bspline_static_logit"
+  cmdstan_fit$settings$model_name <- "bspline_static_logit"
 
   # Mock backend_draws_array and backend_generate_quantities
   fake_draws <- array(rnorm(10 * 2 * 5), dim = c(10, 2, 5))

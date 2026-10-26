@@ -129,7 +129,7 @@ predict.imugap_fit <- function(
   n_chains <- dim(draws_sub)[2]
 
   # Stan model name for generated quantities (required by cmdstanr)
-  model_name <- object$settings$imugap_opts$model_name
+  model_name <- object$settings$model_name
 
   # Flatten to the 2D draws matrix gqs expects (rows = draws, cols = params).
   draws_mat <- apply(draws_sub, 3L, c)
@@ -705,13 +705,33 @@ compute_phi <- function(
 
   dat_stan <- object$data
   n_cohort <- dat_stan$n_cohort
-  n_locs <- dat_stan$n_locs %||% 1L
-  n_layers <- dat_stan$n_layers %||% 1L
+  link <- object$settings$imugap_opts$link
+  inv_link_fn <- if (identical(link, "probit")) stats::pnorm else stats::plogis
 
   # Baseline root link vector across draws and cohorts (n_draws x n_cohort)
   beta_cols <- paste0("beta_bs[", seq_len(dat_stan$k_bs), "]")
   beta_mat <- draws_mat[, beta_cols, drop = FALSE]
   raw_phi_root <- beta_mat %*% t(dat_stan$bs)
+
+  # Direct return for single-layer hierarchy
+  if (is.null(dat_stan$n_layers)) {
+    eta_array <- array(
+      raw_phi_root,
+      dim = c(n_draws, n_cohort, 1L),
+      dimnames = list(
+        draw = seq_len(n_draws),
+        cohort = seq_len(n_cohort),
+        location = object$locations$loc_id
+      )
+    )
+    return(if (isTRUE(link_scale)) eta_array else inv_link_fn(eta_array))
+  }
+
+  n_locs <- dat_stan$n_locs
+  n_parent_locs <- dat_stan$n_parent_locs
+  parent_loc_id <- as.vector(dat_stan$parent_loc_id)
+  starts <- as.integer(dat_stan$parent_child_starts)
+  ends <- c(starts[-1L] - 1L, n_locs)
 
   loc_names <- object$locations$loc_id
   dim_names <- list(
@@ -727,37 +747,30 @@ compute_phi <- function(
   )
   eta_array[seq_len(n_draws), seq_len(n_cohort), 1L] <- raw_phi_root
 
-  if (n_layers > 1L) {
-    n_parent_locs <- dat_stan$n_parent_locs
-    parent_loc_id <- as.vector(dat_stan$parent_loc_id)
-    starts <- as.integer(dat_stan$parent_child_starts)
-    ends <- c(starts[-1L] - 1L, n_locs)
+  for (p in seq_len(n_parent_locs)) {
+    pid <- parent_loc_id[p]
+    st <- starts[p]
+    en <- ends[p]
 
-    for (p in seq_len(n_parent_locs)) {
-      pid <- parent_loc_id[p]
-      st <- starts[p]
-      en <- ends[p]
+    eta_parent <- eta_array[seq_len(n_draws), seq_len(n_cohort), pid]
+    mu_cols <- paste0("mu_offset[", seq_len(n_cohort), ",", p, "]")
+    mu_p <- if (all(mu_cols %in% colnames(draws_mat))) {
+      draws_mat[, mu_cols, drop = FALSE]
+    } else {
+      matrix(0.0, nrow = n_draws, ncol = n_cohort)
+    }
+    parent_shifted <- eta_parent + mu_p
 
-      eta_parent <- eta_array[seq_len(n_draws), seq_len(n_cohort), pid]
-      mu_cols <- paste0("mu_offset[", seq_len(n_cohort), ",", p, "]")
-      mu_p <- if (all(mu_cols %in% colnames(draws_mat))) {
-        draws_mat[, mu_cols, drop = FALSE]
-      } else {
-        matrix(0.0, nrow = n_draws, ncol = n_cohort)
-      }
-      parent_shifted <- eta_parent + mu_p
-
-      for (l in st:en) {
-        off_col <- paste0("off_layer[", l - 1L, "]")
-        off_l <- draws_mat[, off_col]
-        # Broadcast off_l across cohorts (n_draws x n_cohort)
-        eta_array[seq_len(n_draws), seq_len(n_cohort), l] <- sweep(
-          parent_shifted,
-          1L,
-          off_l,
-          "+"
-        )
-      }
+    for (l in st:en) {
+      off_col <- paste0("off_layer[", l - 1L, "]")
+      off_l <- draws_mat[, off_col]
+      # Broadcast off_l across cohorts (n_draws x n_cohort)
+      eta_array[seq_len(n_draws), seq_len(n_cohort), l] <- sweep(
+        parent_shifted,
+        1L,
+        off_l,
+        "+"
+      )
     }
   }
 
@@ -765,7 +778,5 @@ compute_phi <- function(
     return(eta_array)
   }
 
-  link <- object$settings$imugap_opts$link %||% "logit"
-  inv_link_fn <- if (identical(link, "probit")) stats::pnorm else stats::plogis
   inv_link_fn(eta_array)
 }

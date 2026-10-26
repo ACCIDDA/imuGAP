@@ -35,7 +35,7 @@ normalize_benchmark_config <- function(cfg) {
   }
 
   if (is.null(cfg$guessers)) {
-    cfg$guessers <- names(GUESS_TYPE_MAP)
+    cfg$guessers <- "zero"
   } else {
     cfg$guessers <- as.character(cfg$guessers)
   }
@@ -44,6 +44,68 @@ normalize_benchmark_config <- function(cfg) {
     cfg$solvers <- names(SOLVER_TYPE_MAP)
   } else {
     cfg$solvers <- as.character(cfg$solvers)
+  }
+
+  if (is.null(cfg$seed)) {
+    cfg$seed <- 42L
+  } else {
+    cfg$seed <- as.integer(cfg$seed)
+  }
+
+  if (is.null(cfg$n_sample_obs)) {
+    cfg$n_sample_obs <- 1000L
+  } else {
+    cfg$n_sample_obs <- as.integer(cfg$n_sample_obs)
+  }
+
+  if (is.null(cfg$pop_per_sub)) {
+    cfg$pop_per_sub <- 5000L
+  } else {
+    cfg$pop_per_sub <- as.integer(cfg$pop_per_sub)
+  }
+
+  raw_ages <- if (!is.null(cfg$obs_ages)) {
+    cfg$obs_ages
+  } else if (!is.null(cfg$obs_age)) {
+    cfg$obs_age
+  } else {
+    c(2L, 4L)
+  }
+  cfg$obs_ages <- as.integer(raw_ages)
+  cfg$obs_age <- NULL
+
+  if (is.null(cfg$lambda_true)) {
+    cfg$lambda_true <- 3.0
+  } else {
+    cfg$lambda_true <- as.numeric(cfg$lambda_true)
+  }
+
+  if (is.null(cfg$dose_schedule)) {
+    cfg$dose_schedule <- 1L
+  } else {
+    cfg$dose_schedule <- as.integer(cfg$dose_schedule)
+  }
+
+  if (is.null(cfg$dose)) {
+    cfg$dose <- 1L
+  } else {
+    cfg$dose <- as.integer(cfg$dose)
+  }
+
+  if (!is.null(cfg$k_grid)) {
+    cfg$k_grid <- as.integer(cfg$k_grid)
+  }
+
+  if (!is.null(cfg$sigma_grid)) {
+    cfg$sigma_grid <- as.numeric(cfg$sigma_grid)
+  }
+
+  if (!is.null(cfg$p0_trend)) {
+    cfg$p0_trend <- as.numeric(cfg$p0_trend)
+  }
+
+  if (!is.null(cfg$n_samples)) {
+    cfg$n_samples <- as.integer(cfg$n_samples)
   }
 
   cfg
