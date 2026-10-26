@@ -53,6 +53,8 @@ generated quantities {
   array[2, n_obs_mixed_left] int out_obs_map_left = obs_map_mixed_left;
   array[n_obs_unmixed_left] int out_cdf_lookup_unmix_left = cdf_lookup_unmixed_left;
   array[n_weights_mixed_left] int out_cdf_lookup_mix_left = cdf_lookup_mixed_left;
+
+  int out_n_obs_total = n_obs_total;
 }
 "
 ) |>
@@ -189,5 +191,14 @@ test_that("structural data and transformed indices create compliant lookup and r
   expect_equal(
     as.numeric(results$out_phi_lookup_mix_unc),
     w_cohort_mix_unc + (w_loc_mix_unc - 1L) * n_cohort
+  )
+  expect_equal(
+    results$out_n_obs_total,
+    data_list$n_obs_unmixed_uncensored +
+      data_list$n_obs_mixed_uncensored +
+      data_list$n_obs_unmixed_right +
+      data_list$n_obs_mixed_right +
+      data_list$n_obs_unmixed_left +
+      data_list$n_obs_mixed_left
   )
 })

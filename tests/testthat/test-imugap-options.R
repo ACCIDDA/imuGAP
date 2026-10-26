@@ -2,6 +2,7 @@
 
 test_that("imugap_options returns expected structure with defaults", {
   defaults <- imugap_options()
+  expect_s3_class(defaults, "imugap_options")
   expect_type(defaults, "list")
   expect_setequal(
     names(defaults),
@@ -23,7 +24,7 @@ test_that("imugap_options returns expected structure with defaults", {
   expect_equal(defaults$time, "bspline")
   expect_equal(defaults$offsets, "static")
   expect_equal(defaults$link, "logit")
-  expect_equal(defaults$model, "bspline_static_direct_logit")
+  expect_equal(defaults$model, "bspline_static_zero_direct_logit")
   expect_equal(defaults$solver, "direct")
   expect_equal(defaults$solver_type, 1L)
 })
@@ -46,7 +47,7 @@ test_that("imugap_options dose_schedule can be overridden", {
   expect_equal(opts, expected)
 })
 
-test_that("imugap_options errors on unknown link / model", {
+test_that("imugap_options errors on unknown link / model / offsets", {
   expect_error(
     imugap_options(link = "unknown_link"),
     "should be"
@@ -59,6 +60,14 @@ test_that("imugap_options errors on unknown link / model", {
     imugap_options(link = "stateonly"),
     "should be"
   )
+  expect_error(
+    imugap_options(offsets = "single"),
+    "should be"
+  )
+  expect_error(
+    imugap_options(offsets = "unknown_offset"),
+    "should be"
+  )
 })
 
 test_that("imugap_options accepts default, logit, and probit link options", {
@@ -68,25 +77,25 @@ test_that("imugap_options accepts default, logit, and probit link options", {
 
   opts_logit <- imugap_options(link = "logit")
   expect_equal(opts_logit$link, "logit")
-  expect_equal(opts_logit$model, "bspline_static_direct_logit")
+  expect_equal(opts_logit$model, "bspline_static_zero_direct_logit")
 
   opts_probit <- imugap_options(link = "probit")
   expect_equal(opts_probit$link, "probit")
-  expect_equal(opts_probit$model, "bspline_static_direct_probit")
+  expect_equal(opts_probit$model, "bspline_static_zero_direct_probit")
 
   # Backwards compatibility with model parameter
   opts_model_probit <- imugap_options(model = "probit")
   expect_equal(opts_model_probit$link, "probit")
-  expect_equal(opts_model_probit$model, "bspline_static_direct_probit")
+  expect_equal(opts_model_probit$model, "bspline_static_zero_direct_probit")
 
   # Full model template name
-  opts_model_full <- imugap_options(model = "bspline_static_direct_probit")
+  opts_model_full <- imugap_options(model = "bspline_static_zero_direct_probit")
   expect_equal(opts_model_full$link, "probit")
-  expect_equal(opts_model_full$model, "bspline_static_direct_probit")
+  expect_equal(opts_model_full$model, "bspline_static_zero_direct_probit")
 
   # Legacy model alias
   opts_model_legacy <- imugap_options(model = "bspline_static_probit")
-  expect_equal(opts_model_legacy$model, "bspline_static_direct_probit")
+  expect_equal(opts_model_legacy$model, "bspline_static_zero_direct_probit")
 })
 
 test_that("imugap_options accepts numeric whole-number df", {
@@ -174,125 +183,94 @@ test_that("imugap_options accepts valid solver values including default", {
   opts_halley10 <- imugap_options(solver = "halley10")
   expect_equal(opts_halley10$solver, "halley10")
   expect_equal(opts_halley10$solver_type, 5L)
-
-  # Numeric integer codes 1..5
-  opts_num2 <- imugap_options(solver = 2L)
-  expect_equal(opts_num2$solver, "halley2")
-  expect_equal(opts_num2$solver_type, 2L)
-
-  opts_num5 <- imugap_options(solver = 5)
-  expect_equal(opts_num5$solver, "halley10")
-  expect_equal(opts_num5$solver_type, 5L)
 })
 
 test_that("imugap_options rejects invalid solver values", {
   expect_error(imugap_options(solver = "unknown_solver"), "should be")
   expect_error(
     imugap_options(solver = 0L),
-    err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "0")
+    "must be NULL or a character vector"
+  )
+  expect_error(
+    imugap_options(solver = 2L),
+    "must be NULL or a character vector"
   )
   expect_error(
     imugap_options(solver = 6L),
-    err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "6")
+    "must be NULL or a character vector"
   )
   expect_error(
     imugap_options(solver = 2.5),
-    err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "2.5")
+    "must be NULL or a character vector"
   )
   expect_error(
-    imugap_options(solver = c(1L, 2L)),
-    err_pattern(ERR_OPT_UNKNOWN_SOLVER)
+    imugap_options(solver = c("halley2", "direct")),
+    "must be of length 1"
   )
 })
 
-test_that("resolve_model_name resolves defaults and handles multi- vs single-layer", {
+test_that("resolve_model_name resolves defaults and multi-layer model specs", {
   res_def <- resolve_model_name()
-  expect_equal(res_def$model_name, "bspline_static_direct_logit")
+  expect_equal(res_def$model_name, "bspline_static_zero_direct_logit")
   expect_equal(res_def$time, "bspline")
   expect_equal(res_def$offsets, "static")
   expect_equal(res_def$solver, "direct")
   expect_equal(res_def$solver_module, "direct")
-  expect_null(res_def$solver_type)
+  expect_equal(res_def$solver_type, 1L)
   expect_equal(res_def$link, "logit")
-  expect_true(res_def$is_multilayer)
   expect_false(res_def$is_dispatch)
 
-  # Single-layer conversion
-  res_single <- resolve_model_name(is_multilayer = FALSE)
-  expect_equal(res_single$model_name, "bspline_single_logit")
-  expect_equal(res_single$offsets, "single")
-  expect_null(res_single$solver_module)
-  expect_null(res_single$solver_type)
-  expect_false(res_single$is_multilayer)
-  expect_false(res_single$is_dispatch)
-
   # default_default_default_* template resolution
-  res_tmpl_logit <- resolve_model_name("default_default_default_logit")
-  expect_equal(res_tmpl_logit$model_name, "bspline_static_direct_logit")
+  res_tmpl_logit <- resolve_model_name(model = "default_default_default_logit")
+  expect_equal(res_tmpl_logit$model_name, "bspline_static_zero_direct_logit")
 
-  res_tmpl_probit <- resolve_model_name("default_default_default_probit")
-  expect_equal(res_tmpl_probit$model_name, "bspline_static_direct_probit")
+  res_tmpl_probit <- resolve_model_name(
+    model = "default_default_default_probit"
+  )
+  expect_equal(res_tmpl_probit$model_name, "bspline_static_zero_direct_probit")
   expect_equal(res_tmpl_probit$link, "probit")
 
-  res_tmpl_single <- resolve_model_name(
-    "default_default_default_probit",
-    is_multilayer = FALSE
-  )
-  expect_equal(res_tmpl_single$model_name, "bspline_single_probit")
-  expect_equal(res_tmpl_single$offsets, "single")
-
   # Character vector input
-  res_vec <- resolve_model_name(c("default", "default", "default", "probit"))
-  expect_equal(res_vec$model_name, "bspline_static_direct_probit")
+  res_vec <- resolve_model_name(
+    model = c("default", "default", "default", "probit")
+  )
+  expect_equal(res_vec$model_name, "bspline_static_zero_direct_probit")
 
   # Legacy model strings
-  res_leg_logit <- resolve_model_name("bspline_static_logit")
-  expect_equal(res_leg_logit$model_name, "bspline_static_direct_logit")
+  res_leg_logit <- resolve_model_name(model = "bspline_static_logit")
+  expect_equal(res_leg_logit$model_name, "bspline_static_zero_direct_logit")
 
-  res_leg_probit <- resolve_model_name("bspline_static_probit")
-  expect_equal(res_leg_probit$model_name, "bspline_static_direct_probit")
+  res_leg_probit <- resolve_model_name(model = "bspline_static_probit")
+  expect_equal(res_leg_probit$model_name, "bspline_static_zero_direct_probit")
 
   # Single shortcuts
   expect_equal(
-    resolve_model_name("default")$model_name,
-    "bspline_static_direct_logit"
+    resolve_model_name(model = "default")$model_name,
+    "bspline_static_zero_direct_logit"
   )
   expect_equal(
-    resolve_model_name("logit")$model_name,
-    "bspline_static_direct_logit"
+    resolve_model_name(model = "logit")$model_name,
+    "bspline_static_zero_direct_logit"
   )
   expect_equal(
-    resolve_model_name("probit")$model_name,
-    "bspline_static_direct_probit"
-  )
-  expect_equal(
-    resolve_model_name("probit", is_multilayer = FALSE)$model_name,
-    "bspline_single_probit"
+    resolve_model_name(model = "probit")$model_name,
+    "bspline_static_zero_direct_probit"
   )
 })
 
 test_that("resolve_model_name resolves dynamic dispatch solvers", {
-  res_h2 <- resolve_model_name(imugap_options(solver = "halley2"))
-  expect_equal(res_h2$model_name, "bspline_static_dispatch_logit")
+  res_h2 <- resolve_model_name(solver = "halley2")
+  expect_equal(res_h2$model_name, "bspline_static_zero_dispatch_logit")
   expect_equal(res_h2$solver, "halley2")
   expect_equal(res_h2$solver_module, "dispatch")
   expect_equal(res_h2$solver_type, 2L)
   expect_true(res_h2$is_dispatch)
 
-  # Solver ignored in single-layer conversion
-  res_h2_single <- resolve_model_name(
-    imugap_options(solver = "halley2"),
-    is_multilayer = FALSE
-  )
-  expect_equal(res_h2_single$model_name, "bspline_single_logit")
-  expect_null(res_h2_single$solver_type)
-  expect_false(res_h2_single$is_dispatch)
-
-  res_n2_probit <- resolve_model_name(imugap_options(
+  res_n2_probit <- resolve_model_name(
     solver = "newton2",
     link = "probit"
-  ))
-  expect_equal(res_n2_probit$model_name, "bspline_static_dispatch_probit")
+  )
+  expect_equal(res_n2_probit$model_name, "bspline_static_zero_dispatch_probit")
   expect_equal(res_n2_probit$solver, "newton2")
   expect_equal(res_n2_probit$solver_type, 3L)
   expect_equal(res_n2_probit$link, "probit")
@@ -301,7 +279,15 @@ test_that("resolve_model_name resolves dynamic dispatch solvers", {
 
 test_that("resolve_model_name validates unknown options and models", {
   expect_error(
-    resolve_model_name("unknown_model_name"),
+    resolve_model_name(offsets = "single"),
+    err_pattern(ERR_OPT_UNKNOWN_MODEL, model = "single")
+  )
+  expect_error(
+    resolve_model_name(offsets = "unknown_offset"),
+    err_pattern(ERR_OPT_UNKNOWN_MODEL, model = "unknown_offset")
+  )
+  expect_error(
+    resolve_model_name(model = "unknown_model_name"),
     err_pattern(ERR_OPT_UNKNOWN_MODEL, model = "unknown_model_name")
   )
   expect_error(
@@ -321,7 +307,52 @@ test_that("resolve_model_name validates unknown options and models", {
     err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "0")
   )
   expect_error(
+    resolve_model_name(solver = 2L),
+    err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "2")
+  )
+  expect_error(
     resolve_model_name(solver = 6L),
     err_pattern(ERR_OPT_UNKNOWN_SOLVER, solver = "6")
+  )
+})
+
+test_that("resolve_layer_model handles multilayer vs single-layer conversion", {
+  # Default multi-layer
+  res_multi <- resolve_layer_model(imugap_options(), is_multilayer = TRUE)
+  expect_equal(res_multi, "bspline_static_zero_direct_logit")
+
+  # Single-layer conversion
+  res_single <- resolve_layer_model(imugap_options(), is_multilayer = FALSE)
+  expect_equal(res_single, "bspline_single_logit")
+
+  # Single-layer with probit
+  res_single_probit <- resolve_layer_model(
+    imugap_options(link = "probit"),
+    is_multilayer = FALSE
+  )
+  expect_equal(res_single_probit, "bspline_single_probit")
+
+  # Solver ignored in single-layer conversion (always <time>_single_<link>)
+  res_h2_single <- resolve_layer_model(
+    imugap_options(solver = "halley2"),
+    is_multilayer = FALSE
+  )
+  expect_equal(res_h2_single, "bspline_single_logit")
+
+  # Solver retained in multi-layer
+  res_h2_multi <- resolve_layer_model(
+    imugap_options(solver = "halley2"),
+    is_multilayer = TRUE
+  )
+  expect_equal(res_h2_multi, "bspline_static_zero_dispatch_logit")
+
+  # Type assertion
+  expect_error(
+    resolve_layer_model("not_an_imugap_options"),
+    err_pattern(ERR_IMUGAP_OPTS_CLASS)
+  )
+  expect_error(
+    resolve_layer_model(list(df = 5L)),
+    err_pattern(ERR_IMUGAP_OPTS_CLASS)
   )
 })

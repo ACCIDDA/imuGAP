@@ -535,13 +535,16 @@ canonicalize_populations <- function(
 ) {
   if (is_canonical(populations, "populations")) {
     if (!missing(imugap_opts)) {
+      stop_fmt_if(
+        !inherits(imugap_opts, "imugap_options"),
+        ERR_IMUGAP_OPTS_CLASS
+      )
       warn_fmt_if(
         !missing(max_dose),
         MSG_POP_OPTS_OVERRIDE_MAX_DOSE,
         max_dose = max_dose
       )
-      dose_schedule <- imugap_opts$dose_schedule %||% c(1L, 4L)
-      validate_dose_schedule(dose_schedule, populations)
+      validate_dose_schedule(imugap_opts$dose_schedule, populations)
     }
     return(populations[])
   }
@@ -563,14 +566,14 @@ canonicalize_populations <- function(
   locations <- canonicalize_locations(locations)
 
   if (!missing(imugap_opts)) {
+    stop_fmt_if(!inherits(imugap_opts, "imugap_options"), ERR_IMUGAP_OPTS_CLASS)
     warn_fmt_if(
       !missing(max_dose),
       MSG_POP_OPTS_OVERRIDE_MAX_DOSE,
       max_dose = max_dose
     )
-    dose_schedule <- imugap_opts$dose_schedule %||% c(1L, 4L)
     assert_positive_integer(populations, "dose")
-    validate_dose_schedule(dose_schedule, populations)
+    validate_dose_schedule(imugap_opts$dose_schedule, populations)
   } else {
     assert_maxed_pos_integer(populations, "dose", max_dose)
   }
@@ -744,4 +747,41 @@ canonicalize_target <- function(target, fit) {
   target <- target[, .SD, .SDcols = cols]
   target[fit$locations, on = .(loc_id), loc_c_id := loc_c_id]
   mark_canonical(target, "target")
+}
+
+#' @title Canonicalize and validate Stan options
+#'
+#' @description
+#' Validates that `stan_opts` is an options object constructed by [stan_options()]
+#' (or [flexstanr::stan_options()]), guarantees required field invariants such as
+#' `threads_per_chain`, and tags a checkable class for type compliance until flexstanr
+#' provides native S3 classes.
+#'
+#' @param stan_opts a list or object representing sampler configuration.
+#'
+#' @return a validated `stan_opts` object with class `"flexstan_options"`, guaranteed
+#'   integer scalar `threads_per_chain`, and validated `backend`.
+#'
+#' @keywords internal
+#' @noRd
+canonicalize_stan_options <- function(stan_opts) {
+  is_compliant <- inherits(stan_opts, "flexstan_options") ||
+    inherits(stan_opts, "flexstanr_options") ||
+    inherits(stan_opts, "stan_options") ||
+    (is.list(stan_opts) && !is.null(stan_opts$backend))
+
+  stop_fmt_if(!is_compliant, ERR_STAN_OPTS_CLASS)
+
+  # Guarantee invariant: threads_per_chain is always present as integer scalar
+  if (is.null(stan_opts$threads_per_chain)) {
+    stan_opts$threads_per_chain <- 1L
+  } else {
+    stan_opts$threads_per_chain <- as.integer(stan_opts$threads_per_chain)
+  }
+
+  if (!inherits(stan_opts, "flexstan_options")) {
+    class(stan_opts) <- c("flexstan_options", class(stan_opts))
+  }
+
+  stan_opts
 }

@@ -148,18 +148,18 @@ generate_synthetic_dataset <- function(
 generate_populations_from_config <- function(config_path) {
   cfg <- read_benchmark_config(config_path)
 
-  k_grid <- as.integer(cfg$k_grid)
-  sigma_grid <- as.numeric(cfg$sigma_grid)
-  p0_trend <- as.numeric(cfg$p0_trend)
-  n_samples <- as.integer(cfg$n_samples)
-  seed_base <- as.integer(cfg$seed %||% 42L)
+  k_grid <- cfg$k_grid
+  sigma_grid <- cfg$sigma_grid
+  p0_trend <- cfg$p0_trend
+  n_samples <- cfg$n_samples
+  seed_base <- cfg$seed
   links <- cfg$links
-  n_sample_obs <- as.integer(cfg$n_sample_obs %||% 1000L)
-  pop_per_sub <- as.integer(cfg$pop_per_sub %||% 5000L)
-  obs_ages <- as.integer(cfg$obs_ages %||% cfg$obs_age %||% c(2L, 4L))
-  lambda_true <- as.numeric(cfg$lambda_true %||% 3.0)
-  dose_schedule <- as.integer(cfg$dose_schedule %||% 1L)
-  dose <- as.integer(cfg$dose %||% 1L)
+  n_sample_obs <- cfg$n_sample_obs
+  pop_per_sub <- cfg$pop_per_sub
+  obs_ages <- cfg$obs_ages
+  lambda_true <- cfg$lambda_true
+  dose_schedule <- cfg$dose_schedule
+  dose <- cfg$dose
 
   total_datasets <- length(links) *
     length(k_grid) *

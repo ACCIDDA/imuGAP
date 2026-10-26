@@ -103,7 +103,7 @@ $ Rscript benchmark_synthetic_populations.R some_config_A.yml
 
 Unified models are compiled directly from the shipped Stan models (`inst/stan/bspline_static_zero_dispatch_<link>.stan`), which dynamically dispatch guessers and solvers at runtime. Compiled model objects with Stan thread support are cached in the `benchobjs/` directory. These are managed by `benchmark_compilation.R` and the `Makefile`.
 
-The models for a benchmark are determined by a configuration file. The full set of available combinations are listed below. The stress test configuration uses all links, the `zero` and `taylor2` guessers, and the `direct` and `builtin` solvers. The full test uses all relevant combinations.
+The models for a benchmark are determined by a configuration file. The full set of available combinations are listed below. The stress test configuration uses all links, the `zero` initial guesser, and all five rootfinding solvers (`direct`, `halley2`, `newton2`, `builtin`, and `halley10`).
 
 ### 3.1 Link Functions (`@LINK@`)
 - `logit`: Logistic link $g(p) = \log(p / (1 - p))$.

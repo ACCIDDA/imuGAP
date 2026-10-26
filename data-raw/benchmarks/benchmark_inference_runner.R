@@ -168,7 +168,7 @@ run_benchmark_inference <- function(
   base_seed <- if (!is.null(seed)) {
     as.integer(seed)
   } else {
-    (cfg$seed %||% 20261008L)
+    as.integer(if (is.null(cfg$seed)) 20261008L else cfg$seed)
   }
 
   # 2. Resolve model combinations

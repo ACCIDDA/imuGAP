@@ -206,10 +206,12 @@ test_that("sampling data assembly produces sane derived values", {
   pops <- make_minimal_pops()
   locs <- make_3layer_locs()
   opts <- imuGAP::imugap_options()
-  default_threads <- flexstanr::stan_options(
-    threading = TRUE
-  )$threads_per_chain %||%
+  st_opts <- flexstanr::stan_options(threading = TRUE)
+  default_threads <- if (is.null(st_opts$threads_per_chain)) {
     1L
+  } else {
+    st_opts$threads_per_chain
+  }
   out <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(observations = obs, populations = pops, locations = locs)
   ))
@@ -277,7 +279,7 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_multi$captured$object, "stanmodel")
   expect_equal(
     out_multi$captured$object@model_name,
-    "bspline_static_direct_logit"
+    "bspline_static_zero_direct_logit"
   )
   expect_null(out_multi$captured$data$solver_type)
 
@@ -304,7 +306,7 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
     "bspline_single_logit"
   )
 
-  # Probit multi-layer hierarchy dispatches to bspline_static_direct_probit
+  # Probit multi-layer hierarchy dispatches to bspline_static_zero_direct_probit
   out_multi_probit <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
       observations = make_minimal_obs(),
@@ -316,11 +318,11 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_multi_probit$captured$object, "stanmodel")
   expect_equal(
     out_multi_probit$captured$object@model_name,
-    "bspline_static_direct_probit"
+    "bspline_static_zero_direct_probit"
   )
   expect_null(out_multi_probit$captured$data$solver_type)
 
-  # Multi-layer with selectable solver dispatches to bspline_static_dispatch_logit
+  # Multi-layer with selectable solver dispatches to bspline_static_zero_dispatch_logit
   out_multi_dispatch <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
       observations = make_minimal_obs(),
@@ -332,11 +334,11 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_multi_dispatch$captured$object, "stanmodel")
   expect_equal(
     out_multi_dispatch$captured$object@model_name,
-    "bspline_static_dispatch_logit"
+    "bspline_static_zero_dispatch_logit"
   )
   expect_equal(out_multi_dispatch$captured$data$solver_type, 2L)
 
-  # Probit multi-layer with selectable solver dispatches to bspline_static_dispatch_probit
+  # Probit multi-layer with selectable solver dispatches to bspline_static_zero_dispatch_probit
   out_multi_dispatch_probit <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
       observations = make_minimal_obs(),
@@ -348,7 +350,7 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_multi_dispatch_probit$captured$object, "stanmodel")
   expect_equal(
     out_multi_dispatch_probit$captured$object@model_name,
-    "bspline_static_dispatch_probit"
+    "bspline_static_zero_dispatch_probit"
   )
   expect_equal(out_multi_dispatch_probit$captured$data$solver_type, 3L)
 
@@ -421,9 +423,10 @@ test_that("sampling returns a structured imugap_fit object", {
   expect_s3_class(fit$locations, "data.table")
   expect_named(
     fit$settings,
-    c("imugap_opts", "stan_opts"),
+    c("model_name", "imugap_opts", "stan_opts"),
     ignore.order = TRUE
   )
+  expect_equal(fit$settings$model_name, "bspline_static_zero_direct_logit")
   expect_named(
     fit$settings$imugap_opts,
     c(
@@ -435,8 +438,7 @@ test_that("sampling returns a structured imugap_fit object", {
       "link",
       "solver",
       "solver_type",
-      "model",
-      "model_name"
+      "model"
     ),
     ignore.order = TRUE
   )
@@ -456,7 +458,7 @@ test_that("sampling errors when stan_opts was not built by stan_options()", {
   )
 })
 
-test_that("sampling errors when imugap_opts contains an unknown model", {
+test_that("sampling errors when imugap_opts is not an imugap_options object", {
   expect_error(
     imuGAP::sampling(
       observations = make_minimal_obs(),
@@ -464,7 +466,7 @@ test_that("sampling errors when imugap_opts contains an unknown model", {
       locations = make_3layer_locs(),
       imugap_opts = list(model = "unsupported_model")
     ),
-    "unknown model 'unsupported_model'"
+    err_pattern(ERR_IMUGAP_OPTS_CLASS)
   )
 })
 
