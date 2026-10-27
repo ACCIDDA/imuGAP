@@ -119,6 +119,15 @@ read_benchmark_config <- function(config_path) {
 # --- Combination Resolver -----------------------------------------------------
 
 get_valid_model_combinations <- function(cfg) {
+  # Stan models currently only implement the zero guesser
+  unsupported_guess <- setdiff(cfg$guessers, "zero")
+  if (length(unsupported_guess) > 0L) {
+    stop(sprintf(
+      "Guesser(s) not yet supported in Stan models: %s. Only 'zero' is currently implemented.",
+      paste(sprintf("'%s'", unsupported_guess), collapse = ", ")
+    ))
+  }
+
   grid <- expand.grid(
     link = cfg$links,
     guess = cfg$guessers,

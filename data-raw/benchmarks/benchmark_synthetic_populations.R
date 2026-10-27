@@ -66,7 +66,7 @@ generate_synthetic_dataset <- function(
   C <- length(p0_trend)
 
   # 1. Locations Table
-  loc_ids <- c("Root", sprintf("Child_%02d", seq_len(K)))
+  loc_ids <- c("Root", sprintf("Child_%03d", seq_len(K)))
   locations <- data.table(
     loc_id = loc_ids,
     parent_id = c(NA_character_, rep("Root", K)),
@@ -106,7 +106,7 @@ generate_synthetic_dataset <- function(
         y_count <- as.integer(round(n_sample_obs * p_vax))
         obs_list[[length(obs_list) + 1L]] <- data.table(
           obs_id = obs_counter,
-          loc_id = sprintf("Child_%02d", k),
+          loc_id = sprintf("Child_%03d", k),
           cohort = c,
           age_min = as.integer(a),
           dose = as.integer(dose),
@@ -136,6 +136,7 @@ generate_synthetic_dataset <- function(
     w_vec = w_vec,
     lambda_true = lambda_true,
     obs_ages = obs_ages,
+    dose_schedule = dose_schedule,
     K = K,
     sigma = sigma,
     link = link,

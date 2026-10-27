@@ -14,12 +14,14 @@ CORES_PER_TASK=$(( CHAINS * THREADS_PER_CHAIN ))
 ITER="${4:-300}"
 WARMUP="${5:-150}"
 
-CONFIG_RDS="config_${CONFIG_NAME}.rds"
+CONFIG_BASE=$(echo "${CONFIG_NAME}" | tr '-' '_')
+CONFIG_TARGET=$(echo "${CONFIG_NAME}" | tr '_' '-')
+CONFIG_RDS="config_${CONFIG_BASE}.rds"
 
 echo "================================================================="
 echo " imuGAP Distributed Benchmark Pipeline Orchestrator"
 echo "================================================================="
-echo "Configuration     : ${CONFIG_NAME} (${CONFIG_RDS})"
+echo "Configuration     : ${CONFIG_BASE} (${CONFIG_RDS})"
 echo "Parallel Chains   : ${CHAINS} chains"
 echo "Threads per Chain : ${THREADS_PER_CHAIN} threads (STAN_NUM_THREADS)"
 echo "CPUs per Task     : ${CORES_PER_TASK} cores (${CHAINS} x ${THREADS_PER_CHAIN})"
@@ -32,15 +34,23 @@ R CMD INSTALL --no-multiarch --with-keep.source ../..
 
 # Stage 1: Build populations and pre-compile unified Stan models
 echo ">>> [Stage 1] Pre-flight compilation & population generation..."
-make "${CONFIG_NAME}-pop"
-make "${CONFIG_NAME}-compile"
+make "${CONFIG_TARGET}-pop"
+make compile
 
 mkdir -p results_parts logs
 
+# Derive total number of model combinations dynamically
+N_MODELS=$(Rscript -e '
+  source("benchmark_compilation.R")
+  cfg <- read_benchmark_config("'"${CONFIG_RDS}"'")
+  cat(nrow(get_valid_model_combinations(cfg)))
+')
+
 # Stage 2: Submit SLURM Array Job with exact CPU allocation
-echo ">>> [Stage 2] Submitting 55-task SLURM job array (${CORES_PER_TASK} CPUs/task)..."
+echo ">>> [Stage 2] Submitting ${N_MODELS}-task SLURM job array (${CORES_PER_TASK} CPUs/task)..."
 ARRAY_JOB_ID=$(sbatch \
   --parsable \
+  --array=1-"${N_MODELS}" \
   --cpus-per-task="${CORES_PER_TASK}" \
   slurm_benchmark_array.sh \
     "${CONFIG_RDS}" \
@@ -54,12 +64,12 @@ echo ">>> Successfully submitted Array Job ID: ${ARRAY_JOB_ID}"
 
 # Stage 3: Submit Dependent Merge Job
 echo ">>> [Stage 3] Submitting dependent merge job (afterok:${ARRAY_JOB_ID})..."
-MERGE_JOB_ID=$(sbatch --parsable --dependency=afterok:"${ARRAY_JOB_ID}" slurm_merge.sh "${CONFIG_NAME}")
+MERGE_JOB_ID=$(sbatch --parsable --dependency=afterok:"${ARRAY_JOB_ID}" slurm_merge.sh "${CONFIG_BASE}")
 
 echo ">>> Successfully submitted Merge Job ID: ${MERGE_JOB_ID}"
 echo "================================================================="
 echo "Pipeline submitted to SLURM:"
-echo "  - Array Tasks : ${ARRAY_JOB_ID}_[1-55] (${CORES_PER_TASK} cores each)"
+echo "  - Array Tasks : ${ARRAY_JOB_ID}_[1-${N_MODELS}] (${CORES_PER_TASK} cores each)"
 echo "  - Merge Job   : ${MERGE_JOB_ID} (will run automatically when array finishes)"
 echo "  - Monitor with: squeue -u \$USER"
 echo "================================================================="

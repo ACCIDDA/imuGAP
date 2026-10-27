@@ -159,11 +159,11 @@ is_canonical <- function(dt, target_class) {
 #'    3 (grandchildren), &c
 #'  - `layer_bound` column, an integer starting from 1 by layer. This provides
 #'    index slice information used in the stan model.
-#'  - `population` column (optional), positive numeric population totals, preserved and
+#'  - `population` column, positive numeric population totals, preserved and
 #'    validated for hierarchical sum consistency across parent-child nodes
 #'    (with missing parent populations automatically imputed from child sums).
-#'    If not present, the highest resolution entities (i.e. those with no offspring)
-#'    will be assigned an identical weight.
+#'    If not supplied in input `locations`, leaf entities (those with no offspring)
+#'    default to 1.0 and parent populations are imputed from child sums.
 #'
 #' @examples
 #' # --- canonicalize_locations ---
@@ -308,41 +308,42 @@ canonicalize_locations <- function(locations) {
 #' @keywords internal
 #' @noRd
 validate_location_populations <- function(locations) {
-  if (!"population" %in% names(locations)) {
-    return(locations)
-  }
-
-  stop_fmt_if(
-    !is.numeric(locations$population),
-    ERR_LOCATIONS_POP_NUMERIC,
-    class = class(locations$population)[1L]
-  )
-
-  locations[, population := as.numeric(population)]
-
-  # Check that existing non-NA populations are positive and finite
-  invalid_pop <- locations[
-    !is.na(population) & (population <= 0 | !is.finite(population)),
-    .N
-  ]
-  stop_fmt_if(
-    invalid_pop > 0L,
-    ERR_LOCATIONS_POP_POSITIVE,
-    n_invalid = invalid_pop
-  )
-
   # Identify parents vs leaves
   parent_ids <- locations[!is.na(parent_id), unique(parent_id)]
   leaf_ids <- setdiff(locations$loc_id, parent_ids)
 
-  # Leaves cannot have NA population
-  na_leaves <- locations[loc_id %in% leaf_ids & is.na(population), loc_id]
-  stop_fmt_if(
-    length(na_leaves) > 0L,
-    ERR_LOCATIONS_POP_LEAF_NA,
-    n_locations = length(na_leaves),
-    locations = paste0("'", na_leaves, "'", collapse = ", ")
-  )
+  if (!"population" %in% names(locations)) {
+    locations[, population := NA_real_]
+    locations[loc_id %in% leaf_ids, population := 1.0]
+  } else {
+    stop_fmt_if(
+      !is.numeric(locations$population),
+      ERR_LOCATIONS_POP_NUMERIC,
+      class = class(locations$population)[1L]
+    )
+
+    locations[, population := as.numeric(population)]
+
+    # Check that existing non-NA populations are positive and finite
+    invalid_pop <- locations[
+      !is.na(population) & (population <= 0 | !is.finite(population)),
+      .N
+    ]
+    stop_fmt_if(
+      invalid_pop > 0L,
+      ERR_LOCATIONS_POP_POSITIVE,
+      n_invalid = invalid_pop
+    )
+
+    # Leaves cannot have NA population
+    na_leaves <- locations[loc_id %in% leaf_ids & is.na(population), loc_id]
+    stop_fmt_if(
+      length(na_leaves) > 0L,
+      ERR_LOCATIONS_POP_LEAF_NA,
+      n_locations = length(na_leaves),
+      locations = paste0("'", na_leaves, "'", collapse = ", ")
+    )
+  }
 
   # Bottom-up recursion across layers: from max_layer down to 1
   max_layer <- max(locations$layer, na.rm = TRUE)

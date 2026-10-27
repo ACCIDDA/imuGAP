@@ -87,11 +87,13 @@ test_that("yields data.table with ordered layer, parent_id, and id columns", {
     c(
       names(ref),
       "layer",
+      "population",
       "loc_c_id",
       "loc_cp_id",
       "layer_bound"
     )
   )
+  expect_equal(locs$population, c(3.0, 2.0, 1.0, 1.0, 1.0))
   expect_equal(locs$layer, c(1L, 2L, 2L, 3L, 3L))
   expect_equal(locs$loc_id, c("a", "b", "c", "d", "e"))
   expect_equal(locs$loc_c_id, sort(locs$loc_c_id, na.last = FALSE))
@@ -410,4 +412,38 @@ test_that("an NA loc_id is rejected with its rows (#156)", {
     conditionMessage(err),
     err_pattern(ERR_LOCATIONS_NA_ID, rows = 4L)
   )
+})
+
+test_that("canonicalize_locations populates default populations when omitted", {
+  # 1-layer hierarchy
+  locs1 <- canonicalize_locations(data.frame(
+    loc_id = "state",
+    parent_id = NA_character_
+  ))
+  expect_true("population" %in% names(locs1))
+  expect_equal(locs1$population, 1.0)
+
+  # 2-layer hierarchy
+  locs2 <- canonicalize_locations(data.frame(
+    loc_id = c("state", "cnty1", "cnty2"),
+    parent_id = c(NA, "state", "state")
+  ))
+  expect_true("population" %in% names(locs2))
+  expect_equal(locs2[loc_id == "cnty1", population], 1.0)
+  expect_equal(locs2[loc_id == "cnty2", population], 1.0)
+  expect_equal(locs2[loc_id == "state", population], 2.0)
+
+  # 3-layer branching hierarchy
+  locs3 <- canonicalize_locations(data.frame(
+    loc_id = c("state", "c1", "c2", "s1", "s2", "s3", "s4", "s5"),
+    parent_id = c(NA, "state", "state", "c1", "c1", "c2", "c2", "c2")
+  ))
+  expect_true("population" %in% names(locs3))
+  expect_equal(
+    locs3[loc_id %in% c("s1", "s2", "s3", "s4", "s5"), population],
+    rep(1.0, 5L)
+  )
+  expect_equal(locs3[loc_id == "c1", population], 2.0)
+  expect_equal(locs3[loc_id == "c2", population], 3.0)
+  expect_equal(locs3[loc_id == "state", population], 5.0)
 })

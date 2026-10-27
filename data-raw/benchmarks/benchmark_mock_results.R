@@ -18,7 +18,7 @@ generate_mock_stress_test_results <- function(
   output_rds = pkgload::package_file(
     "data-raw",
     "benchmarks",
-    "results_stress_test.rds"
+    "results_stress_test_mock.rds"
   ),
   seed = 20261025L
 ) {
