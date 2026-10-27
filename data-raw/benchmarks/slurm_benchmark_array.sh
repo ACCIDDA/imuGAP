@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=imugap_bench
-#SBATCH --array=1-55
+# Default array range; slurm_submit.sh dynamically passes --array=1-N matching the config
+#SBATCH --array=1-10
 #SBATCH --mem=4G
 #SBATCH --time=01:00:00
 #SBATCH --output=logs/bench_%A_%a.log

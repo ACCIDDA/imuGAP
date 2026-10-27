@@ -29,11 +29,12 @@ links:
   - "probit"
 guessers:
   - "zero"
-  - "taylor2"
-  - "taylor4"
-  - "pade"
-  - "asymptotic"
-  - "conditioned"
+  # Prospective guessers (disabled until Stan implementations are wired up):
+  # - "taylor2"
+  # - "taylor4"
+  # - "pade"
+  # - "asymptotic"
+  # - "conditioned"
 solvers:
   - "direct"
   - "halley2"

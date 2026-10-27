@@ -87,11 +87,8 @@ if (!pkgs_available) {
   ]))
   sch_counts <- table(locations_sim$parent_id[locations_sim$parent_id %in% county_names])
   n_schools <- sum(sch_counts)
-  dose_sched <- if (is.null(latent_params_sim$dose_schedule)) {
-    c(1L, 4L)
-  } else {
-    latent_params_sim$dose_schedule
-  }
+  sch_summary <- paste0(sch_counts[county_names], " in ", county_names, collapse = ", ")
+  dose_sched <- imugap_options()$dose_schedule
 }
 ```
 

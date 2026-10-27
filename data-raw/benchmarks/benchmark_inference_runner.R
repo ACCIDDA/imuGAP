@@ -74,7 +74,7 @@ prepare_benchmark_stan_data <- function(
   locs <- ds$locations
   obs <- ds$observations
   pops <- ds$populations
-  C <- if (!is.null(ds$p0_true)) length(ds$p0_true) else max(pops$cohort)
+  C <- length(ds$p0_true)
 
   # Canonicalize with imuGAP helpers
   loc_c <- canonicalize_locations(locs)
@@ -96,7 +96,7 @@ prepare_benchmark_stan_data <- function(
     )
   }
 
-  dose_sched <- sort(unique(wts$dose))
+  dose_sched <- ds$dose_schedule
   sched <- build_interval_schedule(dose_sched, wts$age)
 
   st_uncensored <- slice_weights(
@@ -365,8 +365,15 @@ run_benchmark_inference <- function(
 
       t_elapsed <- (proc.time() - t_run_start)[["elapsed"]]
 
-      if (inherits(fit, "error")) {
-        message(sprintf("FAILED (%s)", conditionMessage(fit)))
+      has_draws <- !inherits(fit, "error") && flexstanr::backend_has_draws(fit)
+
+      if (!has_draws) {
+        err_msg <- if (inherits(fit, "error")) {
+          conditionMessage(fit)
+        } else {
+          "RStan returned empty fit without draws (mode 2 / initialization failure)"
+        }
+        message(sprintf("FAILED (%s)", err_msg))
         results_runs[[length(results_runs) + 1L]] <- data.table(
           dataset_id = ds$dataset_id,
           K = ds$K,
@@ -382,7 +389,7 @@ run_benchmark_inference <- function(
           warmup_sec = NA_real_,
           sampling_sec = NA_real_,
           status = "error",
-          error_msg = conditionMessage(fit),
+          error_msg = err_msg,
           p0_link_mae = NA_real_,
           p0_link_rmse = NA_real_,
           p0_js_dist = NA_real_,

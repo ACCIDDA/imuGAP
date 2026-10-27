@@ -409,40 +409,12 @@ assemble_layer_data <- function(loc_info) {
     integer(0)
   }
 
-  loc_population <- if ("population" %in% names(loc_info)) {
-    as.numeric(loc_info$population)
-  } else {
-    rep(NA_real_, n_locs)
-  }
-
-  parent_ids <- unique(loc_info$parent_id[!is.na(loc_info$parent_id)])
-  is_leaf <- !(loc_info$loc_id %in% parent_ids)
-
-  # Default outermost leaves with NA or <= 0 population to 1.0
-  loc_population[is_leaf & (is.na(loc_population) | loc_population <= 0)] <- 1.0
-
-  # Bottom-up accumulation for parent entities from lowest non-leaf layer to root
-  if (n_layers >= 2L) {
-    for (lyr in seq(n_layers - 1L, 1L, by = -1L)) {
-      parent_rows <- which(loc_info$layer == lyr & !is_leaf)
-      for (p in parent_rows) {
-        pid <- loc_info$loc_id[p]
-        child_rows <- which(loc_info$parent_id == pid)
-        child_sum <- sum(loc_population[child_rows], na.rm = TRUE)
-        if (is.na(loc_population[p]) || loc_population[p] <= 0) {
-          loc_population[p] <- child_sum
-        }
-      }
-    }
-  }
-  loc_population[is.na(loc_population)] <- 1.0
-
   # Precompute QR block entries and index bounds for balanced layer offsets
   qr_data <- compute_layer_qr(
     n_parent_locs,
     parent_child_starts,
     n_locs,
-    loc_population
+    loc_info$population
   )
 
   list(
@@ -452,11 +424,11 @@ assemble_layer_data <- function(loc_info) {
     n_parent_locs = n_parent_locs,
     parent_loc_id = as.array(as.integer(parent_loc_id)),
     parent_child_starts = as.array(as.integer(parent_child_starts)),
-    loc_population = as.array(as.numeric(loc_population)),
+    loc_population = as.array(loc_info$population),
     n_qr_entries = qr_data$n_qr_entries,
     z_bounds = qr_data$z_bounds,
     qr_bounds = qr_data$qr_bounds,
-    qr_entries = as.array(as.numeric(qr_data$qr_entries))
+    qr_entries = as.array(qr_data$qr_entries)
   )
 }
 

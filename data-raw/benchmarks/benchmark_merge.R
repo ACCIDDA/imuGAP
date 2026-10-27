@@ -40,15 +40,6 @@ consolidate_benchmark_results <- function(
   ))
 
   if (length(part_files) == 0L) {
-    # Fallback to any raw_part_*.rds in directory
-    part_files <- sort(list.files(
-      parts_dir,
-      pattern = "\\.rds$",
-      full.names = TRUE
-    ))
-  }
-
-  if (length(part_files) == 0L) {
     stop(sprintf(
       "No partition files found in '%s' matching '%s'",
       parts_dir,
@@ -254,6 +245,8 @@ consolidate_benchmark_results <- function(
     ranking = ranking_dt,
     runs = runs_dt,
     calibration = list(p0 = cal_p0, delta = cal_delta),
+    p0_profiles = p0_dt,
+    delta_profiles = delta_dt,
     param_summaries = param_dt
   )
   saveRDS(master_bundle, file = bundle_rds)
