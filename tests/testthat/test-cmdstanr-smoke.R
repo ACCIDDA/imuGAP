@@ -13,7 +13,7 @@ test_that("imuGAP::sampling() fits via the cmdstanr backend", {
   skip_if(
     base::system.file(
       "stan",
-      "bspline_static_zero_direct_logit.stan",
+      "bspline_static_zero_halley2_logit.stan",
       package = "imuGAP"
     ) ==
       "",

@@ -24,9 +24,9 @@ test_that("imugap_options returns expected structure with defaults", {
   expect_equal(defaults$time, "bspline")
   expect_equal(defaults$offsets, "static")
   expect_equal(defaults$link, "logit")
-  expect_equal(defaults$model, "bspline_static_zero_direct_logit")
-  expect_equal(defaults$solver, "direct")
-  expect_equal(defaults$solver_type, 1L)
+  expect_equal(defaults$model, "bspline_static_zero_halley2_logit")
+  expect_equal(defaults$solver, "halley2")
+  expect_equal(defaults$solver_type, 2L)
 })
 
 test_that("imugap_options df can be overridden", {
@@ -77,11 +77,11 @@ test_that("imugap_options accepts default, logit, and probit link options", {
 
   opts_logit <- imugap_options(link = "logit")
   expect_equal(opts_logit$link, "logit")
-  expect_equal(opts_logit$model, "bspline_static_zero_direct_logit")
+  expect_equal(opts_logit$model, "bspline_static_zero_halley2_logit")
 
   opts_probit <- imugap_options(link = "probit")
   expect_equal(opts_probit$link, "probit")
-  expect_equal(opts_probit$model, "bspline_static_zero_direct_probit")
+  expect_equal(opts_probit$model, "bspline_static_zero_halley2_probit")
 })
 
 test_that("imugap_options accepts numeric whole-number df", {
@@ -151,8 +151,12 @@ test_that("imugap_options rejects invalid compute_log_lik", {
 
 test_that("imugap_options accepts valid solver values including default", {
   opts_def <- imugap_options(solver = "default")
-  expect_equal(opts_def$solver, "direct")
-  expect_equal(opts_def$solver_type, 1L)
+  expect_equal(opts_def$solver, "halley2")
+  expect_equal(opts_def$solver_type, 2L)
+
+  opts_dir <- imugap_options(solver = "direct")
+  expect_equal(opts_dir$solver, "direct")
+  expect_equal(opts_dir$solver_type, 1L)
 
   opts_halley2 <- imugap_options(solver = "halley2")
   expect_equal(opts_halley2$solver, "halley2")
@@ -197,31 +201,31 @@ test_that("imugap_options rejects invalid solver values", {
 
 test_that("resolve_model_name resolves defaults and multi-layer model specs", {
   res_def <- resolve_model_name()
-  expect_equal(res_def$model_name, "bspline_static_zero_direct_logit")
+  expect_equal(res_def$model_name, "bspline_static_zero_halley2_logit")
   expect_equal(res_def$time, "bspline")
   expect_equal(res_def$offsets, "static")
-  expect_equal(res_def$solver, "direct")
-  expect_equal(res_def$solver_module, "direct")
-  expect_equal(res_def$solver_type, 1L)
+  expect_equal(res_def$solver, "halley2")
+  expect_equal(res_def$solver_module, "halley2")
+  expect_equal(res_def$solver_type, 2L)
   expect_equal(res_def$link, "logit")
   expect_false(res_def$is_dispatch)
 
   res_logit <- resolve_model_name(link = "logit")
-  expect_equal(res_logit$model_name, "bspline_static_zero_direct_logit")
+  expect_equal(res_logit$model_name, "bspline_static_zero_halley2_logit")
   expect_equal(res_logit$link, "logit")
 
   res_probit <- resolve_model_name(link = "probit")
-  expect_equal(res_probit$model_name, "bspline_static_zero_direct_probit")
+  expect_equal(res_probit$model_name, "bspline_static_zero_halley2_probit")
   expect_equal(res_probit$link, "probit")
 })
 
 test_that("resolve_model_name resolves dynamic dispatch solvers", {
-  res_h2 <- resolve_model_name(solver = "halley2")
-  expect_equal(res_h2$model_name, "bspline_static_zero_dispatch_logit")
-  expect_equal(res_h2$solver, "halley2")
-  expect_equal(res_h2$solver_module, "dispatch")
-  expect_equal(res_h2$solver_type, 2L)
-  expect_true(res_h2$is_dispatch)
+  res_dir <- resolve_model_name(solver = "direct")
+  expect_equal(res_dir$model_name, "bspline_static_zero_dispatch_logit")
+  expect_equal(res_dir$solver, "direct")
+  expect_equal(res_dir$solver_module, "dispatch")
+  expect_equal(res_dir$solver_type, 1L)
+  expect_true(res_dir$is_dispatch)
 
   res_n2_probit <- resolve_model_name(
     solver = "newton2",
@@ -237,7 +241,14 @@ test_that("resolve_model_name resolves dynamic dispatch solvers", {
 test_that("resolve_layer_model handles multilayer vs single-layer conversion", {
   # Default multi-layer
   res_multi <- resolve_layer_model(imugap_options(), is_multilayer = TRUE)
-  expect_equal(res_multi, "bspline_static_zero_direct_logit")
+  expect_equal(res_multi, "bspline_static_zero_halley2_logit")
+
+  # Direct multi-layer (dispatched)
+  res_multi_dir <- resolve_layer_model(
+    imugap_options(solver = "direct"),
+    is_multilayer = TRUE
+  )
+  expect_equal(res_multi_dir, "bspline_static_zero_dispatch_logit")
 
   # Single-layer conversion
   res_single <- resolve_layer_model(imugap_options(), is_multilayer = FALSE)
@@ -257,12 +268,19 @@ test_that("resolve_layer_model handles multilayer vs single-layer conversion", {
   )
   expect_equal(res_h2_single, "bspline_single_logit")
 
-  # Solver retained in multi-layer
+  # Dedicated halley2 model retained in multi-layer
   res_h2_multi <- resolve_layer_model(
     imugap_options(solver = "halley2"),
     is_multilayer = TRUE
   )
-  expect_equal(res_h2_multi, "bspline_static_zero_dispatch_logit")
+  expect_equal(res_h2_multi, "bspline_static_zero_halley2_logit")
+
+  # Dispatched solver retained in multi-layer
+  res_n2_multi <- resolve_layer_model(
+    imugap_options(solver = "newton2"),
+    is_multilayer = TRUE
+  )
+  expect_equal(res_n2_multi, "bspline_static_zero_dispatch_logit")
 
   # Type assertion
   expect_error(

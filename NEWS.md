@@ -49,7 +49,7 @@
     (`functions/layer_offsets.stan`).
   - Standardized top-level Stan model names under the convention
     `<time>_<offsets>_<guess>_<solver>_<link>.stan` (e.g.
-    `bspline_static_zero_direct_logit.stan`, `bspline_static_zero_dispatch_probit.stan`)
+    `bspline_static_zero_halley2_logit.stan`, `bspline_static_zero_dispatch_probit.stan`)
     and `<time>_single_<link>.stan` for unpartitioned models, reflecting the temporal
     basis, hierarchy offset structure, initial guesser, solver module, and link function.
 

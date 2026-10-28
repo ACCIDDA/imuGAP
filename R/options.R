@@ -29,7 +29,7 @@ guess_type_map <- c(
 #' @param guesser character string; initial guesser method (default: `"default"`,
 #'   resolving to `"zero"`).
 #' @param solver character string; rootfinder solver method (default: `"default"`,
-#'   resolving to `"direct"`).
+#'   resolving to `"halley2"`).
 #' @param link character string; link function formulation (default: `"default"`,
 #'   resolving to `"logit"`).
 #'
@@ -71,12 +71,12 @@ resolve_model_name <- function(
     guesser <- "zero"
   }
   if (identical(solver, "default")) {
-    solver <- "direct"
+    solver <- "halley2"
   }
 
   solver_type <- unname(solver_type_map[solver])
 
-  if (identical(solver, "direct")) {
+  if (identical(solver, "halley2")) {
     is_dispatch <- FALSE
     solver_module <- solver
     model_name <- sprintf("%s_static_%s_%s_%s", time, guesser, solver, link)
@@ -143,8 +143,8 @@ resolve_layer_model <- function(imugap_opts, is_multilayer = TRUE) {
 #'   (default: `"default"`, resolving to `"logit"`). Options include `"default"` (or `"logit"`)
 #'   and `"probit"`.
 #' @param solver character string specifying the rootfinder solver method
-#'   (default: `"default"`, resolving to `"direct"`). Options include `"default"` (or `"direct"`),
-#'   `"halley2"`, `"newton2"`, `"builtin"`, and `"halley10"`.
+#'   (default: `"default"`, resolving to `"halley2"`). Options include `"default"` (or `"halley2"`),
+#'   `"direct"`, `"newton2"`, `"builtin"`, and `"halley10"`.
 #' @examples
 #' imugap_options()
 #' imugap_options(dose_schedule = c(1, 3))
@@ -159,7 +159,7 @@ imugap_options <- function(
   time = c("default", "bspline"),
   offsets = c("default", "static"),
   link = c("default", "logit", "probit"),
-  solver = c("default", "direct", "halley2", "newton2", "builtin", "halley10")
+  solver = c("default", "halley2", "direct", "newton2", "builtin", "halley10")
 ) {
   time <- match.arg(time)
   offsets <- match.arg(offsets)

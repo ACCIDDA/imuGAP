@@ -23,20 +23,20 @@ This document provides concise instructions and rules for AI coding assistants w
   * Never inline full block contents or inlined logic directly into top-level Stan models in
     `inst/stan/`.
   * **Model Naming**: Top-level Stan model files follow the naming convention
-    `<time>_<offsets>_<solver>_<link>.stan` (e.g. `bspline_static_direct_logit.stan`,
-    `bspline_static_direct_probit.stan`, `bspline_static_dispatch_logit.stan`,
-    `bspline_static_dispatch_probit.stan`, and unpartitioned `bspline_single_logit.stan`,
+    `<time>_<offsets>_<solver>_<link>.stan` (e.g. `bspline_static_zero_halley2_logit.stan`,
+    `bspline_static_zero_halley2_probit.stan`, `bspline_static_zero_dispatch_logit.stan`,
+    `bspline_static_zero_dispatch_probit.stan`, and unpartitioned `bspline_single_logit.stan`,
     `bspline_single_probit.stan`).
   * **Link Functions**: Modular link implementations live in `inst/stan/functions/link/<link>.stan`
     and define `link_fn()`, `inv_link()`, `d_inv_link()`, and `d2_inv_link()`.
   * **Options Specification**: Option parameters in `imugap_options()` follow the vector idiom
     `c("default", "the_default_value", ...)` (e.g. `time = c("default", "bspline")`,
-    `offsets = c("default", "static")`, `solver = c("default", "direct", ...)`,
+    `offsets = c("default", "static")`, `solver = c("default", "halley2", ...)`,
     `link = c("default", "logit", "probit")`). High-level options construct a model template,
     reflecting temporal basis, hierarchical offset structure for nested population partitions,
-    solver module (`"direct"` for zero-conditional default rootfinder, `"dispatch"` for dynamic
-    solver selection), and link function. Resolution to the concrete model name occurs dynamically
-    inside `sampling()`.
+    solver module (`"dispatch"` for dynamic solver selection including default `"halley2"`, or
+    `"direct"` for unconstrained baseline), and link function. Resolution to the concrete model
+    name occurs dynamically inside `sampling()`.
 * **Stan Multi-Indexing & Slicing Idiom**:
   * Prefer open-ended slices (e.g. `:n_locs` from beginning to index, `(n_locs + 1):` from index to
     end, `:` for entire dimension) over redundant closed bounds (e.g. `1:n_locs`,

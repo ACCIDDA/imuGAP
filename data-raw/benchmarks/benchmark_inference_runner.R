@@ -368,16 +368,15 @@ run_benchmark_inference <- function(
 
       t_elapsed <- (proc.time() - t_run_start)[["elapsed"]]
 
-      has_draws <- !inherits(fit, "error") && (
-        if (requireNamespace("flexstanr", quietly = TRUE)) {
+      has_draws <- !inherits(fit, "error") &&
+        (if (requireNamespace("flexstanr", quietly = TRUE)) {
           flexstanr::backend_has_draws(fit)
         } else {
           inherits(fit, "stanfit") &&
             fit@mode == 0L &&
             length(fit@sim$samples) > 0L &&
             length(fit@sim$samples[[1L]]) > 0L
-        }
-      )
+        })
 
       if (!has_draws) {
         err_msg <- if (inherits(fit, "error")) {

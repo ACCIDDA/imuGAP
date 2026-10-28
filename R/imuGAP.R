@@ -358,7 +358,7 @@ sampling <- function(
       n_cohort = max(wts$cohort)
     ),
     if (is_multilayer) layer_data,
-    if (is_multilayer && !identical(imugap_opts$solver, "direct")) {
+    if (is_multilayer && !identical(imugap_opts$solver, "halley2")) {
       list(solver_type = imugap_opts$solver_type)
     },
     list(
