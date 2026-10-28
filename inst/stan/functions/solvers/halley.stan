@@ -24,6 +24,7 @@ vector solve_shift_halley(
 ) {
   int C = num_elements(p0);
   int K = num_elements(w);
+  real M = fmax(1e-8, max(abs(delta)));
   vector[C] mu = y_guess;
 
   for (c in 1:C) {
@@ -31,7 +32,7 @@ vector solve_shift_halley(
       vector[K] eta = (eta0[c] + mu[c]) + delta;
       vector[K] p_i = inv_link(eta);
       real f_val = dot_product(w, p_i) - p0[c];
-      if (abs(f_val) < 1e-10) break;
+      if (abs(f_val) < 1e-12) break;
 
       vector[K] d1 = d_inv_link(eta, p_i);
       real f1 = dot_product(w, d1);
@@ -39,13 +40,15 @@ vector solve_shift_halley(
 
       vector[K] d2 = d2_inv_link(eta, p_i, d1);
       real f2 = dot_product(w, d2);
-      real denom = 2.0 * square(f1) - f_val * f2;
 
-      if (abs(denom) <= 1e-12) {
-        mu[c] = mu[c] - f_val / f1;
-      } else {
-        mu[c] = mu[c] - (2.0 * f_val * f1) / denom;
-      }
+      real raw_newton = f_val / f1;
+      real kappa = 0.5 * (f_val * f2) / square(f1);
+      real safe_kappa = kappa / sqrt(1.0 + square(kappa / 0.8));
+      real denom = 1.0 - safe_kappa;
+      real raw_halley = raw_newton / denom;
+
+      real step = raw_halley / sqrt(1.0 + square(raw_halley / M));
+      mu[c] = mu[c] - step;
     }
   }
 

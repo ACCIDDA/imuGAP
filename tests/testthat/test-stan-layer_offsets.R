@@ -9,8 +9,6 @@ target <- "functions/layer_offsets.stan"
 
 skip_if_stan_unchanged(c(
   "functions/link/logit.stan",
-  "functions/guess/zero.stan",
-  "functions/solvers/direct.stan",
   target
 ))
 
@@ -18,8 +16,6 @@ model_layer_offsets <- sprintf(
   "
 functions {
   #include functions/link/logit.stan
-  #include functions/guess/zero.stan
-  #include functions/solvers/direct.stan
   #include %s
 }
 data {
@@ -31,7 +27,6 @@ data {
 
   int n_cohort;
   vector[n_cohort] raw_phi_root;
-  vector[n_locs - 1] loc_child_weight;
 
   int n_unconstrained;
   int n_qr_entries;
@@ -57,12 +52,6 @@ generated quantities {
   vector[n_cohort * n_locs] out_phi = compute_hierarchical_phi(
     raw_phi_root, out_raw_phi_loc, n_cohort, n_locs
   );
-  matrix[n_cohort, n_locs + n_parent_locs] out_raw_phi_and_mu = accumulate_hierarchical_raw_phi(
-    raw_phi_root, off_layer, n_cohort, n_locs,
-    n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight
-  );
-  matrix[n_cohort, n_locs] out_raw_phi_mat = out_raw_phi_and_mu[:, :n_locs];
-  matrix[n_cohort, n_parent_locs] out_mu_offset = out_raw_phi_and_mu[:, (n_locs + 1):];
   vector[n_locs - 1] out_computed_offsets = compute_layer_offsets(
     n_locs, n_parent_locs, parent_child_bounds, z_bounds, qr_bounds, qr_entries,
     z_layer, loc_pop_scale, sigma_layer, loc_layer_idx
@@ -110,14 +99,6 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
   qr_bounds <- ld_sim$qr_bounds
   qr_entries <- ld_sim$qr_entries
 
-  loc_child_weight <- numeric(ld_sim$n_locs - 1L)
-  for (p in seq_len(ld_sim$n_parent_locs)) {
-    st <- parent_child_bounds[1, p]
-    en <- parent_child_bounds[2, p]
-    w <- ld_sim$loc_population[st:en]
-    loc_child_weight[(st - 1L):(en - 1L)] <- w / sum(w)
-  }
-
   data_list <- c(
     ld_sim,
     list(
@@ -125,7 +106,6 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
       off_layer = off_layer,
       n_cohort = length(raw_phi_root),
       raw_phi_root = raw_phi_root,
-      loc_child_weight = loc_child_weight,
       n_unconstrained = n_unconstrained,
       z_layer = z_layer,
       loc_pop_scale = loc_pop_scale,
@@ -144,18 +124,6 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
     model_layer_offsets,
     data = data_list,
     out_phi
-  )
-
-  raw_phi_mat <- run_stan_harness(
-    model_layer_offsets,
-    data = data_list,
-    out_raw_phi_mat
-  )
-
-  mu_offset <- run_stan_harness(
-    model_layer_offsets,
-    data = data_list,
-    out_mu_offset
   )
 
   computed_offsets <- run_stan_harness(
@@ -183,12 +151,6 @@ test_that("accumulate_layer_offsets and compute_hierarchical_phi compute correct
   expected_phi <- as.vector(stats::plogis(expected_mat))
 
   expect_equal(phi, expected_phi, tolerance = 1e-6)
-  expect_equal(raw_phi_mat, expected_mat, tolerance = 1e-6)
-  expect_equal(
-    mu_offset,
-    matrix(0, nrow = length(raw_phi_root), ncol = ld_sim$n_parent_locs),
-    tolerance = 1e-6
-  )
 
   # Check compute_layer_offsets against original full-matrix formulation
   # using dense qr_basis multiplied by z_layer and scaling factors

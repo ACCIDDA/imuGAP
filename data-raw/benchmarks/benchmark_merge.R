@@ -57,7 +57,6 @@ consolidate_benchmark_results <- function(
   runs_list <- list()
   p0_list <- list()
   delta_list <- list()
-  param_list <- list()
 
   for (i in seq_along(part_files)) {
     fpath <- part_files[i]
@@ -86,15 +85,6 @@ consolidate_benchmark_results <- function(
           part_data$delta_profiles
         )
       }
-      if (
-        "param_summaries" %in%
-          names(part_data) &&
-          !is.null(part_data$param_summaries)
-      ) {
-        param_list[[length(param_list) + 1L]] <- as.data.table(
-          part_data$param_summaries
-        )
-      }
     } else if (is.data.frame(part_data)) {
       runs_list[[length(runs_list) + 1L]] <- as.data.table(part_data)
     }
@@ -108,11 +98,6 @@ consolidate_benchmark_results <- function(
   }
   delta_dt <- if (length(delta_list) > 0L) {
     rbindlist(delta_list, use.names = TRUE, fill = TRUE)
-  } else {
-    NULL
-  }
-  param_dt <- if (length(param_list) > 0L) {
-    rbindlist(param_list, use.names = TRUE, fill = TRUE)
   } else {
     NULL
   }
@@ -135,6 +120,9 @@ consolidate_benchmark_results <- function(
       median_sampling_sec = round(median(sampling_sec, na.rm = TRUE), 3),
       median_min_ess_sec = round(median(min_ess_per_sec, na.rm = TRUE), 2),
       iqr_min_ess_sec = round(IQR(min_ess_per_sec, na.rm = TRUE), 2),
+      mean_p0_prob_mae = round(mean(p0_prob_mae, na.rm = TRUE), 4),
+      median_p0_prob_mae = round(median(p0_prob_mae, na.rm = TRUE), 4),
+      mean_p0_prob_rmse = round(mean(p0_prob_rmse, na.rm = TRUE), 4),
       mean_p0_mae = round(mean(p0_link_mae, na.rm = TRUE), 4),
       median_p0_mae = round(median(p0_link_mae, na.rm = TRUE), 4),
       mean_p0_js_dist = round(mean(p0_js_dist, na.rm = TRUE), 4),
@@ -165,6 +153,8 @@ consolidate_benchmark_results <- function(
       median_min_ess_sec = round(median(min_ess_per_sec, na.rm = TRUE), 2),
       mean_min_ess_sec = round(mean(min_ess_per_sec, na.rm = TRUE), 2),
       median_elapsed_sec = round(median(elapsed_sec, na.rm = TRUE), 3),
+      mean_p0_prob_mae = round(mean(p0_prob_mae, na.rm = TRUE), 4),
+      median_p0_prob_mae = round(median(p0_prob_mae, na.rm = TRUE), 4),
       mean_p0_mae = round(mean(p0_link_mae, na.rm = TRUE), 4),
       mean_p0_js_dist = round(mean(p0_js_dist, na.rm = TRUE), 4),
       mean_delta_mae = round(mean(delta_link_mae, na.rm = TRUE), 4),
@@ -244,10 +234,13 @@ consolidate_benchmark_results <- function(
     matrix = matrix_dt,
     ranking = ranking_dt,
     runs = runs_dt,
-    calibration = list(p0 = cal_p0, delta = cal_delta),
+    calibration = if (!is.null(cal_p0) || !is.null(cal_delta)) {
+      list(p0 = cal_p0, delta = cal_delta)
+    } else {
+      NULL
+    },
     p0_profiles = p0_dt,
-    delta_profiles = delta_dt,
-    param_summaries = param_dt
+    delta_profiles = delta_dt
   )
   saveRDS(master_bundle, file = bundle_rds)
 
@@ -270,12 +263,6 @@ consolidate_benchmark_results <- function(
     nrow(ranking_dt)
   ))
   message(sprintf("  - Calibration      : %s", cal_rds))
-  if (!is.null(param_dt)) {
-    message(sprintf(
-      "  - Param summaries  : %d parameter records preserved",
-      nrow(param_dt)
-    ))
-  }
   message(sprintf("  - Master bundle    : %s", bundle_rds))
 
   invisible(master_bundle)

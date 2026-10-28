@@ -51,7 +51,6 @@ generate_mock_stress_test_results <- function(
   results_runs <- list()
   results_p0 <- list()
   results_delta <- list()
-  results_params <- list()
 
   for (m_idx in seq_len(nrow(models_grid))) {
     m_info <- models_grid[m_idx, ]
@@ -178,6 +177,8 @@ generate_mock_stress_test_results <- function(
       p0_q75 <- inv_g(eta_mean + 0.674 * eta_sd)
       p0_q975 <- inv_g(eta_mean + 1.96 * eta_sd)
 
+      p0_prob_mae <- mean(abs(p0_mean - p0_true))
+      p0_prob_rmse <- sqrt(mean((p0_mean - p0_true)^2))
       p0_link_mae <- mean(abs(eta_mean - eta_true))
       p0_link_rmse <- sqrt(mean((eta_mean - eta_true)^2))
       p0_cov_95 <- mean(p0_true >= p0_q025 & p0_true <= p0_q975)
@@ -255,6 +256,8 @@ generate_mock_stress_test_results <- function(
         sampling_sec = sampling_sec,
         status = "ok",
         error_msg = NA_character_,
+        p0_prob_mae = p0_prob_mae,
+        p0_prob_rmse = p0_prob_rmse,
         p0_link_mae = p0_link_mae,
         p0_link_rmse = p0_link_rmse,
         p0_js_dist = p0_js_dist,
@@ -273,31 +276,13 @@ generate_mock_stress_test_results <- function(
         n_divergent = n_div,
         stepsize = round(stats::rnorm(1, 0.045, 0.003), 4)
       )
-
-      # 4. Parameter summaries placeholder
-      results_params[[length(results_params) + 1L]] <- data.table(
-        dataset_id = ds_id,
-        model_name = m_name,
-        parameter = c("sigma_delta", "bsp_sigma"),
-        mean = c(
-          sigma + stats::rnorm(1, 0, 0.02),
-          0.5 + stats::rnorm(1, 0, 0.01)
-        ),
-        sd = c(0.04, 0.05),
-        q025 = c(sigma - 0.08, 0.40),
-        q50 = c(sigma, 0.50),
-        q975 = c(sigma + 0.08, 0.60),
-        n_eff = c(min_ess, mean_ess),
-        Rhat = c(max_rhat, 1.00)
-      )
     }
   }
 
   bundle <- list(
     runs = rbindlist(results_runs),
     p0_profiles = rbindlist(results_p0),
-    delta_profiles = rbindlist(results_delta),
-    param_summaries = rbindlist(results_params)
+    delta_profiles = rbindlist(results_delta)
   )
 
   saveRDS(bundle, output_rds)

@@ -84,7 +84,7 @@ logs:
 
 results_stress_test.rds: benchmark_inference_runner.R config_stress_test.rds \
 	$(UNIFIED_MODELS_OBJS)
-	$(call R)
+	$(call R,--save-profiles)
 
 results_strenuous.rds: benchmark_inference_runner.R config_strenuous.rds \
 	$(UNIFIED_MODELS_OBJS)

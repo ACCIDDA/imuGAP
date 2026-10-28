@@ -11,7 +11,10 @@ skip_if_stan_unchanged(c(
   "functions/unrolled_dose_static_lambda.stan",
   "functions/bounds_to_range.stan",
   "functions/lookups.stan",
+  "functions/guess/zero.stan",
+  "functions/solvers/direct.stan",
   "functions/layer_offsets.stan",
+  "functions/layer_offsets_static.stan",
   "data/shared.stan",
   "data/locations.stan",
   "data/uncensored/weights_location.stan",
@@ -34,7 +37,10 @@ functions {
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/bounds_to_range.stan
   #include functions/lookups.stan
+  #include functions/guess/zero.stan
+  #include functions/solvers/direct.stan
   #include functions/layer_offsets.stan
+  #include functions/layer_offsets_static.stan
 }
 data {
   #include data/shared.stan
