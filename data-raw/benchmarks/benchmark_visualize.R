@@ -9,10 +9,17 @@
 suppressPackageStartupMessages({
   library(data.table)
   library(ggplot2)
-  library(ggh4x)
   library(scales)
   library(pkgload)
 })
+
+facet_nested_or_grid <- function(...) {
+  if (requireNamespace("ggh4x", quietly = TRUE)) {
+    facet_nested_or_grid(...)
+  } else {
+    ggplot2::facet_grid(...)
+  }
+}
 
 if (getRversion() >= "2.15.1") {
   utils::globalVariables(c(
@@ -233,6 +240,13 @@ plot_error_strata <- function(bundle, output_file = NULL) {
     by = list(link_label, k_label, sigma_label, model_label, p0_true)
   ]
 
+  # Floor to prevent non-positive values on log scale
+  agg[, `:=`(
+    mae_q25 = pmax(mae_q25, 1e-6),
+    mae_median = pmax(mae_median, 1e-6),
+    mae_q75 = pmax(mae_q75, 1e-6)
+  )]
+
   p_mae <- ggplot2::ggplot(
     agg,
     ggplot2::aes(
@@ -249,7 +263,7 @@ plot_error_strata <- function(bundle, output_file = NULL) {
     ) +
     ggplot2::geom_line(linewidth = 0.8) +
     ggplot2::geom_point(size = 2.2) +
-    ggh4x::facet_nested(
+    facet_nested_or_grid(
       rows = ggplot2::vars(link_label),
       cols = ggplot2::vars(k_label, sigma_label),
       labeller = ggplot2::label_parsed
@@ -267,20 +281,20 @@ plot_error_strata <- function(bundle, output_file = NULL) {
       labels = scales::label_percent(accuracy = 1),
       minor_breaks = NULL
     ) +
-    ggplot2::scale_y_continuous(
-      labels = scales::label_percent(accuracy = 0.1),
-      expand = ggplot2::expansion(mult = c(0, 0.05))
+    ggplot2::scale_y_log10(
+      breaks = 10^seq(-5, -1, by = 1),
+      labels = scales::label_log()
     ) +
-    ggplot2::coord_cartesian(ylim = c(0, 0.052)) +
+    ggplot2::coord_cartesian(ylim = c(2e-6, 0.2)) +
     imugap_benchmark_theme() +
     ggplot2::labs(
-      title = "Probability-Scale Absolute Error Across Strata",
+      title = "Probability-Scale Absolute Error Across Strata (Log Scale)",
       subtitle = paste(
         "Posterior median and IQR ribbon of |p0_hat - p0_true|",
         "as a function of target parent probability (p0)"
       ),
       x = "Target Parent Probability (p0)",
-      y = "Absolute Probability Error (|p0_hat - p0_true|)"
+      y = "Absolute Probability Error (|p0_hat - p0_true|, log10 scale)"
     )
 
   if (!is.null(output_file)) {
@@ -334,7 +348,7 @@ plot_runtime_strata <- function(bundle, output_file = NULL) {
       width = 0.65,
       show.legend = FALSE
     ) +
-    ggh4x::facet_nested(
+    facet_nested_or_grid(
       rows = ggplot2::vars(link_label),
       cols = ggplot2::vars(k_label, sigma_label),
       labeller = ggplot2::label_parsed
@@ -420,7 +434,7 @@ plot_pareto_tradeoff <- function(bundle, output_file = NULL) {
       linewidth = 0.5
     ) +
     ggplot2::geom_point(size = 2.8, alpha = 0.95) +
-    ggh4x::facet_nested(
+    facet_nested_or_grid(
       rows = ggplot2::vars(link_label),
       cols = ggplot2::vars(k_label, sigma_label),
       labeller = ggplot2::label_parsed,

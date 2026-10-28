@@ -96,7 +96,11 @@ prepare_benchmark_stan_data <- function(
     )
   }
 
-  dose_sched <- ds$dose_schedule
+  dose_sched <- if (!is.null(ds$dose_schedule)) {
+    ds$dose_schedule
+  } else {
+    sort(unique(wts$dose))
+  }
   sched <- build_interval_schedule(dose_sched, wts$age)
 
   st_uncensored <- slice_weights(
@@ -150,7 +154,8 @@ run_benchmark_inference <- function(
   seed = NULL,
   model_idx = NULL,
   chunk_id = NULL,
-  n_chunks = NULL
+  n_chunks = NULL,
+  save_profiles = FALSE
 ) {
   # 1. Resolve population datasets (built by Make)
   rds_pop_path <- if (grepl("\\.ya?ml$", config_input)) {
@@ -243,7 +248,6 @@ run_benchmark_inference <- function(
   results_runs <- list()
   results_p0 <- list()
   results_delta <- list()
-  results_params <- list()
   completed_keys <- character()
 
   if (!is.null(output_rds) && file.exists(output_rds)) {
@@ -255,14 +259,13 @@ run_benchmark_inference <- function(
     ) {
       prev_runs <- prev_bundle$runs
       results_runs[[1L]] <- as.data.table(prev_runs)
-      if ("p0_profiles" %in% names(prev_bundle)) {
-        results_p0[[1L]] <- as.data.table(prev_bundle$p0_profiles)
-      }
-      if ("delta_profiles" %in% names(prev_bundle)) {
-        results_delta[[1L]] <- as.data.table(prev_bundle$delta_profiles)
-      }
-      if ("param_summaries" %in% names(prev_bundle)) {
-        results_params[[1L]] <- as.data.table(prev_bundle$param_summaries)
+      if (isTRUE(save_profiles)) {
+        if ("p0_profiles" %in% names(prev_bundle)) {
+          results_p0[[1L]] <- as.data.table(prev_bundle$p0_profiles)
+        }
+        if ("delta_profiles" %in% names(prev_bundle)) {
+          results_delta[[1L]] <- as.data.table(prev_bundle$delta_profiles)
+        }
       }
       completed_keys <- paste(
         prev_runs$dataset_id,
@@ -365,7 +368,16 @@ run_benchmark_inference <- function(
 
       t_elapsed <- (proc.time() - t_run_start)[["elapsed"]]
 
-      has_draws <- !inherits(fit, "error") && flexstanr::backend_has_draws(fit)
+      has_draws <- !inherits(fit, "error") && (
+        if (requireNamespace("flexstanr", quietly = TRUE)) {
+          flexstanr::backend_has_draws(fit)
+        } else {
+          inherits(fit, "stanfit") &&
+            fit@mode == 0L &&
+            length(fit@sim$samples) > 0L &&
+            length(fit@sim$samples[[1L]]) > 0L
+        }
+      )
 
       if (!has_draws) {
         err_msg <- if (inherits(fit, "error")) {
@@ -390,6 +402,8 @@ run_benchmark_inference <- function(
           sampling_sec = NA_real_,
           status = "error",
           error_msg = err_msg,
+          p0_prob_mae = NA_real_,
+          p0_prob_rmse = NA_real_,
           p0_link_mae = NA_real_,
           p0_link_rmse = NA_real_,
           p0_js_dist = NA_real_,
@@ -447,6 +461,8 @@ run_benchmark_inference <- function(
       p0_true <- ds$p0_true
       eta_true <- link_fn(p0_true)
 
+      p0_prob_mae <- mean(abs(p0_mean - p0_true))
+      p0_prob_rmse <- sqrt(mean((p0_mean - p0_true)^2))
       p0_link_mae <- mean(abs(eta_mean - eta_true))
       p0_link_rmse <- sqrt(mean((eta_mean - eta_true)^2))
       p0_js_dist <- compute_bernoulli_jsd(p0_true, p0_mean)
@@ -457,24 +473,6 @@ run_benchmark_inference <- function(
         p0_q975,
         p0_true,
         alpha = 0.05
-      )
-
-      # Record cohort p0 profiles
-      results_p0[[length(results_p0) + 1L]] <- data.table(
-        dataset_id = ds$dataset_id,
-        model_name = m_name,
-        cohort = seq_along(p0_true),
-        p0_true = p0_true,
-        eta_true = eta_true,
-        p0_mean = p0_mean,
-        p0_sd = p0_sd,
-        p0_q025 = p0_q025,
-        p0_q25 = p0_q25,
-        p0_q50 = p0_q50,
-        p0_q75 = p0_q75,
-        p0_q975 = p0_q975,
-        eta_mean = eta_mean,
-        eta_sd = eta_sd
       )
 
       # 2. Subpopulation Offset Recovery (from transformed parameter off_layer)
@@ -499,39 +497,48 @@ run_benchmark_inference <- function(
         alpha = 0.05
       )
 
-      # Record subpopulation delta profiles
-      results_delta[[length(results_delta) + 1L]] <- data.table(
-        dataset_id = ds$dataset_id,
-        model_name = m_name,
-        node_idx = seq_along(delta_true),
-        delta_true = delta_true,
-        delta_mean = off_mean,
-        delta_sd = off_sd,
-        delta_q025 = off_q025,
-        delta_q25 = off_q25,
-        delta_q50 = off_q50,
-        delta_q75 = off_q75,
-        delta_q975 = off_q975
-      )
+      if (isTRUE(save_profiles)) {
+        # Record cohort p0 profiles
+        results_p0[[length(results_p0) + 1L]] <- data.table(
+          dataset_id = ds$dataset_id,
+          model_name = m_name,
+          cohort = seq_along(p0_true),
+          p0_true = p0_true,
+          eta_true = eta_true,
+          p0_mean = p0_mean,
+          p0_sd = p0_sd,
+          p0_q025 = p0_q025,
+          p0_q25 = p0_q25,
+          p0_q50 = p0_q50,
+          p0_q75 = p0_q75,
+          p0_q975 = p0_q975,
+          eta_mean = eta_mean,
+          eta_sd = eta_sd
+        )
 
-      # 3. Parameter Summaries (excluding lp__)
+        # Record subpopulation delta profiles
+        results_delta[[length(results_delta) + 1L]] <- data.table(
+          dataset_id = ds$dataset_id,
+          model_name = m_name,
+          node_idx = seq_along(delta_true),
+          delta_true = delta_true,
+          delta_mean = off_mean,
+          delta_sd = off_sd,
+          delta_q025 = off_q025,
+          delta_q25 = off_q25,
+          delta_q50 = off_q50,
+          delta_q75 = off_q75,
+          delta_q975 = off_q975
+        )
+      }
+
+      # 3. MCMC Diagnostics
       param_names <- rownames(fit_sum)
-      clean_p_mask <- param_names != "lp__"
-      results_params[[length(results_params) + 1L]] <- data.table(
-        dataset_id = ds$dataset_id,
-        model_name = m_name,
-        parameter = param_names[clean_p_mask],
-        mean = fit_sum[clean_p_mask, "mean"],
-        sd = fit_sum[clean_p_mask, "sd"],
-        q025 = fit_sum[clean_p_mask, "2.5%"],
-        q50 = fit_sum[clean_p_mask, "50%"],
-        q975 = fit_sum[clean_p_mask, "97.5%"],
-        n_eff = fit_sum[clean_p_mask, "n_eff"],
-        Rhat = fit_sum[clean_p_mask, "Rhat"]
+      diag_mask <- !grepl(
+        "^(lp__|raw_phi_mat\\[|z_layer\\[|raw_phi_and_mu\\[)",
+        param_names
       )
-
-      # 4. MCMC Diagnostics
-      n_eff_vals <- fit_sum[, "n_eff"]
+      n_eff_vals <- fit_sum[diag_mask, "n_eff"]
       n_eff_clean <- n_eff_vals[
         !is.na(n_eff_vals) & is.finite(n_eff_vals) & n_eff_vals > 0
       ]
@@ -543,7 +550,7 @@ run_benchmark_inference <- function(
         NA_real_
       }
 
-      rhat_vals <- fit_sum[, "Rhat"]
+      rhat_vals <- fit_sum[diag_mask, "Rhat"]
       rhat_clean <- rhat_vals[!is.na(rhat_vals) & is.finite(rhat_vals)]
       max_rhat <- if (length(rhat_clean) > 0L) max(rhat_clean) else NA_real_
       n_div <- get_divergences(fit)
@@ -557,10 +564,11 @@ run_benchmark_inference <- function(
 
       message(sprintf(
         paste0(
-          "DONE (%.1fs | p0_MAE=%.4f | JSD=%.4f | off_MAE=%.4f | ",
-          "min_ESS=%.0f | max_Rhat=%.3f | div=%d)"
+          "DONE (%.1fs | p0_prob_MAE=%.4f | p0_link_MAE=%.4f | JSD=%.4f | ",
+          "off_MAE=%.4f | min_ESS=%.0f | max_Rhat=%.3f | div=%d)"
         ),
         t_elapsed,
+        p0_prob_mae,
         p0_link_mae,
         p0_js_dist,
         delta_link_mae,
@@ -585,6 +593,8 @@ run_benchmark_inference <- function(
         sampling_sec = sampling_sec,
         status = "ok",
         error_msg = NA_character_,
+        p0_prob_mae = p0_prob_mae,
+        p0_prob_rmse = p0_prob_rmse,
         p0_link_mae = p0_link_mae,
         p0_link_rmse = p0_link_rmse,
         p0_js_dist = p0_js_dist,
@@ -608,12 +618,15 @@ run_benchmark_inference <- function(
       if (
         !is.null(output_rds) && (run_idx %% 50L == 0L || run_idx == total_runs)
       ) {
-        res_tmp_bundle <- list(
-          runs = rbindlist(results_runs),
-          p0_profiles = rbindlist(results_p0),
-          delta_profiles = rbindlist(results_delta),
-          param_summaries = rbindlist(results_params)
-        )
+        res_tmp_bundle <- if (isTRUE(save_profiles)) {
+          list(
+            runs = rbindlist(results_runs),
+            p0_profiles = rbindlist(results_p0),
+            delta_profiles = rbindlist(results_delta)
+          )
+        } else {
+          list(runs = rbindlist(results_runs))
+        }
         saveRDS(res_tmp_bundle, file = output_rds)
         t_now <- (proc.time() - t_suite_start)[["elapsed"]]
         runs_done <- max(run_idx - length(completed_keys), 1L)
@@ -631,12 +644,15 @@ run_benchmark_inference <- function(
     }
   }
 
-  res_bundle <- list(
-    runs = rbindlist(results_runs),
-    p0_profiles = rbindlist(results_p0),
-    delta_profiles = rbindlist(results_delta),
-    param_summaries = rbindlist(results_params)
-  )
+  res_bundle <- if (isTRUE(save_profiles)) {
+    list(
+      runs = rbindlist(results_runs),
+      p0_profiles = rbindlist(results_p0),
+      delta_profiles = rbindlist(results_delta)
+    )
+  } else {
+    list(runs = rbindlist(results_runs))
+  }
 
   # Save results bundle
   if (!is.null(output_rds)) {
@@ -683,6 +699,7 @@ if (sys.nframe() == 0L) {
   model_idx_opt <- get_opt_int("model-idx", NULL)
   chunk_id_opt <- get_opt_int("chunk-id", NULL)
   n_chunks_opt <- get_opt_int("n-chunks", NULL)
+  save_profiles_opt <- "--save-profiles" %in% args
   output_arg <- if (length(non_flags) >= 2L) {
     non_flags[length(non_flags)]
   } else {
@@ -710,6 +727,7 @@ if (sys.nframe() == 0L) {
     seed = seed_opt,
     model_idx = model_idx_opt,
     chunk_id = chunk_id_opt,
-    n_chunks = n_chunks_opt
+    n_chunks = n_chunks_opt,
+    save_profiles = save_profiles_opt
   )
 }

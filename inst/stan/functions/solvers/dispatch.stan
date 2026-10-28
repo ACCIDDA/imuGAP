@@ -17,7 +17,6 @@
  *   4: builtin (Stan algebra_solver rootfinder)
  *   5: halley10 (10-iteration high-precision Halley solver)
  *
- * @param mu_init Vector of initial guess shifts (length `n_cohort`).
  * @param eta0 Vector of baseline parent coordinates on link scale (length `n_cohort`).
  * @param p0 Vector of baseline target probabilities (length `n_cohort`).
  * @param w Vector of child weights summing to 1 (length `K`).
@@ -26,13 +25,13 @@
  * @return Vector of solved link-scale shift offsets mu (length `n_cohort`).
  */
 vector solve_subpop_shift(
-  vector mu_init,
   vector eta0,
   vector p0,
   data vector w,
   vector delta,
   int solver_type
 ) {
+  vector[num_elements(eta0)] mu_init = guess_subpop_shift(eta0, p0, w, delta);
   if (solver_type == 1) {
     return mu_init;
   } else if (solver_type == 2) {
@@ -45,24 +44,4 @@ vector solve_subpop_shift(
     return solve_shift_halley(mu_init, eta0, p0, w, delta, 10);
   }
   return mu_init;
-}
-
-vector solve_subpop_shift(
-  vector eta0,
-  vector p0,
-  data vector w,
-  vector delta,
-  int solver_type
-) {
-  vector[num_elements(eta0)] mu_init = guess_subpop_shift(eta0, p0, w, delta);
-  return solve_subpop_shift(mu_init, eta0, p0, w, delta, solver_type);
-}
-
-vector solve_subpop_shift(
-  vector eta0,
-  vector p0,
-  data vector w,
-  vector delta
-) {
-  return solve_subpop_shift(eta0, p0, w, delta, 1);
 }

@@ -24,6 +24,7 @@ vector solve_shift_newton(
 ) {
   int C = num_elements(p0);
   int K = num_elements(w);
+  real M = fmax(1e-8, max(abs(delta)));
   vector[C] mu = y_guess;
 
   for (c in 1:C) {
@@ -31,13 +32,15 @@ vector solve_shift_newton(
       vector[K] eta = (eta0[c] + mu[c]) + delta;
       vector[K] p_i = inv_link(eta);
       real f_val = dot_product(w, p_i) - p0[c];
-      if (abs(f_val) < 1e-10) break;
+      if (abs(f_val) < 1e-12) break;
 
       vector[K] d1 = d_inv_link(eta, p_i);
       real f1 = dot_product(w, d1);
       if (f1 <= 1e-12) break;
 
-      mu[c] = mu[c] - f_val / f1;
+      real raw_step = f_val / f1;
+      real step = raw_step / sqrt(1.0 + square(raw_step / M));
+      mu[c] = mu[c] - step;
     }
   }
 

@@ -4,6 +4,7 @@ functions {
   #include functions/guess/zero.stan
   #include functions/solvers/dispatch.stan
   #include functions/layer_offsets.stan
+  #include functions/layer_offsets_dispatch.stan
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/observation_likelihood_reduce.stan
 }

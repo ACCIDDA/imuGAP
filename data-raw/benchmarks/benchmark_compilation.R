@@ -16,14 +16,36 @@ suppressPackageStartupMessages({
 
 # --- Package Environment Resolution -------------------------------------------
 
-pkgload::load_all(
-  path = pkgload::pkg_path(),
-  compile = FALSE,
-  export_all = TRUE,
-  quiet = TRUE
+tryCatch(
+  pkgload::load_all(
+    path = pkgload::pkg_path(),
+    compile = FALSE,
+    export_all = TRUE,
+    quiet = TRUE
+  ),
+  error = function(e) {
+    r_dir <- pkgload::package_file("R")
+    if (dir.exists(r_dir)) {
+      r_files <- list.files(r_dir, pattern = "\\.R$", full.names = TRUE)
+      r_files <- setdiff(r_files, file.path(r_dir, c("flexstanr.R", "stanmodels.R")))
+      for (f in r_files) {
+        suppressWarnings(sys.source(f, envir = .GlobalEnv))
+      }
+    }
+  }
 )
-SOLVER_TYPE_MAP <- solver_type_map
-GUESS_TYPE_MAP <- guess_type_map
+
+SOLVER_TYPE_MAP <- if (exists("solver_type_map")) {
+  solver_type_map
+} else {
+  c(direct = 1L, halley2 = 2L, newton2 = 3L, builtin = 4L, halley10 = 5L)
+}
+
+GUESS_TYPE_MAP <- if (exists("guess_type_map")) {
+  guess_type_map
+} else {
+  c(zero = 1L)
+}
 
 # --- Configuration Reading & Normalization -----------------------------------
 
