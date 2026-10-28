@@ -52,7 +52,7 @@ This is a minor release update of imuGAP (version 0.3.0).
     solver dependencies from shared QR basis projection (`functions/layer_offsets.stan`).
   - Standardized top-level model names under the convention
     `<time>_<offsets>_<guess>_<solver>_<link>.stan` (e.g.
-    `bspline_static_zero_direct_logit.stan`, `bspline_static_zero_dispatch_probit.stan`) and
+    `bspline_static_zero_halley2_logit.stan`, `bspline_static_zero_dispatch_probit.stan`) and
     `<time>_single_<link>.stan` for unpartitioned models.
 * **Automated Diagram Pipeline**:
   - Added automated Mermaid diagram compilation pipeline generating SVG and PDF visual assets

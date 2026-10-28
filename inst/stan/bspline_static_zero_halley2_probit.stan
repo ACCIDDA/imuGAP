@@ -2,7 +2,7 @@ functions {
   #include functions/convenience.stan
   #include functions/link/probit.stan
   #include functions/guess/zero.stan
-  #include functions/solvers/direct.stan
+  #include functions/solvers/halley2.stan
   #include functions/layer_offsets.stan
   #include functions/layer_offsets_static.stan
   #include functions/unrolled_dose_static_lambda.stan
@@ -53,3 +53,4 @@ generated quantities {
     }
   }
 }
+

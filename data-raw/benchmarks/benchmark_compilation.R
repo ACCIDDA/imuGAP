@@ -27,7 +27,10 @@ tryCatch(
     r_dir <- pkgload::package_file("R")
     if (dir.exists(r_dir)) {
       r_files <- list.files(r_dir, pattern = "\\.R$", full.names = TRUE)
-      r_files <- setdiff(r_files, file.path(r_dir, c("flexstanr.R", "stanmodels.R")))
+      r_files <- setdiff(
+        r_files,
+        file.path(r_dir, c("flexstanr.R", "stanmodels.R"))
+      )
       for (f in r_files) {
         suppressWarnings(sys.source(f, envir = .GlobalEnv))
       }
