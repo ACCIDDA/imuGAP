@@ -32,12 +32,11 @@ links:
 
 guessers:
   - "zero"
-  # Prospective guessers (disabled until Stan implementations are wired up):
-  # - "taylor2"
-  # - "taylor4"
-  # - "pade"
-  # - "asymptotic"
-  # - "conditioned"
+  - "taylor2"
+  - "taylor4"
+  - "pade"
+  - "asymptotic"
+  - "conditioned"
 
 solvers:
   - "direct"
