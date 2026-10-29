@@ -104,6 +104,27 @@ print_stan_summary <- function(stanfit) {
   }
 }
 
+trim_stanfit <- function(stanfit, keep_per_chain = 125L) {
+  stopifnot(inherits(stanfit, "stanfit"))
+  for (i in seq_along(stanfit@sim$samples)) {
+    orig_n <- length(stanfit@sim$samples[[i]][[1]])
+    keep_idx <- (orig_n - keep_per_chain + 1L):orig_n
+    for (p in seq_along(stanfit@sim$samples[[i]])) {
+      stanfit@sim$samples[[i]][[p]] <- stanfit@sim$samples[[i]][[p]][keep_idx]
+    }
+  }
+  stanfit@sim$iter <- keep_per_chain
+  stanfit@sim$warmup <- 0L
+  stanfit@sim$warmup2 <- rep(0L, length(stanfit@sim$samples))
+  stanfit@sim$n_save <- rep(
+    as.integer(keep_per_chain),
+    length(stanfit@sim$samples)
+  )
+  total_samples <- keep_per_chain * length(stanfit@sim$samples)
+  stanfit@sim$permutation <- seq_len(total_samples)
+  stanfit
+}
+
 st_opts <- stan_options(
   iter = 1000,
   chains = 4L,
@@ -129,6 +150,7 @@ fit_res <- measure_time(sampling(
 fit_sim <- fit_res$val
 print_time("Fitting", fit_res$time)
 print_stan_summary(fit_sim$raw_fit)
+fit_sim$raw_fit <- trim_stanfit(fit_sim$raw_fit, 125L)
 
 stopifnot(
   inherits(fit_sim$raw_fit, "stanfit"),
@@ -180,6 +202,7 @@ fit_res_2layer <- measure_time(sampling(
 fit_sim_2layer <- fit_res_2layer$val
 print_time("Fitting", fit_res_2layer$time)
 print_stan_summary(fit_sim_2layer$raw_fit)
+fit_sim_2layer$raw_fit <- trim_stanfit(fit_sim_2layer$raw_fit, 125L)
 
 stopifnot(inherits(fit_sim_2layer$raw_fit, "stanfit"))
 usethis::use_data(fit_sim_2layer, overwrite = TRUE, compress = "xz")
@@ -228,6 +251,7 @@ fit_res_1layer <- measure_time(sampling(
 fit_sim_1layer <- fit_res_1layer$val
 print_time("Fitting", fit_res_1layer$time)
 print_stan_summary(fit_sim_1layer$raw_fit)
+fit_sim_1layer$raw_fit <- trim_stanfit(fit_sim_1layer$raw_fit, 125L)
 
 stopifnot(inherits(fit_sim_1layer$raw_fit, "stanfit"))
 usethis::use_data(fit_sim_1layer, overwrite = TRUE, compress = "xz")

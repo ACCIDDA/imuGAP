@@ -12,7 +12,7 @@ test_that("log_lik.imugap_fit computes valid pointwise log-likelihood matrix", {
   # Test with all draws
   ll_all <- log_lik.imugap_fit(fit_sim)
   expect_true(is.matrix(ll_all))
-  expect_equal(nrow(ll_all), 2000L) # fit_sim has 2000 posterior draws (500 iter x 4 chains)
+  expect_equal(nrow(ll_all), 500L) # fit_sim has 500 posterior draws (125 iter x 4 chains)
   expect_equal(ncol(ll_all), ncol(ll_sub))
   expect_true(all(is.finite(ll_all)))
   expect_true(all(ll_all <= 0))
