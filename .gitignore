@@ -5,6 +5,9 @@ src/RcppExports.o
 src/stanExports*
 src/*.dll
 src/*.so
+src/*.gcno
+src/*.gcda
+src/*.gcov
 .Rhistory
 .vscode/*
 *.gz
