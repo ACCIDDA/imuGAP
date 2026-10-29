@@ -120,8 +120,11 @@ trim_stanfit <- function(stanfit, keep_per_chain = 125L) {
     as.integer(keep_per_chain),
     length(stanfit@sim$samples)
   )
-  total_samples <- keep_per_chain * length(stanfit@sim$samples)
-  stanfit@sim$permutation <- seq_len(total_samples)
+  stanfit@sim$permutation <- replicate(
+    length(stanfit@sim$samples),
+    seq_len(keep_per_chain),
+    simplify = FALSE
+  )
   stanfit
 }
 
