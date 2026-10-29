@@ -9,7 +9,7 @@
 functions {
   #include functions/convenience.stan
   #include functions/link/@LINK@.stan
-  #include functions/guess/@GUESS@.stan
+  #include functions/guess/dispatch_@LINK@.stan
   #include functions/solvers/dispatch.stan
   #include functions/layer_offsets.stan
   #include functions/layer_offsets_dispatch.stan
@@ -19,6 +19,7 @@ functions {
 data {
   #include data/shared.stan
   #include data/locations.stan
+  #include data/guesser.stan
   #include data/solver.stan
   #include data/uncensored/weights_location.stan
   #include data/right/weights_location.stan
