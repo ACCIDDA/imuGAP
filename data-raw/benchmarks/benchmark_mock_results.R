@@ -28,13 +28,18 @@ generate_mock_stress_test_results <- function(
   cfg <- pop_data$config
   datasets <- pop_data$datasets
 
-  # Model combinations for stress-test: zero guesser x solvers
+  # Model combinations for stress-test: filter out invalid (logit + pade)
   models_grid <- expand.grid(
     link = cfg$links,
     guess = cfg$guessers,
     solver = cfg$solvers,
     stringsAsFactors = FALSE
   )
+  models_grid <- models_grid[
+    !(models_grid$link == "logit" & models_grid$guess == "pade"),
+    ,
+    drop = FALSE
+  ]
   models_grid$model_name <- sprintf(
     "model_%s_%s_%s",
     models_grid$link,
@@ -92,10 +97,21 @@ generate_mock_stress_test_results <- function(
           tanh(delta_true) +
           stats::rnorm(K, mean = 0, sd = 0.008)
       } else {
+        guess_factor <- switch(
+          m_guess,
+          zero = 1.0,
+          taylor2 = 0.35,
+          taylor4 = 0.12,
+          pade = if (m_link == "probit") 0.08 else 0.12,
+          asymptotic = 0.20,
+          conditioned = 0.05,
+          1.0
+        )
         delta_bias <- -0.120 *
+          guess_factor *
           (sigma^2) *
           tanh(delta_true) +
-          stats::rnorm(K, mean = 0, sd = 0.025)
+          stats::rnorm(K, mean = 0, sd = 0.005 + 0.020 * guess_factor)
       }
 
       off_sd <- pmax(
@@ -154,10 +170,21 @@ generate_mock_stress_test_results <- function(
           curvature_factor +
           stats::rnorm(length(p0_true), 0, 0.007)
       } else {
+        guess_factor <- switch(
+          m_guess,
+          zero = 1.0,
+          taylor2 = 0.30,
+          taylor4 = 0.10,
+          pade = if (m_link == "probit") 0.06 else 0.10,
+          asymptotic = 0.18,
+          conditioned = 0.04,
+          1.0
+        )
         0.180 *
+          guess_factor *
           (sigma^2) *
           curvature_factor +
-          stats::rnorm(length(p0_true), 0, 0.018)
+          stats::rnorm(length(p0_true), 0, 0.004 + 0.014 * guess_factor)
       }
       eta_sd <- pmax(
         0.02,

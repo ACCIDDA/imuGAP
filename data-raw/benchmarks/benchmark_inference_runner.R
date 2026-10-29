@@ -117,6 +117,7 @@ prepare_benchmark_stan_data <- function(
       n_cohort = max(wts$cohort)
     ),
     layer_data,
+    if (!is.null(guess_type)) list(guess_type = as.integer(guess_type)),
     if (!is.null(solver_type)) list(solver_type = as.integer(solver_type)),
     list(
       n_doses = length(dose_sched),
