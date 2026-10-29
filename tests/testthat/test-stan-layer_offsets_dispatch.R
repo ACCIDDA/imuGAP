@@ -4,7 +4,7 @@ target <- "functions/layer_offsets_dispatch.stan"
 
 skip_if_stan_unchanged(c(
   "functions/link/logit.stan",
-  "functions/guess/zero.stan",
+  "functions/guess/dispatch_logit.stan",
   "functions/solvers/dispatch.stan",
   "functions/layer_offsets.stan",
   target
@@ -14,7 +14,7 @@ model_layer_offsets_dispatch <- sprintf(
   "
 functions {
   #include functions/link/logit.stan
-  #include functions/guess/zero.stan
+  #include functions/guess/dispatch_logit.stan
   #include functions/solvers/dispatch.stan
   #include functions/layer_offsets.stan
   #include %s
@@ -29,6 +29,7 @@ data {
   int n_cohort;
   vector[n_cohort] raw_phi_root;
   vector[n_locs - 1] loc_child_weight;
+  int guess_type;
   int solver_type;
 }
 parameters {
@@ -41,7 +42,7 @@ generated quantities {
   matrix[n_cohort, n_locs + n_parent_locs] out_raw_phi_and_mu = accumulate_hierarchical_raw_phi(
     raw_phi_root, off_layer, n_cohort, n_locs,
     n_parent_locs, parent_child_bounds, parent_loc_id, loc_child_weight,
-    solver_type
+    guess_type, solver_type
   );
   matrix[n_cohort, n_locs] out_raw_phi_mat = out_raw_phi_and_mu[:, :n_locs];
   matrix[n_cohort, n_parent_locs] out_mu_offset = out_raw_phi_and_mu[:, (n_locs + 1):];
@@ -70,6 +71,7 @@ test_that("accumulate_hierarchical_raw_phi with solver_type dispatches correctly
     n_cohort = n_cohort,
     raw_phi_root = raw_phi_root,
     loc_child_weight = loc_child_weight,
+    guess_type = 1L,
     solver_type = 1L
   )
 
@@ -90,4 +92,14 @@ test_that("accumulate_hierarchical_raw_phi with solver_type dispatches correctly
   expect_equal(unname(res_mu[, 1L]), rep(0.0, n_cohort), tolerance = 1e-9)
   # Root location equals raw_phi_root
   expect_equal(unname(res_mat[, 1L]), raw_phi_root, tolerance = 1e-9)
+
+  # With taylor2 guess and direct solver, mu_offset is non-zero and finite
+  data_t2 <- data_list
+  data_t2$guess_type <- 2L
+  res_mu_t2 <- run_stan_harness(
+    model_layer_offsets_dispatch,
+    data = data_t2,
+    out_mu_offset
+  )
+  expect_true(all(is.finite(res_mu_t2)))
 })

@@ -1,7 +1,7 @@
 functions {
   #include functions/convenience.stan
   #include functions/link/probit.stan
-  #include functions/guess/zero.stan
+  #include functions/guess/dispatch_probit.stan
   #include functions/solvers/dispatch.stan
   #include functions/layer_offsets.stan
   #include functions/layer_offsets_dispatch.stan
@@ -11,6 +11,7 @@ functions {
 data {
   #include data/shared.stan
   #include data/locations.stan
+  #include data/guesser.stan
   #include data/solver.stan
   #include data/uncensored/weights_location.stan
   #include data/right/weights_location.stan

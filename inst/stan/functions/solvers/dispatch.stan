@@ -8,7 +8,7 @@
 #include functions/solvers/builtin_rootfinding.stan
 
 /**
- * Dispatch rootfinding solver based on integer type code.
+ * Dispatch rootfinding solver based on integer type code with initial guess dispatch.
  *
  * Types:
  *   1: direct (direct evaluation of initial guess, 0 steps)
@@ -21,6 +21,7 @@
  * @param p0 Vector of baseline target probabilities (length `n_cohort`).
  * @param w Vector of child weights summing to 1 (length `K`).
  * @param delta Vector of relative child offsets on link scale (length `K`).
+ * @param guess_type Integer code specifying initial guesser (1..6).
  * @param solver_type Integer code specifying solver (1..5).
  * @return Vector of solved link-scale shift offsets mu (length `n_cohort`).
  */
@@ -29,9 +30,10 @@ vector solve_subpop_shift(
   vector p0,
   data vector w,
   vector delta,
+  int guess_type,
   int solver_type
 ) {
-  vector[num_elements(eta0)] mu_init = guess_subpop_shift(eta0, p0, w, delta);
+  vector[num_elements(eta0)] mu_init = guess_subpop_shift(eta0, p0, w, delta, guess_type);
   if (solver_type == 1) {
     return mu_init;
   } else if (solver_type == 2) {
@@ -44,4 +46,14 @@ vector solve_subpop_shift(
     return solve_shift_halley(mu_init, eta0, p0, w, delta, 10);
   }
   return mu_init;
+}
+
+vector solve_subpop_shift(
+  vector eta0,
+  vector p0,
+  data vector w,
+  vector delta,
+  int solver_type
+) {
+  return solve_subpop_shift(eta0, p0, w, delta, 1, solver_type);
 }

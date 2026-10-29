@@ -14,8 +14,11 @@ test_that("imugap_options returns expected structure with defaults", {
       "offsets",
       "link",
       "model",
+      "guesser",
+      "guess_type",
       "solver",
-      "solver_type"
+      "solver_type",
+      "is_dispatch"
     )
   )
   expect_equal(defaults$df, 5L)
@@ -25,8 +28,11 @@ test_that("imugap_options returns expected structure with defaults", {
   expect_equal(defaults$offsets, "static")
   expect_equal(defaults$link, "logit")
   expect_equal(defaults$model, "bspline_static_zero_halley2_logit")
+  expect_equal(defaults$guesser, "zero")
+  expect_equal(defaults$guess_type, 1L)
   expect_equal(defaults$solver, "halley2")
   expect_equal(defaults$solver_type, 2L)
+  expect_false(defaults$is_dispatch)
 })
 
 test_that("imugap_options df can be overridden", {
@@ -192,6 +198,23 @@ test_that("imugap_options defaults to halley2, and accepts valid solver values",
   expect_error(imugap_options(solver = "default"), "should be")
 })
 
+test_that("imugap_options guesser option maps to guess_type correctly", {
+  expect_equal(imugap_options(guesser = "zero")$guess_type, 1L)
+  expect_equal(imugap_options(guesser = "taylor2")$guess_type, 2L)
+  expect_equal(imugap_options(guesser = "taylor4")$guess_type, 3L)
+  expect_equal(imugap_options(guesser = "pade")$guess_type, 4L)
+  expect_equal(imugap_options(guesser = "asymptotic")$guess_type, 5L)
+  expect_equal(imugap_options(guesser = "conditioned")$guess_type, 6L)
+})
+
+test_that("imugap_options rejects invalid guesser values", {
+  expect_error(imugap_options(guesser = "unknown_guesser"), "should be")
+  expect_error(
+    imugap_options(guesser = 0L),
+    "must be NULL or a character vector"
+  )
+})
+
 test_that("imugap_options rejects invalid solver values", {
   expect_error(imugap_options(solver = "unknown_solver"), "should be")
   expect_error(
@@ -267,6 +290,26 @@ test_that("resolve_model_name resolves dynamic dispatch solvers", {
   expect_equal(res_n2_probit$solver_type, 3L)
   expect_equal(res_n2_probit$link, "probit")
   expect_true(res_n2_probit$is_dispatch)
+})
+
+test_that("resolve_model_name resolves dynamic dispatch guessers", {
+  res_t2 <- resolve_model_name(guesser = "taylor2")
+  expect_equal(res_t2$model_name, "bspline_static_zero_dispatch_logit")
+  expect_equal(res_t2$guesser, "taylor2")
+  expect_equal(res_t2$guess_type, 2L)
+  expect_true(res_t2$is_dispatch)
+
+  res_cond_probit <- resolve_model_name(
+    guesser = "conditioned",
+    link = "probit"
+  )
+  expect_equal(
+    res_cond_probit$model_name,
+    "bspline_static_zero_dispatch_probit"
+  )
+  expect_equal(res_cond_probit$guesser, "conditioned")
+  expect_equal(res_cond_probit$guess_type, 6L)
+  expect_true(res_cond_probit$is_dispatch)
 })
 
 test_that("resolve_layer_model handles multilayer vs single-layer conversion", {
