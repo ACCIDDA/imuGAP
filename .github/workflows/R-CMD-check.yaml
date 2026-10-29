@@ -37,16 +37,16 @@ jobs:
       - name: Guard source tarball size
         shell: bash
         run: |
-          echo "=== Top 20 largest files in working directory before build ==="
-          find . -maxdepth 4 -type f -exec du -h {} + | sort -hr | head -n 20
           R CMD build --resave-data=best --compact-vignettes=both .
           TARBALL=$(ls -1 imuGAP_*.tar.gz | head -n 1)
           SIZE=$(wc -c < "${TARBALL}")
           echo "Built ${TARBALL} (${SIZE} bytes)"
-          echo "=== Tarball size breakdown by directory ==="
-          tar -ztvf "${TARBALL}" | awk '{split($6, a, "/"); dir=a[1]"/"a[2]; size[dir]+=$3} END {for (d in size) printf "%-30s %12d bytes\n", d, size[d]}' | sort -k2 -n -r
-          echo "=== Top 30 largest files in source tarball ==="
-          tar -ztvf "${TARBALL}" | sort -k3 -n -r | head -n 30
+          if [ "${SIZE}" -gt 5242880 ]; then
+            echo "=== Tarball size breakdown by directory ==="
+            tar -ztvf "${TARBALL}" | awk '{split($6, a, "/"); dir=a[1]"/"a[2]; size[dir]+=$3} END {for (d in size) printf "%-30s %12d bytes\n", d, size[d]}' | sort -k2 -n -r
+            echo "=== Top 20 largest files in source tarball ==="
+            tar -ztvf "${TARBALL}" | sort -k3 -n -r | head -n 20
+          fi
           if [ "${SIZE}" -gt 10485760 ]; then
             echo "::error::Source tarball exceeds 10MB (${SIZE} bytes)"
             exit 1

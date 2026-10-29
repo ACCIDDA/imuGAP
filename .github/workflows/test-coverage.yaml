@@ -39,6 +39,11 @@ jobs:
           name: coverage-data
           path: cobertura.xml
 
+      - name: Clean up coverage artifacts in src/
+        if: always()
+        shell: bash
+        run: rm -f src/*.gcno src/*.gcda src/*.gcov
+
       - name: Show testthat output
         if: always()
         run: |

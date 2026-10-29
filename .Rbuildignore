@@ -33,3 +33,11 @@
 ^figure$
 ^figures$
 ^.*\.tar\.gz$
+^src/.*\.gcno$
+^src/.*\.gcda$
+^src/.*\.gcov$
+^src/.*\.o$
+^src/.*\.so$
+^src/.*\.dll$
+^src/.*\.dylib$
+^src/.*\.a$
