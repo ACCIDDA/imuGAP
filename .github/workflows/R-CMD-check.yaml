@@ -37,7 +37,7 @@ jobs:
       - name: Guard source tarball size
         shell: bash
         run: |
-          R CMD build .
+          R CMD build --resave-data=best --compact-vignettes=both .
           TARBALL=$(ls -1 imuGAP_*.tar.gz | head -n 1)
           SIZE=$(wc -c < "${TARBALL}")
           echo "Built ${TARBALL} (${SIZE} bytes)"

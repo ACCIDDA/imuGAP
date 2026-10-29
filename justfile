@@ -149,7 +149,7 @@ data-fit:
 
 [doc('Build a tar.gz artifact')]
 build: bootstrap-namespace diagrams docs
-	R CMD build .
+	R CMD build --resave-data=best --compact-vignettes=both .
 
 [doc('Check the built tar.gz artifact')]
 check: build

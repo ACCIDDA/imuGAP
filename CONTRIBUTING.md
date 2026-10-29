@@ -42,7 +42,7 @@ We use [`just`](https://github.com/casey/just) to automate development tasks. Th
 | `just data-inputs` | Regenerate `*_sim` input datasets from raw simulation | `Rscript data-raw/DATASET.R` |
 | `just data-fit` | Regenerate pre-computed Stan fits (`fit_sim`, `target_sim`, etc.) | `Rscript data-raw/fit_data.R` |
 | `just data` | Regenerate all package data (`data-inputs` + `data-fit`) | *(compound command)* |
-| `just build` | Build package `.tar.gz` archive | `R CMD build .` |
+| `just build` | Build package `.tar.gz` archive | `R CMD build --resave-data=best --compact-vignettes=both .` |
 | `just check` | Check package archive | `R CMD check imuGAP_*.tar.gz --no-manual --no-tests` |
 | `just check-cran` | Check package archive using strict CRAN settings | `R CMD check imuGAP_*.tar.gz --as-cran` |
 
