@@ -281,4 +281,9 @@ pred_res_1layer <- measure_time(
 predict_sim_1layer <- pred_res_1layer$val
 print_time("Predicting", pred_res_1layer$time)
 usethis::use_data(predict_sim_1layer, overwrite = TRUE, compress = "xz")
+
+cat("\nArtifact file sizes in data/:\n")
+for (f in list.files("data", pattern = "\\.rda$", full.names = TRUE)) {
+  cat(sprintf("  %-30s %10d bytes\n", basename(f), file.size(f)))
+}
 cat("\nFit and prediction artifacts updated successfully.\n")
