@@ -445,6 +445,19 @@ plot_runtime_strata <- function(bundle, output_file = NULL) {
     )
   ]
 
+  # Anchor y-axis limits to non-builtin solvers so builtin outliers run off panel
+  non_bi_runs <- runs_dt[
+    solver != "builtin" & is.finite(elapsed_sec) & elapsed_sec > 0
+  ]
+  y_limits <- if (nrow(non_bi_runs) > 0L) {
+    c(
+      max(0.1, min(non_bi_runs$elapsed_sec, na.rm = TRUE) * 0.85),
+      max(non_bi_runs$elapsed_sec, na.rm = TRUE) * 1.15
+    )
+  } else {
+    c(1, 100)
+  }
+
   p_time <- ggplot2::ggplot(
     runs_dt,
     ggplot2::aes(x = guess_label, y = elapsed_sec, fill = solver_label)
@@ -464,15 +477,16 @@ plot_runtime_strata <- function(bundle, output_file = NULL) {
     ) +
     ggplot2::scale_fill_manual(values = SOLVER_PALETTE, name = "Solver") +
     ggplot2::scale_y_log10(
-      breaks = c(0.5, 1, 2, 5, 10, 20),
+      breaks = c(1, 2, 5, 10, 20, 50),
       labels = scales::label_number(suffix = "s")
     ) +
+    ggplot2::coord_cartesian(ylim = y_limits) +
     ggplot2::scale_x_discrete(guide = ggplot2::guide_axis(angle = 45)) +
     imugap_benchmark_theme() +
     ggplot2::labs(
       title = "MCMC Wall-Clock Sampling Duration Across Benchmarking Strata",
       subtitle = paste(
-        "Elapsed sampling time across 4 chains on log-scale",
+        "Elapsed sampling time across 4 chains on log-scale (y-range anchored to non-builtin)",
         "grouped by proposal algorithm and solver (lower is faster)"
       ),
       x = "Proposal Algorithm",
