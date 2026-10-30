@@ -246,9 +246,17 @@ plot_recovery_truth <- function(bundle, output_file = NULL) {
 
 # --- Figure 2: Error Behavior Across Strata (Link Scale MAE vs p0) ------------
 
-plot_error_strata <- function(bundle, output_file = NULL) {
+plot_error_strata <- function(
+  bundle,
+  output_file = NULL,
+  exclude_direct = TRUE
+) {
   runs_dt <- data.table::as.data.table(bundle$runs)
   p0_dt <- data.table::as.data.table(bundle$p0_profiles)
+
+  if (isTRUE(exclude_direct)) {
+    runs_dt <- runs_dt[solver != "direct"]
+  }
 
   meta <- unique(runs_dt[, list(
     dataset_id,
@@ -268,10 +276,14 @@ plot_error_strata <- function(bundle, output_file = NULL) {
       levels = names(GUESSER_PALETTE)
     )
   ]
+  active_solvers <- intersect(
+    names(SOLVER_PALETTE),
+    unique(tools::toTitleCase(merged$solver))
+  )
   merged[,
     solver_label := factor(
       tools::toTitleCase(solver),
-      levels = names(SOLVER_PALETTE)
+      levels = active_solvers
     )
   ]
   merged[,
@@ -368,14 +380,23 @@ plot_error_strata <- function(bundle, output_file = NULL) {
       breaks = 10^seq(-5, -1, by = 1),
       labels = scales::label_log()
     ) +
-    ggplot2::coord_cartesian(ylim = c(2e-6, 0.2)) +
+    ggplot2::coord_cartesian(
+      ylim = if (isTRUE(exclude_direct)) c(5e-6, 0.03) else c(2e-6, 0.2)
+    ) +
     imugap_benchmark_theme() +
     ggplot2::labs(
       title = "Probability-Scale Absolute Error Across Strata (Log Scale)",
-      subtitle = paste(
-        "Posterior median and IQR ribbon of |p0_hat - p0_true| across",
-        "proposal algorithms (colors) and solvers (linetypes/shapes)"
-      ),
+      subtitle = if (isTRUE(exclude_direct)) {
+        paste(
+          "Posterior median and IQR ribbon of |p0_hat - p0_true| across",
+          "proposal algorithms (colors) and solved models (Halley2 vs Builtin, excluding direct)"
+        )
+      } else {
+        paste(
+          "Posterior median and IQR ribbon of |p0_hat - p0_true| across",
+          "proposal algorithms (colors) and solvers (linetypes/shapes)"
+        )
+      },
       x = "Target Parent Probability (p0)",
       y = "Absolute Probability Error (|p0_hat - p0_true|, log10 scale)"
     )
