@@ -19,19 +19,18 @@ guess_type_map <- c(
 #' @title Resolve and assemble concrete Stan model name from options
 #'
 #' @description
-#' Validates option compatibility and emits the concrete Stan model name along
-#' with parsed model components.
+#' Emits the concrete Stan model name along with parsed model components from
+#' validated model options.
 #'
-#' @param time character string; temporal component specification (default: `"bspline"`).
-#'   Options include `"bspline"`.
-#' @param offsets character string; spatial offset component specification
-#'   (default: `"static"`). Options include `"static"`.
-#' @param guesser character string; initial guesser method (default: `"zero"`).
-#'   Options include `"zero"`.
-#' @param solver character string; rootfinder solver method (default: `"halley2"`).
-#'   Options include `"halley2"`, `"direct"`, `"newton2"`, `"builtin"`, and `"halley10"`.
-#' @param link character string; link function formulation (default: `"logit"`).
-#'   Options include `"logit"` and `"probit"`.
+#' @param time character string; temporal component specification. Options include `"bspline"`.
+#' @param offsets character string; spatial offset component specification. Options include
+#'   `"static"`.
+#' @param solver character string; rootfinder solver method. Options include `"halley2"`,
+#'   `"direct"`, `"newton2"`, `"builtin"`, and `"halley10"`.
+#' @param link character string; link function formulation. Options include `"logit"` and
+#'   `"probit"`.
+#' @param guesser character string; initial guesser method (default: `"zero"`). Options include
+#'   `"zero"`.
 #'
 #' @return a named list, containing:
 #'   - `model_name`: character string of the concrete compiled Stan model.
@@ -44,37 +43,26 @@ guess_type_map <- c(
 #'   - `link`: character string link formulation (`"logit"` or `"probit"`).
 #'   - `is_dispatch`: logical scalar indicating whether dynamic solver dispatch is active.
 #'
-#' @examples
-#' resolve_model_name()
-#' resolve_model_name(solver = "newton2")
-#' resolve_model_name(link = "probit")
-#'
 #' @keywords internal
 #' @noRd
 resolve_model_name <- function(
-  time = c("bspline"),
-  offsets = c("static"),
-  guesser = c("zero"),
-  solver = c("halley2", "direct", "newton2", "builtin", "halley10"),
-  link = c("logit", "probit")
+  time,
+  offsets,
+  solver,
+  link,
+  guesser = "zero"
 ) {
-  time <- match.arg(time)
-  offsets <- match.arg(offsets)
-  guesser <- match.arg(guesser)
-  solver <- match.arg(solver)
-  link <- match.arg(link)
-
   solver_type <- unname(solver_type_map[solver])
 
-  if (identical(solver, "halley2")) {
-    is_dispatch <- FALSE
-    solver_module <- solver
-    model_name <- sprintf("%s_static_%s_%s_%s", time, guesser, solver, link)
-  } else {
-    is_dispatch <- TRUE
-    solver_module <- "dispatch"
-    model_name <- sprintf("%s_static_%s_dispatch_%s", time, guesser, link)
-  }
+  is_dispatch <- !identical(solver, "halley2")
+  solver_module <- if (is_dispatch) "dispatch" else solver
+  model_name <- sprintf(
+    "%s_static_%s_%s_%s",
+    time,
+    guesser,
+    solver_module,
+    link
+  )
 
   list(
     model_name = model_name,

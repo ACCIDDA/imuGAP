@@ -216,34 +216,40 @@ test_that("imugap_options rejects invalid solver values", {
   )
 })
 
-test_that("resolve_model_name resolves defaults and multi-layer model specs", {
-  res_def <- resolve_model_name()
+test_that("resolve_model_name resolves model specs and components", {
+  res_def <- resolve_model_name(
+    time = "bspline",
+    offsets = "static",
+    solver = "halley2",
+    link = "logit"
+  )
   expect_equal(res_def$model_name, "bspline_static_zero_halley2_logit")
   expect_equal(res_def$time, "bspline")
   expect_equal(res_def$offsets, "static")
+  expect_equal(res_def$guesser, "zero")
   expect_equal(res_def$solver, "halley2")
   expect_equal(res_def$solver_module, "halley2")
   expect_equal(res_def$solver_type, 2L)
   expect_equal(res_def$link, "logit")
   expect_false(res_def$is_dispatch)
 
-  res_logit <- resolve_model_name(link = "logit")
-  expect_equal(res_logit$model_name, "bspline_static_zero_halley2_logit")
-  expect_equal(res_logit$link, "logit")
-
-  res_probit <- resolve_model_name(link = "probit")
+  res_probit <- resolve_model_name(
+    time = "bspline",
+    offsets = "static",
+    solver = "halley2",
+    link = "probit"
+  )
   expect_equal(res_probit$model_name, "bspline_static_zero_halley2_probit")
   expect_equal(res_probit$link, "probit")
-
-  expect_error(resolve_model_name(link = "default"), "should be")
-  expect_error(resolve_model_name(solver = "default"), "should be")
-  expect_error(resolve_model_name(time = "default"), "should be")
-  expect_error(resolve_model_name(offsets = "default"), "should be")
-  expect_error(resolve_model_name(guesser = "default"), "should be")
 })
 
 test_that("resolve_model_name resolves dynamic dispatch solvers", {
-  res_dir <- resolve_model_name(solver = "direct")
+  res_dir <- resolve_model_name(
+    time = "bspline",
+    offsets = "static",
+    solver = "direct",
+    link = "logit"
+  )
   expect_equal(res_dir$model_name, "bspline_static_zero_dispatch_logit")
   expect_equal(res_dir$solver, "direct")
   expect_equal(res_dir$solver_module, "dispatch")
@@ -251,6 +257,8 @@ test_that("resolve_model_name resolves dynamic dispatch solvers", {
   expect_true(res_dir$is_dispatch)
 
   res_n2_probit <- resolve_model_name(
+    time = "bspline",
+    offsets = "static",
     solver = "newton2",
     link = "probit"
   )
