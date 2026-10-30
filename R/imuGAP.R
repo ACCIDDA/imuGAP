@@ -150,13 +150,13 @@ slice_weights <- function(wts_dt, obs_dt, suffix) {
 #' empirical survey observations, dose schedule, and location hierarchy.
 #'
 #' @param dat_stan named list of data formatted for Stan input.
-#' @param model character string specifying the model formulation (default: `"default"`).
+#' @param model character string specifying the link model (`"logit"` or `"probit"`).
 #'
 #' @return a named list, of initial parameter arrays for Stan.
 #'
 #' @keywords internal
 #' @noRd
-generate_inits <- function(dat_stan, model = "default") {
+generate_inits <- function(dat_stan, model) {
   y_all <- c(
     dat_stan$y_obs_unmixed_uncensored,
     dat_stan$y_obs_mixed_uncensored,
@@ -200,19 +200,18 @@ generate_inits <- function(dat_stan, model = "default") {
     )
   }
 
-  model_inits <- if (model %in% c("default", "logit")) {
-    init_beta <- rep(stats::qlogis(baseline_phi), dat_stan$k_bs) +
-      stats::rnorm(dat_stan$k_bs, 0, 0.05)
-    list(beta_bs = array(init_beta, dim = dat_stan$k_bs))
-  } else if (identical(model, "probit")) {
-    init_beta <- rep(stats::qnorm(baseline_phi), dat_stan$k_bs) +
-      stats::rnorm(dat_stan$k_bs, 0, 0.05)
-    list(beta_bs = array(init_beta, dim = dat_stan$k_bs))
-  } else {
-    stop_fmt_if(TRUE, ERR_OPT_UNKNOWN_MODEL, model = model)
-  }
+  init_beta <- rep(
+    if (identical(model, "logit")) {
+      stats::qlogis(baseline_phi)
+    } else {
+      stats::qnorm(baseline_phi)
+    },
+    dat_stan$k_bs
+  ) +
+    stats::rnorm(dat_stan$k_bs, 0, 0.05)
+  inits$beta_bs <- array(init_beta, dim = dat_stan$k_bs)
 
-  c(inits, model_inits)
+  inits
 }
 
 #' @title Make Stan initialization function
@@ -221,13 +220,13 @@ generate_inits <- function(dat_stan, model = "default") {
 #' Returns a 0-argument function suitable for passing to `fit_model(init = ...)`.
 #'
 #' @param dat_stan named list of data formatted for Stan input.
-#' @param model character string specifying the model formulation (default: `"default"`).
+#' @param model character string specifying the link model (`"logit"` or `"probit"`).
 #'
 #' @return a function, 0-argument function returning a list of initial parameter values.
 #'
 #' @keywords internal
 #' @noRd
-make_init_fn <- function(dat_stan, model = "default") {
+make_init_fn <- function(dat_stan, model) {
   function() {
     generate_inits(dat_stan, model = model)
   }
