@@ -49,7 +49,16 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="imugap-030">imuGAP 0.3.0<a class="anchor" aria-label="anchor" href="#imugap-030"></a></h2>
 <div class="section level3">
-<h3 id="major-features-0-3-0">Major Features<a class="anchor" aria-label="anchor" href="#major-features-0-3-0"></a></h3>
+<h3 id="model-changes-0-3-0">Model Changes<a class="anchor" aria-label="anchor" href="#model-changes-0-3-0"></a></h3>
+<ul><li>
+<strong>Hierarchical Tree Aggregation Solvers</strong>:
+<ul><li>Introduced calculations to equate parent aggregate coverage to population-weighted sum of child probabilities under nonlinear links (<code>logit</code>, <code>probit</code>).</li>
+<li>The added rootfinding approaches are <code>newton</code>, <code>halley</code>, <code>builtin</code>, along with a no-change <code>direct</code>. These translate an initial guess into a “solved” parent aggregation shift offsets. <code>builtin</code> does root-finding to exhaustion using the general purpose solver included in stan, <code>newton</code> and <code>halley</code> do limited-step root finding using those tailored numerical methods, and <code>direct</code> uses the guess-as-is.</li>
+<li>The solver is currently selectable at run time, though the default solver option is compiled in an optimized model without branching.</li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="user-interface-changes-0-3-0">User Interface Changes<a class="anchor" aria-label="anchor" href="#user-interface-changes-0-3-0"></a></h3>
 <ul><li>
 <strong>S3 Print Methods</strong>:
 <ul><li>Added dedicated <code><a href="../reference/print.imugap_fit.html">print.imugap_fit()</a></code> providing a structured summary of the location hierarchy, observation data distribution, and key Stan parameters (<code>beta_bs</code>, <code>sigma_layer</code>, <code>lambda_raw</code>, and <code>lp__</code>).</li>
@@ -58,12 +67,6 @@
 <li>
 <strong>Vignette Architecture &amp; Documentation Overhaul</strong>:
 <ul><li>Reorganized the vignette suite into focused modular articles: <code>imuGAP</code> (core workflow), <code>example_data</code> (input data schemas and structure), <code>examining_fits</code> (posterior diagnostics and inspection), and <code>user_specified_layers</code> (multi-layer and single-layer spatial partitions).</li>
-<li>Added kindergarten entry records visualization distinguishing individual schools by color and illustrating coverage dynamics across cohorts.</li>
-<li>Standardized voice, visual presentations, and documentation formatting across all articles.</li>
-</ul></li>
-<li>
-<strong>Automated Diagram Pipeline</strong>:
-<ul><li>Added automated Mermaid diagram compilation pipeline (<code>just diagrams</code>) generating SVG and PDF visual assets with dark-mode compatibility.</li>
 </ul></li>
 <li>
 <strong>Structured Input Conditions</strong> (<a href="https://github.com/ACCIDDA/imuGAP/issues/156" class="external-link">#156</a>):
@@ -74,19 +77,32 @@
 </ul></li>
 </ul></div>
 <div class="section level3">
-<h3 id="performance--stan-model-improvements-0-3-0">Performance &amp; Stan Model Improvements<a class="anchor" aria-label="anchor" href="#performance--stan-model-improvements-0-3-0"></a></h3>
+<h3 id="engineering-changes-0-3-0">Engineering Changes<a class="anchor" aria-label="anchor" href="#engineering-changes-0-3-0"></a></h3>
 <ul><li>
+<strong>Stan Modular Organization</strong>
+<ul><li>Decoupled tree accumulation into modular Stan includes (<code>functions/layer_offsets_static.stan</code>, <code>functions/layer_offsets_dispatch.stan</code>), isolating solver dependencies from shared QR basis projection (<code>functions/layer_offsets.stan</code>).</li>
+<li>Standardized top-level Stan model names under the convention <code>&lt;time&gt;_&lt;offsets&gt;_&lt;guess&gt;_&lt;solver&gt;_&lt;link&gt;.stan</code> (e.g. <code>bspline_static_zero_halley2_logit.stan</code>, <code>bspline_static_zero_dispatch_probit.stan</code>) and <code>&lt;time&gt;_single_&lt;link&gt;.stan</code> for unpartitioned models, reflecting the temporal basis, hierarchy offset structure, initial guesser, solver module, and link function.</li>
+</ul></li>
+<li>
+<strong>Automated Diagram Pipeline</strong>:
+<ul><li>Added automated Mermaid diagram compilation pipeline (<code>just diagrams</code>) generating SVG and PDF visual assets with dark-mode compatibility.</li>
+</ul></li>
+<li>
+<strong>Synthetic Benchmark Suite</strong>:
+<ul><li>Added a benchmarking suite (<code>data-raw/benchmarks/</code>) with Slurm HPC array execution to profile runtime, effective sample size, numerical accuracy, and calibration across solver alternatives and hierarchy depths.</li>
+</ul></li>
+<li>
 <strong>Stan Computation Optimization</strong>:
 <ul><li>Optimized dose transitions, linear predictor broadcasting, and blocked QR orthonormal basis calculations.</li>
 <li>Decoupled observation likelihood evaluation into uncensored, right-censored, and left-censored streams for vectorized evaluation.</li>
 <li>Added population-scaled hierarchical layer offset shrinkage with standardized QR basis orientation.</li>
 <li>Refactored Stan initial value generation into static helper <code>make_init_fn()</code>.</li>
 </ul></li>
-</ul></div>
-<div class="section level3">
-<h3 id="infrastructure--maintenance-0-3-0">Infrastructure &amp; Maintenance<a class="anchor" aria-label="anchor" href="#infrastructure--maintenance-0-3-0"></a></h3>
+<li>
+<strong>Build Organization</strong>
 <ul><li>Streamlined developer and CI workflows via authoritative <code>just</code> recipes (<code>just lint</code>, <code>just docs</code>, <code>just diagrams</code>, <code>just data-fit</code>).</li>
 <li>Decoupled <code>lintr</code> package execution from <code>devtools</code> in CI linting workflows.</li>
+</ul></li>
 </ul></div>
 </div>
     <div class="section level2">

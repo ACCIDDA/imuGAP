@@ -77,11 +77,11 @@
 <ul><li>Top-level Stan models in <code>inst/stan/</code> (and not Stan code in subdirectories) must remain modular skeletons that assemble model components using <code>#include &lt;subpath&gt;.stan</code> directives.</li>
 <li>Never inline full block contents or inlined logic directly into top-level Stan models in <code>inst/stan/</code>.</li>
 <li>
-<strong>Model Naming</strong>: Top-level Stan model files follow the naming convention <code>&lt;time&gt;_&lt;offsets&gt;_&lt;link&gt;.stan</code> (e.g. <code>bspline_static_logit.stan</code>, <code>bspline_single_logit.stan</code>, <code>bspline_static_probit.stan</code>, <code>bspline_single_probit.stan</code>).</li>
+<strong>Model Naming</strong>: Top-level Stan model files follow the naming convention <code>&lt;time&gt;_&lt;offsets&gt;_&lt;solver&gt;_&lt;link&gt;.stan</code> (e.g. <code>bspline_static_zero_halley2_logit.stan</code>, <code>bspline_static_zero_halley2_probit.stan</code>, <code>bspline_static_zero_dispatch_logit.stan</code>, <code>bspline_static_zero_dispatch_probit.stan</code>, and unpartitioned <code>bspline_single_logit.stan</code>, <code>bspline_single_probit.stan</code>).</li>
 <li>
 <strong>Link Functions</strong>: Modular link implementations live in <code>inst/stan/functions/link/&lt;link&gt;.stan</code> and define <code>link_fn()</code>, <code>inv_link()</code>, <code>d_inv_link()</code>, and <code>d2_inv_link()</code>.</li>
 <li>
-<strong>Options Specification</strong>: Option parameters in <code><a href="reference/imugap_options.html">imugap_options()</a></code> follow the vector idiom <code>c("default", "the_default_value", ...)</code> (e.g. <code>time = c("default", "bspline")</code>, <code>offsets = c("default", "static")</code>, <code>link = c("default", "logit", "probit")</code>). High-level options construct a model template (<code>&lt;time&gt;_&lt;offsets&gt;_&lt;link&gt;</code>), reflecting temporal basis, hierarchical offset structure for nested population partitions (<code>"static"</code> for non-time varying multi-layer populations, <code>"single"</code> for unpartitioned populations), and link function. Resolution to the concrete model name occurs dynamically inside <code><a href="reference/sampling.html">sampling()</a></code>.</li>
+<strong>Options Specification</strong>: Option parameters in <code><a href="reference/imugap_options.html">imugap_options()</a></code> follow the vector idiom where the first item is the default value (e.g. <code>time = c("bspline")</code>, <code>offsets = c("static")</code>, <code>solver = c("halley2", "direct", ...)</code>, <code>link = c("logit", "probit")</code>). High-level options construct a model template, reflecting temporal basis, hierarchical offset structure for nested population partitions, solver module (<code>"dispatch"</code> for dynamic solver selection including default <code>"halley2"</code>, or <code>"direct"</code> for unconstrained baseline), and link function. Resolution to the concrete model name occurs dynamically inside <code><a href="reference/sampling.html">sampling()</a></code>.</li>
 </ul></li>
 <li>
 <strong>Stan Multi-Indexing &amp; Slicing Idiom</strong>:
@@ -116,6 +116,17 @@
 <li>
 <code>err_pattern()</code> converts templates to regexes, escaping literal metacharacters and binding specified named arguments.</li>
 <li>Omitted, <code>NA</code>, or <code>NULL</code> slots automatically match wildcards (<code>.+?</code>), allowing tests to assert on specific key parameters while remaining robust to phrasing updates.</li>
+</ul></li>
+<li>
+<strong>Validation Architecture, Defaults &amp; Type Safety</strong>:
+<ul><li>
+<strong>Avoid Validation Code Sprawl</strong>: Centralize validation at external and public entry boundaries (e.g. <code>canonicalize_*()</code>, <code><a href="reference/imugap_options.html">imugap_options()</a></code>, <code><a href="https://accidda.github.io/flexstanr/reference/stan_options.html" class="external-link">stan_options()</a></code>). Internal helpers and downstream model assemblers must rely on established contract invariants rather than redundantly re-validating, defensively patching, or scattering ad-hoc checks throughout the call stack.</li>
+<li>
+<strong>Internal Helper Invariants</strong>: Unless internal functions are explicitly intended to perform argument validation (e.g. <code>check_*()</code>), they should assume they are passed valid values. Internal helpers behind validated public entry boundaries should not set defaults or perform <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code> validation.</li>
+<li>
+<strong>Explicit, Communicated Defaults</strong>: Define default values directly in formal parameter signatures for public, user-facing functions (e.g. <code>df = 5L</code>, <code>dose_schedule = c(1, 4)</code>) so they are visible in documentation, autocomplete, and formal argument inspection (<code><a href="https://rdrr.io/r/base/args.html" class="external-link">args()</a></code>). Avoid <code>NULL</code> sentinels coupled with hidden internal fallback chains (e.g. avoid <code>x %||% y %||% default</code>). Internal helpers should take explicit parameters without redundant defaults.</li>
+<li>
+<strong>Type-Based Validation</strong>: Favor class and type invariants over loose list inspection. Validate structured inputs upfront against expected classes (e.g. <code>inherits(opts, "imugap_options")</code>, <code>is_canonical(dt, ...)</code>). Constructors must guarantee that all required fields are present and correctly typed upon creation, eliminating the need for defensive null-coalescing operators (<code>%||%</code>) throughout internal code.</li>
 </ul></li>
 <li>
 <strong>Roxygen Documentation Standards</strong>:

@@ -131,7 +131,7 @@
 <td><em>(compound command)</em></td>
 </tr><tr><td><code>just build</code></td>
 <td>Build package <code>.tar.gz</code> archive</td>
-<td><code>R CMD build .</code></td>
+<td><code>R CMD build --resave-data=best --compact-vignettes=both .</code></td>
 </tr><tr><td><code>just check</code></td>
 <td>Check package archive</td>
 <td><code>R CMD check imuGAP_*.tar.gz --no-manual --no-tests</code></td>
@@ -281,7 +281,7 @@
 <strong>Link Functions</strong>: Modular link implementations are located in <code>inst/stan/functions/link/&lt;link&gt;.stan</code> (e.g. <code>logit.stan</code>, <code>probit.stan</code>) and define mathematical transformations <code>link_fn()</code>, <code>inv_link()</code>, <code>d_inv_link()</code>, and <code>d2_inv_link()</code>.</li>
 <li>
 <strong>Options Interface (<code><a href="reference/imugap_options.html">imugap_options()</a></code>)</strong>:
-<ul><li>Option arguments adhere to the <code>c("default", "the_default_value", ...)</code> vector idiom (e.g. <code>time = c("default", "bspline")</code>, <code>offsets = c("default", "static")</code>, <code>link = c("default", "logit", "probit")</code>).</li>
+<ul><li>Option arguments adhere to the vector idiom where the first item is the default value (e.g. <code>time = c("bspline")</code>, <code>offsets = c("static")</code>, <code>link = c("logit", "probit")</code>, <code>solver = c("halley2", "direct", ...)</code>).</li>
 <li>High-level options define a model template string (<code>&lt;time&gt;_&lt;offsets&gt;_&lt;link&gt;</code>, e.g. <code>"bspline_static_logit"</code>).</li>
 <li>Resolution from high-level offset specification (<code>"static"</code>) to execution model name (<code>"static"</code> vs. <code>"single"</code>) happens dynamically inside <code><a href="reference/sampling.html">sampling()</a></code> where the location tree hierarchy depth is known.</li>
 </ul></li>
@@ -430,6 +430,35 @@
 <td align="left"><code>test-stan-observation_likelihood.R</code></td>
 <td align="left">Modular observation log-likelihoods (<code>uncensored/</code>, <code>right/</code>, <code>left/</code>)</td>
 </tr></tbody></table><hr></div>
+</div>
+<div class="section level2">
+<h2 id="validation-architecture-defaults-and-type-safety">Validation Architecture, Defaults, and Type Safety<a class="anchor" aria-label="anchor" href="#validation-architecture-defaults-and-type-safety"></a></h2>
+<p><code>imuGAP</code> enforces clear architectural boundaries for input validation and parameter defaults to prevent defensive validation code sprawl:</p>
+<div class="section level3">
+<h3 id="id_1-avoid-validation-code-sprawl">1. Avoid Validation Code Sprawl<a class="anchor" aria-label="anchor" href="#id_1-avoid-validation-code-sprawl"></a></h3>
+<ul><li>
+<strong>Boundary Validation</strong>: Validate inputs at external, public entry points (such as <code><a href="reference/canonicalize.html">canonicalize_observations()</a></code>, <code><a href="reference/canonicalize.html">canonicalize_populations()</a></code>, <code><a href="reference/canonicalize.html">canonicalize_locations()</a></code>, <code><a href="reference/imugap_options.html">imugap_options()</a></code>, and <code><a href="reference/sampling.html">sampling()</a></code>).</li>
+<li>
+<strong>Contract Invariants</strong>: Once data or options pass these entry boundaries, internal helpers and Stan model assemblers should rely on established invariants. Do not re-validate, re-check types, or defensively patch missing fields repeatedly throughout internal helper functions.</li>
+<li>
+<strong>Internal Helper Invariants</strong>: Unless internal functions are explicitly intended to perform argument validation (e.g. <code>check_*()</code>), they should assume they are passed valid values. Internal helpers behind validated public entry boundaries should not set defaults or perform <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code> validation.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_2-explicit-communicated-defaults">2. Explicit, Communicated Defaults<a class="anchor" aria-label="anchor" href="#id_2-explicit-communicated-defaults"></a></h3>
+<ul><li>
+<strong>Signature Defaults for Public APIs</strong>: Define defaults directly in formal function signatures for user-facing functions (e.g. <code>df = 5L</code>, <code>dose_schedule = c(1, 4)</code> in <code><a href="reference/imugap_options.html">imugap_options()</a></code>). This makes default values immediately visible to users via documentation, IDE autocomplete, and <code><a href="https://rdrr.io/r/base/args.html" class="external-link">args()</a></code>. Internal helpers whose arguments are passed from validated entry boundaries should take explicit parameters without redundant defaults.</li>
+<li>
+<strong>No Hidden Fallback Chains</strong>: Avoid signatures with <code>NULL</code> defaults that hide actual defaults behind internal fallback expressions (e.g. <code>x %||% y %||% "default"</code>). The user should never have to inspect implementation code to discover what default value will be applied.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_3-type-based-validation">3. Type-Based Validation<a class="anchor" aria-label="anchor" href="#id_3-type-based-validation"></a></h3>
+<ul><li>
+<strong>Class &amp; Type Invariants</strong>: Favor structured classes (such as <code>imugap_options</code>, <code>imugap_fit</code>, <code>imugap_predict</code>, and canonical table attributes) over unvalidated lists.</li>
+<li>
+<strong>Guarantee by Construction</strong>: Validate typed structures at construction time so that presence and types of all required fields are guaranteed.</li>
+<li>
+<strong>Eliminate Null-Coalescing (<code>%||%</code>)</strong>: Do not use ad-hoc null-coalescing operators to paper over missing defaults or loose list structures. Use type-asserted constructors and explicit control flow instead.</li>
+</ul><hr></div>
 </div>
 <div class="section level2">
 <h2 id="error-messages-signaling-standards-and-unit-testing">Error Messages, Signaling Standards, and Unit Testing<a class="anchor" aria-label="anchor" href="#error-messages-signaling-standards-and-unit-testing"></a></h2>

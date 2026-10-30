@@ -49,22 +49,25 @@ documentation and CI architecture, see
   - Never inline full block contents or inlined logic directly into
     top-level Stan models in `inst/stan/`.
   - **Model Naming**: Top-level Stan model files follow the naming
-    convention `<time>_<offsets>_<link>.stan`
-    (e.g. `bspline_static_logit.stan`, `bspline_single_logit.stan`,
-    `bspline_static_probit.stan`, `bspline_single_probit.stan`).
+    convention `<time>_<offsets>_<solver>_<link>.stan`
+    (e.g. `bspline_static_zero_halley2_logit.stan`,
+    `bspline_static_zero_halley2_probit.stan`,
+    `bspline_static_zero_dispatch_logit.stan`,
+    `bspline_static_zero_dispatch_probit.stan`, and unpartitioned
+    `bspline_single_logit.stan`, `bspline_single_probit.stan`).
   - **Link Functions**: Modular link implementations live in
     `inst/stan/functions/link/<link>.stan` and define `link_fn()`,
     `inv_link()`, `d_inv_link()`, and `d2_inv_link()`.
   - **Options Specification**: Option parameters in
     [`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md)
-    follow the vector idiom `c("default", "the_default_value", ...)`
-    (e.g. `time = c("default", "bspline")`,
-    `offsets = c("default", "static")`,
-    `link = c("default", "logit", "probit")`). High-level options
-    construct a model template (`<time>_<offsets>_<link>`), reflecting
-    temporal basis, hierarchical offset structure for nested population
-    partitions (`"static"` for non-time varying multi-layer populations,
-    `"single"` for unpartitioned populations), and link function.
+    follow the vector idiom where the first item is the default value
+    (e.g. `time = c("bspline")`, `offsets = c("static")`,
+    `solver = c("halley2", "direct", ...)`,
+    `link = c("logit", "probit")`). High-level options construct a model
+    template, reflecting temporal basis, hierarchical offset structure
+    for nested population partitions, solver module (`"dispatch"` for
+    dynamic solver selection including default `"halley2"`, or
+    `"direct"` for unconstrained baseline), and link function.
     Resolution to the concrete model name occurs dynamically inside
     [`sampling()`](https://accidda.github.io/imuGAP/reference/sampling.md).
 - **Stan Multi-Indexing & Slicing Idiom**:
@@ -117,6 +120,36 @@ documentation and CI architecture, see
   - Omitted, `NA`, or `NULL` slots automatically match wildcards
     (`.+?`), allowing tests to assert on specific key parameters while
     remaining robust to phrasing updates.
+- **Validation Architecture, Defaults & Type Safety**:
+  - **Avoid Validation Code Sprawl**: Centralize validation at external
+    and public entry boundaries (e.g. `canonicalize_*()`,
+    [`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md),
+    [`stan_options()`](https://accidda.github.io/flexstanr/reference/stan_options.html)).
+    Internal helpers and downstream model assemblers must rely on
+    established contract invariants rather than redundantly
+    re-validating, defensively patching, or scattering ad-hoc checks
+    throughout the call stack.
+  - **Internal Helper Invariants**: Unless internal functions are
+    explicitly intended to perform argument validation
+    (e.g. `check_*()`), they should assume they are passed valid values.
+    Internal helpers behind validated public entry boundaries should not
+    set defaults or perform
+    [`match.arg()`](https://rdrr.io/r/base/match.arg.html) validation.
+  - **Explicit, Communicated Defaults**: Define default values directly
+    in formal parameter signatures for public, user-facing functions
+    (e.g. `df = 5L`, `dose_schedule = c(1, 4)`) so they are visible in
+    documentation, autocomplete, and formal argument inspection
+    ([`args()`](https://rdrr.io/r/base/args.html)). Avoid `NULL`
+    sentinels coupled with hidden internal fallback chains (e.g. avoid
+    `x %||% y %||% default`). Internal helpers should take explicit
+    parameters without redundant defaults.
+  - **Type-Based Validation**: Favor class and type invariants over
+    loose list inspection. Validate structured inputs upfront against
+    expected classes (e.g. `inherits(opts, "imugap_options")`,
+    `is_canonical(dt, ...)`). Constructors must guarantee that all
+    required fields are present and correctly typed upon creation,
+    eliminating the need for defensive null-coalescing operators
+    (`%||%`) throughout internal code.
 - **Roxygen Documentation Standards**:
   - **Explicit `@title` and `@description`**: Roxygen blocks must use
     explicit `@title` and `@description` tags rather than relying on

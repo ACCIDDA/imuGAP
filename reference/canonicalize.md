@@ -106,12 +106,12 @@ for `canonicalize_locations()`: a `[data.table()]`, with:
 - `layer_bound` column, an integer starting from 1 by layer. This
   provides index slice information used in the stan model.
 
-- `population` column (optional), positive numeric population totals,
-  preserved and validated for hierarchical sum consistency across
-  parent-child nodes (with missing parent populations automatically
-  imputed from child sums). If not present, the highest resolution
-  entities (i.e. those with no offspring) will be assigned an identical
-  weight.
+- `population` column, positive numeric population totals, preserved and
+  validated for hierarchical sum consistency across parent-child nodes
+  (with missing parent populations automatically imputed from child
+  sums). If not supplied in input `locations`, leaf entities (those with
+  no offspring) default to 1.0 and parent populations are imputed from
+  child sums.
 
 for `canonicalize_observations()`: a `[data.table()]`, canonical
 observation object with:

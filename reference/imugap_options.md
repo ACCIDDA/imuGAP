@@ -9,10 +9,10 @@ imugap_options(
   df = 5L,
   dose_schedule = c(1, 4),
   compute_log_lik = FALSE,
-  time = c("default", "bspline"),
-  offsets = c("default", "static"),
-  link = c("default", "logit", "probit"),
-  model = NULL
+  time = c("bspline"),
+  offsets = c("static"),
+  link = c("logit", "probit"),
+  solver = c("halley2", "direct", "newton2", "builtin", "halley10")
 )
 ```
 
@@ -36,27 +36,28 @@ imugap_options(
 - time:
 
   character string specifying the temporal model component (default:
-  `"default"`, resolving to `"bspline"`).
+  `"bspline"`). Options include `"bspline"`.
 
 - offsets:
 
   character string specifying the spatial offset model component
-  (default: `"default"`, resolving to `"static"`).
+  (default: `"static"`). Options include `"static"`.
 
 - link:
 
   character string specifying the link function formulation (default:
-  `"default"`, resolving to `"logit"`). Options include `"default"` (or
-  `"logit"`) and `"probit"`.
+  `"logit"`). Options include `"logit"` and `"probit"`.
 
-- model:
+- solver:
 
-  optional character string; alias for `link` or full model template
-  name (default: `NULL`).
+  character string specifying the rootfinder solver method (default:
+  `"halley2"`). Options include `"halley2"`, `"direct"`, `"newton2"`,
+  `"builtin"`, and `"halley10"`.
 
 ## Value
 
-a named list, of `imuGAP` model options.
+an object of class `imugap_options`, wrapping a named list of model
+options.
 
 ## Examples
 
@@ -81,8 +82,16 @@ imugap_options()
 #> [1] "logit"
 #> 
 #> $model
-#> [1] "bspline_static_logit"
+#> [1] "bspline_static_zero_halley2_logit"
 #> 
+#> $solver
+#> [1] "halley2"
+#> 
+#> $solver_type
+#> [1] 2
+#> 
+#> attr(,"class")
+#> [1] "imugap_options"
 imugap_options(dose_schedule = c(1, 3))
 #> $df
 #> [1] 5
@@ -103,9 +112,17 @@ imugap_options(dose_schedule = c(1, 3))
 #> [1] "logit"
 #> 
 #> $model
-#> [1] "bspline_static_logit"
+#> [1] "bspline_static_zero_halley2_logit"
 #> 
-imugap_options(link = "probit")
+#> $solver
+#> [1] "halley2"
+#> 
+#> $solver_type
+#> [1] 2
+#> 
+#> attr(,"class")
+#> [1] "imugap_options"
+imugap_options(link = "probit", solver = "halley2")
 #> $df
 #> [1] 5
 #> 
@@ -125,6 +142,14 @@ imugap_options(link = "probit")
 #> [1] "probit"
 #> 
 #> $model
-#> [1] "bspline_static_probit"
+#> [1] "bspline_static_zero_halley2_probit"
 #> 
+#> $solver
+#> [1] "halley2"
+#> 
+#> $solver_type
+#> [1] 2
+#> 
+#> attr(,"class")
+#> [1] "imugap_options"
 ```

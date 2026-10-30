@@ -2,7 +2,22 @@
 
 ## imuGAP 0.3.0
 
-### Major Features
+### Model Changes
+
+- **Hierarchical Tree Aggregation Solvers**:
+  - Introduced calculations to equate parent aggregate coverage to
+    population-weighted sum of child probabilities under nonlinear links
+    (`logit`, `probit`).
+  - The added rootfinding approaches are `newton`, `halley`, `builtin`,
+    along with a no-change `direct`. These translate an initial guess
+    into a “solved” parent aggregation shift offsets. `builtin` does
+    root-finding to exhaustion using the general purpose solver included
+    in stan, `newton` and `halley` do limited-step root finding using
+    those tailored numerical methods, and `direct` uses the guess-as-is.
+  - The solver is currently selectable at run time, though the default
+    solver option is compiled in an optimized model without branching.
+
+### User Interface Changes
 
 - **S3 Print Methods**:
   - Added dedicated
@@ -20,15 +35,6 @@
     structure), `examining_fits` (posterior diagnostics and inspection),
     and `user_specified_layers` (multi-layer and single-layer spatial
     partitions).
-  - Added kindergarten entry records visualization distinguishing
-    individual schools by color and illustrating coverage dynamics
-    across cohorts.
-  - Standardized voice, visual presentations, and documentation
-    formatting across all articles.
-- **Automated Diagram Pipeline**:
-  - Added automated Mermaid diagram compilation pipeline
-    (`just diagrams`) generating SVG and PDF visual assets with
-    dark-mode compatibility.
 - **Structured Input Conditions**
   ([\#156](https://github.com/ACCIDDA/imuGAP/issues/156)):
   - Errors raised through `stop_fmt_if()` have class `imugap_error`;
@@ -48,8 +54,30 @@
     none censored. An `NA` in a subset-checked column is reported as a
     missing value, not as “missing NA”.
 
-### Performance & Stan Model Improvements
+### Engineering Changes
 
+- **Stan Modular Organization**
+  - Decoupled tree accumulation into modular Stan includes
+    (`functions/layer_offsets_static.stan`,
+    `functions/layer_offsets_dispatch.stan`), isolating solver
+    dependencies from shared QR basis projection
+    (`functions/layer_offsets.stan`).
+  - Standardized top-level Stan model names under the convention
+    `<time>_<offsets>_<guess>_<solver>_<link>.stan` (e.g.
+    `bspline_static_zero_halley2_logit.stan`,
+    `bspline_static_zero_dispatch_probit.stan`) and
+    `<time>_single_<link>.stan` for unpartitioned models, reflecting the
+    temporal basis, hierarchy offset structure, initial guesser, solver
+    module, and link function.
+- **Automated Diagram Pipeline**:
+  - Added automated Mermaid diagram compilation pipeline
+    (`just diagrams`) generating SVG and PDF visual assets with
+    dark-mode compatibility.
+- **Synthetic Benchmark Suite**:
+  - Added a benchmarking suite (`data-raw/benchmarks/`) with Slurm HPC
+    array execution to profile runtime, effective sample size, numerical
+    accuracy, and calibration across solver alternatives and hierarchy
+    depths.
 - **Stan Computation Optimization**:
   - Optimized dose transitions, linear predictor broadcasting, and
     blocked QR orthonormal basis calculations.
@@ -59,13 +87,12 @@
     standardized QR basis orientation.
   - Refactored Stan initial value generation into static helper
     `make_init_fn()`.
-
-### Infrastructure & Maintenance
-
-- Streamlined developer and CI workflows via authoritative `just`
-  recipes (`just lint`, `just docs`, `just diagrams`, `just data-fit`).
-- Decoupled `lintr` package execution from `devtools` in CI linting
-  workflows.
+- **Build Organization**
+  - Streamlined developer and CI workflows via authoritative `just`
+    recipes (`just lint`, `just docs`, `just diagrams`,
+    `just data-fit`).
+  - Decoupled `lintr` package execution from `devtools` in CI linting
+    workflows.
 
 ## imuGAP 0.2.0
 

@@ -139,11 +139,11 @@ representing the order that will be used in the sampler</p></li>
 3 (grandchildren), &amp;c</p></li>
 <li><p><code>layer_bound</code> column, an integer starting from 1 by layer. This provides
 index slice information used in the stan model.</p></li>
-<li><p><code>population</code> column (optional), positive numeric population totals, preserved and
+<li><p><code>population</code> column, positive numeric population totals, preserved and
 validated for hierarchical sum consistency across parent-child nodes
 (with missing parent populations automatically imputed from child sums).
-If not present, the highest resolution entities (i.e. those with no offspring)
-will be assigned an identical weight.</p></li>
+If not supplied in input <code>locations</code>, leaf entities (those with no offspring)
+default to 1.0 and parent populations are imputed from child sums.</p></li>
 </ul><p>for <code>canonicalize_observations()</code>: a <code>[data.table()]</code>, canonical observation object with:</p><ul><li><p>an <code>obs_c_id</code> column, an integer sequence from 1; the order observations
 will be passed to estimation</p></li>
 <li><p>the original <code>obs_id</code> column, possibly reordered</p></li>

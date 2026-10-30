@@ -57,7 +57,7 @@ across both local development and GitHub Actions CI:
 | `just data-inputs` | Regenerate `*_sim` input datasets from raw simulation | `Rscript data-raw/DATASET.R` |
 | `just data-fit` | Regenerate pre-computed Stan fits (`fit_sim`, `target_sim`, etc.) | `Rscript data-raw/fit_data.R` |
 | `just data` | Regenerate all package data (`data-inputs` + `data-fit`) | *(compound command)* |
-| `just build` | Build package `.tar.gz` archive | `R CMD build .` |
+| `just build` | Build package `.tar.gz` archive | `R CMD build --resave-data=best --compact-vignettes=both .` |
 | `just check` | Check package archive | `R CMD check imuGAP_*.tar.gz --no-manual --no-tests` |
 | `just check-cran` | Check package archive using strict CRAN settings | `R CMD check imuGAP_*.tar.gz --as-cran` |
 
@@ -268,11 +268,10 @@ or multi-draw [`predict()`](https://rdrr.io/r/stats/predict.html)):
   `inv_link()`, `d_inv_link()`, and `d2_inv_link()`.
 - **Options Interface
   ([`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md))**:
-  - Option arguments adhere to the
-    `c("default", "the_default_value", ...)` vector idiom
-    (e.g. `time = c("default", "bspline")`,
-    `offsets = c("default", "static")`,
-    `link = c("default", "logit", "probit")`).
+  - Option arguments adhere to the vector idiom where the first item is
+    the default value (e.g. `time = c("bspline")`,
+    `offsets = c("static")`, `link = c("logit", "probit")`,
+    `solver = c("halley2", "direct", ...)`).
   - High-level options define a model template string
     (`<time>_<offsets>_<link>`, e.g. `"bspline_static_logit"`).
   - Resolution from high-level offset specification (`"static"`) to
@@ -442,6 +441,65 @@ following these guidelines:
 | **`model/`** | `hierarchical_phi.stan` | `test-stan-hierarchical_phi.R` | Deterministic hierarchical observation probabilities against analytical formula |
 |  | `single_phi.stan` | `test-stan-single_phi.R` | Deterministic single-location observation probabilities against analytical formula |
 |  | `observation_likelihood.stan` | `test-stan-observation_likelihood.R` | Modular observation log-likelihoods (`uncensored/`, `right/`, `left/`) |
+
+------------------------------------------------------------------------
+
+## Validation Architecture, Defaults, and Type Safety
+
+`imuGAP` enforces clear architectural boundaries for input validation
+and parameter defaults to prevent defensive validation code sprawl:
+
+### 1. Avoid Validation Code Sprawl
+
+- **Boundary Validation**: Validate inputs at external, public entry
+  points (such as
+  [`canonicalize_observations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md),
+  [`canonicalize_populations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md),
+  [`canonicalize_locations()`](https://accidda.github.io/imuGAP/reference/canonicalize.md),
+  [`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md),
+  and
+  [`sampling()`](https://accidda.github.io/imuGAP/reference/sampling.md)).
+- **Contract Invariants**: Once data or options pass these entry
+  boundaries, internal helpers and Stan model assemblers should rely on
+  established invariants. Do not re-validate, re-check types, or
+  defensively patch missing fields repeatedly throughout internal helper
+  functions.
+- **Internal Helper Invariants**: Unless internal functions are
+  explicitly intended to perform argument validation (e.g. `check_*()`),
+  they should assume they are passed valid values. Internal helpers
+  behind validated public entry boundaries should not set defaults or
+  perform [`match.arg()`](https://rdrr.io/r/base/match.arg.html)
+  validation.
+
+### 2. Explicit, Communicated Defaults
+
+- **Signature Defaults for Public APIs**: Define defaults directly in
+  formal function signatures for user-facing functions (e.g. `df = 5L`,
+  `dose_schedule = c(1, 4)` in
+  [`imugap_options()`](https://accidda.github.io/imuGAP/reference/imugap_options.md)).
+  This makes default values immediately visible to users via
+  documentation, IDE autocomplete, and
+  [`args()`](https://rdrr.io/r/base/args.html). Internal helpers whose
+  arguments are passed from validated entry boundaries should take
+  explicit parameters without redundant defaults.
+- **No Hidden Fallback Chains**: Avoid signatures with `NULL` defaults
+  that hide actual defaults behind internal fallback expressions
+  (e.g. `x %||% y %||% "default"`). The user should never have to
+  inspect implementation code to discover what default value will be
+  applied.
+
+### 3. Type-Based Validation
+
+- **Class & Type Invariants**: Favor structured classes (such as
+  `imugap_options`, `imugap_fit`, `imugap_predict`, and canonical table
+  attributes) over unvalidated lists.
+- **Guarantee by Construction**: Validate typed structures at
+  construction time so that presence and types of all required fields
+  are guaranteed.
+- **Eliminate Null-Coalescing (`%||%`)**: Do not use ad-hoc
+  null-coalescing operators to paper over missing defaults or loose list
+  structures. Use type-asserted constructors and explicit control flow
+  instead.
 
 ------------------------------------------------------------------------
 
