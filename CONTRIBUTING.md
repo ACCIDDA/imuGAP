@@ -152,7 +152,7 @@ For computationally heavy functions (such as `sampling()` or multi-draw `predict
   * Examples: `bspline_static_logit.stan`, `bspline_single_logit.stan`, `bspline_static_probit.stan`, `bspline_single_probit.stan`.
 * **Link Functions**: Modular link implementations are located in `inst/stan/functions/link/<link>.stan` (e.g. `logit.stan`, `probit.stan`) and define mathematical transformations `link_fn()`, `inv_link()`, `d_inv_link()`, and `d2_inv_link()`.
 * **Options Interface (`imugap_options()`)**:
-  * Option arguments adhere to the `c("default", "the_default_value", ...)` vector idiom (e.g. `time = c("default", "bspline")`, `offsets = c("default", "static")`, `link = c("default", "logit", "probit")`).
+  * Option arguments adhere to the vector idiom where the first item is the default value (e.g. `time = c("bspline")`, `offsets = c("static")`, `link = c("logit", "probit")`, `solver = c("halley2", "direct", ...)`).
   * High-level options define a model template string (`<time>_<offsets>_<link>`, e.g. `"bspline_static_logit"`).
   * Resolution from high-level offset specification (`"static"`) to execution model name (`"static"` vs. `"single"`) happens dynamically inside `sampling()` where the location tree hierarchy depth is known.
 * **Stan Multi-Indexing & Slicing Idiom**:
@@ -245,11 +245,17 @@ prevent defensive validation code sprawl:
 * **Contract Invariants**: Once data or options pass these entry boundaries, internal helpers
   and Stan model assemblers should rely on established invariants. Do not re-validate, re-check
   types, or defensively patch missing fields repeatedly throughout internal helper functions.
+* **Internal Helper Invariants**: Unless internal functions are explicitly intended to perform
+  argument validation (e.g. `check_*()`), they should assume they are passed valid values.
+  Internal helpers behind validated public entry boundaries should not set defaults or perform
+  `match.arg()` validation.
 
 ### 2. Explicit, Communicated Defaults
-* **Signature Defaults**: Define defaults directly in formal function signatures (e.g. `df = 5L`,
-  `dose_schedule = c(1, 4)` in `imugap_options()`). This makes default values immediately visible
-  to users via documentation, IDE autocomplete, and `args()`.
+* **Signature Defaults for Public APIs**: Define defaults directly in formal function signatures
+  for user-facing functions (e.g. `df = 5L`, `dose_schedule = c(1, 4)` in `imugap_options()`).
+  This makes default values immediately visible to users via documentation, IDE autocomplete,
+  and `args()`. Internal helpers whose arguments are passed from validated entry boundaries
+  should take explicit parameters without redundant defaults.
 * **No Hidden Fallback Chains**: Avoid signatures with `NULL` defaults that hide actual defaults
   behind internal fallback expressions (e.g. `x %||% y %||% "default"`). The user should never
   have to inspect implementation code to discover what default value will be applied.

@@ -30,9 +30,9 @@ This document provides concise instructions and rules for AI coding assistants w
   * **Link Functions**: Modular link implementations live in `inst/stan/functions/link/<link>.stan`
     and define `link_fn()`, `inv_link()`, `d_inv_link()`, and `d2_inv_link()`.
   * **Options Specification**: Option parameters in `imugap_options()` follow the vector idiom
-    `c("default", "the_default_value", ...)` (e.g. `time = c("default", "bspline")`,
-    `offsets = c("default", "static")`, `solver = c("default", "halley2", ...)`,
-    `link = c("default", "logit", "probit")`). High-level options construct a model template,
+    where the first item is the default value (e.g. `time = c("bspline")`,
+    `offsets = c("static")`, `solver = c("halley2", "direct", ...)`,
+    `link = c("logit", "probit")`). High-level options construct a model template,
     reflecting temporal basis, hierarchical offset structure for nested population partitions,
     solver module (`"dispatch"` for dynamic solver selection including default `"halley2"`, or
     `"direct"` for unconstrained baseline), and link function. Resolution to the concrete model
@@ -80,10 +80,16 @@ This document provides concise instructions and rules for AI coding assistants w
     and downstream model assemblers must rely on established contract invariants rather than
     redundantly re-validating, defensively patching, or scattering ad-hoc checks throughout the
     call stack.
+  * **Internal Helper Invariants**: Unless internal functions are explicitly intended to perform
+    argument validation (e.g. `check_*()`), they should assume they are passed valid values.
+    Internal helpers behind validated public entry boundaries should not set defaults or perform
+    `match.arg()` validation.
   * **Explicit, Communicated Defaults**: Define default values directly in formal parameter
-    signatures (e.g. `df = 5L`, `dose_schedule = c(1, 4)`) so they are visible in documentation,
-    autocomplete, and formal argument inspection (`args()`). Avoid `NULL` sentinels coupled with
-    hidden internal fallback chains (e.g. avoid `x %||% y %||% default`).
+    signatures for public, user-facing functions (e.g. `df = 5L`, `dose_schedule = c(1, 4)`) so
+    they are visible in documentation, autocomplete, and formal argument inspection (`args()`).
+    Avoid `NULL` sentinels coupled with hidden internal fallback chains (e.g. avoid
+    `x %||% y %||% default`). Internal helpers should take explicit parameters without redundant
+    defaults.
   * **Type-Based Validation**: Favor class and type invariants over loose list inspection.
     Validate structured inputs upfront against expected classes (e.g.
     `inherits(opts, "imugap_options")`, `is_canonical(dt, ...)`). Constructors must guarantee

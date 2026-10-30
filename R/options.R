@@ -19,19 +19,19 @@ guess_type_map <- c(
 #' @title Resolve and assemble concrete Stan model name from options
 #'
 #' @description
-#' Converts `"default"` option tokens to concrete specifications, validates option
-#' compatibility, and emits the concrete Stan model name along with parsed model components.
+#' Validates option compatibility and emits the concrete Stan model name along
+#' with parsed model components.
 #'
-#' @param time character string; temporal component specification (default: `"default"`,
-#'   resolving to `"bspline"`).
+#' @param time character string; temporal component specification (default: `"bspline"`).
+#'   Options include `"bspline"`.
 #' @param offsets character string; spatial offset component specification
-#'   (default: `"default"`, resolving to `"static"`).
-#' @param guesser character string; initial guesser method (default: `"default"`,
-#'   resolving to `"zero"`).
-#' @param solver character string; rootfinder solver method (default: `"default"`,
-#'   resolving to `"halley2"`).
-#' @param link character string; link function formulation (default: `"default"`,
-#'   resolving to `"logit"`).
+#'   (default: `"static"`). Options include `"static"`.
+#' @param guesser character string; initial guesser method (default: `"zero"`).
+#'   Options include `"zero"`.
+#' @param solver character string; rootfinder solver method (default: `"halley2"`).
+#'   Options include `"halley2"`, `"direct"`, `"newton2"`, `"builtin"`, and `"halley10"`.
+#' @param link character string; link function formulation (default: `"logit"`).
+#'   Options include `"logit"` and `"probit"`.
 #'
 #' @return a named list, containing:
 #'   - `model_name`: character string of the concrete compiled Stan model.
@@ -52,27 +52,17 @@ guess_type_map <- c(
 #' @keywords internal
 #' @noRd
 resolve_model_name <- function(
-  time = "default",
-  offsets = "default",
-  guesser = "default",
-  solver = "default",
-  link = "default"
+  time = c("bspline"),
+  offsets = c("static"),
+  guesser = c("zero"),
+  solver = c("halley2", "direct", "newton2", "builtin", "halley10"),
+  link = c("logit", "probit")
 ) {
-  if (identical(time, "default")) {
-    time <- "bspline"
-  }
-  if (identical(offsets, "default")) {
-    offsets <- "static"
-  }
-  if (identical(link, "default")) {
-    link <- "logit"
-  }
-  if (identical(guesser, "default")) {
-    guesser <- "zero"
-  }
-  if (identical(solver, "default")) {
-    solver <- "halley2"
-  }
+  time <- match.arg(time)
+  offsets <- match.arg(offsets)
+  guesser <- match.arg(guesser)
+  solver <- match.arg(solver)
+  link <- match.arg(link)
 
   solver_type <- unname(solver_type_map[solver])
 
@@ -136,15 +126,14 @@ resolve_layer_model <- function(imugap_opts, is_multilayer = TRUE) {
 #' @param compute_log_lik logical scalar; compute pointwise log-likelihood during
 #'   sampling? (default: `FALSE`).
 #' @param time character string specifying the temporal model component
-#'   (default: `"default"`, resolving to `"bspline"`).
+#'   (default: `"bspline"`). Options include `"bspline"`.
 #' @param offsets character string specifying the spatial offset model component
-#'   (default: `"default"`, resolving to `"static"`). Options include `"default"` and `"static"`.
+#'   (default: `"static"`). Options include `"static"`.
 #' @param link character string specifying the link function formulation
-#'   (default: `"default"`, resolving to `"logit"`). Options include `"default"` (or `"logit"`)
-#'   and `"probit"`.
+#'   (default: `"logit"`). Options include `"logit"` and `"probit"`.
 #' @param solver character string specifying the rootfinder solver method
-#'   (default: `"default"`, resolving to `"halley2"`). Options include `"default"` (or `"halley2"`),
-#'   `"direct"`, `"newton2"`, `"builtin"`, and `"halley10"`.
+#'   (default: `"halley2"`). Options include `"halley2"`, `"direct"`, `"newton2"`,
+#'   `"builtin"`, and `"halley10"`.
 #' @examples
 #' imugap_options()
 #' imugap_options(dose_schedule = c(1, 3))
@@ -156,10 +145,10 @@ imugap_options <- function(
   df = 5L,
   dose_schedule = c(1, 4),
   compute_log_lik = FALSE,
-  time = c("default", "bspline"),
-  offsets = c("default", "static"),
-  link = c("default", "logit", "probit"),
-  solver = c("default", "halley2", "direct", "newton2", "builtin", "halley10")
+  time = c("bspline"),
+  offsets = c("static"),
+  link = c("logit", "probit"),
+  solver = c("halley2", "direct", "newton2", "builtin", "halley10")
 ) {
   time <- match.arg(time)
   offsets <- match.arg(offsets)

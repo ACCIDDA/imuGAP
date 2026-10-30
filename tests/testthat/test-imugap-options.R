@@ -53,7 +53,15 @@ test_that("imugap_options errors on unknown link / time / offsets", {
     "should be"
   )
   expect_error(
+    imugap_options(time = "default"),
+    "should be"
+  )
+  expect_error(
     imugap_options(link = "unknown_link"),
+    "should be"
+  )
+  expect_error(
+    imugap_options(link = "default"),
     "should be"
   )
   expect_error(
@@ -65,23 +73,29 @@ test_that("imugap_options errors on unknown link / time / offsets", {
     "should be"
   )
   expect_error(
+    imugap_options(offsets = "default"),
+    "should be"
+  )
+  expect_error(
     imugap_options(offsets = "unknown_offset"),
     "should be"
   )
 })
 
-test_that("imugap_options accepts default, logit, and probit link options", {
+test_that("imugap_options defaults to logit, and accepts logit and probit link options", {
   defaults <- imugap_options()
-  opts_default <- imugap_options(link = "default")
-  expect_equal(opts_default, defaults)
+  expect_equal(defaults$link, "logit")
 
   opts_logit <- imugap_options(link = "logit")
+  expect_equal(opts_logit, defaults)
   expect_equal(opts_logit$link, "logit")
   expect_equal(opts_logit$model, "bspline_static_zero_halley2_logit")
 
   opts_probit <- imugap_options(link = "probit")
   expect_equal(opts_probit$link, "probit")
   expect_equal(opts_probit$model, "bspline_static_zero_halley2_probit")
+
+  expect_error(imugap_options(link = "default"), "should be")
 })
 
 test_that("imugap_options accepts numeric whole-number df", {
@@ -149,18 +163,19 @@ test_that("imugap_options rejects invalid compute_log_lik", {
   )
 })
 
-test_that("imugap_options accepts valid solver values including default", {
-  opts_def <- imugap_options(solver = "default")
-  expect_equal(opts_def$solver, "halley2")
-  expect_equal(opts_def$solver_type, 2L)
-
-  opts_dir <- imugap_options(solver = "direct")
-  expect_equal(opts_dir$solver, "direct")
-  expect_equal(opts_dir$solver_type, 1L)
+test_that("imugap_options defaults to halley2, and accepts valid solver values", {
+  defaults <- imugap_options()
+  expect_equal(defaults$solver, "halley2")
+  expect_equal(defaults$solver_type, 2L)
 
   opts_halley2 <- imugap_options(solver = "halley2")
   expect_equal(opts_halley2$solver, "halley2")
   expect_equal(opts_halley2$solver_type, 2L)
+  expect_equal(opts_halley2, defaults)
+
+  opts_dir <- imugap_options(solver = "direct")
+  expect_equal(opts_dir$solver, "direct")
+  expect_equal(opts_dir$solver_type, 1L)
 
   opts_newton2 <- imugap_options(solver = "newton2")
   expect_equal(opts_newton2$solver, "newton2")
@@ -173,6 +188,8 @@ test_that("imugap_options accepts valid solver values including default", {
   opts_halley10 <- imugap_options(solver = "halley10")
   expect_equal(opts_halley10$solver, "halley10")
   expect_equal(opts_halley10$solver_type, 5L)
+
+  expect_error(imugap_options(solver = "default"), "should be")
 })
 
 test_that("imugap_options rejects invalid solver values", {
@@ -217,6 +234,12 @@ test_that("resolve_model_name resolves defaults and multi-layer model specs", {
   res_probit <- resolve_model_name(link = "probit")
   expect_equal(res_probit$model_name, "bspline_static_zero_halley2_probit")
   expect_equal(res_probit$link, "probit")
+
+  expect_error(resolve_model_name(link = "default"), "should be")
+  expect_error(resolve_model_name(solver = "default"), "should be")
+  expect_error(resolve_model_name(time = "default"), "should be")
+  expect_error(resolve_model_name(offsets = "default"), "should be")
+  expect_error(resolve_model_name(guesser = "default"), "should be")
 })
 
 test_that("resolve_model_name resolves dynamic dispatch solvers", {

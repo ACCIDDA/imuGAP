@@ -39,7 +39,7 @@ make_test_stan_data <- function(
 
 test_that("make_init_fn returns a 0-argument function returning initialized parameters", {
   dat <- make_test_stan_data()
-  fn <- make_init_fn(dat)
+  fn <- make_init_fn(dat, model = "logit")
   expect_true(is.function(fn))
   expect_equal(length(formals(fn)), 0L)
 
@@ -50,7 +50,7 @@ test_that("make_init_fn returns a 0-argument function returning initialized para
 
 test_that("generate_inits handles single-layer data without layer parameters", {
   dat <- make_test_stan_data(n_doses = 3L, k_bs = 6L, n_layers = 1L)
-  inits <- generate_inits(dat)
+  inits <- generate_inits(dat, model = "logit")
 
   expect_named(inits, c("lambda_raw", "beta_bs"), ignore.order = TRUE)
   expect_length(inits$lambda_raw, 3L)
@@ -69,7 +69,7 @@ test_that("generate_inits handles multilayer hierarchy parameters", {
     n_locs = 5L,
     n_parent_locs = 2L
   )
-  inits <- generate_inits(dat)
+  inits <- generate_inits(dat, model = "logit")
 
   expect_named(
     inits,
@@ -91,7 +91,7 @@ test_that("generate_inits falls back to default coverage when observations are e
     y_obs_unmixed_right = integer(0),
     y_smp_unmixed_right = integer(0)
   )
-  inits <- generate_inits(dat)
+  inits <- generate_inits(dat, model = "logit")
   expect_length(inits$beta_bs, dat$k_bs)
   # Default coverage of 0.85 maps to phi of 0.15
   expected_center <- stats::qlogis(0.15)
@@ -103,7 +103,7 @@ test_that("generate_inits falls back when total sample size is zero or results i
     y_obs_unmixed_uncensored = 0L,
     y_smp_unmixed_uncensored = 0L
   )
-  inits_zero <- generate_inits(dat_zero)
+  inits_zero <- generate_inits(dat_zero, model = "logit")
   expected_center <- stats::qlogis(0.15)
   expect_true(all(abs(inits_zero$beta_bs - expected_center) < 0.5))
 
@@ -111,7 +111,7 @@ test_that("generate_inits falls back when total sample size is zero or results i
     y_obs_unmixed_uncensored = as.integer(NA),
     y_smp_unmixed_uncensored = 10L
   )
-  inits_na <- generate_inits(dat_na)
+  inits_na <- generate_inits(dat_na, model = "logit")
   expect_true(all(abs(inits_na$beta_bs - expected_center) < 0.5))
 })
 
@@ -121,7 +121,7 @@ test_that("generate_inits clamps baseline phi to [0.01, 0.5] for extreme coverag
     y_obs_unmixed_uncensored = 100L,
     y_smp_unmixed_uncensored = 100L
   )
-  inits_high <- generate_inits(dat_high)
+  inits_high <- generate_inits(dat_high, model = "logit")
   expect_true(all(abs(inits_high$beta_bs - stats::qlogis(0.01)) < 0.5))
 
   # Low coverage (0%) maps to phi clamped to upper bound 0.5
@@ -129,7 +129,7 @@ test_that("generate_inits clamps baseline phi to [0.01, 0.5] for extreme coverag
     y_obs_unmixed_uncensored = 0L,
     y_smp_unmixed_uncensored = 100L
   )
-  inits_low <- generate_inits(dat_low)
+  inits_low <- generate_inits(dat_low, model = "logit")
   expect_true(all(abs(inits_low$beta_bs - stats::qlogis(0.5)) < 0.5))
 })
 
@@ -140,16 +140,16 @@ test_that("generate_inits combines uncensored and right-censored observation dat
     y_obs_unmixed_right = c(40L),
     y_smp_unmixed_right = c(50L)
   )
-  inits <- generate_inits(dat)
+  inits <- generate_inits(dat, model = "logit")
   # Combined sample gives 60% coverage, corresponding to phi of 0.40
   expected_center <- stats::qlogis(0.40)
   expect_true(all(abs(inits$beta_bs - expected_center) < 0.5))
 })
 
-test_that("generate_inits validates model argument", {
+test_that("generate_inits supports probit link model", {
   dat <- make_test_stan_data()
-  expect_error(
-    generate_inits(dat, model = "unsupported_model"),
-    "`imugap_opts` unknown model 'unsupported_model'"
-  )
+  inits_logit <- generate_inits(dat, model = "logit")
+  inits_probit <- generate_inits(dat, model = "probit")
+  expect_named(inits_probit, c("lambda_raw", "beta_bs"), ignore.order = TRUE)
+  expect_false(identical(inits_logit$beta_bs, inits_probit$beta_bs))
 })
