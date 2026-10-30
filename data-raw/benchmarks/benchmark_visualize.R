@@ -445,15 +445,21 @@ plot_runtime_strata <- function(bundle, output_file = NULL) {
     )
   ]
 
-  # Anchor y-axis limits to non-builtin solvers so builtin outliers run off panel
+  # Anchor y-axis limits to non-builtin whiskers (excluding outlier dots)
   non_bi_runs <- runs_dt[
     solver != "builtin" & is.finite(elapsed_sec) & elapsed_sec > 0
   ]
   y_limits <- if (nrow(non_bi_runs) > 0L) {
-    c(
-      max(0.1, min(non_bi_runs$elapsed_sec, na.rm = TRUE) * 0.85),
-      max(non_bi_runs$elapsed_sec, na.rm = TRUE) * 1.15
-    )
+    whiskers <- non_bi_runs[,
+      {
+        b <- grDevices::boxplot.stats(elapsed_sec)$stats
+        list(lower = b[1L], upper = b[5L])
+      },
+      by = list(link, K, sigma, guess, solver)
+    ]
+    w_min <- min(whiskers$lower, na.rm = TRUE)
+    w_max <- max(whiskers$upper, na.rm = TRUE)
+    c(max(0.1, w_min * 0.9), w_max * 1.1)
   } else {
     c(1, 100)
   }
@@ -477,7 +483,7 @@ plot_runtime_strata <- function(bundle, output_file = NULL) {
     ) +
     ggplot2::scale_fill_manual(values = SOLVER_PALETTE, name = "Solver") +
     ggplot2::scale_y_log10(
-      breaks = c(1, 2, 5, 10, 20, 50),
+      breaks = c(1, 2, 3, 5, 7, 10, 15, 20),
       labels = scales::label_number(suffix = "s")
     ) +
     ggplot2::coord_cartesian(ylim = y_limits) +
@@ -486,7 +492,7 @@ plot_runtime_strata <- function(bundle, output_file = NULL) {
     ggplot2::labs(
       title = "MCMC Wall-Clock Sampling Duration Across Benchmarking Strata",
       subtitle = paste(
-        "Elapsed sampling time across 4 chains on log-scale (y-range anchored to non-builtin)",
+        "Elapsed sampling time across 4 chains on log-scale (y-range anchored to non-builtin whiskers)",
         "grouped by proposal algorithm and solver (lower is faster)"
       ),
       x = "Proposal Algorithm",
