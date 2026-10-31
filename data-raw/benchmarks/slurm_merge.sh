@@ -11,6 +11,8 @@
 
 set -euo pipefail
 
+cd "${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+
 CONFIG_NAME="${1:-strenuous}"
 PARTS_DIR="${2:-results_parts}"
 

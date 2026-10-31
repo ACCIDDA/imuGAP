@@ -145,7 +145,13 @@ normalize_benchmark_config <- function(cfg) {
 
 read_benchmark_config <- function(config_path) {
   stopifnot(file.exists(config_path))
-  normalize_benchmark_config(yaml::read_yaml(config_path))
+  raw_cfg <- if (grepl("\\.rds$", config_path, ignore.case = TRUE)) {
+    obj <- readRDS(config_path)
+    if (is.list(obj) && !is.null(obj$config)) obj$config else obj
+  } else {
+    yaml::read_yaml(config_path)
+  }
+  normalize_benchmark_config(raw_cfg)
 }
 
 # --- Combination Resolver -----------------------------------------------------

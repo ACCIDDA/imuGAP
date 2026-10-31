@@ -1,5 +1,5 @@
 # Full Grid Benchmark Configuration
-name: "full_grid"
+name: "full"
 k_grid: [3, 10, 30, 100]
 sigma_grid: [0.2, 0.6, 1.0, 1.4]
 p0_trend:
@@ -29,12 +29,11 @@ links:
   - "probit"
 guessers:
   - "zero"
-  # Prospective guessers (disabled until Stan implementations are wired up):
-  # - "taylor2"
-  # - "taylor4"
-  # - "pade"
-  # - "asymptotic"
-  # - "conditioned"
+  - "taylor2"
+  - "taylor4"
+  - "pade"
+  - "asymptotic"
+  - "conditioned"
 solvers:
   - "direct"
   - "halley2"

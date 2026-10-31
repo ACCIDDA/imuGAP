@@ -183,7 +183,7 @@ For every fit, the following metrics are recorded and aggregated across Monte Ca
 - Primary configurations:
   - Stress Test: `config_stress_test.yml` -> `results_stress_test.rds`
   - Strenuous Grid: `config_strenuous.yml` -> `results_strenuous.rds`
-  - Full Grid: `config_full.yml` -> `results_full_grid.rds`
+  - Full Grid: `config_full.yml` -> `results_full.rds`
 
 ---
 

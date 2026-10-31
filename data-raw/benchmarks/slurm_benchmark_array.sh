@@ -12,6 +12,8 @@
 
 set -euo pipefail
 
+cd "${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+
 CONFIG_ARG="${1:-config_strenuous.rds}"
 CHAINS="${2:-4}"
 THREADS_PER_CHAIN="${3:-1}"

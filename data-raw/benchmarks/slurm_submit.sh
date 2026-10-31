@@ -18,6 +18,14 @@ CONFIG_BASE=$(echo "${CONFIG_NAME}" | tr '-' '_')
 CONFIG_TARGET=$(echo "${CONFIG_NAME}" | tr '_' '-')
 CONFIG_RDS="config_${CONFIG_BASE}.rds"
 
+DEFAULT_TIME_LIMIT="01:00:00"
+if [[ "${CONFIG_BASE}" == "full" || "${CONFIG_BASE}" == "full_grid" ]]; then
+  DEFAULT_TIME_LIMIT="24:00:00"
+elif [[ "${CONFIG_BASE}" == "strenuous" ]]; then
+  DEFAULT_TIME_LIMIT="02:00:00"
+fi
+TIME_LIMIT="${6:-${DEFAULT_TIME_LIMIT}}"
+
 echo "================================================================="
 echo " imuGAP Distributed Benchmark Pipeline Orchestrator"
 echo "================================================================="
@@ -26,6 +34,7 @@ echo "Parallel Chains   : ${CHAINS} chains"
 echo "Threads per Chain : ${THREADS_PER_CHAIN} threads (STAN_NUM_THREADS)"
 echo "CPUs per Task     : ${CORES_PER_TASK} cores (${CHAINS} x ${THREADS_PER_CHAIN})"
 echo "Iterations        : ${ITER} (warmup: ${WARMUP})"
+echo "Walltime Limit    : ${TIME_LIMIT}"
 echo "================================================================="
 
 # Stage 0: Guarantee current development package is installed in R library
@@ -47,11 +56,14 @@ N_MODELS=$(Rscript -e '
 ')
 
 # Stage 2: Submit SLURM Array Job with exact CPU allocation
-echo ">>> [Stage 2] Submitting ${N_MODELS}-task SLURM job array (${CORES_PER_TASK} CPUs/task)..."
+echo ">>> [Stage 2] Submitting ${N_MODELS}-task SLURM job array..."
+echo "    Allocation: ${CORES_PER_TASK} CPUs/task, walltime ${TIME_LIMIT}"
 ARRAY_JOB_ID=$(sbatch \
+  ${SLURM_EXTRA_ARGS:-} \
   --parsable \
   --array=1-"${N_MODELS}" \
   --cpus-per-task="${CORES_PER_TASK}" \
+  --time="${TIME_LIMIT}" \
   slurm_benchmark_array.sh \
     "${CONFIG_RDS}" \
     "${CHAINS}" \
@@ -64,7 +76,11 @@ echo ">>> Successfully submitted Array Job ID: ${ARRAY_JOB_ID}"
 
 # Stage 3: Submit Dependent Merge Job
 echo ">>> [Stage 3] Submitting dependent merge job (afterok:${ARRAY_JOB_ID})..."
-MERGE_JOB_ID=$(sbatch --parsable --dependency=afterok:"${ARRAY_JOB_ID}" slurm_merge.sh "${CONFIG_BASE}")
+MERGE_JOB_ID=$(sbatch \
+  ${SLURM_EXTRA_ARGS:-} \
+  --parsable \
+  --dependency=afterok:"${ARRAY_JOB_ID}" \
+  slurm_merge.sh "${CONFIG_BASE}")
 
 echo ">>> Successfully submitted Merge Job ID: ${MERGE_JOB_ID}"
 echo "================================================================="
