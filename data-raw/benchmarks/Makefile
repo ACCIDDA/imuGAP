@@ -65,7 +65,7 @@ benchobjs:
 
 # Pattern rule: Compile unified Stan model object with Stan thread support
 benchobjs/model_unified_%.rds: benchmark_compilation.R \
-	../../inst/stan/bspline_static_zero_dispatch_%.stan \
+	../../inst/stan/bspline_static_dispatch_dispatch_%.stan \
 	$(STAN_DEPS) | benchobjs
 	Rscript $(wordlist 1, 2, $^) $@
 

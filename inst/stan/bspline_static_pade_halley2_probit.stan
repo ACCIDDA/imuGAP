@@ -1,7 +1,7 @@
 functions {
   #include functions/convenience.stan
   #include functions/link/probit.stan
-  #include functions/guess/zero.stan
+  #include functions/guess/pade_probit.stan
   #include functions/solvers/halley2.stan
   #include functions/layer_offsets.stan
   #include functions/layer_offsets_static.stan

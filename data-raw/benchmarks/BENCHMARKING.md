@@ -101,7 +101,7 @@ $ Rscript benchmark_synthetic_populations.R some_config_A.yml
 
 ## 3. Evaluated Model Configurations
 
-Unified models are compiled directly from the shipped Stan models (`inst/stan/bspline_static_zero_dispatch_<link>.stan`), which dynamically dispatch guessers and solvers at runtime. Compiled model objects with Stan thread support are cached in the `benchobjs/` directory. These are managed by `benchmark_compilation.R` and the `Makefile`.
+Unified models are compiled directly from the shipped Stan models (`inst/stan/bspline_static_dispatch_dispatch_<link>.stan`), which dynamically dispatch guessers and solvers at runtime. Compiled model objects with Stan thread support are cached in the `benchobjs/` directory. These are managed by `benchmark_compilation.R` and the `Makefile`.
 
 The models for a benchmark are determined by a configuration file. The full set of available combinations are listed below. The stress test configuration exercises all proposal generators (`zero`, `taylor2`, `taylor4`, `pade`, `asymptotic`, and `conditioned`) across the three primary solvers (`direct`, `halley2` [package default], and `builtin`).
 
