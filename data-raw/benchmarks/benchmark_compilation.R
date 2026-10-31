@@ -5,7 +5,7 @@
 #'
 #' 1. Reads a benchmark configuration file (specifying links, guessers, and solvers).
 #' 2. Compiles and caches Stan DSO objects into `data-raw/benchobjs/` directly
-#'    from shipped dispatch models (`inst/stan/bspline_static_zero_dispatch_<link>.stan`).
+#'    from shipped dispatch models (`inst/stan/bspline_static_dispatch_dispatch_<link>.stan`).
 
 suppressPackageStartupMessages({
   library(yaml)
@@ -47,7 +47,14 @@ SOLVER_TYPE_MAP <- if (exists("solver_type_map")) {
 GUESS_TYPE_MAP <- if (exists("guess_type_map")) {
   guess_type_map
 } else {
-  c(zero = 1L)
+  c(
+    zero = 1L,
+    taylor2 = 2L,
+    taylor4 = 3L,
+    pade = 4L,
+    asymptotic = 5L,
+    conditioned = 6L
+  )
 }
 
 # --- Configuration Reading & Normalization -----------------------------------
@@ -144,12 +151,21 @@ read_benchmark_config <- function(config_path) {
 # --- Combination Resolver -----------------------------------------------------
 
 get_valid_model_combinations <- function(cfg) {
-  # Stan models currently only implement the zero guesser
-  unsupported_guess <- setdiff(cfg$guessers, "zero")
-  if (length(unsupported_guess) > 0L) {
+  unknown_guess <- setdiff(cfg$guessers, names(GUESS_TYPE_MAP))
+  if (length(unknown_guess) > 0L) {
     stop(sprintf(
-      "Guesser(s) not yet supported in Stan models: %s. Only 'zero' is currently implemented.",
-      paste(sprintf("'%s'", unsupported_guess), collapse = ", ")
+      "Guesser(s) not recognized: %s. Supported guessers are: %s.",
+      paste(sprintf("'%s'", unknown_guess), collapse = ", "),
+      paste(sprintf("'%s'", names(GUESS_TYPE_MAP)), collapse = ", ")
+    ))
+  }
+
+  unknown_solver <- setdiff(cfg$solvers, names(SOLVER_TYPE_MAP))
+  if (length(unknown_solver) > 0L) {
+    stop(sprintf(
+      "Solver(s) not recognized: %s. Supported solvers are: %s.",
+      paste(sprintf("'%s'", unknown_solver), collapse = ", "),
+      paste(sprintf("'%s'", names(SOLVER_TYPE_MAP)), collapse = ", ")
     ))
   }
 

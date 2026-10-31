@@ -279,11 +279,12 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_multi$captured$object, "stanmodel")
   expect_equal(
     out_multi$captured$object@model_name,
-    "bspline_static_zero_halley2_logit"
+    "bspline_static_taylor2_halley2_logit"
   )
+  expect_null(out_multi$captured$data$guess_type)
   expect_null(out_multi$captured$data$solver_type)
 
-  # Explicit direct solver multi-layer hierarchy dispatches to bspline_static_zero_dispatch_logit
+  # Explicit direct solver multi-layer hierarchy dispatches to dispatch model
   out_multi_direct <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
       observations = make_minimal_obs(),
@@ -295,9 +296,27 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_multi_direct$captured$object, "stanmodel")
   expect_equal(
     out_multi_direct$captured$object@model_name,
-    "bspline_static_zero_dispatch_logit"
+    "bspline_static_dispatch_dispatch_logit"
   )
+  expect_equal(out_multi_direct$captured$data$guess_type, 2L)
   expect_equal(out_multi_direct$captured$data$solver_type, 1L)
+
+  # Multi-layer with custom guesser dispatches to bspline_static_dispatch_dispatch_logit
+  out_multi_guesser <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs(),
+      imugap_opts = imuGAP::imugap_options(guesser = "zero")
+    )
+  ))
+  expect_s4_class(out_multi_guesser$captured$object, "stanmodel")
+  expect_equal(
+    out_multi_guesser$captured$object@model_name,
+    "bspline_static_dispatch_dispatch_logit"
+  )
+  expect_equal(out_multi_guesser$captured$data$guess_type, 1L)
+  expect_equal(out_multi_guesser$captured$data$solver_type, 2L)
 
   # 1-layer hierarchy dispatches to specialized single-layer Stan model
   locs1 <- data.frame(loc_id = "state", parent_id = NA)
@@ -322,7 +341,7 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
     "bspline_single_logit"
   )
 
-  # Probit multi-layer hierarchy dispatches to bspline_static_zero_halley2_probit
+  # Probit multi-layer hierarchy dispatches to bspline_static_pade_halley2_probit
   out_multi_probit <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
       observations = make_minimal_obs(),
@@ -334,11 +353,12 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_multi_probit$captured$object, "stanmodel")
   expect_equal(
     out_multi_probit$captured$object@model_name,
-    "bspline_static_zero_halley2_probit"
+    "bspline_static_pade_halley2_probit"
   )
+  expect_null(out_multi_probit$captured$data$guess_type)
   expect_null(out_multi_probit$captured$data$solver_type)
 
-  # Multi-layer with selectable solver dispatches to bspline_static_zero_dispatch_logit
+  # Multi-layer with selectable solver dispatches to bspline_static_dispatch_dispatch_logit
   out_multi_dispatch <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
       observations = make_minimal_obs(),
@@ -350,11 +370,12 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_multi_dispatch$captured$object, "stanmodel")
   expect_equal(
     out_multi_dispatch$captured$object@model_name,
-    "bspline_static_zero_dispatch_logit"
+    "bspline_static_dispatch_dispatch_logit"
   )
+  expect_equal(out_multi_dispatch$captured$data$guess_type, 2L)
   expect_equal(out_multi_dispatch$captured$data$solver_type, 3L)
 
-  # Probit multi-layer with selectable solver dispatches to bspline_static_zero_dispatch_probit
+  # Probit multi-layer with selectable solver dispatches to bspline_static_dispatch_dispatch_probit
   out_multi_dispatch_probit <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
       observations = make_minimal_obs(),
@@ -366,8 +387,9 @@ test_that("sampling translates model from imugap_opts and hierarchy depth to sta
   expect_s4_class(out_multi_dispatch_probit$captured$object, "stanmodel")
   expect_equal(
     out_multi_dispatch_probit$captured$object@model_name,
-    "bspline_static_zero_dispatch_probit"
+    "bspline_static_dispatch_dispatch_probit"
   )
+  expect_equal(out_multi_dispatch_probit$captured$data$guess_type, 4L)
   expect_equal(out_multi_dispatch_probit$captured$data$solver_type, 3L)
 
   # Probit single-layer hierarchy dispatches to bspline_single_probit
@@ -400,7 +422,7 @@ test_that("sampling forwards extra stan_opts (e.g. iter, chains)", {
   expect_equal(out$captured$refresh, 0)
 })
 
-test_that("sampling passes solver_type to Stan data", {
+test_that("sampling passes solver_type and guess_type to Stan data", {
   out_default <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
       observations = make_minimal_obs(),
@@ -409,6 +431,7 @@ test_that("sampling passes solver_type to Stan data", {
     )
   ))
   expect_null(out_default$captured$data$solver_type)
+  expect_null(out_default$captured$data$guess_type)
 
   out_direct <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
@@ -419,6 +442,18 @@ test_that("sampling passes solver_type to Stan data", {
     )
   ))
   expect_equal(out_direct$captured$data$solver_type, 1L)
+  expect_equal(out_direct$captured$data$guess_type, 2L)
+
+  out_guesser <- with_captured_sampling(suppressWarnings(
+    imuGAP::sampling(
+      observations = make_minimal_obs(),
+      populations = make_minimal_pops(),
+      locations = make_3layer_locs(),
+      imugap_opts = imuGAP::imugap_options(guesser = "taylor4")
+    )
+  ))
+  expect_equal(out_guesser$captured$data$solver_type, 2L)
+  expect_equal(out_guesser$captured$data$guess_type, 3L)
 
   out_halley2 <- with_captured_sampling(suppressWarnings(
     imuGAP::sampling(
@@ -429,6 +464,7 @@ test_that("sampling passes solver_type to Stan data", {
     )
   ))
   expect_null(out_halley2$captured$data$solver_type)
+  expect_null(out_halley2$captured$data$guess_type)
 })
 
 test_that("sampling returns a structured imugap_fit object", {
@@ -452,7 +488,7 @@ test_that("sampling returns a structured imugap_fit object", {
     c("model_name", "imugap_opts", "stan_opts"),
     ignore.order = TRUE
   )
-  expect_equal(fit$settings$model_name, "bspline_static_zero_halley2_logit")
+  expect_equal(fit$settings$model_name, "bspline_static_taylor2_halley2_logit")
   expect_named(
     fit$settings$imugap_opts,
     c(
@@ -463,7 +499,12 @@ test_that("sampling returns a structured imugap_fit object", {
       "offsets",
       "link",
       "solver",
+      "solver_module",
       "solver_type",
+      "guesser",
+      "guesser_module",
+      "guess_type",
+      "is_dispatch",
       "model"
     ),
     ignore.order = TRUE
