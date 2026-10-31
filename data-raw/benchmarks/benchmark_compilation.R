@@ -5,7 +5,7 @@
 #'
 #' 1. Reads a benchmark configuration file (specifying links, guessers, and solvers).
 #' 2. Compiles and caches Stan DSO objects into `data-raw/benchobjs/` directly
-#'    from shipped dispatch models (`inst/stan/bspline_static_zero_dispatch_<link>.stan`).
+#'    from shipped dispatch models (`inst/stan/bspline_static_dispatch_dispatch_<link>.stan`).
 
 suppressPackageStartupMessages({
   library(yaml)

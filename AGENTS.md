@@ -23,10 +23,10 @@ This document provides concise instructions and rules for AI coding assistants w
   * Never inline full block contents or inlined logic directly into top-level Stan models in
     `inst/stan/`.
   * **Model Naming**: Top-level Stan model files follow the naming convention
-    `<time>_<offsets>_<solver>_<link>.stan` (e.g. `bspline_static_zero_halley2_logit.stan`,
-    `bspline_static_zero_halley2_probit.stan`, `bspline_static_zero_dispatch_logit.stan`,
-    `bspline_static_zero_dispatch_probit.stan`, and unpartitioned `bspline_single_logit.stan`,
-    `bspline_single_probit.stan`).
+    `<time>_<offsets>_<guesser>_<solver>_<link>.stan` (e.g.
+    `bspline_static_taylor2_halley2_logit.stan`, `bspline_static_pade_halley2_probit.stan`,
+    `bspline_static_dispatch_dispatch_logit.stan`, `bspline_static_dispatch_dispatch_probit.stan`,
+    and unpartitioned `bspline_single_logit.stan`, `bspline_single_probit.stan`).
   * **Link Functions**: Modular link implementations live in `inst/stan/functions/link/<link>.stan`
     and define `link_fn()`, `inv_link()`, `d_inv_link()`, and `d2_inv_link()`.
   * **Options Specification**: Option parameters in `imugap_options()` follow the vector idiom
