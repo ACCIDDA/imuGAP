@@ -51,7 +51,7 @@ vector guess_shift_taylor4_logit(
   vector[C] mu2 = 0.5 * m2 * v;
   vector[C] mu3 = -((1.0 - 6.0 * p0 + 6.0 * p0_sq) / 6.0) * m3;
   vector[C] term4_m4 = (1.0 - 12.0 * p0 + 12.0 * p0_sq) * m4;
-  vector[C] term4_m2 = 3.0 * (1.0 - 4.0 * p0 + 4.0 * p0_sq) * m2_sq;
+  vector[C] term4_m2 = 3.0 * (1.0 - 8.0 * p0 + 8.0 * p0_sq) * m2_sq;
   vector[C] mu4 = (v / 24.0) .* (term4_m4 - term4_m2);
 
   return mu2 + mu3 + mu4;

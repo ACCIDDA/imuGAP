@@ -11,7 +11,7 @@ HPC_HOST="${HPC_HOST:-longleaf}"
 HPC_DIR="${HPC_DIR:-imuGAP}"
 # Normalize remote path: strip any leading ~/ for safe remote shell expansion
 HPC_REL_DIR="${HPC_DIR#~/}"
-R_MODULE="${R_MODULE:-R/4.5.0}"
+R_MODULE="${R_MODULE:-r/4.5.0}"
 SYNC_HOST="${HPC_DM_HOST:-longleaf-dm}"
 
 # Determine repository root
@@ -20,7 +20,8 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 # Verify connection host
 get_transfer_host() {
-  if ssh -q -o BatchMode=yes -o ConnectTimeout=3 "${SYNC_HOST}" exit 2>/dev/null; then
+  local ssh_opts=(-q -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=3)
+  if ssh "${ssh_opts[@]}" "${SYNC_HOST}" exit 2>/dev/null; then
     echo "${SYNC_HOST}"
   else
     echo "${HPC_HOST}"
@@ -66,7 +67,7 @@ Commands:
 Environment variables:
   HPC_HOST             Remote SSH host alias (default: 'longleaf')
   HPC_DIR              Target directory on remote host (default: 'imuGAP')
-  R_MODULE             R environment module on remote host (default: 'R/4.5.0')
+  R_MODULE             R environment module on remote host (default: 'r/4.5.0')
   SLURM_EXTRA_ARGS     Additional sbatch arguments (e.g. '-p jlessler' or '--qos=...')
 
 Examples:
@@ -91,6 +92,7 @@ cmd_sync() {
 
   # Sync repository excluding build artifacts and large results
   rsync -avz --delete \
+    -e "ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new" \
     --exclude=".git/" \
     --exclude=".Rproj.user/" \
     --exclude="*.Rcheck/" \
@@ -105,6 +107,8 @@ cmd_sync() {
     --exclude="data-raw/benchmarks/results_parts/" \
     --exclude="data-raw/benchmarks/results_*.rds" \
     --exclude="data-raw/benchmarks/results_*.csv" \
+    --exclude="data-raw/benchmarks/config_*.rds" \
+    --exclude="data-raw/benchmarks/benchobjs/" \
     "${REPO_ROOT}/" "${target_host}:${HPC_REL_DIR}/"
 
   echo ">>> Code synchronization complete."

@@ -38,12 +38,12 @@ vector guess_shift_conditioned_logit(
     real r_conv = pi() * fmin(p, 1.0 - p);
     real ratio = max_delta / fmax(1e-8, r_conv);
 
-    if (p >= 0.85) {
+    if (ratio < 0.8) {
+      mu[c] = mu_t4[c];
+    } else if (p >= 0.85) {
       mu[c] = mu_tail_high;
     } else if (p <= 0.15) {
       mu[c] = mu_tail_low;
-    } else if (ratio < 0.8) {
-      mu[c] = mu_t4[c];
     } else {
       mu[c] = mu_asymp[c];
     }

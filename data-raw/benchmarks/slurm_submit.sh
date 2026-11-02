@@ -37,8 +37,26 @@ echo "Iterations        : ${ITER} (warmup: ${WARMUP})"
 echo "Walltime Limit    : ${TIME_LIMIT}"
 echo "================================================================="
 
-# Stage 0: Guarantee current development package is installed in R library
+# Stage 0: Guarantee dependencies and current development package are installed in R library
 echo ">>> [Stage 0] Synchronizing and installing imuGAP package in R library..."
+Rscript -e '
+  user_lib <- Sys.getenv("R_LIBS_USER")
+  if (!nzchar(user_lib)) {
+    r_ver <- sprintf("%s.%s", R.version$major, sub("\\..*", "", R.version$minor))
+    user_lib <- file.path(Sys.getenv("HOME"), "R", paste0(R.version$platform, "-library"), r_ver)
+  }
+  dir.create(user_lib, recursive = TRUE, showWarnings = FALSE)
+  .libPaths(c(user_lib, .libPaths()))
+
+  pkgs <- c("yaml", "data.table", "rstan", "withr", "flexstanr")
+  missing <- setdiff(pkgs, rownames(installed.packages()))
+  if (length(missing) > 0L) {
+    msg <- sprintf("Installing missing CRAN packages into %s: %s",
+      user_lib, paste(missing, collapse = ", "))
+    message(msg)
+    install.packages(missing, lib = user_lib, repos = "https://cloud.r-project.org", quiet = TRUE)
+  }
+'
 R CMD INSTALL --no-multiarch --with-keep.source ../..
 
 # Stage 1: Build populations and pre-compile unified Stan models
