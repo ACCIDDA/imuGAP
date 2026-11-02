@@ -10,6 +10,7 @@
 suppressPackageStartupMessages({
   library(data.table)
   library(yaml)
+  library(parallel)
   library(pkgload)
 })
 
@@ -162,45 +163,114 @@ generate_populations_from_config <- function(config_path) {
   dose_schedule <- cfg$dose_schedule
   dose <- cfg$dose
 
+  # Determine parallel worker allocation
+  n_cores <- as.integer(
+    Sys.getenv("SLURM_CPUS_PER_TASK", Sys.getenv("MC_CORES", "1"))
+  )
+  if (is.na(n_cores) || n_cores < 1L) {
+    n_cores <- min(parallel::detectCores(), 4L)
+  }
+  if (.Platform$OS.type == "windows") {
+    n_cores <- 1L
+  }
+
   total_datasets <- length(links) *
     length(k_grid) *
     length(sigma_grid) *
     n_samples
   cat(sprintf(
-    "Generating %d synthetic datasets from '%s'...\n",
+    "Generating %d synthetic datasets from '%s' using %d core(s)...\n",
     total_datasets,
-    config_path
+    config_path,
+    n_cores
   ))
   flush(stdout())
 
-  datasets <- list()
-  idx <- 1L
+  # Construct exact parameter grid matching deterministic nested-loop ordering
+  grid_params <- expand.grid(
+    sample_id = seq_len(n_samples),
+    sigma = sigma_grid,
+    K = k_grid,
+    link = links,
+    stringsAsFactors = FALSE
+  )
+  grid_params <- grid_params[
+    order(
+      match(grid_params$link, links),
+      match(grid_params$K, k_grid),
+      match(grid_params$sigma, sigma_grid),
+      grid_params$sample_id
+    ),
+    ,
+    drop = FALSE
+  ]
+  grid_params$dataset_id <- seq_len(nrow(grid_params))
 
-  for (lnk in links) {
-    for (K in k_grid) {
-      for (sig in sigma_grid) {
-        for (s in seq_len(n_samples)) {
-          sim_seed <- seed_base + idx * 1000L + s
-          ds <- generate_synthetic_dataset(
-            K = K,
-            sigma = sig,
-            p0_trend = p0_trend,
-            link = lnk,
-            n_sample_obs = n_sample_obs,
-            pop_per_sub = pop_per_sub,
-            obs_ages = obs_ages,
-            lambda_true = lambda_true,
-            dose_schedule = dose_schedule,
-            dose = dose,
-            seed = sim_seed
-          )
-          ds$sample_id <- s
-          ds$dataset_id <- idx
-          datasets[[idx]] <- ds
-          idx <- idx + 1L
-        }
+  t0_gen <- proc.time()
+
+  # Process in chunks to stream progress updates and manage memory
+  chunk_size <- if (total_datasets > 1000L) 1000L else total_datasets
+  chunk_cuts <- split(
+    seq_len(total_datasets),
+    ceiling(seq_len(total_datasets) / chunk_size)
+  )
+
+  datasets <- vector("list", total_datasets)
+
+  for (chunk in chunk_cuts) {
+    chunk_res <- parallel::mclapply(
+      chunk,
+      function(idx) {
+        row <- grid_params[idx, ]
+        sim_seed <- seed_base + idx * 1000L + row$sample_id
+        ds <- generate_synthetic_dataset(
+          K = row$K,
+          sigma = row$sigma,
+          p0_trend = p0_trend,
+          link = row$link,
+          n_sample_obs = n_sample_obs,
+          pop_per_sub = pop_per_sub,
+          obs_ages = obs_ages,
+          lambda_true = lambda_true,
+          dose_schedule = dose_schedule,
+          dose = dose,
+          seed = sim_seed
+        )
+        ds$sample_id <- row$sample_id
+        ds$dataset_id <- idx
+        ds
+      },
+      mc.cores = n_cores
+    )
+
+    for (i in seq_along(chunk)) {
+      res <- chunk_res[[i]]
+      if (inherits(res, "try-error")) {
+        stop(sprintf(
+          "Error generating dataset %d: %s",
+          chunk[i],
+          as.character(res)
+        ))
       }
+      datasets[[chunk[i]]] <- res
     }
+
+    done <- max(chunk)
+    elapsed_min <- (proc.time() - t0_gen)[["elapsed"]] / 60
+    eta_min <- if (done < total_datasets) {
+      (elapsed_min / done) * (total_datasets - done)
+    } else {
+      0.0
+    }
+    cat(sprintf(
+      "  Progress: %d / %d datasets (%.1f%%) [elapsed: %.1f min, eta: ~%.1f min]\n",
+      done,
+      total_datasets,
+      (done / total_datasets) * 100,
+      elapsed_min,
+      eta_min
+    ))
+    flush(stdout())
   }
 
   output_path <- sub("\\.ya?ml$", ".rds", config_path)

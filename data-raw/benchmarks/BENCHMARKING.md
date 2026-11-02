@@ -223,8 +223,8 @@ The consolidation reducer executes the following reductions:
 You can launch and manage benchmarks on a remote HPC cluster (e.g. Longleaf) directly from your local terminal using `just hpc-*` recipes or `hpc_remote.sh`:
 
 ```bash
-# 1. Sync repository code to remote HPC
-just hpc-sync
+# 1. (Optional/Automatic) Bootstrap remote HPC: clone/sync branch & install dependencies
+just hpc-setup
 
 # 2. Pre-generate datasets and compile Stan models on a remote compute node
 just hpc-prep full

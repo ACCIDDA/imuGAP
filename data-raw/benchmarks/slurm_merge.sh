@@ -16,7 +16,7 @@ if ! command -v Rscript &>/dev/null; then
   if [ -f /etc/profile.d/modules.sh ]; then
     source /etc/profile.d/modules.sh
   fi
-  module load r 2>/dev/null || module load R 2>/dev/null || true
+  module load R/4.5.0 2>/dev/null || module load r 2>/dev/null || module load R 2>/dev/null || true
 fi
 
 cd "${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"

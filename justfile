@@ -307,6 +307,12 @@ pr-failed-logs run_id="":
 	fi
 
 [group('hpc')]
+[doc('Bootstrap remote HPC: clone/sync branch, install R dependencies and imuGAP')]
+hpc-setup:
+	#!/usr/bin/env bash
+	bash data-raw/benchmarks/hpc_remote.sh setup
+
+[group('hpc')]
 [doc('Sync imuGAP repository to remote HPC cluster')]
 hpc-sync:
 	#!/usr/bin/env bash
