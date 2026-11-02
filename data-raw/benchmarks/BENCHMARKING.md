@@ -218,4 +218,26 @@ The consolidation reducer executes the following reductions:
 4. **Calibration Profiles (`results_<cfg>_calibration.rds`)**: Cohort-specific and subpopulation offset bias and credible interval coverage envelopes.
 5. **Master Bundle (`results_<cfg>.rds`)**: Unified list holding all consolidated summary tables for downstream plotting and reporting.
 
+### 6.3 Direct Local-to-HPC Execution (`just hpc-*`)
+
+You can launch and manage benchmarks on a remote HPC cluster (e.g. Longleaf) directly from your local terminal using `just hpc-*` recipes or `hpc_remote.sh`:
+
+```bash
+# 1. Sync repository code to remote HPC
+just hpc-sync
+
+# 2. Pre-generate datasets and compile Stan models on a remote compute node
+just hpc-prep full
+
+# 3. Submit 55-task SLURM array and dependent merge job
+just hpc-submit full 4 1 300 150
+
+# 4. Monitor queue status
+just hpc-status
+
+# 5. Download final consolidated results when finished
+just hpc-fetch full
+```
+
+
 

@@ -306,3 +306,47 @@ pr-failed-logs run_id="":
 		exit 1
 	fi
 
+[group('hpc')]
+[doc('Sync imuGAP repository to remote HPC cluster')]
+hpc-sync:
+	#!/usr/bin/env bash
+	bash data-raw/benchmarks/hpc_remote.sh sync
+
+[group('hpc')]
+[doc('Prepare population datasets and compile Stan models on remote HPC compute node')]
+hpc-prep config="full":
+	#!/usr/bin/env bash
+	bash data-raw/benchmarks/hpc_remote.sh prep "{{ config }}"
+
+[group('hpc')]
+[doc('Sync code and submit SLURM benchmark array + merge job on remote HPC')]
+hpc-submit config="full" chains="4" threads="1" iter="300" warmup="150":
+	#!/usr/bin/env bash
+	bash data-raw/benchmarks/hpc_remote.sh submit \
+		"{{ config }}" "{{ chains }}" "{{ threads }}" "{{ iter }}" "{{ warmup }}"
+
+[group('hpc')]
+[doc('Check SLURM job queue status on remote HPC')]
+hpc-status:
+	#!/usr/bin/env bash
+	bash data-raw/benchmarks/hpc_remote.sh status
+
+[group('hpc')]
+[doc('Display recent SLURM benchmark logs from remote HPC')]
+hpc-logs filter="":
+	#!/usr/bin/env bash
+	bash data-raw/benchmarks/hpc_remote.sh logs "{{ filter }}"
+
+[group('hpc')]
+[doc('Download completed benchmark results from remote HPC to local')]
+hpc-fetch config="full":
+	#!/usr/bin/env bash
+	bash data-raw/benchmarks/hpc_remote.sh fetch "{{ config }}"
+
+[group('hpc')]
+[doc('Cancel active imuGAP benchmark jobs on remote HPC')]
+hpc-cancel:
+	#!/usr/bin/env bash
+	bash data-raw/benchmarks/hpc_remote.sh cancel
+
+

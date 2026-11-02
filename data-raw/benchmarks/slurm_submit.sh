@@ -43,6 +43,10 @@ R CMD INSTALL --no-multiarch --with-keep.source ../..
 
 # Stage 1: Build populations and pre-compile unified Stan models
 echo ">>> [Stage 1] Pre-flight compilation & population generation..."
+if [[ ! -f "${CONFIG_RDS}" ]] && [[ "$(hostname)" =~ (login|ll-login) ]]; then
+  echo "NOTICE: Building '${CONFIG_RDS}' on an HPC login node may be throttled."
+  echo "        Pre-generating via 'srun -p interact ... make ${CONFIG_TARGET}-pop' is recommended."
+fi
 make "${CONFIG_TARGET}-pop"
 make compile
 
@@ -63,6 +67,7 @@ ARRAY_JOB_ID=$(sbatch \
   --parsable \
   --array=1-"${N_MODELS}" \
   --cpus-per-task="${CORES_PER_TASK}" \
+  --mem-per-cpu="${MEM_PER_CPU:-2G}" \
   --time="${TIME_LIMIT}" \
   slurm_benchmark_array.sh \
     "${CONFIG_RDS}" \
