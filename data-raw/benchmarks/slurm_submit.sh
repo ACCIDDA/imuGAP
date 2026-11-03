@@ -57,7 +57,7 @@ Rscript -e '
     install.packages(missing, lib = user_lib, repos = "https://cloud.r-project.org", quiet = TRUE)
   }
 '
-R CMD INSTALL --no-multiarch --with-keep.source ../..
+MAKEFLAGS="-j${CORES_PER_TASK}" R CMD INSTALL --no-lock --no-multiarch --with-keep.source ../..
 
 # Stage 1: Build populations and pre-compile unified Stan models
 echo ">>> [Stage 1] Pre-flight compilation & population generation..."

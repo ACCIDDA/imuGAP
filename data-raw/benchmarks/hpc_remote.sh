@@ -12,7 +12,7 @@ HPC_DIR="${HPC_DIR:-imuGAP}"
 # Normalize remote path: strip any leading ~/ for safe remote shell expansion
 HPC_REL_DIR="${HPC_DIR#~/}"
 R_MODULE="${R_MODULE:-r/4.5.0}"
-SYNC_HOST="${HPC_DM_HOST:-longleaf-dm}"
+SYNC_HOST="${HPC_DM_HOST:-${HPC_HOST}}"
 
 # Determine repository root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -234,26 +234,29 @@ cmd_prep() {
   local config_target
   config_target=$(echo "${config}" | tr '_' '-')
   local prep_cpus="${PREP_CPUS:-4}"
+  local prep_mem="${PREP_MEM:-32G}"
   local prep_time="${PREP_TIME_LIMIT:-02:00:00}"
 
   echo ">>> Submitting data prep & compilation job on ${HPC_HOST} for '${config}'..."
-  echo "    Allocation: ${prep_cpus} CPUs, walltime ${prep_time}"
-  ssh "${HPC_HOST}" "bash -l -c '
-    set -euo pipefail
-    TARGET=\"\${HOME}/${HPC_REL_DIR}\"
-    module load ${R_MODULE} 2>/dev/null || module load r 2>/dev/null || true
-    cd \"\${TARGET}/data-raw/benchmarks\"
-    mkdir -p logs benchobjs
-    sbatch \
-      ${SLURM_EXTRA_ARGS:-} \
-      --job-name=imugap_prep \
-      --cpus-per-task=${prep_cpus} \
-      --mem=8G \
-      --time=${prep_time} \
-      --output=logs/prep_%j.log \
-      --error=logs/prep_%j.err \
-      --wrap=\"make ${config_target}-pop && make compile\"
-  '"
+  echo "    Allocation: ${prep_cpus} CPUs, ${prep_mem} RAM, walltime ${prep_time}"
+  ssh "${HPC_HOST}" bash -l <<EOF
+set -euo pipefail
+module load ${R_MODULE} 2>/dev/null || module load r 2>/dev/null || true
+cd "\${HOME}/${HPC_REL_DIR}/data-raw/benchmarks"
+mkdir -p logs benchobjs
+prep_cmd="MAKEFLAGS=\"-j${prep_cpus}\" R CMD INSTALL --no-lock"
+prep_cmd="\${prep_cmd} --no-multiarch --with-keep.source ../.."
+prep_cmd="\${prep_cmd} && make ${config_target}-pop && make compile"
+sbatch \
+  ${SLURM_EXTRA_ARGS:-} \
+  --job-name=imugap_prep \
+  --cpus-per-task=${prep_cpus} \
+  --mem=${prep_mem} \
+  --time=${prep_time} \
+  --output=logs/prep_%j.log \
+  --error=logs/prep_%j.err \
+  --wrap="\${prep_cmd}"
+EOF
   echo ">>> Prep job submitted. Monitor progress with: ./hpc_remote.sh status"
 }
 
