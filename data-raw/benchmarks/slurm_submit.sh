@@ -37,27 +37,31 @@ echo "Iterations        : ${ITER} (warmup: ${WARMUP})"
 echo "Walltime Limit    : ${TIME_LIMIT}"
 echo "================================================================="
 
-# Stage 0: Guarantee dependencies and current development package are installed in R library
-echo ">>> [Stage 0] Synchronizing and installing imuGAP package in R library..."
+# Stage 0: Guarantee dependencies are available
+echo ">>> [Stage 0] Verifying runtime dependencies..."
 Rscript -e '
-  user_lib <- Sys.getenv("R_LIBS_USER")
-  if (!nzchar(user_lib)) {
-    r_ver <- sprintf("%s.%s", R.version$major, sub("\\..*", "", R.version$minor))
-    user_lib <- file.path(Sys.getenv("HOME"), "R", paste0(R.version$platform, "-library"), r_ver)
-  }
-  dir.create(user_lib, recursive = TRUE, showWarnings = FALSE)
-  .libPaths(c(user_lib, .libPaths()))
-
-  pkgs <- c("yaml", "data.table", "rstan", "withr", "flexstanr")
+  pkgs <- c("yaml", "data.table", "rstan", "withr", "pkgload")
   missing <- setdiff(pkgs, rownames(installed.packages()))
   if (length(missing) > 0L) {
+    user_lib <- Sys.getenv("R_LIBS_USER")
+    if (!nzchar(user_lib)) {
+      r_ver <- sprintf("%s.%s", R.version$major, sub("\\..*", "", R.version$minor))
+      user_lib <- file.path(Sys.getenv("HOME"), "R", paste0(R.version$platform, "-library"), r_ver)
+    }
+    dir.create(user_lib, recursive = TRUE, showWarnings = FALSE)
     msg <- sprintf("Installing missing CRAN packages into %s: %s",
       user_lib, paste(missing, collapse = ", "))
     message(msg)
     install.packages(missing, lib = user_lib, repos = "https://cloud.r-project.org", quiet = TRUE)
   }
 '
-MAKEFLAGS="-j${CORES_PER_TASK}" R CMD INSTALL --no-lock --no-multiarch --with-keep.source ../..
+
+if [[ "${FORCE_REINSTALL:-0}" == "1" ]]; then
+  echo ">>> Reinstalling imuGAP package in R library (FORCE_REINSTALL=1)..."
+  MAKEFLAGS="-j${CORES_PER_TASK}" R CMD INSTALL --no-lock --no-multiarch --with-keep.source ../..
+else
+  echo ">>> Package re-installation skipped (runner dynamically loads workspace via pkgload)."
+fi
 
 # Stage 1: Build populations and pre-compile unified Stan models
 echo ">>> [Stage 1] Pre-flight compilation & population generation..."
