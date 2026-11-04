@@ -30,7 +30,9 @@ by location, cohort, age, and dose for the requested quantiles."><meta property=
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
-      </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+      </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
+ <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch"><li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
@@ -111,11 +113,11 @@ coverage (<code>mean</code>), and the requested quantiles (e.g. <code>q2.5</code
 <span class="r-out co"><span class="r-pr">#&gt;</span>    4: 0.0000000 0.0000000 0.0000000 0.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    5: 0.0000000 0.0000000 0.0000000 0.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ---                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1004: 0.9065753 0.8901314 0.9060418 0.9255876</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1005: 0.9849415 0.9739804 0.9858495 0.9943623</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1006: 0.9867467 0.9756177 0.9869648 0.9959851</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1007: 0.8927919 0.8743257 0.8923504 0.9147424</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1008: 0.9321943 0.9212147 0.9321951 0.9406812</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1004: 0.9062623 0.8873584 0.9053190 0.9256850</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1005: 0.9843906 0.9760715 0.9842873 0.9937371</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1006: 0.9871394 0.9737656 0.9870097 0.9969445</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1007: 0.8921072 0.8709556 0.8927786 0.9108449</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1008: 0.9317356 0.9191129 0.9315590 0.9425783</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Summarize with custom quantiles</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">predict_sim</span>, probs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -140,11 +142,11 @@ coverage (<code>mean</code>), and the requested quantiles (e.g. <code>q2.5</code
 <span class="r-out co"><span class="r-pr">#&gt;</span>    4: 0.0000000 0.0000000 0.0000000 0.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    5: 0.0000000 0.0000000 0.0000000 0.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ---                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1004: 0.9065753 0.8957054 0.9060418 0.9189076</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1005: 0.9849415 0.9777962 0.9858495 0.9913800</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1006: 0.9867467 0.9811113 0.9869648 0.9940891</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1007: 0.8927919 0.8779042 0.8923504 0.9056408</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1008: 0.9321943 0.9245783 0.9321951 0.9386191</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1004: 0.9062623 0.8944733 0.9053190 0.9190568</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1005: 0.9843906 0.9786325 0.9842873 0.9913324</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1006: 0.9871394 0.9797486 0.9870097 0.9946662</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1007: 0.8921072 0.8815458 0.8927786 0.9038298</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1008: 0.9317356 0.9244273 0.9315590 0.9391698</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

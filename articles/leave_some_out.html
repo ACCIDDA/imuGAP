@@ -52,6 +52,9 @@
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
+<li class="nav-item"><form class="form-inline" role="search">
+ <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
+</form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/ACCIDDA/imuGAP/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
@@ -117,7 +120,7 @@ computes the corresponding cumulative log probability:</p>
 <code class="sourceCode R"><span><span class="co"># Compute log-likelihood matrix (Draws x Observations)</span></span>
 <span><span class="va">ll_mat</span> <span class="op">&lt;-</span> <span class="fu">rstantools</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstantools/reference/log_lik.html" class="external-link">log_lik</a></span><span class="op">(</span><span class="va">fit_sim</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Elapsed Time: 0.07 seconds (Generated Quantities)</span></span>
+<span><span class="co">#&gt;  Elapsed Time: 0.139 seconds (Generated Quantities)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">ll_mat</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 500 841</span></span></code></pre></div>
 <hr>
@@ -134,20 +137,25 @@ diagnostics by calling <code>loo()</code> directly on an
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">loo_res</span> <span class="op">&lt;-</span> <span class="fu">loo</span><span class="op">(</span><span class="va">fit_sim</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Elapsed Time: 0.07 seconds (Generated Quantities)</span></span>
+<span><span class="co">#&gt;  Elapsed Time: 0.138 seconds (Generated Quantities)</span></span>
+<span><span class="co">#&gt; Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">loo_res</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Computed from 500 by 841 log-likelihood matrix.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;          Estimate   SE</span></span>
-<span><span class="co">#&gt; elpd_loo  -2155.4 35.7</span></span>
-<span><span class="co">#&gt; p_loo        33.4  2.1</span></span>
-<span><span class="co">#&gt; looic      4310.7 71.4</span></span>
+<span><span class="co">#&gt; elpd_loo  -2155.3 35.7</span></span>
+<span><span class="co">#&gt; p_loo        33.3  2.0</span></span>
+<span><span class="co">#&gt; looic      4310.5 71.3</span></span>
 <span><span class="co">#&gt; ------</span></span>
-<span><span class="co">#&gt; MCSE of elpd_loo is 0.3.</span></span>
-<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.1, 2.2]).</span></span>
+<span><span class="co">#&gt; MCSE of elpd_loo is NA.</span></span>
+<span><span class="co">#&gt; MCSE and ESS estimates assume MCMC draws (r_eff in [0.3, 2.0]).</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; All Pareto k estimates are good (k &lt; 0.63).</span></span>
+<span><span class="co">#&gt; Pareto k diagnostic values:</span></span>
+<span><span class="co">#&gt;                           Count Pct.    Min. ESS</span></span>
+<span><span class="co">#&gt; (-Inf, 0.63]   (good)     840   99.9%   142     </span></span>
+<span><span class="co">#&gt;    (0.63, 1]   (bad)        1    0.1%   &lt;NA&gt;    </span></span>
+<span><span class="co">#&gt;     (1, Inf)   (very bad)   0    0.0%   &lt;NA&gt;    </span></span>
 <span><span class="co">#&gt; See help('pareto-k-diagnostic') for details.</span></span></code></pre></div>
 <p>The Pareto shape parameter
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>k</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat{k}</annotation></semantics></math>
