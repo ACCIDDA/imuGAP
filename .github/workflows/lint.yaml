@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # lint_package() is static: it needs the sources and deps, not an installed
       # imuGAP or a regenerated NAMESPACE, so every build step in the composite
