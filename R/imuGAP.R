@@ -357,8 +357,11 @@ sampling <- function(
       n_cohort = max(wts$cohort)
     ),
     if (is_multilayer) layer_data,
-    if (is_multilayer && !identical(imugap_opts$solver, "halley2")) {
-      list(solver_type = imugap_opts$solver_type)
+    if (is_multilayer && isTRUE(imugap_opts$is_dispatch)) {
+      list(
+        guess_type = imugap_opts$guess_type,
+        solver_type = imugap_opts$solver_type
+      )
     },
     list(
       n_doses = length(dose_sched_opts),

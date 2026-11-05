@@ -4,6 +4,8 @@ targets <- c(
   "functions/link/logit.stan",
   "functions/link/probit.stan",
   "functions/guess/zero.stan",
+  "functions/guess/dispatch_logit.stan",
+  "functions/guess/dispatch_probit.stan",
   "functions/solvers/direct.stan",
   "functions/solvers/halley.stan",
   "functions/solvers/newton.stan",
@@ -82,7 +84,7 @@ model_dispatch_logit <- sprintf(
   "
 functions {
   #include functions/link/logit.stan
-  #include functions/guess/zero.stan
+  #include functions/guess/dispatch_logit.stan
   #include functions/solvers/dispatch.stan
 }
 data {
@@ -122,7 +124,7 @@ model_dispatch_probit <- sprintf(
   "
 functions {
   #include functions/link/probit.stan
-  #include functions/guess/zero.stan
+  #include functions/guess/dispatch_probit.stan
   #include functions/solvers/dispatch.stan
 }
 data {

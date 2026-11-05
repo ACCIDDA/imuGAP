@@ -29,19 +29,23 @@ guess_type_map <- c(
 #'   `"direct"`, `"newton2"`, `"builtin"`, and `"halley10"`.
 #' @param link character string; link function formulation. Options include `"logit"` and
 #'   `"probit"`.
-#' @param guesser character string; initial guesser method (default: `"zero"`). Options include
-#'   `"zero"`.
+#' @param guesser character string; initial guesser method. Options include `"auto"` (resolving to
+#'   `"taylor2"` for `"logit"` and `"pade"` for `"probit"`), `"zero"`, `"taylor2"`, `"taylor4"`,
+#'   `"pade"`, `"asymptotic"`, and `"conditioned"`.
 #'
 #' @return a named list, containing:
 #'   - `model_name`: character string of the concrete compiled Stan model.
 #'   - `time`: character string temporal basis (`"bspline"`).
 #'   - `offsets`: character string spatial offset type (`"static"`).
-#'   - `guesser`: character string initial guesser method (`"zero"`).
+#'   - `guesser`: character string resolved initial guesser method.
+#'   - `guesser_module`: character string guesser module (`"taylor2"`, `"pade"`, or `"dispatch"`).
+#'   - `guess_type`: integer guesser code (1L..6L).
 #'   - `solver`: character string rootfinder method (`"halley2"`, `"direct"`, etc.).
-#'   - `solver_module`: character string solver module (`"halley2"`, `"direct"`, or `"dispatch"`).
+#'   - `solver_module`: character string solver module (`"halley2"`, or `"dispatch"`).
 #'   - `solver_type`: integer solver code (1L..5L).
 #'   - `link`: character string link formulation (`"logit"` or `"probit"`).
-#'   - `is_dispatch`: logical scalar indicating whether dynamic solver dispatch is active.
+#'   - `is_dispatch`: logical scalar indicating whether dynamic solver and guesser dispatch is
+#'     active.
 #'
 #' @keywords internal
 #' @noRd
@@ -50,16 +54,32 @@ resolve_model_name <- function(
   offsets,
   solver,
   link,
-  guesser = "zero"
+  guesser
 ) {
-  solver_type <- unname(solver_type_map[solver])
+  resolved_guesser <- if (identical(guesser, "auto")) {
+    if (identical(link, "probit")) "pade" else "taylor2"
+  } else {
+    guesser
+  }
 
-  is_dispatch <- !identical(solver, "halley2")
-  solver_module <- if (is_dispatch) "dispatch" else solver
+  solver_type <- unname(solver_type_map[solver])
+  guess_type <- unname(guess_type_map[resolved_guesser])
+
+  is_default_logit <- identical(link, "logit") &&
+    identical(resolved_guesser, "taylor2")
+  is_default_probit <- identical(link, "probit") &&
+    identical(resolved_guesser, "pade")
+  is_default_guesser <- is_default_logit || is_default_probit
+  is_branchless <- identical(solver, "halley2") && is_default_guesser
+
+  is_dispatch <- !is_branchless
+
+  guesser_module <- if (is_branchless) resolved_guesser else "dispatch"
+  solver_module <- if (is_branchless) solver else "dispatch"
   model_name <- sprintf(
     "%s_static_%s_%s_%s",
     time,
-    guesser,
+    guesser_module,
     solver_module,
     link
   )
@@ -68,7 +88,9 @@ resolve_model_name <- function(
     model_name = model_name,
     time = time,
     offsets = offsets,
-    guesser = guesser,
+    guesser = resolved_guesser,
+    guesser_module = guesser_module,
+    guess_type = guess_type,
     solver = solver,
     solver_module = solver_module,
     solver_type = solver_type,
@@ -119,13 +141,17 @@ resolve_layer_model <- function(imugap_opts, is_multilayer = TRUE) {
 #'   (default: `"static"`). Options include `"static"`.
 #' @param link character string specifying the link function formulation
 #'   (default: `"logit"`). Options include `"logit"` and `"probit"`.
+#' @param guesser character string specifying the initial shift guess method
+#'   (default: `"auto"`). Options include `"auto"` (resolving to `"taylor2"` for `"logit"`
+#'   and `"pade"` for `"probit"`), `"zero"`, `"taylor2"`, `"taylor4"`, `"pade"`,
+#'   `"asymptotic"`, and `"conditioned"`.
 #' @param solver character string specifying the rootfinder solver method
 #'   (default: `"halley2"`). Options include `"halley2"`, `"direct"`, `"newton2"`,
 #'   `"builtin"`, and `"halley10"`.
 #' @examples
 #' imugap_options()
 #' imugap_options(dose_schedule = c(1, 3))
-#' imugap_options(link = "probit", solver = "halley2")
+#' imugap_options(link = "probit", guesser = "pade", solver = "halley2")
 #'
 #' @return an object of class `imugap_options`, wrapping a named list of model options.
 #' @export
@@ -136,12 +162,29 @@ imugap_options <- function(
   time = c("bspline"),
   offsets = c("static"),
   link = c("logit", "probit"),
+  guesser = c(
+    "auto",
+    "zero",
+    "taylor2",
+    "taylor4",
+    "pade",
+    "asymptotic",
+    "conditioned"
+  ),
   solver = c("halley2", "direct", "newton2", "builtin", "halley10")
 ) {
   time <- match.arg(time)
   offsets <- match.arg(offsets)
   link <- match.arg(link)
+  guesser <- match.arg(guesser)
   solver <- match.arg(solver)
+
+  stop_fmt_if(
+    identical(guesser, "pade") && !identical(link, "probit"),
+    ERR_OPT_GUESSER_LINK,
+    guesser = guesser,
+    link = link
+  )
 
   stop_fmt_if(length(df) != 1L, ERR_OPT_DF_SINGLE)
   df <- assert_positive_int(df, "df")
@@ -163,7 +206,8 @@ imugap_options <- function(
     time = time,
     offsets = offsets,
     solver = solver,
-    link = link
+    link = link,
+    guesser = guesser
   )
 
   structure(
@@ -175,8 +219,13 @@ imugap_options <- function(
       offsets = resolved$offsets,
       link = resolved$link,
       model = resolved$model_name,
+      guesser = resolved$guesser,
+      guesser_module = resolved$guesser_module,
+      guess_type = resolved$guess_type,
       solver = resolved$solver,
-      solver_type = resolved$solver_type
+      solver_module = resolved$solver_module,
+      solver_type = resolved$solver_type,
+      is_dispatch = resolved$is_dispatch
     ),
     class = "imugap_options"
   )

@@ -101,9 +101,9 @@ $ Rscript benchmark_synthetic_populations.R some_config_A.yml
 
 ## 3. Evaluated Model Configurations
 
-Unified models are compiled directly from the shipped Stan models (`inst/stan/bspline_static_zero_dispatch_<link>.stan`), which dynamically dispatch guessers and solvers at runtime. Compiled model objects with Stan thread support are cached in the `benchobjs/` directory. These are managed by `benchmark_compilation.R` and the `Makefile`.
+Unified models are compiled directly from the shipped Stan models (`inst/stan/bspline_static_dispatch_dispatch_<link>.stan`), which dynamically dispatch guessers and solvers at runtime. Compiled model objects with Stan thread support are cached in the `benchobjs/` directory. These are managed by `benchmark_compilation.R` and the `Makefile`.
 
-The models for a benchmark are determined by a configuration file. The full set of available combinations are listed below. The stress test configuration uses all links, the `zero` initial guesser, and all five rootfinding solvers (`direct`, `halley2`, `newton2`, `builtin`, and `halley10`).
+The models for a benchmark are determined by a configuration file. The full set of available combinations are listed below. The stress test configuration exercises all proposal generators (`zero`, `taylor2`, `taylor4`, `pade`, `asymptotic`, and `conditioned`) across the three primary solvers (`direct`, `halley2` [package default], and `builtin`).
 
 ### 3.1 Link Functions (`@LINK@`)
 - `logit`: Logistic link $g(p) = \log(p / (1 - p))$.
@@ -183,7 +183,7 @@ For every fit, the following metrics are recorded and aggregated across Monte Ca
 - Primary configurations:
   - Stress Test: `config_stress_test.yml` -> `results_stress_test.rds`
   - Strenuous Grid: `config_strenuous.yml` -> `results_strenuous.rds`
-  - Full Grid: `config_full.yml` -> `results_full_grid.rds`
+  - Full Grid: `config_full.yml` -> `results_full.rds`
 
 ---
 
@@ -217,5 +217,27 @@ The consolidation reducer executes the following reductions:
 3. **Solver Ranking (`results_<cfg>_ranking.rds` & `.csv`)**: Overall speedup and Pareto-efficiency ranking across models.
 4. **Calibration Profiles (`results_<cfg>_calibration.rds`)**: Cohort-specific and subpopulation offset bias and credible interval coverage envelopes.
 5. **Master Bundle (`results_<cfg>.rds`)**: Unified list holding all consolidated summary tables for downstream plotting and reporting.
+
+### 6.3 Direct Local-to-HPC Execution (`just hpc-*`)
+
+You can launch and manage benchmarks on a remote HPC cluster (e.g. Longleaf) directly from your local terminal using `just hpc-*` recipes or `hpc_remote.sh`:
+
+```bash
+# 1. (Optional/Automatic) Bootstrap remote HPC: clone/sync branch & install dependencies
+just hpc-setup
+
+# 2. Pre-generate datasets and compile Stan models on a remote compute node
+just hpc-prep full
+
+# 3. Submit 55-task SLURM array and dependent merge job
+just hpc-submit full 4 1 300 150
+
+# 4. Monitor queue status
+just hpc-status
+
+# 5. Download final consolidated results when finished
+just hpc-fetch full
+```
+
 
 

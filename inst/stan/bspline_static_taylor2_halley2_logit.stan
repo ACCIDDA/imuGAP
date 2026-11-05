@@ -1,7 +1,7 @@
 functions {
   #include functions/convenience.stan
   #include functions/link/logit.stan
-  #include functions/guess/zero.stan
+  #include functions/guess/taylor2_logit.stan
   #include functions/solvers/halley2.stan
   #include functions/layer_offsets.stan
   #include functions/layer_offsets_static.stan
@@ -53,3 +53,4 @@ generated quantities {
     }
   }
 }
+

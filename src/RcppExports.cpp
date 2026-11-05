@@ -14,18 +14,18 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_single_logit_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_single_probit_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_zero_dispatch_logit_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_zero_dispatch_probit_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_zero_halley2_logit_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_zero_halley2_probit_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_dispatch_dispatch_logit_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_dispatch_dispatch_probit_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_pade_halley2_probit_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4bspline_static_taylor2_halley2_logit_mod();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_stan_fit4bspline_single_logit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_single_logit_mod, 0},
     {"_rcpp_module_boot_stan_fit4bspline_single_probit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_single_probit_mod, 0},
-    {"_rcpp_module_boot_stan_fit4bspline_static_zero_dispatch_logit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_zero_dispatch_logit_mod, 0},
-    {"_rcpp_module_boot_stan_fit4bspline_static_zero_dispatch_probit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_zero_dispatch_probit_mod, 0},
-    {"_rcpp_module_boot_stan_fit4bspline_static_zero_halley2_logit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_zero_halley2_logit_mod, 0},
-    {"_rcpp_module_boot_stan_fit4bspline_static_zero_halley2_probit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_zero_halley2_probit_mod, 0},
+    {"_rcpp_module_boot_stan_fit4bspline_static_dispatch_dispatch_logit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_dispatch_dispatch_logit_mod, 0},
+    {"_rcpp_module_boot_stan_fit4bspline_static_dispatch_dispatch_probit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_dispatch_dispatch_probit_mod, 0},
+    {"_rcpp_module_boot_stan_fit4bspline_static_pade_halley2_probit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_pade_halley2_probit_mod, 0},
+    {"_rcpp_module_boot_stan_fit4bspline_static_taylor2_halley2_logit_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4bspline_static_taylor2_halley2_logit_mod, 0},
     {NULL, NULL, 0}
 };
 

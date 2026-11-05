@@ -1,16 +1,18 @@
 functions {
   #include functions/convenience.stan
   #include functions/link/probit.stan
-  #include functions/guess/zero.stan
-  #include functions/solvers/halley2.stan
+  #include functions/guess/dispatch_probit.stan
+  #include functions/solvers/dispatch.stan
   #include functions/layer_offsets.stan
-  #include functions/layer_offsets_static.stan
+  #include functions/layer_offsets_dispatch.stan
   #include functions/unrolled_dose_static_lambda.stan
   #include functions/observation_likelihood_reduce.stan
 }
 data {
   #include data/shared.stan
   #include data/locations.stan
+  #include data/guesser.stan
+  #include data/solver.stan
   #include data/uncensored/weights_location.stan
   #include data/right/weights_location.stan
   #include data/left/weights_location.stan
@@ -29,7 +31,7 @@ parameters {
 }
 transformed parameters {
   #include transformed_parameters/bspline.stan
-  #include transformed_parameters/layer_offsets.stan
+  #include transformed_parameters/layer_offsets_dispatch.stan
 }
 model {
   if (!predict_mode) {
@@ -53,4 +55,3 @@ generated quantities {
     }
   }
 }
-

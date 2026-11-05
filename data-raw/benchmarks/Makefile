@@ -65,7 +65,7 @@ benchobjs:
 
 # Pattern rule: Compile unified Stan model object with Stan thread support
 benchobjs/model_unified_%.rds: benchmark_compilation.R \
-	../../inst/stan/bspline_static_zero_dispatch_%.stan \
+	../../inst/stan/bspline_static_dispatch_dispatch_%.stan \
 	$(STAN_DEPS) | benchobjs
 	Rscript $(wordlist 1, 2, $^) $@
 
@@ -90,7 +90,7 @@ results_strenuous.rds: benchmark_inference_runner.R config_strenuous.rds \
 	$(UNIFIED_MODELS_OBJS)
 	$(call R)
 
-results_full_grid.rds: benchmark_inference_runner.R config_full.rds \
+results_full.rds: benchmark_inference_runner.R config_full.rds \
 	$(UNIFIED_MODELS_OBJS)
 	$(call R)
 
@@ -98,7 +98,7 @@ stress-test-run: results_stress_test.rds
 
 strenuous-run: results_strenuous.rds
 
-full-run: results_full_grid.rds
+full-run: results_full.rds
 
 run: stress-test-run
 
