@@ -39,7 +39,7 @@ data("locations_sim", package = "imuGAP")
 # Compute log-likelihood matrix (Draws x Observations)
 ll_mat <- rstantools::log_lik(fit_sim)
 #> 
-#>  Elapsed Time: 0.139 seconds (Generated Quantities)
+#>  Elapsed Time: 0.117 seconds (Generated Quantities)
 dim(ll_mat)
 #> [1] 500 841
 ```
@@ -56,25 +56,20 @@ diagnostics by calling `loo()` directly on an `imugap_fit` object:
 
 loo_res <- loo(fit_sim)
 #> 
-#>  Elapsed Time: 0.138 seconds (Generated Quantities)
-#> Warning: Some Pareto k diagnostic values are too high. See help('pareto-k-diagnostic') for details.
+#>  Elapsed Time: 0.117 seconds (Generated Quantities)
 print(loo_res)
 #> 
 #> Computed from 500 by 841 log-likelihood matrix.
 #> 
 #>          Estimate   SE
-#> elpd_loo  -2155.3 35.7
-#> p_loo        33.3  2.0
-#> looic      4310.5 71.3
+#> elpd_loo  -2154.4 35.6
+#> p_loo        32.5  2.0
+#> looic      4308.9 71.3
 #> ------
-#> MCSE of elpd_loo is NA.
-#> MCSE and ESS estimates assume MCMC draws (r_eff in [0.3, 2.0]).
+#> MCSE of elpd_loo is 0.5.
+#> MCSE and ESS estimates assume MCMC draws (r_eff in [0.0, 1.7]).
 #> 
-#> Pareto k diagnostic values:
-#>                           Count Pct.    Min. ESS
-#> (-Inf, 0.63]   (good)     840   99.9%   142     
-#>    (0.63, 1]   (bad)        1    0.1%   <NA>    
-#>     (1, Inf)   (very bad)   0    0.0%   <NA>    
+#> All Pareto k estimates are good (k < 0.63).
 #> See help('pareto-k-diagnostic') for details.
 ```
 
