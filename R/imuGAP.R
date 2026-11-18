@@ -348,7 +348,7 @@ sampling <- function(
 
   st_uncensored <- slice_weights(wts, obs[is.na(censored)], "uncensored")
   st_right <- slice_weights(wts, obs[censored == 1], "right")
-  st_left <- slice_weights(wts, obs[0], "left")
+  st_left <- slice_weights(wts, obs[censored == 0], "left")
 
   # prepare dat_stan
   dat_stan <- c(

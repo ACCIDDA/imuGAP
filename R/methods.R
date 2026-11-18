@@ -490,9 +490,21 @@ print.imugap_fit <- function(x, pars = NULL, ...) {
     x$data$n_obs_mixed_right
   }
 
+  l_unmix <- if (is.null(x$data$n_obs_unmixed_left)) {
+    0L
+  } else {
+    x$data$n_obs_unmixed_left
+  }
+  l_mix <- if (is.null(x$data$n_obs_mixed_left)) {
+    0L
+  } else {
+    x$data$n_obs_mixed_left
+  }
+
   n_obs_uncensored <- u_unmix + u_mix
   n_obs_censored <- c_unmix + c_mix
-  n_obs_total <- n_obs_uncensored + n_obs_censored
+  n_obs_left <- l_unmix + l_mix
+  n_obs_total <- n_obs_uncensored + n_obs_censored + n_obs_left
 
   cat("An imuGAP model fit (`imugap_fit`):\n")
   if (!is.na(n_locs)) {
@@ -511,9 +523,13 @@ print.imugap_fit <- function(x, pars = NULL, ...) {
   }
   if (!is.null(x$data)) {
     cat(sprintf(
-      "  Observations: %d total (%d uncensored, %d right-censored)\n",
+      paste0(
+        "  Observations: %d total (%d uncensored, %d left-censored, ",
+        "%d right-censored)\n"
+      ),
       n_obs_total,
       n_obs_uncensored,
+      n_obs_left,
       n_obs_censored
     ))
   }
