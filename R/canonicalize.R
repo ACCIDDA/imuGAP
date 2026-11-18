@@ -60,11 +60,16 @@
 #' The specific coverage for the target vaccine is right-censored in the latter
 #' case: full-set-coverage is the minimum coverage for the target.
 #'
+#' Observations can also be left-censored, meaning the observed coverage is an
+#' upper bound on true coverage (e.g. administrative records suspected of
+#' over-reporting). These contribute `P(Y <= positive)` to the likelihood rather
+#' than `P(Y = positive)`. Note that a left-censored observation with
+#' `positive == sample_n` carries no information.
+#'
 #' When at least some of the data are censored, you must supply the `censored`
 #' column to correctly estimate coverage. Mark any uncensored observations with
-#' `NA`, and any right-censored observations with `1`. Note that `0` is *not* a
-#' valid value at this time; we are preserving that for potential future support
-#' of left-censoring.
+#' `NA`, any left-censored observations with `0`, and any right-censored
+#' observations with `1`.
 #'
 #' ## Populations (`canonicalize_populations`)
 #' This method validates the meta-data associated with the observations, as well
@@ -89,8 +94,9 @@
 #'     vaccinated individuals
 #'   - a `sample_n` column; positive integers, the number of individuals
 #'     sampled, must be greater than or equal to `positive`
-#'   - optionally, a `censored` column; numeric, `NA` (uncensored) or 1
-#'     (right-censored); if not present, will be assumed `NA`
+#'   - optionally, a `censored` column; numeric, `NA` (uncensored), 0
+#'     (left-censored), or 1 (right-censored); if not present, will be assumed
+#'     `NA`
 #' @param populations a `[data.frame()]` containing observation metadata, with columns:
 #'  - `obs_id`, any type; the observation the row concerns (i.e. id shared with
 #'    an observations data object)
@@ -434,19 +440,20 @@ canonicalize_observations <- function(observations, drop_extra = TRUE) {
       # full-length RHS: `:=` would coerce a scalar NA_real_ back to logical
       observations[, censored := as.numeric(censored)]
     }
-    # confirmed censored is numeric, and only contains NA or 1
+    # confirmed censored is numeric, and only contains NA, 0, or 1
     stop_fmt_if(!is.numeric(observations$censored), ERR_OBS_CENSORED_NUMERIC)
     stop_fmt_if(
-      observations[, any(!is.na(censored) & censored != 1)],
+      observations[, any(!is.na(censored) & !(censored %in% c(0, 1)))],
       ERR_OBS_CENSORED_VALUES,
-      rows = observations[, which(!is.na(censored) & censored != 1)]
+      rows = observations[, which(!is.na(censored) & !(censored %in% c(0, 1)))]
     )
   } else {
     observations[, censored := NA_real_]
   }
 
   # canonicalize ids: order by censoring, then original obs_id.
-  # this results in uncensored then censored observations.
+  # this results in uncensored, then left-censored, then right-censored
+  # observations.
   setkey(observations, censored, obs_id)
   observations[, obs_c_id := seq_len(.N)]
 

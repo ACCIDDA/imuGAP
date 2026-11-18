@@ -447,13 +447,14 @@ ERR_OBS_POS_GT_SAMPLE <- paste0(
 ERR_OBS_CENSORED_NUMERIC <- "`observations` column 'censored' must contain numeric values"
 
 #' @title Censored Column Values Error
-#' @description Raised when `censored` column contains values other than NA or 1.
+#' @description Raised when `censored` column contains values other than NA, 0, or 1.
 #' @keywords internal
 #' @noRd
 ERR_OBS_CENSORED_VALUES <- paste0(
-  "`observations` column 'censored' must contain NA (uncensored) ",
-  "or 1 (right-censored); ",
-  "use `subset(observations, !is.na(censored) & censored != 1)` to resolve invalid entries"
+  "`observations` column 'censored' must contain NA (uncensored), ",
+  "0 (left-censored), or 1 (right-censored); ",
+  "use `subset(observations, !is.na(censored) & censored != 0 & censored != 1)` ",
+  "to resolve invalid entries"
 )
 
 # ------------------------------------------------------------------------------

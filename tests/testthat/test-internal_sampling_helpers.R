@@ -349,3 +349,43 @@ test_that("slice_weights partitions combined unmixed and mixed canonical observa
   expect_equal(res$n_weights_mixed_left, nrow(w_mixed))
   expect_equal(res$weights_mixed_left, w_mixed$weight)
 })
+
+test_that("slice_weights splits uncensored, left-, and right-censored streams", {
+  can_locs <- canonicalize_locations(make_test_locs())
+  raw_obs <- data.frame(
+    obs_id = c("u1", "l1", "l2", "r1"),
+    positive = c(5L, 12L, 9L, 18L),
+    sample_n = c(10L, 15L, 10L, 20L),
+    censored = c(NA, 0, 0, 1)
+  )
+  can_obs <- canonicalize_observations(raw_obs)
+  raw_pops <- data.frame(
+    obs_id = c("u1", "l1", "l1", "l2", "r1"),
+    loc_id = c("schl1", "schl1", "schl2", "schl2", "cnty2"),
+    cohort = c(1L, 2L, 2L, 3L, 3L),
+    age = c(4L, 5L, 5L, 5L, 6L),
+    dose = c(1L, 1L, 1L, 2L, 2L),
+    weight = c(1.0, 0.5, 0.5, 1.0, 1.0)
+  )
+  can_wts <- canonicalize_populations(
+    raw_pops,
+    observations = can_obs,
+    locations = can_locs
+  )
+
+  st_u <- slice_weights(can_wts, can_obs[is.na(censored)], "uncensored")
+  st_l <- slice_weights(can_wts, can_obs[censored == 0], "left")
+  st_r <- slice_weights(can_wts, can_obs[censored == 1], "right")
+
+  expect_equal(st_u$n_obs_unmixed_uncensored + st_u$n_obs_mixed_uncensored, 1L)
+  expect_equal(st_r$n_obs_unmixed_right + st_r$n_obs_mixed_right, 1L)
+
+  # left stream: l2 is unmixed, l1 is mixed over two schools
+  expect_equal(st_l$n_obs_unmixed_left, 1L)
+  expect_equal(st_l$y_obs_unmixed_left, 9L)
+  expect_equal(st_l$n_obs_mixed_left, 1L)
+  expect_equal(st_l$y_obs_mixed_left, 12L)
+  expect_equal(st_l$n_weights_mixed_left, 2L)
+  expect_equal(st_l$obs_bounds_mixed_left, 1L)
+  expect_equal(st_l$weights_mixed_left, c(0.5, 0.5))
+})

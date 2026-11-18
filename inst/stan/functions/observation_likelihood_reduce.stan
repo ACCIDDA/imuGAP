@@ -8,6 +8,41 @@
  */
 
 /**
+ * Numerically stable log binomial CDF, log P(Y <= y | n, p).
+ *
+ * Stan's built-in `binomial_lcdf` returns non-finite gradients for large `n`
+ * (observed from n ~ 2000 upward, even with p == y / n), which makes the
+ * sampler fail to initialize. Below `n_exact_max` we use the exact
+ * `binomial_lcdf`; at or above it we use a continuity-corrected normal
+ * approximation through `std_normal_lcdf`, which is accurate near the bulk of
+ * the distribution (where the posterior lives for large n) and only diverges
+ * in the far tails.
+ */
+real stable_binom_log_cdf(int y, int n, real p) {
+  int n_exact_max = 1500;
+  if (y >= n) {
+    return 0.0;
+  }
+  if (n < n_exact_max) {
+    return binomial_lcdf(y | n, p);
+  }
+  real mu = n * p;
+  real sd = sqrt(fmax(n * p * (1.0 - p), 1e-12));
+  return std_normal_lcdf((y + 0.5 - mu) / sd);
+}
+
+/**
+ * Sum of `stable_binom_log_cdf` over paired arrays.
+ */
+real stable_binom_log_cdf_sum(array[] int y, array[] int n, vector p) {
+  real lp = 0.0;
+  for (i in 1:size(y)) {
+    lp += stable_binom_log_cdf(y[i], n[i], p[i]);
+  }
+  return lp;
+}
+
+/**
  * Partial log-likelihood for unmixed uncensored observations (unnormalized).
  */
 real unmixed_uncensored_partial_lpmf(
@@ -59,7 +94,7 @@ real unmixed_right_partial_lcdf(
   int len = end - start + 1;
   vector[len] p =
     (1.0 - phi[phi_lookup[start:end]]) .* unrolled_dose_probs[cdf_lookup[start:end]];
-  return binomial_lcdf(y_fail_slice | y_smp[start:end], 1.0 - p);
+  return stable_binom_log_cdf_sum(y_fail_slice, y_smp[start:end], 1.0 - p);
 }
 
 /**
@@ -80,7 +115,7 @@ real mixed_right_partial_lcdf(
     int st = obs_map[1, global_idx];
     int en = obs_map[2, global_idx];
     real p_i = sum(segment(weighted, st, en - st + 1));
-    lp += binomial_lcdf(y_fail_slice[i] | y_smp[global_idx], 1.0 - p_i);
+    lp += stable_binom_log_cdf(y_fail_slice[i], y_smp[global_idx], 1.0 - p_i);
   }
   return lp;
 }
@@ -101,7 +136,7 @@ real unmixed_left_partial_lcdf(
   int len = end - start + 1;
   vector[len] p =
     (1.0 - phi[phi_lookup[start:end]]) .* unrolled_dose_probs[cdf_lookup[start:end]];
-  return binomial_lcdf(y_obs_slice | y_smp[start:end], p);
+  return stable_binom_log_cdf_sum(y_obs_slice, y_smp[start:end], p);
 }
 
 /**
@@ -122,7 +157,7 @@ real mixed_left_partial_lcdf(
     int st = obs_map[1, global_idx];
     int en = obs_map[2, global_idx];
     real p_i = sum(segment(weighted, st, en - st + 1));
-    lp += binomial_lcdf(y_obs_slice[i] | y_smp[global_idx], p_i);
+    lp += stable_binom_log_cdf(y_obs_slice[i], y_smp[global_idx], p_i);
   }
   return lp;
 }

@@ -121,18 +121,31 @@ test_that("errors when censored column is not numeric", {
   )
 })
 
-test_that("errors when censored column contains values other than NA or 1", {
+test_that("errors when censored column contains values other than NA, 0, or 1", {
   obs <- data.frame(
     obs_id = c("a", "b", "c"),
     positive = c(5, 10, 15),
     sample_n = c(10, 20, 30),
-    censored = c(NA, 0, 1) # 0 is not allowed (reserved for left-censoring)
+    censored = c(NA, -1, 1) # only NA, 0 (left), 1 (right) are valid
   )
   err_cens <- tryCatch(canonicalize_observations(obs), error = identity)
   expect_match(err_cens$message, err_pattern(ERR_OBS_CENSORED_VALUES))
   diag_cens <- eval_err_diagnostic(err_cens, list(observations = obs))
   expect_equal(diag_cens$obs_id, "b")
-  expect_equal(diag_cens$censored, 0)
+  expect_equal(diag_cens$censored, -1)
+})
+
+test_that("accepts left-censoring and orders uncensored, left, right", {
+  obs <- data.frame(
+    obs_id = c("a", "b", "c", "d"),
+    positive = c(5, 10, 15, 20),
+    sample_n = c(10, 20, 30, 40),
+    censored = c(1, 0, NA, 0)
+  )
+  expect_silent(obs_res <- canonicalize_observations(obs))
+  expect_equal(obs_res$obs_id, c("c", "b", "d", "a"))
+  expect_equal(obs_res$censored, c(NA, 0, 0, 1))
+  expect_equal(obs_res$obs_c_id, 1:4)
 })
 
 test_that("canonical input short-circuits and returns unchanged", {

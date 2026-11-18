@@ -30,32 +30,32 @@
   }
   if (n_obs_unmixed_right > 0) {
     for (i in 1:n_obs_unmixed_right) {
-      log_lik[ll_offset + i] = binomial_lcdf(
-        y_fail_unmixed_right[i] | y_smp_unmixed_right[i], 1.0 - p_obs_unmixed_right[i]
+      log_lik[ll_offset + i] = stable_binom_log_cdf(
+        y_fail_unmixed_right[i], y_smp_unmixed_right[i], 1.0 - p_obs_unmixed_right[i]
       );
     }
     ll_offset += n_obs_unmixed_right;
   }
   if (n_obs_mixed_right > 0) {
     for (i in 1:n_obs_mixed_right) {
-      log_lik[ll_offset + i] = binomial_lcdf(
-        y_fail_mixed_right[i] | y_smp_mixed_right[i], 1.0 - p_obs_mixed_right[i]
+      log_lik[ll_offset + i] = stable_binom_log_cdf(
+        y_fail_mixed_right[i], y_smp_mixed_right[i], 1.0 - p_obs_mixed_right[i]
       );
     }
     ll_offset += n_obs_mixed_right;
   }
   if (n_obs_unmixed_left > 0) {
     for (i in 1:n_obs_unmixed_left) {
-      log_lik[ll_offset + i] = binomial_lcdf(
-        y_obs_unmixed_left[i] | y_smp_unmixed_left[i], p_obs_unmixed_left[i]
+      log_lik[ll_offset + i] = stable_binom_log_cdf(
+        y_obs_unmixed_left[i], y_smp_unmixed_left[i], p_obs_unmixed_left[i]
       );
     }
     ll_offset += n_obs_unmixed_left;
   }
   if (n_obs_mixed_left > 0) {
     for (i in 1:n_obs_mixed_left) {
-      log_lik[ll_offset + i] = binomial_lcdf(
-        y_obs_mixed_left[i] | y_smp_mixed_left[i], p_obs_mixed_left[i]
+      log_lik[ll_offset + i] = stable_binom_log_cdf(
+        y_obs_mixed_left[i], y_smp_mixed_left[i], p_obs_mixed_left[i]
       );
     }
     ll_offset += n_obs_mixed_left;
