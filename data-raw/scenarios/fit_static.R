@@ -23,8 +23,10 @@ dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 all_scenarios <- sub("[.]rds$", "", list.files(scen_dir, pattern = "[.]rds$"))
 stopifnot(
-  "no scenario files found; run data-raw/scenarios/dynamic_lambda.R first" =
-    length(all_scenarios) > 0L
+  "no scenario files found; run data-raw/scenarios/dynamic_lambda.R first" = length(
+    all_scenarios
+  ) >
+    0L
 )
 args <- commandArgs(trailingOnly = TRUE)
 scenarios <- if (length(args)) args else all_scenarios
@@ -34,9 +36,21 @@ stopifnot(
 
 quick <- identical(Sys.getenv("IMUGAP_QUICK"), "1")
 st_opts <- if (quick) {
-  stan_options(iter = 200, chains = 2L, threading = TRUE, refresh = 50, seed = 1L)
+  stan_options(
+    iter = 200,
+    chains = 2L,
+    threading = TRUE,
+    refresh = 50,
+    seed = 1L
+  )
 } else {
-  stan_options(iter = 1000, chains = 4L, threading = TRUE, refresh = 250, seed = 1L)
+  stan_options(
+    iter = 1000,
+    chains = 4L,
+    threading = TRUE,
+    refresh = 250,
+    seed = 1L
+  )
 }
 im_opts <- imugap_options() # current defaults: logit, df = 5, static lambda
 
@@ -106,7 +120,9 @@ for (nm in scenarios) {
   pops <- sim$populations_sim
 
   fit_file <- file.path(out_dir, paste0(nm, "_fit.rds"))
-  if (identical(Sys.getenv("IMUGAP_REUSE_FITS"), "1") && file.exists(fit_file)) {
+  if (
+    identical(Sys.getenv("IMUGAP_REUSE_FITS"), "1") && file.exists(fit_file)
+  ) {
     cat("  reusing saved fit:", fit_file, "\n")
     fit <- readRDS(fit_file)
   } else {
@@ -147,7 +163,12 @@ for (nm in scenarios) {
     base_truth = sim$truth$lambda
   )
 
-  res <- list(phi = phi_dt, coverage = cov_dt, resid = resid_dt, lambda = lambda_dt)
+  res <- list(
+    phi = phi_dt,
+    coverage = cov_dt,
+    resid = resid_dt,
+    lambda = lambda_dt
+  )
   saveRDS(res, file.path(out_dir, paste0(nm, "_summary.rds")))
   results[[nm]] <- res
 }
@@ -164,7 +185,8 @@ print(lambda_all)
 
 phi_all[, covered := truth >= q2_5 & truth <= q97_5]
 cat("\nState phi: share of cohorts whose 95% interval covers the truth\n")
-print(phi_all[, .(coverage_95 = mean(covered), max_abs_err = max(abs(q50 - truth))),
+print(phi_all[,
+  .(coverage_95 = mean(covered), max_abs_err = max(abs(q50 - truth))),
   by = scenario
 ])
 
@@ -177,7 +199,10 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
     geom_line(aes(y = q50, color = "Posterior median")) +
     geom_line(aes(y = truth, color = "Truth"), linetype = "dashed") +
     facet_wrap(~scenario) +
-    scale_color_manual(NULL, values = c("Posterior median" = "black", "Truth" = "firebrick")) +
+    scale_color_manual(
+      NULL,
+      values = c("Posterior median" = "black", "Truth" = "firebrick")
+    ) +
     labs(x = "Birth cohort", y = "State non-uptake (phi)") +
     theme_bw()
 
@@ -187,7 +212,10 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
     geom_line(aes(y = q50, color = "Posterior median")) +
     geom_line(aes(y = truth, color = "Truth"), linetype = "dashed") +
     facet_grid(paste("age", age) ~ scenario) +
-    scale_color_manual(NULL, values = c("Posterior median" = "black", "Truth" = "firebrick")) +
+    scale_color_manual(
+      NULL,
+      values = c("Posterior median" = "black", "Truth" = "firebrick")
+    ) +
     labs(x = "Birth cohort", y = "State 2-dose coverage") +
     theme_bw()
 
@@ -211,8 +239,18 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
     theme_bw()
 
   ggsave(file.path(out_dir, "phi_recovery.png"), p_phi, width = 9, height = 6)
-  ggsave(file.path(out_dir, "coverage_recovery.png"), p_cov, width = 10, height = 5)
-  ggsave(file.path(out_dir, "residuals_by_calendar.png"), p_resid, width = 9, height = 6)
+  ggsave(
+    file.path(out_dir, "coverage_recovery.png"),
+    p_cov,
+    width = 10,
+    height = 5
+  )
+  ggsave(
+    file.path(out_dir, "residuals_by_calendar.png"),
+    p_resid,
+    width = 9,
+    height = 6
+  )
 }
 
 cat("\nSummaries and plots written to", out_dir, "\n")

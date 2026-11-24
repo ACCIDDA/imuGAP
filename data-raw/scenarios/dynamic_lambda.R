@@ -72,15 +72,15 @@ scenarios <- list(
 label_streams <- function(observations, setup) {
   observations[,
     stream := fcase(
-      loc_id %in% setup$school_names,
-      "school_kg",
-      loc_id %in% setup$county_names,
-      "county_grade6",
-      loc_id == "State" & age_min %in% c(2L, 3L),
-      "cvv",
-      loc_id == "State" & age_min == setup$sch_start,
-      "skv",
-      loc_id == "State" & age_min == min(setup$study_ages),
+      loc_id %in% setup$school_names                       ,
+      "school_kg"                                          ,
+      loc_id %in% setup$county_names                       ,
+      "county_grade6"                                      ,
+      loc_id == "State" & age_min %in% c(2L, 3L)           ,
+      "cvv"                                                ,
+      loc_id == "State" & age_min == setup$sch_start       ,
+      "skv"                                                ,
+      loc_id == "State" & age_min == min(setup$study_ages) ,
       "tvv"
     )
   ]
@@ -148,8 +148,10 @@ chk <- merge(
 )
 state_streams <- c("cvv", "skv", "tvv")
 stopifnot(
-  "static scenario does not reproduce state-level package observations" =
-    chk[stream %in% state_streams, all(positive == positive_pkg)]
+  "static scenario does not reproduce state-level package observations" = chk[
+    stream %in% state_streams,
+    all(positive == positive_pkg)
+  ]
 )
 n_mismatch <- chk[!stream %in% state_streams, sum(positive != positive_pkg)]
 if (n_mismatch > 0L) {
@@ -164,11 +166,14 @@ if (n_mismatch > 0L) {
 # up as a drop in the cohorts whose age-5 year falls in the dip.
 
 skv <- rbindlist(lapply(results, function(r) {
-  r$observations_sim[stream == "skv", .(
-    scenario = r$scenario,
-    cohort,
-    coverage = positive / sample_n
-  )]
+  r$observations_sim[
+    stream == "skv",
+    .(
+      scenario = r$scenario,
+      cohort,
+      coverage = positive / sample_n
+    )
+  ]
 }))
 
 lambda_dt <- rbindlist(lapply(results, function(r) {
@@ -194,10 +199,23 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
     aes(cohort, coverage, color = scenario, linetype = scenario) +
     geom_line() +
     geom_point(size = 0.8) +
-    labs(x = "Birth cohort", y = "Observed state kindergarten 2-dose coverage") +
+    labs(
+      x = "Birth cohort",
+      y = "Observed state kindergarten 2-dose coverage"
+    ) +
     theme_bw()
-  ggsave(file.path(out_dir, "lambda_by_scenario.png"), p_lambda, width = 7, height = 4)
-  ggsave(file.path(out_dir, "skv_by_scenario.png"), p_skv, width = 7, height = 4)
+  ggsave(
+    file.path(out_dir, "lambda_by_scenario.png"),
+    p_lambda,
+    width = 7,
+    height = 4
+  )
+  ggsave(
+    file.path(out_dir, "skv_by_scenario.png"),
+    p_skv,
+    width = 7,
+    height = 4
+  )
 }
 
 cat("Scenarios written to", out_dir, ":\n")

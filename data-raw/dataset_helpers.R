@@ -97,8 +97,10 @@ build_lambda_cal <- function(lambda, lambda_mult, n_cal) {
   base <- matrix(lambda, nrow = n_cal, ncol = n_doses, byrow = TRUE)
   if (is.matrix(lambda_mult)) {
     stopifnot(
-      "`lambda_mult` matrix must be n_cal x n_doses" =
-        identical(dim(lambda_mult), c(n_cal, n_doses))
+      "`lambda_mult` matrix must be n_cal x n_doses" = identical(
+        dim(lambda_mult),
+        c(n_cal, n_doses)
+      )
     )
     mult <- lambda_mult
   } else if (length(lambda_mult) == 1L || length(lambda_mult) == n_cal) {
@@ -106,7 +108,9 @@ build_lambda_cal <- function(lambda, lambda_mult, n_cal) {
   } else {
     stop(sprintf(
       "`lambda_mult` must be a scalar, length %d, or a %d x %d matrix",
-      n_cal, n_cal, n_doses
+      n_cal,
+      n_cal,
+      n_doses
     ))
   }
   stopifnot("`lambda_mult` must be non-negative" = all(mult >= 0))
@@ -195,7 +199,9 @@ get_simulation_setup <- function(
   # and the simulation is identical to static uptake.
   n_cal <- n_cohort + n_yr - 1L
   lambda_cal <- build_lambda_cal(lambda, lambda_mult, n_cal)
-  is_static_lambda <- all(lambda_cal == matrix(lambda, n_cal, n_doses, byrow = TRUE))
+  is_static_lambda <- all(
+    lambda_cal == matrix(lambda, n_cal, n_doses, byrow = TRUE)
+  )
 
   # Baseline age x dose coverage under the base rates (no calendar variation).
   # Kept for backwards compatibility: vignettes read latent_params_sim$uptake[age, dose].
