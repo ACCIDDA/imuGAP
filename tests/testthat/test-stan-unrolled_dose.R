@@ -354,8 +354,17 @@ overload_case <- function() {
 
 test_that("matrix overload with constant rows is identical to the vector overload", {
   dat <- overload_case()
-  dat$lambda_mat <- matrix(dat$lambda_vec, dat$n_intervals, dat$n_doses, byrow = TRUE)
-  res <- run_stan_harness(model_unrolled_overloads, data = dat, c("out_vec", "out_mat"))
+  dat$lambda_mat <- matrix(
+    dat$lambda_vec,
+    dat$n_intervals,
+    dat$n_doses,
+    byrow = TRUE
+  )
+  res <- run_stan_harness(
+    model_unrolled_overloads,
+    data = dat,
+    c("out_vec", "out_mat")
+  )
   expect_identical(res$out_mat, res$out_vec)
 })
 
@@ -395,6 +404,10 @@ test_that("array overload returns one column per group matching the matrix overl
   expect_identical(out_arr[, 2L], res$out_mat)
 
   # Group 3 = reversed disruption, checked against the reference
-  expected_3 <- reference_ctmc(dat$dt_vec, dat$dose_sched, exp(dat$lambda_arr[3L, , ]))
+  expected_3 <- reference_ctmc(
+    dat$dt_vec,
+    dat$dose_sched,
+    exp(dat$lambda_arr[3L, , ])
+  )
   expect_equal(out_arr[, 3L], as.vector(expected_3), tolerance = 1e-10)
 })
