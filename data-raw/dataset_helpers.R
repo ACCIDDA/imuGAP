@@ -22,12 +22,131 @@ utils::globalVariables(c(
 p_to_odds <- function(p) p / (1 - p)
 odds_to_p <- function(odds) odds / (1 + odds)
 
+#' Cumulative dose coverage for a single cohort under piecewise-constant uptake rates
+#'
+#' Two-dose continuous-time Markov chain (0 -> 1 -> 2 doses) evaluated over unit
+#' age intervals. Interval `y` covers age `(y - 1, y]`.
+#'
+#' @param lambda_mat numeric matrix (`n_yr` x 2); uptake rate for each dose in
+#'   each age interval.
+#' @param doses binary matrix (`n_yr` x 2); 1 if the dose is eligible in that
+#'   age interval.
+#' @return numeric matrix (`n_yr` x 2); `P(>= k doses)` at the end of each age
+#'   interval, conditional on being in the vaccinating population.
+ctmc_coverage <- function(lambda_mat, doses) {
+  n_yr <- nrow(doses)
+  n_doses <- ncol(doses)
+  stopifnot(
+    n_doses == 2L,
+    identical(dim(lambda_mat), dim(doses))
+  )
+
+  n_states <- n_doses + 1L
+  p_state <- c(1, rep(0, n_states - 1L))
+  cov <- matrix(0, nrow = n_yr, ncol = n_doses)
+  for (y in 1:n_yr) {
+    r1 <- doses[y, 1] * lambda_mat[y, 1]
+    r2 <- doses[y, 2] * lambda_mat[y, 2]
+    P <- matrix(0, 3, 3)
+    P[3, 3] <- 1
+    if (r1 == 0 && r2 == 0) {
+      P[1, 1] <- 1
+      P[2, 2] <- 1
+    } else if (r1 > 0 && r2 == 0) {
+      P[1, 1] <- exp(-r1)
+      P[1, 2] <- 1 - exp(-r1)
+      P[2, 2] <- 1
+    } else if (r1 == 0 && r2 > 0) {
+      P[1, 1] <- 1
+      P[2, 2] <- exp(-r2)
+      P[2, 3] <- 1 - exp(-r2)
+    } else if (abs(r1 - r2) < 1e-12) {
+      P[1, 1] <- exp(-r1)
+      P[1, 2] <- r1 * exp(-r1)
+      P[1, 3] <- 1 - (1 + r1) * exp(-r1)
+      P[2, 2] <- exp(-r2)
+      P[2, 3] <- 1 - exp(-r2)
+    } else {
+      P[1, 1] <- exp(-r1)
+      P[1, 2] <- r1 / (r2 - r1) * (exp(-r1) - exp(-r2))
+      P[1, 3] <- 1 - P[1, 1] - P[1, 2]
+      P[2, 2] <- exp(-r2)
+      P[2, 3] <- 1 - exp(-r2)
+    }
+    p_state <- as.vector(p_state %*% P)
+    for (k in 1:n_doses) {
+      cov[y, k] <- sum(p_state[(k + 1L):n_states])
+    }
+  }
+  cov
+}
+
+#' Build calendar-time uptake rates from base rates and multipliers
+#'
+#' Calendar index `t = cohort + age_interval - 1`, so `t = 1` is the first year
+#' of life of cohort 1 and `n_cal = n_cohort + n_yr - 1`.
+#'
+#' @param lambda numeric vector (length `n_doses`); base uptake rate per dose.
+#' @param lambda_mult multiplier on `lambda` by calendar time: a scalar, a
+#'   vector of length `n_cal` (applied to every dose), or an `n_cal` x
+#'   `n_doses` matrix.
+#' @param n_cal integer; number of calendar-time steps.
+#' @return numeric matrix (`n_cal` x `n_doses`) of calendar-time uptake rates.
+build_lambda_cal <- function(lambda, lambda_mult, n_cal) {
+  n_doses <- length(lambda)
+  base <- matrix(lambda, nrow = n_cal, ncol = n_doses, byrow = TRUE)
+  if (is.matrix(lambda_mult)) {
+    stopifnot(
+      "`lambda_mult` matrix must be n_cal x n_doses" = identical(
+        dim(lambda_mult),
+        c(n_cal, n_doses)
+      )
+    )
+    mult <- lambda_mult
+  } else if (length(lambda_mult) == 1L || length(lambda_mult) == n_cal) {
+    mult <- matrix(lambda_mult, nrow = n_cal, ncol = n_doses)
+  } else {
+    stop(sprintf(
+      "`lambda_mult` must be a scalar, length %d, or a %d x %d matrix",
+      n_cal,
+      n_cal,
+      n_doses
+    ))
+  }
+  stopifnot("`lambda_mult` must be non-negative" = all(mult >= 0))
+  base * mult
+}
+
+#' Cohort-specific cumulative dose coverage from calendar-time uptake rates
+#'
+#' @param lambda_cal numeric matrix (`n_cal` x `n_doses`) from [build_lambda_cal()].
+#' @param doses binary eligibility matrix (`n_yr` x `n_doses`).
+#' @param n_cohort integer; number of birth cohorts.
+#' @return numeric array (`n_cohort` x `n_yr` x `n_doses`); `cov[c, a, k]` is
+#'   `P(>= k doses)` by the end of age interval `a` for cohort `c`.
+build_cohort_coverage <- function(lambda_cal, doses, n_cohort) {
+  n_yr <- nrow(doses)
+  n_doses <- ncol(doses)
+  stopifnot(nrow(lambda_cal) >= n_cohort + n_yr - 1L)
+  cov <- array(0, dim = c(n_cohort, n_yr, n_doses))
+  for (c in seq_len(n_cohort)) {
+    cal_idx <- c + seq_len(n_yr) - 1L
+    cov[c, , ] <- ctmc_coverage(lambda_cal[cal_idx, , drop = FALSE], doses)
+  }
+  cov
+}
+
 #' Construct simulation setup containing population structure and pre-drawn random values
+#'
+#' @param lambda_mult multiplier on the base uptake rates by calendar time; see
+#'   [build_lambda_cal()]. The default (`1`) reproduces the static-uptake
+#'   simulation exactly.
 get_simulation_setup <- function(
   seed = 93254,
   sigma_sch = 0.8,
   sigma_cnty = 0.4,
-  other_vax_reduction = 0.95
+  other_vax_reduction = 0.95,
+  lambda_mult = 1
 ) {
   set.seed(seed)
 
@@ -75,44 +194,24 @@ get_simulation_setup <- function(
     doses[(dose_schedule[i] + 1):nrow(doses), i] <- 1
   }
 
-  # Continuous-time Markov multi-state transition matrix exponential
-  n_states <- n_doses + 1L
-  p_state <- c(1, rep(0, n_states - 1L))
-  cov <- matrix(0, nrow = n_yr, ncol = n_doses)
-  for (y in 1:n_yr) {
-    r1 <- doses[y, 1] * lambda[1]
-    r2 <- doses[y, 2] * lambda[2]
-    P <- matrix(0, 3, 3)
-    P[3, 3] <- 1
-    if (r1 == 0 && r2 == 0) {
-      P[1, 1] <- 1
-      P[2, 2] <- 1
-    } else if (r1 > 0 && r2 == 0) {
-      P[1, 1] <- exp(-r1)
-      P[1, 2] <- 1 - exp(-r1)
-      P[2, 2] <- 1
-    } else if (r1 == 0 && r2 > 0) {
-      P[1, 1] <- 1
-      P[2, 2] <- exp(-r2)
-      P[2, 3] <- 1 - exp(-r2)
-    } else if (abs(r1 - r2) < 1e-12) {
-      P[1, 1] <- exp(-r1)
-      P[1, 2] <- r1 * exp(-r1)
-      P[1, 3] <- 1 - (1 + r1) * exp(-r1)
-      P[2, 2] <- exp(-r2)
-      P[2, 3] <- 1 - exp(-r2)
-    } else {
-      P[1, 1] <- exp(-r1)
-      P[1, 2] <- r1 / (r2 - r1) * (exp(-r1) - exp(-r2))
-      P[1, 3] <- 1 - P[1, 1] - P[1, 2]
-      P[2, 2] <- exp(-r2)
-      P[2, 3] <- 1 - exp(-r2)
-    }
-    p_state <- as.vector(p_state %*% P)
-    for (k in 1:n_doses) {
-      cov[y, k] <- sum(p_state[(k + 1L):n_states])
-    }
-  }
+  # Calendar-time uptake rates. Calendar index t = cohort + age_interval - 1, so
+  # n_cal = n_cohort + n_yr - 1. With lambda_mult = 1 every row equals `lambda`
+  # and the simulation is identical to static uptake.
+  n_cal <- n_cohort + n_yr - 1L
+  lambda_cal <- build_lambda_cal(lambda, lambda_mult, n_cal)
+  is_static_lambda <- all(
+    lambda_cal == matrix(lambda, n_cal, n_doses, byrow = TRUE)
+  )
+
+  # Baseline age x dose coverage under the base rates (no calendar variation).
+  # Kept for backwards compatibility: vignettes read latent_params_sim$uptake[age, dose].
+  cov_static <- ctmc_coverage(
+    matrix(lambda, nrow = n_yr, ncol = n_doses, byrow = TRUE),
+    doses
+  )
+
+  # Cohort-specific coverage: cov[cohort, age, dose]
+  cov <- build_cohort_coverage(lambda_cal, doses, n_cohort)
 
   county_names <- c("Scruggs", "Simone", "Watson")
   school_names <- c(
@@ -233,6 +332,7 @@ get_simulation_setup <- function(
   list(
     county_names = county_names,
     cov = cov,
+    cov_static = cov_static,
     cvv_max_age = cvv_max_age,
     cvv_max_cohort = cvv_max_cohort,
     cvv_cohorts = cvv_cohorts,
@@ -240,6 +340,9 @@ get_simulation_setup <- function(
     grade6_max_cohort = grade6_max_cohort,
     grade6_start = grade6_start,
     lambda = lambda,
+    lambda_cal = lambda_cal,
+    is_static_lambda = is_static_lambda,
+    n_cal = n_cal,
     n_cohort = n_cohort,
     n_cvv = n_cvv,
     n_grade6_matrix = n_grade6_matrix,
@@ -427,8 +530,8 @@ simulate_observations_from_latent <- function(
   u_cvv_36 <- setup$u_cvv_36
 
   # Note: (1 - phi_st) represents the vaccinating population uptake propensity
-  p_24 <- pmin(pmax((1 - phi_st) * cov[2, 1], 0), 1)
-  p_36 <- pmin(pmax((1 - phi_st) * cov[3, 1], 0), 1)
+  p_24 <- pmin(pmax((1 - phi_st) * cov[cbind(seq_len(n_cohort), 2L, 1L)], 0), 1)
+  p_36 <- pmin(pmax((1 - phi_st) * cov[cbind(seq_len(n_cohort), 3L, 1L)], 0), 1)
   p_36_cond <- pmin(pmax((p_36 - p_24) / (1 - p_24), 0), 1)
 
   at_24 <- qbinom(u_cvv_24, n_cvv, p_24)
@@ -470,7 +573,10 @@ simulate_observations_from_latent <- function(
   for (i in seq_len(nrow(sim_teen))) {
     u_slice <- setup$u_teen[i, ]
     phi_slice <- tvv_cohorts[i] + max(study_ages) - study_ages
-    p_slice <- pmin(pmax((1 - phi_st[phi_slice]) * cov[study_ages, 2], 0), 1)
+    p_slice <- pmin(
+      pmax((1 - phi_st[phi_slice]) * cov[cbind(phi_slice, study_ages, 2L)], 0),
+      1
+    )
 
     sim_teen$positive[i] <- sum(qbinom(u_slice, n_teen_per_age, p_slice))
   }
@@ -482,7 +588,11 @@ simulate_observations_from_latent <- function(
     nsch <- nsch_matrix[skv_cohorts, s]
     u_vector <- setup$u_sch_matrix[, s]
     p_vector <- pmin(
-      pmax((1 - schl_prob_matrix[skv_cohorts, s]) * cov[sch_start, 2L], 0),
+      pmax(
+        (1 - schl_prob_matrix[skv_cohorts, s]) *
+          cov[cbind(skv_cohorts, sch_start, 2L)],
+        0
+      ),
       1
     )
 
@@ -501,7 +611,7 @@ simulate_observations_from_latent <- function(
   # 4. SchoolVaxView (State-level kindergarten entry) directly from state-level parameter
   n_skv_state <- as.integer(round(mean(colSums(nsch_matrix)) * 0.9))
   p_skv_state <- pmin(
-    pmax((1 - phi_st[skv_cohorts]) * cov[sch_start, 2L], 0),
+    pmax((1 - phi_st[skv_cohorts]) * cov[cbind(skv_cohorts, sch_start, 2L)], 0),
     1
   )
   sim_school <- data.table(
@@ -526,7 +636,7 @@ simulate_observations_from_latent <- function(
     p_vector <- pmin(
       pmax(
         (1 - cnty_prob_matrix[grade6_cohorts, c]) *
-          cov[grade6_start, 2L] *
+          cov[cbind(grade6_cohorts, grade6_start, 2L)] *
           other_vax_reduction,
         0
       ),
@@ -599,7 +709,9 @@ simulate_observations_from_latent <- function(
     off_sch = latent$delta_sch,
     off_cnty = latent$delta_cnty,
     censor_reduction = other_vax_reduction,
-    uptake = cov,
+    uptake = setup$cov_static,
+    uptake_cohort = cov,
+    lambda_cal = setup$lambda_cal,
     county_names = county_names,
     school_names = school_names,
     cnty_ids = cnty_ids
@@ -623,7 +735,7 @@ simulate_observations_from_latent <- function(
         loc_id %in% school_names                                     ,
         schl_prob_matrix[cbind(cohort, match(loc_id, school_names))]
       )) *
-      cov[cbind(age, dose)]
+      cov[cbind(cohort, age, dose)]
   ]
 
   latent_params_sim <- list(
@@ -635,9 +747,14 @@ simulate_observations_from_latent <- function(
     off_sch = latent$delta_sch,
     off_cnty = latent$delta_cnty,
     censor_reduction = other_vax_reduction,
-    uptake = cov,
+    uptake = setup$cov_static,
     coverage = coverage
   )
+  if (!setup$is_static_lambda) {
+    # Only added for dynamic-uptake scenarios so the default package data is unchanged
+    latent_params_sim$lambda_cal <- setup$lambda_cal
+    latent_params_sim$uptake_cohort <- cov
+  }
 
   list(
     latent = latent,
@@ -678,8 +795,8 @@ simulate_observations_from_latent_min_noise <- function(
 
   # 1. ChildVaxView using expected values
   n_cvv <- setup$n_cvv
-  p_24 <- pmin(pmax((1 - phi_st) * cov[2, 1], 0), 1)
-  p_36 <- pmin(pmax((1 - phi_st) * cov[3, 1], 0), 1)
+  p_24 <- pmin(pmax((1 - phi_st) * cov[cbind(seq_len(n_cohort), 2L, 1L)], 0), 1)
+  p_36 <- pmin(pmax((1 - phi_st) * cov[cbind(seq_len(n_cohort), 3L, 1L)], 0), 1)
 
   at_24 <- as.integer(round(n_cvv * p_24))
   at_36 <- as.integer(round(n_cvv * p_36))
@@ -718,7 +835,10 @@ simulate_observations_from_latent_min_noise <- function(
 
   for (i in seq_len(nrow(sim_teen))) {
     phi_slice <- tvv_cohorts[i] + max(study_ages) - study_ages
-    p_slice <- pmin(pmax((1 - phi_st[phi_slice]) * cov[study_ages, 2], 0), 1)
+    p_slice <- pmin(
+      pmax((1 - phi_st[phi_slice]) * cov[cbind(phi_slice, study_ages, 2L)], 0),
+      1
+    )
 
     sim_teen$positive[i] <- as.integer(round(sum(n_teen_per_age * p_slice)))
   }
@@ -729,7 +849,11 @@ simulate_observations_from_latent_min_noise <- function(
   for (s in seq_len(tot_sch)) {
     nsch <- nsch_matrix[skv_cohorts, s]
     p_vector <- pmin(
-      pmax((1 - schl_prob_matrix[skv_cohorts, s]) * cov[sch_start, 2L], 0),
+      pmax(
+        (1 - schl_prob_matrix[skv_cohorts, s]) *
+          cov[cbind(skv_cohorts, sch_start, 2L)],
+        0
+      ),
       1
     )
 
@@ -748,7 +872,7 @@ simulate_observations_from_latent_min_noise <- function(
   # 4. SchoolVaxView (State-level kindergarten entry) directly from state-level parameter
   n_skv_state <- as.integer(round(mean(colSums(nsch_matrix)) * 0.9))
   p_skv_state <- pmin(
-    pmax((1 - phi_st[skv_cohorts]) * cov[sch_start, 2L], 0),
+    pmax((1 - phi_st[skv_cohorts]) * cov[cbind(skv_cohorts, sch_start, 2L)], 0),
     1
   )
   sim_school <- data.table(
@@ -768,7 +892,7 @@ simulate_observations_from_latent_min_noise <- function(
     p_vector <- pmin(
       pmax(
         (1 - cnty_prob_matrix[grade6_cohorts, c]) *
-          cov[grade6_start, 2L] *
+          cov[cbind(grade6_cohorts, grade6_start, 2L)] *
           other_vax_reduction,
         0
       ),
@@ -841,7 +965,9 @@ simulate_observations_from_latent_min_noise <- function(
     off_sch = latent$delta_sch,
     off_cnty = latent$delta_cnty,
     censor_reduction = other_vax_reduction,
-    uptake = cov,
+    uptake = setup$cov_static,
+    uptake_cohort = cov,
+    lambda_cal = setup$lambda_cal,
     county_names = county_names,
     school_names = school_names,
     cnty_ids = cnty_ids
@@ -865,7 +991,7 @@ simulate_observations_from_latent_min_noise <- function(
         loc_id %in% school_names                                     ,
         schl_prob_matrix[cbind(cohort, match(loc_id, school_names))]
       )) *
-      cov[cbind(age, dose)]
+      cov[cbind(cohort, age, dose)]
   ]
 
   latent_params_sim <- list(
@@ -877,9 +1003,14 @@ simulate_observations_from_latent_min_noise <- function(
     off_sch = latent$delta_sch,
     off_cnty = latent$delta_cnty,
     censor_reduction = other_vax_reduction,
-    uptake = cov,
+    uptake = setup$cov_static,
     coverage = coverage
   )
+  if (!setup$is_static_lambda) {
+    # Only added for dynamic-uptake scenarios so the default package data is unchanged
+    latent_params_sim$lambda_cal <- setup$lambda_cal
+    latent_params_sim$uptake_cohort <- cov
+  }
 
   list(
     latent = latent,

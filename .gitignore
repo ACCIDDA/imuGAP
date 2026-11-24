@@ -53,3 +53,6 @@ data-raw/benchmarks/*.rds
 data-raw/benchmarks/*.csv
 data-raw/benchmarks/figures/
 data-raw/benchmarks/test_output.log
+
+# Synthetic scenario outputs (data-raw/scenarios/*.R)
+data-raw/scenarios/output/
