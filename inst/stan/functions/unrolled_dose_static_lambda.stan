@@ -19,22 +19,23 @@ real exp_diff_div(real delta, real e1, real e2) {
 }
 
 /**
- * Compute cumulative vaccination dose probabilities across discrete age/time intervals.
+ * Core kernel: cumulative vaccination dose probabilities across discrete age intervals.
  *
  * Simulates a continuous-time Markov chain transition matrix P = exp(Q) for each interval m
- * under piecewise-constant transition hazards lambda_raw.
+ * under piecewise-constant transition hazards, which may differ by interval.
+ * Callers should use one of the `unrolled_dose()` overloads below.
  *
  * @param n_intervals Number of time/age intervals (M)
  * @param n_doses     Maximum number of doses (D)
  * @param dt_vec      Vector of interval widths in time/age units (length M)
  * @param dose_sched  Binary schedule matrix (M x D), where dose_sched[m, k] = 1 if dose k is active
- * @param lambda_raw  Log-scale transition hazard rates (length D)
+ * @param lambda      Natural-scale transition hazard rates (M x D); row m applies to interval m
  *
  * @return Flattened vector of length M * D containing cumulative dose probabilities (P(Dose >= k))
  */
-vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sched, vector lambda_raw) {
+vector unrolled_dose_rates(int n_intervals, int n_doses, vector dt_vec, matrix dose_sched,
+                           matrix lambda) {
   int n_states = n_doses + 1;
-  vector[n_doses] lambda = exp(lambda_raw);
 
   // Matrix to store cumulative probabilities: rows = intervals, cols = doses
   matrix[n_intervals, n_doses] conditional_dXcdf;
@@ -44,7 +45,7 @@ vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sc
   p_state[1] = 1.0;
 
   for (m in 1:n_intervals) {
-    vector[n_doses] r = (dose_sched[m]' .* lambda) * dt_vec[m];
+    vector[n_doses] r = (dose_sched[m]' .* lambda[m]') * dt_vec[m];
     vector[n_doses] e = exp(-r);
     row_vector[n_states] p_next;
 
@@ -107,4 +108,44 @@ vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sc
   // to_vector() flattens column-by-column:
   // [dose 1 intervals 1..M, dose 2 intervals 1..M, ..., dose D intervals 1..M]
   return to_vector(conditional_dXcdf);
+}
+
+/**
+ * Static hazards: one log-rate per dose, shared by every interval.
+ *
+ * @param lambda_raw Log-scale transition hazard rates (length D)
+ * @return Flattened vector of length M * D (see `unrolled_dose_rates()`)
+ */
+vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sched,
+                     vector lambda_raw) {
+  return unrolled_dose_rates(
+    n_intervals, n_doses, dt_vec, dose_sched, rep_matrix(exp(lambda_raw)', n_intervals)
+  );
+}
+
+/**
+ * Interval-varying hazards: one log-rate per interval and dose.
+ *
+ * @param lambda_raw Log-scale transition hazard rates (M x D); row m applies to interval m
+ * @return Flattened vector of length M * D (see `unrolled_dose_rates()`)
+ */
+vector unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sched,
+                     matrix lambda_raw) {
+  return unrolled_dose_rates(n_intervals, n_doses, dt_vec, dose_sched, exp(lambda_raw));
+}
+
+/**
+ * Group-specific hazards (e.g. per birth cohort): one (M x D) log-rate matrix per group.
+ *
+ * @param lambda_raw Array of G log-scale hazard matrices, each M x D
+ * @return Matrix (M * D) x G; column g is the flattened result for group g
+ */
+matrix unrolled_dose(int n_intervals, int n_doses, vector dt_vec, matrix dose_sched,
+                     array[] matrix lambda_raw) {
+  int n_groups = size(lambda_raw);
+  matrix[n_intervals * n_doses, n_groups] out;
+  for (g in 1:n_groups) {
+    out[:, g] = unrolled_dose(n_intervals, n_doses, dt_vec, dose_sched, lambda_raw[g]);
+  }
+  return out;
 }
